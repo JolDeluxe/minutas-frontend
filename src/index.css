@@ -1,0 +1,229 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────────────
+   FUENTES E ÍCONOS LOCALES (Soporte Offline PWA estricto)
+───────────────────────────────────────────────────────────────────── */
+
+/* ─── Bebas Neue ─── */
+@font-face {
+  font-family: 'Bebas Neue';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/BebasNeue-Regular.woff2') format('woff2');
+}
+
+/* ─── Lato ─── */
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('./assets/fonts/Lato-Light.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/Lato-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./assets/fonts/Lato-Bold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url('./assets/fonts/Lato-Black.woff2') format('woff2');
+}
+
+/* ─── Work Sans ─── */
+@font-face {
+  font-family: 'Work Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/WorkSans-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Work Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('./assets/fonts/WorkSans-Medium.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Work Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./assets/fonts/WorkSans-SemiBold.woff2') format('woff2');
+}
+
+/* ─── JetBrains Mono ─── */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/JetBrainsMono-Regular.woff2') format('woff2');
+}
+
+/* ─── Material Symbols Rounded (Íconos) ─── */
+@font-face {
+  font-family: 'Material Symbols Rounded';
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: block;
+  src: url('./assets/icons/MaterialSymbolsRounded.woff2') format('woff2');
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   TOKENS DEL SISTEMA
+───────────────────────────────────────────────────────────────────── */
+@theme {
+  --color-marca-primario:   #482b2c;
+  --color-marca-primario-hover: #5d3d3e;
+  --color-marca-secundario: #846768;
+  --color-marca-acento:     #66494a;
+  --color-cuadra-arena:     #F0EBE9;
+
+  --color-estado-pendiente:   #f59e0b;
+  --color-estado-asignada:    #3b82f6;
+  --color-estado-en-progreso: #8b5cf6;
+  --color-estado-en-pausa:    #6b7280;
+  --color-estado-resuelto:    #10b981;
+  --color-estado-cerrado:     #1e293b;
+  --color-estado-rechazado:   #ef4444;
+  --color-estado-cancelada:   #9ca3af;
+
+  --color-prioridad-baja:    #10b981;
+  --color-prioridad-media:   #f59e0b;
+  --color-prioridad-alta:    #f97316;
+  --color-prioridad-critica: #ef4444;
+
+  --font-lectura: "Lato", "Work Sans", ui-sans-serif, system-ui;
+  --font-titulos: "Bebas Neue", sans-serif;
+  --font-codigo:  "JetBrains Mono", monospace;
+
+  --radius-sm: 0.25rem; 
+  --radius-cuadra: 0.25rem;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   OVERRIDE REACT-TOASTIFY (Iguala Desktop con Mobile)
+───────────────────────────────────────────────────────────────────── */
+:root {
+  --toastify-color-success: var(--color-estado-resuelto);
+  --toastify-color-error: var(--color-estado-rechazado);
+  --toastify-color-warning: var(--color-estado-pendiente);
+  --toastify-color-info: var(--color-estado-asignada);
+  --toastify-font-family: var(--font-lectura);
+  --toastify-text-color-light: #ffffff;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   BASE
+───────────────────────────────────────────────────────────────────── */
+@layer base {
+  body {
+    font-family: var(--font-lectura);
+    @apply antialiased text-slate-800 bg-cuadra-arena;
+  }
+
+  .fuente-titulos {
+    font-family: var(--font-titulos);
+    letter-spacing: 0.05em;
+  }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { @apply bg-slate-100; }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 rounded-full hover:bg-marca-secundario/50 transition-colors;
+  }
+
+  input, textarea, select {
+    @apply w-full border border-slate-300 px-3 py-2 rounded-sm
+           focus:outline-none focus:ring-2 focus:ring-marca-secundario/30
+           focus:border-marca-secundario transition-all bg-white;
+  }
+
+  @media screen and (max-width: 768px) {
+    input, textarea, select { font-size: 16px !important; }
+  }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────
+   COMPONENTS (Capa de Compatibilidad y Base UI)
+───────────────────────────────────────────────────────────────────── */
+@layer components {
+  /* .boton-guardar, .boton-aceptar {
+    @apply bg-emerald-600 text-white px-5 py-2 rounded-sm
+           hover:bg-emerald-700 active:scale-95 transition-all
+           font-medium cursor-pointer flex items-center justify-center gap-2;
+  }
+
+  .boton-editar {
+    @apply bg-amber-500 text-white px-5 py-2 rounded-sm
+           hover:bg-amber-600 active:scale-95 transition-all
+           font-medium cursor-pointer flex items-center justify-center gap-2;
+  }
+
+  .boton-accion {
+    @apply bg-blue-600 text-white px-5 py-2 rounded-sm
+           hover:bg-blue-700 active:scale-95 transition-all
+           font-medium cursor-pointer flex items-center justify-center gap-2;
+  }
+
+  .boton-borrar, .boton-eliminar {
+    @apply bg-red-600 text-white px-5 py-2 rounded-sm
+           hover:bg-red-700 active:scale-95 transition-all
+           font-medium cursor-pointer flex items-center justify-center gap-2;
+  }
+
+  .boton-cancelar {
+    @apply bg-slate-300 text-slate-700 px-5 py-2 rounded-sm
+           hover:bg-slate-400 active:scale-95 transition-all
+           font-medium cursor-pointer flex items-center justify-center gap-2;
+  }
+
+  button:disabled {
+    @apply opacity-50 cursor-not-allowed grayscale !transform-none;
+  }
+
+  .tarjeta-cuadra {
+    @apply bg-white border border-slate-200 shadow-sm rounded-sm overflow-hidden;
+  }
+
+  .animacion-carga {
+    @apply animate-pulse bg-slate-300 rounded-sm;
+  } */
+
+  /* CRÍTICO: Mantiene vivos los íconos del Sidebar y Navbar */
+  .material-symbols-rounded {
+    font-family: 'Material Symbols Rounded';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    user-select: none;
+    flex-shrink: 0;
+    -webkit-font-feature-settings: 'liga';
+    font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+}
