@@ -5,8 +5,8 @@ import { useTickets } from '@/features/tickets/hooks/use-tickets';
 import { useTicketsUiStore } from '@/stores/tickets-ui-store';
 import { notify } from '@/components/notification/adaptive-notify';
 
-import { TicketsBandejaDesktop } from '../views/tickets-bandeja-desktop';
-import { TicketsBandejaMobile } from '../views/tickets-bandeja-mobile';
+import { TicketsBandejaDesktop } from '../views/tareas-desktop';
+import { TicketsBandejaMobile } from '../views/tareas-mobile';
 import { BandejaAssignModal } from '../components/bandeja/bandeja-assign-modal';
 import { BandejaDetailModal } from '../components/bandeja/bandeja-detail-modal';
 
