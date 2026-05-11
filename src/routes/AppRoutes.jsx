@@ -9,6 +9,9 @@ import { RoleGuard } from './RoleGuard';
 import LoginPage from '@/features/auth/pages/login-page';
 import ProfilePage from '@/features/auth/pages/profile-page';
 import UsersPage from '@/features/usuarios/pages/users-page';
+import MinutasPage from '@/features/minutas/pages/minutas-page';
+import MinutaDetailPage from '@/features/minutas/pages/minuta-detail-page';
+import TareasPages from '@/features/tareas/pages/tareas-pages';
 import { DashboardLayout } from '@/layouts/dashboard-layout';
 import WelcomePage from '@/pages/welcome-page';
 import NotFound from '@/pages/not-found';
@@ -34,8 +37,9 @@ export const AppRoutes = () => {
           </Route>
 
           {/* TODO: Módulos futuros */}
-          {/* <Route path="/minutas" element={<MinutasPage />} /> */}
-          {/* <Route path="/entradas" element={<EntradasPage />} /> */}
+          <Route path="/minutas" element={<MinutasPage />} />
+          <Route path="/minutas/:id" element={<MinutaDetailPage />} />
+          <Route path="/entradas" element={<TareasPages />} />
 
         </Route>
       </Route>

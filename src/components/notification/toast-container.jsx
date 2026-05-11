@@ -12,7 +12,7 @@ export const ToastContainer = () => {
 
   // Diccionario visual original adaptado a los TOKENS del sistema
   const mobileTypes = {
-    success: { icon: 'check_circle', bg: 'bg-estado-resuelto', text: 'text-white' },
+    success: { icon: 'check_circle', bg: 'bg-emerald-600', text: 'text-white' },
     error: { icon: 'error', bg: 'bg-estado-rechazado', text: 'text-white' },
     warning: { icon: 'warning', bg: 'bg-estado-pendiente', text: 'text-white' },
     info: { icon: 'info', bg: 'bg-estado-asignada', text: 'text-white' },

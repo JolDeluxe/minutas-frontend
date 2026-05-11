@@ -22,10 +22,10 @@ const AREA_MAP = {
 };
 
 const LINEA_MAP = {
-    CUADRA: 'Cuadra',
-    FRANCO_CUADRA: 'Franco Cuadra',
-    VESTIGIO: 'Vestigio',
-    GENERAL: 'General',
+    CALZADO: 'Calzado',
+    BOTA: 'Bota',
+    ROPA: 'Ropa',
+    ACCESORIOS: 'Accesorios',
 };
 
 const sanitizeUsername = (text) =>

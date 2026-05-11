@@ -133,32 +133,26 @@ export const UsersMobile = ({
             )}
 
             {hasPaginator && (
-                <div className="md:hidden">
-                    <GlassPaginationPill
-                        page={page}
-                        totalPages={totalPages}
-                        totalItems={totalParaPaginador}
-                        onPageChange={onPageChange}
-                        loading={loading}
-                        bottom="80px"
-                    />
-                </div>
+                <GlassPaginationPill
+                    page={page}
+                    totalPages={totalPages}
+                    totalItems={totalParaPaginador}
+                    onPageChange={onPageChange}
+                    loading={loading}
+                    bottom="80px"
+                />
             )}
 
-            <div className="md:hidden">
-                <GlassFab
-                    icon="add"
-                    onClick={onOpenCreate}
-                    variant="primary"
-                    size={56}
-                    bottom={fabAddBottom}
-                    right="20px"
-                />
-            </div>
+            <GlassFab
+                icon="add"
+                onClick={onOpenCreate}
+                variant="primary"
+                size={56}
+                bottom={fabAddBottom}
+                right="20px"
+            />
 
-            <div className="md:hidden">
-                <ScrollToTopButton bottom={fabAddBottom} left="20px" />
-            </div>
+            <ScrollToTopButton bottom={fabAddBottom} left="20px" />
 
             <UserFormModal
                 isOpen={Boolean(editTarget)}

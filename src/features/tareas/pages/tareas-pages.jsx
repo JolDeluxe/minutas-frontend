@@ -1,158 +1,104 @@
-// src/features/tickets/pages/tickets-bandeja.jsx
-import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useMediaQuery } from '@/hooks/useMediaQuery';
-import { useTickets } from '@/features/tickets/hooks/use-tickets';
-import { useTicketsUiStore } from '@/stores/tickets-ui-store';
+import { useState, useEffect, useCallback } from 'react';
+import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { notify } from '@/components/notification/adaptive-notify';
 
-import { TicketsBandejaDesktop } from '../views/tareas-desktop';
-import { TicketsBandejaMobile } from '../views/tareas-mobile';
-import { BandejaAssignModal } from '../components/bandeja/bandeja-assign-modal';
-import { BandejaDetailModal } from '../components/bandeja/bandeja-detail-modal';
+import { useTareas } from '../hooks/use-tareas';
+import { TareasDesktop } from '../views/tareas-desktop';
+import { TareasMobile } from '../views/tareas-mobile';
 
-const getSortPayload = (order) => {
-    switch (order) {
-        case 'prioridad-desc': return JSON.stringify([{ prioridad: 'desc' }]);
-        case 'prioridad-asc': return JSON.stringify([{ prioridad: 'asc' }]);
-        case 'vencimiento-asc': return JSON.stringify([{ fechaVencimiento: 'asc' }]);
-        case 'asc': return JSON.stringify([{ createdAt: 'asc' }]);
-        default: return JSON.stringify([{ createdAt: 'desc' }]);
-    }
-};
+import { TareaOrganizeModal } from '../components/tarea-organize-modal';
+// En un caso real también habría un TareaDetailModal o redirección
 
-export default function TicketsBandejaPage() {
-    const isDesktop = useMediaQuery('(min-width: 1024px)');
-    const setUnassignedCount = useTicketsUiStore((s) => s.setUnassignedCount);
+const LIMIT = 20;
 
-    const [sortOrder, setSortOrder] = useState('desc');
-    const [page, setPage] = useState(1);
+export default function TareasPages() {
+    const isDesktop = useIsDesktop();
 
     const {
-        tickets,
+        tareas,
         meta,
-        loading: isLoading,
-        fetchTickets,
-        updateTicket,
-    } = useTickets();
+        loading,
+        submitting,
+        fetchTareas,
+        updateTarea,
+        changeStatus,
+    } = useTareas();
 
-    // ── Congelar el payload para que useCallback/useEffect sean estables ──
-    const queryPayload = useMemo(() => ({
-        tipo: 'TICKET',
-        estado: 'PENDIENTE',
-        sort: getSortPayload(sortOrder),
-        page,
-        limit: 12,
-    }), [sortOrder, page]);
+    const [query, setQuery] = useState('');
+    const [page, setPage] = useState(1);
+    const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' });
+    
+    const [showOrganize, setShowOrganize] = useState(false);
+    const [tareaToOrganize, setTareaToOrganize] = useState(null);
 
-    const loadTickets = useCallback(() => {
-        fetchTickets(queryPayload);
-    }, [fetchTickets, queryPayload]);
-
-    useEffect(() => {
-        loadTickets();
-    }, [loadTickets]);
-
-    // ── Filtrar sin asignados y sincronizar el contador global ─────────────
-    const unassignedTickets = useMemo(() => {
-        if (!tickets || tickets.length === 0) return [];
-        return tickets.filter(t => !t.responsables || t.responsables.length === 0);
-    }, [tickets]);
-
-    useEffect(() => {
-        setUnassignedCount(unassignedTickets.length);
-    }, [unassignedTickets.length, setUnassignedCount]);
-
-    // ── Mapear meta a la forma {total, totalPages, page} que esperan las vistas ──
-    // El hook retorna `meta`, no `pagination`. Esta era la causa del bug.
-    const pagination = useMemo(() => ({
-        total: meta?.totalFiltrado ?? 0,
-        totalPages: meta?.totalPages ?? 1,
-        page,
-    }), [meta, page]);
-
-    const [selectedTicket, setSelectedTicket] = useState(null);
-    const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
-    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const handleOpenAssignModal = useCallback((ticket) => {
-        setSelectedTicket(ticket);
-        setIsAssignModalOpen(true);
-    }, []);
-
-    const handleOpenDetailModal = useCallback((ticket) => {
-        setSelectedTicket(ticket);
-        setIsDetailModalOpen(true);
-    }, []);
-
-    const handleConfirmAssign = useCallback(async (payload) => {
-        try {
-            setIsSubmitting(true);
-            await updateTicket(payload.ticketId, {
-                responsables: payload.responsables,
-                fechaVencimiento: payload.fechaVencimiento || payload.fechaProgramada,
-                prioridad: payload.prioridad,
-                estado: payload.estado,
-            });
-            notify.success('Ticket asignado correctamente');
-            loadTickets();
-            setIsAssignModalOpen(false);
-            setTimeout(() => setSelectedTicket(null), 200);
-        } catch (error) {
-            notify.error(error.response?.data?.message || 'Ocurrió un error al asignar');
-        } finally {
-            setIsSubmitting(false);
+    const loadTareas = useCallback(() => {
+        const params = { page, limit: LIMIT };
+        if (query) params.q = query;
+        if (sortConfig?.key) {
+            params.sort = JSON.stringify([{ [sortConfig.key]: sortConfig.direction }]);
         }
-    }, [updateTicket, loadTickets]);
+        return fetchTareas(params).catch(() => notify.error('Error al cargar tareas.'));
+    }, [page, query, sortConfig, fetchTareas]);
 
-    const handleSortChange = useCallback((val) => {
-        setSortOrder(val);
-        setPage(1);
-    }, []);
+    useEffect(() => { loadTareas(); }, [loadTareas]);
+
+    const handleSearchChange = useCallback((q) => { setQuery(q); setPage(1); }, []);
+    const handleSortChange = useCallback((key, direction) => { setSortConfig({ key, direction }); setPage(1); }, []);
+
+    const handleSaveOrganize = async (tareaId, payload, newStatus) => {
+        await updateTarea(tareaId, payload);
+        if (newStatus) {
+            await changeStatus(tareaId, { estado: newStatus });
+        }
+        notify.success('Entrada organizada correctamente.');
+        setShowOrganize(false);
+        setTareaToOrganize(null);
+        await loadTareas();
+    };
+
+    const handleViewDetail = (tarea) => {
+        // Redirigir o abrir un modal de detalle de tarea
+        notify.info("Detalle de la entrada: " + tarea.descripcion);
+    };
+
+    const handleEdit = (tarea) => {
+        // Redirigir o abrir modal de edición
+        notify.info("Editando entrada: " + tarea.descripcion);
+    };
+
+    const sharedProps = {
+        tareas,
+        loading,
+        page,
+        limit: LIMIT,
+        totalPages: meta.totalPages,
+        totalItems: meta.totalFiltrado,
+        sortConfig,
+        query,
+        onPageChange: setPage,
+        onSortChange: handleSortChange,
+        onSearchChange: handleSearchChange,
+        onViewDetail: handleViewDetail,
+        onEdit: handleEdit,
+        onOrganize: (t) => { setTareaToOrganize(t); setShowOrganize(true); },
+    };
 
     return (
-        <>
-            {isDesktop ? (
-                <TicketsBandejaDesktop
-                    tickets={unassignedTickets}
-                    isLoading={isLoading}
-                    onAssignTicket={handleOpenAssignModal}
-                    onViewDetails={handleOpenDetailModal}
-                    sortOrder={sortOrder}
-                    onSortChange={handleSortChange}
-                    pagination={pagination}
-                    onPageChange={setPage}
-                    onRefresh={loadTickets}
-                />
-            ) : (
-                <TicketsBandejaMobile
-                    tickets={unassignedTickets}
-                    isLoading={isLoading}
-                    onAssignTicket={handleOpenAssignModal}
-                    onViewDetails={handleOpenDetailModal}
-                    sortOrder={sortOrder}
-                    onSortChange={handleSortChange}
-                    pagination={pagination}
-                    onPageChange={setPage}
-                    onRefresh={loadTickets}
-                />
-            )}
+        <div className="max-w-full mx-auto w-full">
+            <div className="p-2 lg:p-4">
+                {isDesktop
+                    ? <TareasDesktop {...sharedProps} />
+                    : <TareasMobile  {...sharedProps} />
+                }
+            </div>
 
-            <BandejaAssignModal
-                isOpen={isAssignModalOpen}
-                onClose={() => setIsAssignModalOpen(false)}
-                ticket={selectedTicket}
-                onConfirm={handleConfirmAssign}
-                isSubmitting={isSubmitting}
+            <TareaOrganizeModal
+                isOpen={showOrganize}
+                onClose={() => { setShowOrganize(false); setTareaToOrganize(null); }}
+                tareaAOrganizar={tareaToOrganize}
+                submitting={submitting}
+                onSuccess={handleSaveOrganize}
             />
-
-            {selectedTicket && (
-                <BandejaDetailModal
-                    isOpen={isDetailModalOpen}
-                    onClose={() => setIsDetailModalOpen(false)}
-                    ticket={selectedTicket}
-                />
-            )}
-        </>
+        </div>
     );
 }

@@ -120,7 +120,7 @@
    OVERRIDE REACT-TOASTIFY (Iguala Desktop con Mobile)
 ───────────────────────────────────────────────────────────────────── */
 :root {
-  --toastify-color-success: var(--color-estado-resuelto);
+  --toastify-color-success: #059669; /* bg-emerald-600 */
   --toastify-color-error: var(--color-estado-rechazado);
   --toastify-color-warning: var(--color-estado-pendiente);
   --toastify-color-info: var(--color-estado-asignada);

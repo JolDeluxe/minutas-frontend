@@ -1,43 +1,43 @@
-// src/features/tickets/api/tickets-api.js
 import api from '@/lib/axios';
 
 // ── Listado y detalle ──────────────────────────────────────────────────────
 
-export const getTickets = (params = {}) =>
-    api.get('/api/tickets', { params });
+export const getTareas = async (params = {}) => {
+    return await api.get('/api/tareas', { params });
+};
 
-export const getTicketById = (id) =>
-    api.get(`/api/tickets/${id}`);
-
-// ── Métricas ───────────────────────────────────────────────────────────────
-
-export const getTicketMetrics = (params = {}) =>
-    api.get('/api/tickets/metrics', { params });
+export const getTareaById = async (id) => {
+    return await api.get(`/api/tareas/${id}`);
+};
 
 // ── Mutaciones ─────────────────────────────────────────────────────────────
 
-export const createTicket = (data) =>
-    api.post('/api/tickets', data, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-    });
+export const createTarea = async (data) => {
+    // data debe tener { tareas: [...] } según el backend
+    return await api.post('/api/tareas', data);
+};
 
-export const updateTicket = (id, data) =>
-    api.put(`/api/tickets/${id}`, data, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-    });
+export const updateTarea = async (id, data) => {
+    return await api.put(`/api/tareas/${id}`, data);
+};
 
-export const changeTicketStatus = (id, data) =>
-    api.patch(`/api/tickets/${id}/status`, data, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-    });
+export const changeTareaStatus = async (id, data) => {
+    // data debe ser { estado: 'NUEVO_ESTADO' }
+    return await api.patch(`/api/tareas/${id}/estado`, data);
+};
 
-// ── Personal asignable ─────────────────────────────────────────────────────
+export const deleteTarea = async (id) => {
+    return await api.delete(`/api/tareas/${id}`);
+};
 
-/**
- * Devuelve personal asignable ya calculado desde el cerebro del backend.
- * Evitamos procesamientos dobles y sobrecarga de red en el cliente.
- */
-export const getAsignables = async () => {
-    const res = await api.get('/api/usuarios/workload');
-    return Array.isArray(res?.data) ? res.data : [];
+// ── Notas ─────────────────────────────────────────────────────────────
+
+export const createNotaGeneral = async (data) => {
+    // data: { contenido, minutaId }
+    return await api.post('/api/tareas/notas/general', data);
+};
+
+export const createTareaNota = async (data) => {
+    // data: { contenido, tareaId }
+    return await api.post('/api/tareas/notas/tarea', data);
 };
