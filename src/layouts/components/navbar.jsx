@@ -93,8 +93,8 @@ export const Navbar = () => {
         {/* CENTER — logo */}
         <div className="flex items-center justify-center">
           <img
-            src="/img/01_Cuadra_Mantnimento.webp"
-            alt="Cuadra Mantenimiento"
+            src="/img/01_Cuadra_Diseño.webp"
+            alt="Cuadra — Diseño e Imagen"
             className="h-8 sm:h-10 w-auto object-contain"
           />
         </div>

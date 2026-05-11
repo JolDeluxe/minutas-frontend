@@ -1,47 +1,42 @@
 // src/features/usuarios/components/user-card.jsx
-import { Badge, Icon, Button } from '@/components/ui/z_index';
+import { Badge, Icon } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
 
 const ROL_LABEL = {
-    SUPER_ADMIN: 'Super Admin',
-    JEFE_MTTO: 'Jefe Mtto',
-    COORDINADOR_MTTO: 'Coordinador',
-    TECNICO: 'Técnico',
-    CLIENTE_INTERNO: 'Cliente',
+    GERENCIA: 'Gerencia',
+    JEFE: 'Jefatura',
+    COORDINADOR: 'Coordinador',
 };
 
 const ROL_COLOR = {
-    SUPER_ADMIN: 'text-marca-primario',
-    JEFE_MTTO: 'text-marca-primario',
-    COORDINADOR_MTTO: 'text-amber-700',
-    TECNICO: 'text-blue-700',
-    CLIENTE_INTERNO: 'text-rose-700',
+    GERENCIA: 'text-marca-primario',
+    JEFE: 'text-amber-700',
+    COORDINADOR: 'text-blue-700',
+};
+
+const AREA_LABEL = {
+    DISENO: 'Diseño',
+    ADMON: 'Administración',
+    CONTABILIDAD: 'Contabilidad',
+    DIRECCION: 'Dirección',
+    PRODUCCION: 'Producción',
+    CALIDAD: 'Calidad',
+    ALMACEN: 'Almacén',
+    EXTERNA: 'Externa',
 };
 
 const puedeEditar = (me, row) => {
-    if (me?.rol === 'SUPER_ADMIN') return true;
+    if (me?.rol === 'GERENCIA') return true;
     if (Number(me?.id) === Number(row.id)) return true;
-    if (me?.rol === 'JEFE_MTTO' && row.rol !== 'JEFE_MTTO' && row.rol !== 'SUPER_ADMIN') return true;
     return false;
 };
 
 const puedeCambiarEstado = (me, row) => {
     if (Number(me?.id) === Number(row.id)) return false;
-    if (me?.rol === 'SUPER_ADMIN') return true;
-    if (me?.rol === 'JEFE_MTTO' && row.rol !== 'JEFE_MTTO' && row.rol !== 'SUPER_ADMIN') return true;
+    if (me?.rol === 'GERENCIA') return true;
     return false;
 };
 
-/**
- * Tarjeta de usuario para vista móvil.
- *
- * Props:
- *   usuario       → objeto de usuario del backend
- *   currentUser   → usuario autenticado (para calcular permisos)
- *   onEdit        → (usuario) => void
- *   onToggleStatus→ (usuario) => void
- *   onViewDetail  → (usuario) => void
- */
 export const UserCard = ({ usuario, currentUser, onEdit, onToggleStatus, onViewDetail }) => {
     const canEdit = puedeEditar(currentUser, usuario);
     const canToggle = puedeCambiarEstado(currentUser, usuario);
@@ -90,19 +85,19 @@ export const UserCard = ({ usuario, currentUser, onEdit, onToggleStatus, onViewD
                     </span>
                 </p>
 
-                {usuario.departamento?.nombre && (
+                {usuario.area && (
                     <p className="flex items-center gap-2">
-                        <Icon name="business" size="xs" className="text-slate-300 shrink-0" />
+                        <Icon name="domain" size="xs" className="text-slate-300 shrink-0" />
                         <span className="text-xs text-slate-500 truncate">
-                            {usuario.departamento.nombre}
+                            {AREA_LABEL[usuario.area] || usuario.area}
                         </span>
                     </p>
                 )}
 
-                {usuario.cargo && (
+                {usuario.linea && (
                     <p className="flex items-center gap-2">
-                        <Icon name="work" size="xs" className="text-slate-300 shrink-0" />
-                        <span className="text-xs text-slate-500 truncate">{usuario.cargo}</span>
+                        <Icon name="sell" size="xs" className="text-slate-300 shrink-0" />
+                        <span className="text-xs text-slate-500 truncate">{usuario.linea}</span>
                     </p>
                 )}
             </div>
@@ -110,7 +105,6 @@ export const UserCard = ({ usuario, currentUser, onEdit, onToggleStatus, onViewD
             {/* ── Acciones ── */}
             <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
 
-                {/* Botón ver detalle (siempre visible) */}
                 <button
                     onClick={() => onViewDetail?.(usuario)}
                     className="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-500 bg-slate-50 border border-slate-200 active:scale-95 transition-all"

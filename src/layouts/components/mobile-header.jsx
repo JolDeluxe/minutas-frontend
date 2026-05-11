@@ -90,7 +90,7 @@ export const MobileHeader = ({ showBurger = false }) => {
 
         {/* CENTRO: Logo */}
         <div className="absolute left-1/2 transform -translate-x-1/2">
-          <img src="/img/01_Cuadra_Mantnimento.webp" alt="Cuadra Mantenimiento" className="h-8 w-auto object-contain drop-shadow-sm" />
+          <img src="/img/01_Cuadra_Diseño.webp" alt="Cuadra — Diseño e Imagen" className="h-8 w-auto object-contain drop-shadow-sm" />
         </div>
 
         {/* DERECHA: Campana + Menú Condicional */}

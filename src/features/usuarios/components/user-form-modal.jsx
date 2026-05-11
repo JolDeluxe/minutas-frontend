@@ -5,16 +5,27 @@ import { Input, Label, Select } from '@/components/form/z_index';
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Icon } from '@/components/ui/z_index';
 
 const ROL_MAP = {
-    TECNICO: 'Técnico',
-    COORDINADOR_MTTO: 'Coordinador',
-    JEFE_MTTO: 'Jefe Mtto',
-    CLIENTE_INTERNO: 'Cliente Interno',
-    SUPER_ADMIN: 'Super Admin',
+    COORDINADOR: 'Coordinador',
+    JEFE: 'Jefatura',
+    GERENCIA: 'Gerencia',
 };
 
-const ROL_TO_CARGO = {
-    TECNICO: ROL_MAP.TECNICO,
-    COORDINADOR_MTTO: ROL_MAP.COORDINADOR_MTTO,
+const AREA_MAP = {
+    DISENO: 'Diseño',
+    ADMON: 'Administración',
+    CONTABILIDAD: 'Contabilidad',
+    DIRECCION: 'Dirección',
+    PRODUCCION: 'Producción',
+    CALIDAD: 'Calidad',
+    ALMACEN: 'Almacén',
+    EXTERNA: 'Externa',
+};
+
+const LINEA_MAP = {
+    CUADRA: 'Cuadra',
+    FRANCO_CUADRA: 'Franco Cuadra',
+    VESTIGIO: 'Vestigio',
+    GENERAL: 'General',
 };
 
 const sanitizeUsername = (text) =>
@@ -32,12 +43,10 @@ export const UserFormModal = ({
     onSuccess,
     usuarioAEditar,
     currentUser,
-    departamentos,
     submitting,
 }) => {
     const esEdicion = Boolean(usuarioAEditar);
-    const esSuperAdmin = currentUser?.rol === 'SUPER_ADMIN';
-    const esJefe = currentUser?.rol === 'JEFE_MTTO';
+    const esGerencia = currentUser?.rol === 'GERENCIA';
     const fileInputRef = useRef(null);
 
     const [nombre, setNombre] = useState('');
@@ -45,9 +54,8 @@ export const UserFormModal = ({
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [rol, setRol] = useState('');
-    const [cargo, setCargo] = useState('');
-    const [telefono, setTelefono] = useState('');
-    const [departamentoId, setDepartamentoId] = useState('');
+    const [area, setArea] = useState('DISENO');
+    const [linea, setLinea] = useState('');
     const [imagenPreview, setImagenPreview] = useState(null);
     const [imagenFile, setImagenFile] = useState(undefined);
     const [usernameEdited, setUsernameEdited] = useState(false);
@@ -65,13 +73,8 @@ export const UserFormModal = ({
             setEmail(usuarioAEditar.email || '');
             setPassword('');
             setRol(usuarioAEditar.rol || '');
-            setCargo(
-                usuarioAEditar.cargo ||
-                ROL_TO_CARGO[usuarioAEditar.rol] ||
-                ''
-            );
-            setTelefono(usuarioAEditar.telefono || '');
-            setDepartamentoId(usuarioAEditar.departamentoId ? String(usuarioAEditar.departamentoId) : '');
+            setArea(usuarioAEditar.area || 'DISENO');
+            setLinea(usuarioAEditar.linea || '');
             setImagenPreview(usuarioAEditar.imagen || null);
             setImagenFile(undefined);
             setUsernameEdited(true);
@@ -81,51 +84,19 @@ export const UserFormModal = ({
             setEmail('');
             setPassword('');
             setRol('');
-            setCargo('');
-            setTelefono('');
+            setArea('DISENO');
+            setLinea('');
             setImagenPreview(null);
             setImagenFile(undefined);
             setUsernameEdited(false);
-            setDepartamentoId('');
         }
     }, [isOpen, esEdicion, usuarioAEditar]);
 
-    // ── [CAMBIO] Limpiar departamento si el rol cambia a uno no-CLIENTE_INTERNO
-    // en modo edición, para no enviar datos obsoletos al backend.
-    const handleRolChange = (e) => {
-    const nuevoRol = e.target.value;
-    setRol(nuevoRol);
-
-    setCargo(ROL_TO_CARGO[nuevoRol] || '');
-
-    if (esEdicion && nuevoRol !== 'CLIENTE_INTERNO') {
-        setDepartamentoId('');
-    }
-};
-
     const rolesDisponibles = [
-        { value: 'TECNICO', label: ROL_MAP.TECNICO, visible: true },
-        { value: 'COORDINADOR_MTTO', label: ROL_MAP.COORDINADOR_MTTO, visible: true },
-        { value: 'JEFE_MTTO', label: ROL_MAP.JEFE_MTTO, visible: esSuperAdmin || usuarioAEditar?.rol === 'JEFE_MTTO' },
-        { value: 'CLIENTE_INTERNO', label: ROL_MAP.CLIENTE_INTERNO, visible: esSuperAdmin || usuarioAEditar?.rol === 'CLIENTE_INTERNO' },
-        { value: 'SUPER_ADMIN', label: ROL_MAP.SUPER_ADMIN, visible: esSuperAdmin || usuarioAEditar?.rol === 'SUPER_ADMIN' },
+        { value: 'COORDINADOR', label: ROL_MAP.COORDINADOR, visible: true },
+        { value: 'JEFE', label: ROL_MAP.JEFE, visible: esGerencia || usuarioAEditar?.rol === 'JEFE' },
+        { value: 'GERENCIA', label: ROL_MAP.GERENCIA, visible: esGerencia || usuarioAEditar?.rol === 'GERENCIA' },
     ].filter((r) => r.visible);
-
-    const requiereEmail = rol && rol !== 'TECNICO';
-
-    // ── [CAMBIO] Dos conceptos separados:
-    // requiereDepartamento → la validación obliga a seleccionar uno
-    // departamentoEditable → el select está habilitado para interacción
-    //
-    // En creación (SUPER_ADMIN): el campo está habilitado para todos los roles
-    // que no sean SUPER_ADMIN, porque el admin asigna el depto en ese momento.
-    //
-    // En edición: el campo solo es editable si el rol es CLIENTE_INTERNO.
-    // Para roles de Mantenimiento el depto es fijo y el backend lo rechaza.
-    const requiereDepartamento = rol === 'CLIENTE_INTERNO';
-    const departamentoEditable = esEdicion
-        ? rol === 'CLIENTE_INTERNO'
-        : rol !== '' && rol !== 'SUPER_ADMIN';
 
     const handleNombreChange = (e) => {
         const val = e.target.value;
@@ -159,20 +130,7 @@ export const UserFormModal = ({
         if (!esEdicion && !password.trim()) e.password = 'Contraseña obligatoria (Mínimo 6 chars).';
         if (password && password.length < 6) e.password = 'Mínimo 6 caracteres.';
         if (!rol) e.rol = 'Selecciona un rol.';
-
-        if (requiereEmail) {
-            if (!email.trim()) {
-                e.email = 'El correo es obligatorio para este rol.';
-            } else if (!email.endsWith('@cuadra.com.mx')) {
-                e.email = 'Solo corporativos (@cuadra.com.mx).';
-            }
-        }
-
-        // ── [CAMBIO] Solo se valida departamento si el rol es CLIENTE_INTERNO
-        if (esSuperAdmin && requiereDepartamento && !departamentoId) {
-            e.departamento = 'Selecciona un departamento.';
-        }
-
+        if (!area) e.area = 'Selecciona un área.';
         return e;
     };
 
@@ -186,23 +144,12 @@ export const UserFormModal = ({
         const formData = new FormData();
         formData.append('nombre', nombre);
         formData.append('rol', rol);
+        formData.append('area', area);
 
         if (username) formData.append('username', username);
         if (email) formData.append('email', email);
         if (password) formData.append('password', password);
-        if (cargo) formData.append('cargo', cargo);
-        if (telefono) formData.append('telefono', telefono);
-
-        // ── [CAMBIO] departamentoId solo viaja al backend cuando:
-        // - JEFE crea usuario (usa su propio dept)
-        // - El rol es CLIENTE_INTERNO (único rol con dept variable)
-        // Para roles de Mantenimiento en creación por SUPER_ADMIN,
-        // el SUPER_ADMIN puede asignar el depto directamente.
-        if (!esEdicion && esJefe && currentUser?.departamentoId) {
-            formData.append('departamentoId', currentUser.departamentoId);
-        } else if (departamentoId && (requiereDepartamento || (!esEdicion && departamentoEditable))) {
-            formData.append('departamentoId', departamentoId);
-        }
+        if (linea) formData.append('linea', linea);
 
         if (imagenFile) {
             formData.append('imagen', imagenFile, imagenFile.name);
@@ -303,15 +250,14 @@ export const UserFormModal = ({
                         </div>
                     </div>
 
-                    {/* ── ROL Y DEPARTAMENTO ── */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* ── ROL, ÁREA Y LÍNEA ── */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="flex flex-col gap-1.5">
-                            <Label htmlFor="u-rol" error={!!fe.rol}>Nivel de Acceso (Rol) *</Label>
-                            {/* ── [CAMBIO] handleRolChange en lugar de setter directo */}
+                            <Label htmlFor="u-rol" error={!!fe.rol}>Rol *</Label>
                             <Select
                                 id="u-rol"
                                 value={rol}
-                                onChange={handleRolChange}
+                                onChange={(e) => setRol(e.target.value)}
                                 error={!!fe.rol}
                                 helperText={fe.rol}
                             >
@@ -322,86 +268,47 @@ export const UserFormModal = ({
                             </Select>
                         </div>
 
-                        {esSuperAdmin && (
-                            <div className="flex flex-col gap-1.5">
-                                {/* ── [CAMBIO] Label y hint dinámicos según departamentoEditable */}
-                                <Label
-                                    htmlFor="u-dept"
-                                    error={!!fe.departamento}
-                                    className={!departamentoEditable ? 'opacity-40' : ''}
-                                >
-                                    Departamento{requiereDepartamento ? ' *' : ''}
-                                    {esEdicion && !departamentoEditable && (
-                                        <span className="ml-1 text-[10px] font-normal text-slate-400 normal-case">
-                                            (fijo para este rol)
-                                        </span>
-                                    )}
-                                </Label>
-                                {/* ── [CAMBIO] disabled usa departamentoEditable */}
-                                <Select
-                                    id="u-dept"
-                                    value={departamentoId}
-                                    onChange={(e) => setDepartamentoId(e.target.value)}
-                                    disabled={!departamentoEditable}
-                                    error={!!fe.departamento}
-                                    helperText={fe.departamento}
-                                >
-                                    <option value="">Selecciona…</option>
-                                    {departamentos.map((d) => (
-                                        <option key={d.id} value={d.id}>{d.nombre}</option>
-                                    ))}
-                                </Select>
-                            </div>
-                        )}
+                        <div className="flex flex-col gap-1.5">
+                            <Label htmlFor="u-area" error={!!fe.area}>Área *</Label>
+                            <Select
+                                id="u-area"
+                                value={area}
+                                onChange={(e) => setArea(e.target.value)}
+                                error={!!fe.area}
+                                helperText={fe.area}
+                            >
+                                {Object.entries(AREA_MAP).map(([value, label]) => (
+                                    <option key={value} value={value}>{label}</option>
+                                ))}
+                            </Select>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                            <Label htmlFor="u-linea">Línea (Opcional)</Label>
+                            <Select
+                                id="u-linea"
+                                value={linea}
+                                onChange={(e) => setLinea(e.target.value)}
+                            >
+                                <option value="">Sin línea</option>
+                                {Object.entries(LINEA_MAP).map(([value, label]) => (
+                                    <option key={value} value={value}>{label}</option>
+                                ))}
+                            </Select>
+                        </div>
                     </div>
 
-                    {/* ── CONTACTO ── */}
+                    {/* ── CONTACTO Y SEGURIDAD ── */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="flex flex-col gap-1.5">
-                            <Label htmlFor="u-email" error={!!fe.email}>
-                                Correo Electrónico {requiereEmail && '*'}
-                            </Label>
+                            <Label htmlFor="u-email">Correo Electrónico</Label>
                             <Input
                                 id="u-email"
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value.toLowerCase().trim())}
-                                error={!!fe.email}
-                                helperText={fe.email || (requiereEmail ? 'Requerido para administradores' : 'Opcional para Técnicos')}
                                 placeholder="usuario@cuadra.com.mx"
                             />
-                        </div>
-                        <div className="flex flex-col gap-1.5">
-                            <Label htmlFor="u-telefono">Teléfono (Opcional)</Label>
-                            <Input
-                                id="u-telefono"
-                                type="tel"
-                                value={telefono}
-                                onChange={(e) => setTelefono(e.target.value.replace(/[^0-9]/g, ''))}
-                                placeholder="Ej. 4771234567"
-                                maxLength={10}
-                            />
-                        </div>
-                    </div>
-
-                    {/* ── SEGURIDAD Y CARGO ── */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="flex flex-col gap-1.5">
-                            <Label htmlFor="u-cargo">Puesto / Cargo (Opcional)</Label>
-
-                            <Select
-                                id="u-cargo"
-                                value={cargo}
-                                onChange={(e) => setCargo(e.target.value)}
-                            >
-                                <option value="">Selecciona un cargo</option>
-
-                                {Object.entries(ROL_TO_CARGO).map(([key, label]) => (
-                                    <option key={key} value={label}>
-                                        {label}
-                                    </option>
-                                ))}
-                            </Select>
                         </div>
                         <div className="flex flex-col gap-1.5">
                             <Label htmlFor="u-pass" error={!!fe.password}>

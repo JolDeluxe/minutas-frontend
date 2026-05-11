@@ -1,7 +1,7 @@
 {
-  "name": "Cuadra Mantenimiento",
-  "short_name": "Cuadra",
-  "description": "Sistema de Gestión de Mantenimiento Interno",
+  "name": "Cuadra Minutas — Diseño",
+  "short_name": "Minutas",
+  "description": "Sistema de Seguimiento Organizacional basado en Minutas — Diseño e Imagen",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f6f5f0",

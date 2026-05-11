@@ -7,9 +7,7 @@ import { UserDetailModal } from '../components/user-detail-modal';
 import { UserSummaryBar } from '../components/user-summary-bar';
 import { UserFilterBar } from '../components/user-filter-bar';
 import { UsersTable } from '../components/users-table';
-import { MobileUserFilterChips } from '../components/mobile-user-filter-chips';
 import { MobileUserCardsContent } from '../components/mobile-user-cards-content';
-import { hardReload } from '@/utils/hard-reload';
 import { cn } from '@/utils/cn';
 
 export const UsersMobile = ({
@@ -17,7 +15,6 @@ export const UsersMobile = ({
     loading,
     submitting,
     currentUser,
-    departamentos,
     page,
     limit,
     totalPages,
@@ -28,8 +25,6 @@ export const UsersMobile = ({
     query,
     sortConfig,
     mostrarInactivos,
-    filtroDepto,
-    isMttoFilter,
     onPageChange,
     onSortChange,
     onSave,
@@ -39,8 +34,6 @@ export const UsersMobile = ({
     onFilterChange,
     onSearchChange,
     onToggleInactivos,
-    onDeptoChange,
-    onToggleMttoFilter,
 }) => {
     const [viewMode, setViewMode] = useState('cards');
     const [editTarget, setEditTarget] = useState(null);
@@ -58,7 +51,6 @@ export const UsersMobile = ({
     };
 
     const fabAddBottom = hasPaginator ? '104px' : '84px';
-    const fabRefreshBottom = hasPaginator ? '164px' : '144px';
 
     return (
         <>
@@ -80,42 +72,31 @@ export const UsersMobile = ({
                     onFilterChange={onFilterChange}
                     loading={loading}
                     mostrarInactivos={mostrarInactivos}
-                    isMttoFilter={isMttoFilter}
-                    filtroDepto={filtroDepto}
-                    departamentos={departamentos}
                 />
             </div>
 
             <div className="mb-3 flex flex-col gap-2">
                 <UserFilterBar
-                    currentUser={currentUser}
                     query={query}
-                    departamentos={departamentos}
                     onSearchChange={onSearchChange}
                     mostrarInactivos={mostrarInactivos}
                     onToggleInactivos={onToggleInactivos}
-                    filtroDepto={filtroDepto}
-                    onDeptoChange={onDeptoChange}
-                    isMttoFilter={isMttoFilter}
-                    onToggleMttoFilter={onToggleMttoFilter}
                     mobileSearchOnly
                 />
 
-                <div className="flex items-center justify-end">
+                <div className="flex items-center justify-between">
+                    <button
+                        onClick={onToggleInactivos}
+                        className={cn(
+                            "flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all shrink-0",
+                            mostrarInactivos
+                                ? "bg-red-50 border-red-200 text-red-700 ring-2 ring-red-100"
+                                : "bg-white border-slate-200 text-slate-600"
+                        )}
+                    >
+                        {mostrarInactivos ? '✕ Inactivos' : 'Ver Inactivos'}
+                    </button>
                     <GlassViewToggle value={viewMode} onChange={setViewMode} />
-                </div>
-
-                <div className="flex items-center justify-start">
-                    <MobileUserFilterChips
-                        currentUser={currentUser}
-                        departamentos={departamentos}
-                        mostrarInactivos={mostrarInactivos}
-                        onToggleInactivos={onToggleInactivos}
-                        filtroDepto={filtroDepto}
-                        onDeptoChange={onDeptoChange}
-                        isMttoFilter={isMttoFilter}
-                        onToggleMttoFilter={onToggleMttoFilter}
-                    />
                 </div>
             </div>
 
@@ -136,7 +117,6 @@ export const UsersMobile = ({
                         loading={loading}
                         submitting={submitting}
                         currentUser={currentUser}
-                        departamentos={departamentos}
                         page={page}
                         limit={limit}
                         totalPages={totalPages}
@@ -167,15 +147,6 @@ export const UsersMobile = ({
 
             <div className="md:hidden">
                 <GlassFab
-                    icon="refresh"
-                    onClick={hardReload}
-                    isLoading={loading}
-                    variant="neutral"
-                    size={50}
-                    bottom={fabRefreshBottom}
-                    right="20px"
-                />
-                <GlassFab
                     icon="add"
                     onClick={onOpenCreate}
                     variant="primary"
@@ -194,7 +165,6 @@ export const UsersMobile = ({
                 onClose={() => setEditTarget(null)}
                 usuarioAEditar={editTarget}
                 currentUser={currentUser}
-                departamentos={departamentos}
                 submitting={submitting}
                 onSuccess={async (payload) => {
                     await onSave(editTarget.id, payload);

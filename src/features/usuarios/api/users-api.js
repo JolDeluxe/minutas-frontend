@@ -17,6 +17,3 @@ export const updateUser = (id, data) =>
 
 export const updateUserStatus = (id, estado) =>
   api.patch(`/api/usuarios/${id}`, { estado }).then((r) => r.data);
-
-export const getDepartamentos = () =>
-  api.get('/api/departamentos', { params: { limit: 1000 } });

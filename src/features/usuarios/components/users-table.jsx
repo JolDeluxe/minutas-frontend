@@ -1,7 +1,7 @@
 // src/features/usuarios/components/users-table.jsx
 import { useState } from "react";
-import { toast } from "react-toastify";
 import { Table, Skeleton } from "@/components/ui/z_index";
+import { notify } from "@/components/notification/adaptive-notify";
 import { UserStatusBadge } from "./user-status-badge";
 import { UserFormModal } from "./user-form-modal";
 import { UserStatusModal } from "./user-status-modal";
@@ -9,16 +9,32 @@ import { UserDetailModal } from "./user-detail-modal";
 import { UserActions } from "./user-actions";
 import { updateUserStatus } from "../api/users-api";
 
+const AREA_LABEL = {
+  DISENO: 'Diseño',
+  ADMON: 'Administración',
+  CONTABILIDAD: 'Contabilidad',
+  DIRECCION: 'Dirección',
+  PRODUCCION: 'Producción',
+  CALIDAD: 'Calidad',
+  ALMACEN: 'Almacén',
+  EXTERNA: 'Externa',
+};
+
+const ROL_LABEL = {
+  GERENCIA: 'Gerencia',
+  JEFE: 'Jefatura',
+  COORDINADOR: 'Coordinador',
+};
+
 export const UsersTable = ({
   usuarios,
   loading,
   onRecargar,
   currentUser,
-  departamentos,
   page,
   totalPages,
   totalItems,
-  limit = 20,
+  // limit = 20,
   onPageChange,
   sortConfig,
   onSortChange,
@@ -33,8 +49,6 @@ export const UsersTable = ({
   const [usuarioAConfirmar, setUsuarioAConfirmar] = useState(null);
   const [isConfirming, setIsConfirming] = useState(false);
 
-  const esSuperAdmin = currentUser?.rol === 'SUPER_ADMIN';
-
   const handleConfirmarEstatus = async () => {
     if (!usuarioAConfirmar) return;
     setIsConfirming(true);
@@ -44,17 +58,17 @@ export const UsersTable = ({
 
     try {
       await updateUserStatus(usuarioAConfirmar.id, nuevoEstatus);
-      toast.success("Estatus actualizado exitosamente.");
+      notify.success("Estatus actualizado exitosamente.");
       onRecargar?.();
       setOpenModalConfirm(false);
     } catch (error) {
-      toast.error(error.response?.data?.error || "Error al procesar la solicitud.");
+      notify.error(error.response?.data?.error || "Error al procesar la solicitud.");
     } finally {
       setIsConfirming(false);
     }
   };
 
-  const allColumns = [
+  const columns = [
     {
       header: "Perfil",
       accessorKey: "imagen",
@@ -83,7 +97,7 @@ export const UsersTable = ({
       header: "Usuario",
       accessorKey: "nombre",
       sortable: true,
-      headerClassName: "w-[32%] min-w-[180px]",
+      headerClassName: "w-[28%] min-w-[180px]",
       cell: (row) => {
         if (row.isSkeleton) return (
           <div className="flex flex-col gap-2 py-1">
@@ -100,15 +114,15 @@ export const UsersTable = ({
       },
     },
     {
-      header: "Departamento",
-      accessorKey: "departamento",
+      header: "Área",
+      accessorKey: "area",
       sortable: true,
-      headerClassName: "w-[20%] min-w-[150px] whitespace-nowrap",
+      headerClassName: "w-[18%] min-w-[130px] whitespace-nowrap",
       cell: (row) => {
         if (row.isSkeleton) return <Skeleton className="h-4 w-full max-w-30" />;
         return (
           <span className="text-sm font-medium text-slate-700">
-            {row.departamento?.nombre || <span className="text-slate-400 italic">Sin departamento</span>}
+            {AREA_LABEL[row.area] || row.area || <span className="text-slate-400 italic">Sin área</span>}
           </span>
         );
       },
@@ -123,7 +137,7 @@ export const UsersTable = ({
         if (row.isSkeleton) return <Skeleton className="h-6 w-24 mx-auto rounded-md" />;
         return (
           <span className="text-xs font-bold px-2 py-1 bg-slate-100 text-slate-700 rounded-md border border-slate-200 uppercase tracking-wide whitespace-nowrap">
-            {row.rol.replace(/_/g, ' ')}
+            {ROL_LABEL[row.rol] || row.rol}
           </span>
         );
       },
@@ -164,11 +178,6 @@ export const UsersTable = ({
     },
   ];
 
-  const columns = allColumns.filter((col) => {
-    if (col.header === "Departamento" && !esSuperAdmin) return false;
-    return true;
-  });
-
   const tableData = loading
     ? Array.from({ length: 10 }).map((_, i) => ({ isSkeleton: true, id: `skel-${i}` }))
     : usuarios;
@@ -199,7 +208,6 @@ export const UsersTable = ({
         onClose={() => { setOpenModalEditar(false); setUsuarioSeleccionado(null); }}
         usuarioAEditar={usuarioSeleccionado}
         currentUser={currentUser}
-        departamentos={departamentos}
         submitting={submitting}
         onSuccess={async (payload) => {
           if (usuarioSeleccionado) {

@@ -8,11 +8,6 @@ import { UsersDesktop } from '../views/users-desktop';
 import { UsersMobile } from '../views/users-mobile';
 import { UserFormModal } from '../components/user-form-modal';
 
-/**
- * LIMIT controla cuántas filas pide el frontend al backend por página.
- * Ajustar aquí para cambiar el tamaño de página sin tocar nada más.
- * Con 19 usuarios en la BD, usa un valor ≤ 18 para ver la paginación en acción.
- */
 const LIMIT = 10;
 
 const UsersPage = () => {
@@ -22,33 +17,26 @@ const UsersPage = () => {
 
     const {
         users,
-        departamentos,
         meta,
         loading,
         submitting,
         fetchUsers,
-        fetchDepartamentos,
         createUser,
         updateUser,
         toggleStatus,
     } = useUsers();
 
-    // ── Estado de la página ──────────────────────────────────────────────────
+    // ── Estado de la página ──
     const [query, setQuery] = useState('');
     const [filtroRol, setFiltroRol] = useState('TODOS');
     const [page, setPage] = useState(1);
     const [sortConfig, setSortConfig] = useState(null);
     const [showCreate, setShowCreate] = useState(false);
     const [mostrarInactivos, setMostrarInactivos] = useState(false);
-    const [filtroDepto, setFiltroDepto] = useState('');
-    const [isMttoFilter, setIsMttoFilter] = useState(false);
 
-    // ── Carga de datos ───────────────────────────────────────────────────────
+    // ── Carga de datos ──
     const loadUsers = useCallback(() => {
-        const params = {
-            page,
-            limit: LIMIT,
-        };
+        const params = { page, limit: LIMIT };
 
         if (query) params.q = query;
         if (filtroRol !== 'TODOS') params.rol = filtroRol;
@@ -56,65 +44,26 @@ const UsersPage = () => {
         if (sortConfig?.key) {
             params.sort = JSON.stringify([{ [sortConfig.key]: sortConfig.direction }]);
         }
-        if (isMttoFilter) {
-            params.mtto = true;
-        } else if (filtroDepto) {
-            params.departamentoId = Number(filtroDepto);
-        }
 
-        // Se retorna la promesa para poder usar await en las mutaciones
         return fetchUsers(params).catch(() => notify.error('Error al cargar usuarios.'));
-    }, [page, query, filtroRol, sortConfig, mostrarInactivos, isMttoFilter, filtroDepto, fetchUsers]);
+    }, [page, query, filtroRol, sortConfig, mostrarInactivos, fetchUsers]);
 
     useEffect(() => { loadUsers(); }, [loadUsers]);
-    useEffect(() => { fetchDepartamentos(); }, [fetchDepartamentos]);
 
-    // ── Handlers de filtros (siempre resetean a página 1) ───────────────────
-    const handleSearchChange = useCallback((q) => {
-        setQuery(q);
-        setPage(1);
-    }, []);
+    // ── Handlers ──
+    const handleSearchChange = useCallback((q) => { setQuery(q); setPage(1); }, []);
+    const handleFilterChange = useCallback((rol) => { setFiltroRol(rol); setPage(1); }, []);
+    const handleSortChange = useCallback((key, direction) => { setSortConfig({ key, direction }); setPage(1); }, []);
+    const handleToggleInactivos = useCallback(() => { setMostrarInactivos(prev => !prev); setFiltroRol('TODOS'); setPage(1); }, []);
 
-    const handleFilterChange = useCallback((rol) => {
-        setFiltroRol(rol);
-        setPage(1);
-    }, []);
-
-    const handleSortChange = useCallback((key, direction) => {
-        setSortConfig({ key, direction });
-        setPage(1);
-    }, []);
-
-    const handleToggleMttoFilter = useCallback(() => {
-        setIsMttoFilter(prev => !prev);
-        setFiltroRol('TODOS');
-        setPage(1);
-    }, []);
-
-    const handleDeptoChange = useCallback((id) => {
-        setFiltroDepto(id);
-        setFiltroRol('TODOS');
-        setPage(1);
-    }, []);
-
-    const handleToggleInactivos = useCallback(() => {
-        setMostrarInactivos(prev => !prev);
-        setFiltroRol('TODOS');
-        setPage(1);
-    }, []);
-
-    // ── Handlers de acciones ────────────────────────────────────────────────
     const handleCreate = async (payload) => {
         try {
             await createUser(payload);
             notify.success('Usuario creado correctamente.');
             setShowCreate(false);
-            await loadUsers(); // Encadenamiento estricto
+            await loadUsers();
         } catch (err) {
-            const msg =
-                err?.response?.data?.error ||
-                err?.response?.data?.message ||
-                'Error al crear el usuario.';
+            const msg = err?.response?.data?.error || err?.response?.data?.message || 'Error al crear el usuario.';
             notify.error(msg);
             throw err;
         }
@@ -124,12 +73,9 @@ const UsersPage = () => {
         try {
             await updateUser(id, payload);
             notify.success('Usuario actualizado correctamente.');
-            await loadUsers(); // Encadenamiento estricto
+            await loadUsers();
         } catch (err) {
-            const msg =
-                err?.response?.data?.error ||
-                err?.response?.data?.message ||
-                'Error al actualizar el usuario.';
+            const msg = err?.response?.data?.error || err?.response?.data?.message || 'Error al actualizar el usuario.';
             notify.error(msg);
             throw err;
         }
@@ -140,31 +86,18 @@ const UsersPage = () => {
             await toggleStatus(id, estatus);
             const label = estatus === 'ACTIVO' ? 'reactivado' : 'desactivado';
             notify.success(`Usuario ${label} correctamente.`);
-            await loadUsers(); // Encadenamiento estricto
+            await loadUsers();
         } catch {
             notify.error('Error al cambiar el estatus del usuario.');
         }
     };
 
-    // ── Props compartidos para ambas vistas ──────────────────────────────────
-    /**
-     * Separación explícita de los dos totales:
-     *
-     * totalParaSummary → meta.totalAbsoluto
-     * Cuántos usuarios existen en total (sin filtro de rol).
-     * Lo usan las pastillas de la SummaryBar.
-     *
-     * totalParaPaginador → meta.totalFiltrado
-     * Cuántos usuarios coinciden con la búsqueda/filtros actuales.
-     * Es el número que determina cuántas páginas hay.
-     * = pagination.total del backend.
-     */
+    // ── Props compartidos ──
     const sharedViewProps = {
         users,
         loading,
         submitting,
         currentUser,
-        departamentos,
         page,
         limit: LIMIT,
         totalPages: meta.totalPages,
@@ -175,10 +108,6 @@ const UsersPage = () => {
         query,
         filtroRol,
         mostrarInactivos,
-        filtroDepto,
-        isMttoFilter,
-        onToggleMttoFilter: handleToggleMttoFilter,
-        onDeptoChange: handleDeptoChange,
         onToggleInactivos: handleToggleInactivos,
         onPageChange: setPage,
         onSortChange: handleSortChange,
@@ -204,7 +133,6 @@ const UsersPage = () => {
                 onClose={() => setShowCreate(false)}
                 usuarioAEditar={null}
                 currentUser={currentUser}
-                departamentos={departamentos}
                 submitting={submitting}
                 onSuccess={handleCreate}
             />

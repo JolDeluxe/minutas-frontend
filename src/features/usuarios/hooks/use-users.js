@@ -5,12 +5,10 @@ import {
   createUser,
   updateUser,
   updateUserStatus,
-  getDepartamentos,
 } from '../api/users-api';
 
 export const useUsers = () => {
   const [users, setUsers]       = useState([]);
-  const [departamentos, setDepartamentos] = useState([]);
   const [loading, setLoading]   = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -21,12 +19,11 @@ export const useUsers = () => {
     resumenRoles:   {},
   });
 
-  // Motor Offline: Referencia de memoria para el contexto
   const lastFetchParams = useRef({});
 
   const fetchUsers = useCallback(async (params = {}) => {
     setLoading(true);
-    lastFetchParams.current = params; // Guardamos filtro activo
+    lastFetchParams.current = params;
 
     try {
       const response = await getUsers(params);
@@ -57,16 +54,6 @@ export const useUsers = () => {
     }
   }, []);
 
-  const fetchDepartamentos = useCallback(async () => {
-    try {
-      const response = await getDepartamentos();
-      const list = Array.isArray(response) ? response : Array.isArray(response?.data) ? response.data : [];
-      setDepartamentos(list);
-    } catch {
-      // silencioso
-    }
-  }, []);
-
   const handleCreate = useCallback(async (data) => {
     setSubmitting(true);
     try { return await createUser(data); }
@@ -85,30 +72,24 @@ export const useUsers = () => {
     finally { setSubmitting(false); }
   }, []);
 
-  // ── Motor Reactivo Offline ─────────────────────────────────────────────
+  // Reactivo: re-fetch al sincronizar
   useEffect(() => {
     const handleSyncComplete = () => {
-      console.log('📡 [Hook Users] Sincronización finalizada. Refrescando datos...');
       if (Object.keys(lastFetchParams.current).length > 0 || users.length > 0) {
         fetchUsers(lastFetchParams.current);
-      }
-      if (departamentos.length > 0) {
-         fetchDepartamentos();
       }
     };
 
     window.addEventListener('cuadra-sync-complete', handleSyncComplete);
     return () => window.removeEventListener('cuadra-sync-complete', handleSyncComplete);
-  }, [fetchUsers, fetchDepartamentos, users.length, departamentos.length]);
+  }, [fetchUsers, users.length]);
 
   return {
     users,
-    departamentos,
     meta,
     loading,
     submitting,
     fetchUsers,
-    fetchDepartamentos,
     createUser:   handleCreate,
     updateUser:   handleUpdate,
     toggleStatus: handleToggleStatus,
