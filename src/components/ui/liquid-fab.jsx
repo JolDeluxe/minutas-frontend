@@ -4,28 +4,14 @@ import { cn } from '@/utils/cn';
 
 /**
  * Botón de acción flotante con efecto Liquid Glass estilo iOS.
- *
- * Props:
- *   icon            → nombre del ícono Material Symbols
- *   onClick         → handler de click
- *   disabled        → boolean
- *   isLoading       → boolean (muestra spinner girando)
- *   bottom          → rem units como string "5" = bottom-5 (default)
- *   right           → rem units como string "5" = right-5 (default)
- *   left            → rem units como string (opcional, sobreescribe right)
- *   size            → tamaño del botón en px (default 56)
- *   displacementScale → intensidad del efecto (default 60)
- *   blurAmount      → nivel de frost (default 0.07)
- *   saturation      → saturación (default 140)
- *   zIndex          → z-index del contenedor (default 50)
- *   className       → clases extra para el wrapper
+ * Optimizado para renderizado circular perfecto.
  */
 export const LiquidFab = ({
     icon,
     onClick,
     disabled = false,
     isLoading = false,
-    bottom = '5',   // rem * 4 → bottom-5 = 20px... pasamos como px
+    bottom,
     right,
     left,
     size = 56,
@@ -34,6 +20,7 @@ export const LiquidFab = ({
     saturation = 140,
     zIndex = 50,
     className,
+    style: customStyle = {},
 }) => {
     // Convertimos los rem-based shorthand a píxeles reales para inline style
     const positionStyle = {
@@ -45,7 +32,7 @@ export const LiquidFab = ({
     };
 
     return (
-        <div style={positionStyle} className={cn('touch-none', className)}>
+        <div style={positionStyle} className={cn('touch-none flex items-center justify-center', className)}>
             <LiquidGlass
                 cornerRadius={size}
                 padding="0"
@@ -62,15 +49,19 @@ export const LiquidFab = ({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    borderRadius: '50%', // Forzamos círculo
+                    overflow: 'hidden',   // Evitamos que el efecto se salga
                     opacity: disabled ? 0.45 : 1,
-                    transition: 'opacity 0.2s',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2)',
+                    ...customStyle
                 }}
             >
                 <Icon
                     name={isLoading ? 'progress_activity' : icon}
                     size="md"
                     className={cn(
-                        'text-white drop-shadow-sm select-none',
+                        'text-white drop-shadow-md select-none relative z-10',
                         isLoading && 'animate-spin'
                     )}
                 />
@@ -79,17 +70,6 @@ export const LiquidFab = ({
     );
 };
 
-/**
- * Versión pill para la paginación flotante con Liquid Glass.
- * Renderiza un contenedor horizontal con controles de paginación.
- *
- * Props:
- *   page          → página activa
- *   totalPages    → total de páginas
- *   totalItems    → registros totales (opcional, para label)
- *   onPageChange  → (newPage) => void
- *   loading       → boolean
- */
 export const LiquidPaginationPill = ({
     page,
     totalPages,
@@ -118,6 +98,7 @@ export const LiquidPaginationPill = ({
                 aberrationIntensity={1}
                 elasticity={0.12}
                 overLight={false}
+                style={{ borderRadius: 100, overflow: 'hidden' }}
             >
                 <div className="flex items-center gap-3">
                     <button

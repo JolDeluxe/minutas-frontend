@@ -22,7 +22,7 @@ export const useMobileSnackbarStore = create((set) => ({
 export const notify = {
   success: (msg) => {
     if (window.innerWidth >= 1024) toast.success(msg);
-    else useMobileSnackbarStore.getState().trigger(msg, 'success');
+    else useMobileSnackbarStore.getState().trigger(msg, 'color-estado-resuelto');
   },
   error: (msg) => {
     if (window.innerWidth >= 1024) toast.error(msg);

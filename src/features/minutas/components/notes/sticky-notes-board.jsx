@@ -4,12 +4,8 @@ import { StickyNote } from './sticky-note';
 import { cn } from '@/utils/cn';
 
 /**
- * StickyNotesBoard — Panel de notas rápidas tipo post-it.
- *
- * Desktop: Panel lateral derecho fijo.
- * Mobile: Drawer deslizable desde abajo.
- *
- * Backed by NotaGeneral model (contenido, minutaId, creadoPorId).
+ * StickyNotesBoard — Panel de notas rápidas tipo post-it responsivo.
+ * Refactorizado para comportarse como Aside en Desktop y Overlay/Grid en Mobile.
  */
 export const StickyNotesBoard = ({
   notas = [],
@@ -44,86 +40,106 @@ export const StickyNotesBoard = ({
   };
 
   const content = (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2.5 border-b border-slate-100 shrink-0">
-        <div className="flex items-center gap-1.5">
-          <Icon name="sticky_note_2" size="16px" className="text-amber-500" />
-          <span className="text-xs font-bold text-slate-700">Notas de Junta</span>
-          <span className="text-[10px] text-slate-400 font-mono">({notas.length})</span>
+    <div className="flex flex-col h-full bg-[#fefce8]/40 backdrop-blur-xl">
+      {/* Header Visual */}
+      <div className="flex items-center justify-between px-6 py-6 border-b border-amber-100/50 shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
+            <Icon name="sticky_note_2" size="24px" className="text-white" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-base font-black text-amber-900 tracking-tight">Notas de Junta</span>
+            <span className="text-[10px] text-amber-600/60 font-black uppercase tracking-[0.2em]">{notas.length} registradas</span>
+          </div>
         </div>
         {onClose && (
-          <button onClick={onClose} className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-slate-100">
-            <Icon name="close" size="16px" className="text-slate-400" />
+          <button 
+            onClick={onClose} 
+            className="w-12 h-12 rounded-2xl flex items-center justify-center hover:bg-amber-100/50 transition-colors active:scale-90"
+          >
+            <Icon name="close" size="24px" className="text-amber-400" />
           </button>
         )}
       </div>
 
-      {/* New note input */}
-      <div className="px-3 py-2 border-b border-slate-100 shrink-0">
-        <div className="flex gap-1.5">
-          <textarea
-            value={newContent}
-            onChange={(e) => setNewContent(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Agregar nota..."
-            rows={1}
-            className="flex-1 resize-none rounded-lg px-2.5 py-1.5 text-[12px] bg-amber-50/50 border border-amber-200/40 focus:outline-none focus:ring-1 focus:ring-amber-300/50 placeholder:text-slate-400"
-            style={{ fontSize: '16px', minHeight: 32 }}
-          />
+      {/* Input de Nueva Nota: Más limpio */}
+      <div className="px-6 py-6 border-b border-amber-100/20 bg-amber-50/30 shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1 group">
+            <textarea
+              value={newContent}
+              onChange={(e) => setNewContent(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Nueva nota..."
+              rows={1}
+              className="w-full resize-none rounded-2xl px-6 py-4 text-[15px] bg-white border border-amber-100 focus:border-amber-400 focus:ring-4 focus:ring-amber-400/5 transition-all placeholder:text-amber-200 shadow-sm font-medium"
+              style={{ minHeight: 56 }}
+            />
+          </div>
           <button
             onClick={handleCreate}
             disabled={!newContent.trim() || creating}
             className={cn(
-              'w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all active:scale-90',
-              newContent.trim() ? 'bg-amber-500 text-white' : 'bg-slate-200 text-slate-400'
+              'w-14 h-14 rounded-2xl flex items-center justify-center transition-all active:scale-90 shadow-xl',
+              newContent.trim() 
+                ? 'bg-emerald-500 text-white shadow-emerald-500/20' 
+                : 'bg-slate-100 text-slate-300 shadow-none opacity-50'
             )}
           >
-            <Icon name={creating ? 'progress_activity' : 'add'} size="16px" className={cn(creating && 'animate-spin')} />
+            {creating ? (
+              <Icon name="progress_activity" size="20px" className="animate-spin" />
+            ) : (
+              <Icon name="add" size="28px" />
+            )}
           </button>
         </div>
       </div>
 
-      {/* Notes list */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+      {/* Listado de Notas (Post-its) */}
+      <div className={cn(
+        "flex-1 overflow-y-auto p-6 scrollbar-thin",
+        isDrawer ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" : "flex flex-col gap-6"
+      )}>
         {notas.length === 0 ? (
-          <div className="text-center py-6">
-            <Icon name="note_add" size="32px" className="text-slate-200 mx-auto mb-2" />
-            <p className="text-[11px] text-slate-400">Sin notas aún</p>
+          <div className="flex flex-col items-center justify-center py-20 text-center opacity-20 grayscale">
+            <Icon name="post_add" size="64px" className="text-amber-300 mb-4" />
+            <p className="text-[10px] font-black text-amber-800 uppercase tracking-widest">El tablero está listo</p>
           </div>
         ) : (
-          notas.map((nota, i) => (
-            <StickyNote
-              key={nota.id}
-              nota={nota}
-              colorIndex={i}
-              onUpdate={onUpdateNota}
-              onDelete={onDeleteNota}
-            />
+          [...notas].reverse().map((nota, i) => (
+            <div key={nota.id} className="animate-in fade-in slide-in-from-right-4 duration-300">
+              <StickyNote
+                nota={nota}
+                onUpdate={onUpdateNota}
+                onDelete={onDeleteNota}
+              />
+            </div>
           ))
         )}
       </div>
     </div>
   );
 
-  // Drawer mode (mobile)
+  // Renderizado como Drawer (Mobile)
   if (isDrawer) {
     return (
-      <div className="fixed inset-0 z-100 flex items-end justify-center">
-        <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
-        <div className="relative bg-white w-full rounded-t-2xl shadow-2xl max-h-[70vh] flex flex-col">
-          <div className="flex justify-center pt-3 pb-1">
-            <div className="w-10 h-1 rounded-full bg-slate-300" />
+      <div className="fixed inset-0 z-[120] flex items-end justify-center animate-in fade-in duration-300">
+        <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
+        <div className="relative bg-white w-full rounded-t-[2.5rem] shadow-2xl max-h-[85vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-500">
+          <div className="flex justify-center pt-3 pb-1 shrink-0 bg-white">
+            <div className="w-12 h-1.5 rounded-full bg-slate-200" />
           </div>
-          {content}
+          <div className="flex-1 overflow-hidden">
+            {content}
+          </div>
         </div>
       </div>
     );
   }
 
-  // Desktop panel
+  // Renderizado como Aside (Desktop)
   return (
-    <aside className="h-full bg-white/60 backdrop-blur-sm border-l border-slate-200/60">
+    <aside className="h-full flex flex-col overflow-hidden">
       {content}
     </aside>
   );

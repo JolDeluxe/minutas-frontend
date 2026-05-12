@@ -26,5 +26,5 @@ export function useIsDesktop() {
   // Tailwind lg = 1024px.
   // true = Escritorio (lg, xl, 2xl)
   // false = Móvil/Tablet (xs, sm, md)
-  return useMediaQuery('(min-width: 1024px)');
+  return useMediaQuery('(min-width: 1200px)');
 }

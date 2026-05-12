@@ -2,11 +2,10 @@ import { useMemo } from 'react';
 import { Icon } from '@/components/ui/z_index';
 import { getTemporalGroup } from '../../constants';
 import { EntryCard } from './entry-card';
-// import { cn } from '@/utils/cn';
 
 /**
- * EntryFeed — Feed cronológico con agrupación temporal.
- * Agrupa entradas por HOY / AYER / ESTA SEMANA / SEMANA PASADA.
+ * EntryFeed — Feed de alto rendimiento con grid adaptativo.
+ * Inicia en una columna y expande a dos cuando el espacio en escritorio lo permite.
  */
 export const EntryFeed = ({
   entries = [],
@@ -14,26 +13,29 @@ export const EntryFeed = ({
   meetingMode = false,
   filterActive = 'TODAS',
   onOrganize,
+  onRemoveDraft,
+  onUpdateDraft,
 }) => {
   const grouped = useMemo(() => {
     const groups = [];
     let currentGroup = null;
+    
     for (const entry of entries) {
       const label = getTemporalGroup(entry.createdAt);
       if (label !== currentGroup) {
-        groups.push({ type: 'divider', label, key: `d-${label}-${entry.id}` });
+        groups.push({ type: 'divider', label, key: `div-${label}-${entry.id || entry.tempId}` });
         currentGroup = label;
       }
-      groups.push({ type: 'entry', data: entry, key: `e-${entry.id}` });
+      groups.push({ type: 'entry', data: entry, key: `ent-${entry.id || entry.tempId}` });
     }
     return groups;
   }, [entries]);
 
-  if (loading) {
+  if (loading && entries.length === 0) {
     return (
-      <div className="space-y-2 px-1">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="bg-white rounded-lg h-16 animate-pulse border border-slate-100" />
+          <div key={i} className="h-40 w-full bg-slate-100 rounded-3xl animate-pulse border border-slate-200" />
         ))}
       </div>
     );
@@ -41,39 +43,45 @@ export const EntryFeed = ({
 
   if (grouped.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <Icon name="edit_note" className="text-slate-200 mb-3" size="48px" />
-        <p className="text-sm text-slate-500 font-medium">
+      <div className="flex flex-col items-center justify-center py-32 text-center animate-in fade-in duration-700">
+        <div className="w-24 h-24 bg-white rounded-4xl shadow-xl shadow-slate-200/50 flex items-center justify-center mb-6 border border-slate-100">
+          <Icon name="auto_stories" className="text-slate-200" size="48px" />
+        </div>
+        <h3 className="text-xl font-black text-slate-900">Historial vacío</h3>
+        <p className="text-sm text-slate-400 max-w-xs mt-2 font-medium">
           {filterActive !== 'TODAS'
-            ? 'No hay entradas con este filtro.'
-            : 'Sin entradas aún.'}
+            ? `No hay registros con el filtro "${filterActive}".`
+            : 'Captura la primera entrada para comenzar el seguimiento.'}
         </p>
-        <p className="text-xs text-slate-400 mt-1">Usa el composer para capturar la primera.</p>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-4 gap-y-3 items-start px-1">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4 md:gap-6 pb-40 px-1">
       {grouped.map((item) => {
         if (item.type === 'divider') {
           return (
-            <div key={item.key} className="col-span-full flex items-center gap-2 py-2 mt-1 first:mt-0 px-1">
-              <div className="h-px bg-slate-200/80 flex-1" />
-              <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 shrink-0">
+            <div key={item.key} className="col-span-full flex items-center gap-6 py-6 first:pt-0">
+              <div className="h-px bg-slate-200 flex-1" />
+              <span className="text-[11px] font-black uppercase tracking-[0.25em] text-slate-400 bg-transparent px-4">
                 {item.label}
               </span>
-              <div className="h-px bg-slate-200/80 flex-1" />
+              <div className="h-px bg-slate-200 flex-1" />
             </div>
           );
         }
+        
         return (
-          <EntryCard
-            key={item.key}
-            entry={item.data}
-            onOrganize={onOrganize}
-            meetingMode={meetingMode}
-          />
+          <div key={item.key} className="animate-in fade-in slide-in-from-bottom-6 duration-500 ease-out">
+            <EntryCard
+              entry={item.data}
+              onOrganize={onOrganize}
+              meetingMode={meetingMode}
+              onRemove={onRemoveDraft}
+              onUpdate={onUpdateDraft}
+            />
+          </div>
         );
       })}
     </div>
