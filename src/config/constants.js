@@ -28,16 +28,11 @@ export const ESTADO_TAREA_COLORS = {
 // Clasificación (Naturaleza del tema)
 export const CLASIFICACION_COLORS = {
   IDEA:          'bg-violet-100 text-violet-700 border-violet-300',
-  OBSERVACION:   'bg-sky-100 text-sky-700 border-sky-300',
-  ACUERDO:       'bg-teal-100 text-teal-700 border-teal-300',
   INVESTIGACION: 'bg-indigo-100 text-indigo-700 border-indigo-300',
   CORRECCION:    'bg-orange-100 text-orange-700 border-orange-300',
   ANALISIS:      'bg-cyan-100 text-cyan-700 border-cyan-300',
   MUESTRA:       'bg-pink-100 text-pink-700 border-pink-300',
-  SEGUIMIENTO:   'bg-blue-100 text-blue-700 border-blue-300',
-  SOLICITUD:     'bg-amber-100 text-amber-700 border-amber-300',
   POLITICAS:     'bg-gray-100 text-gray-700 border-gray-300',
-  TAREA:         'bg-emerald-100 text-emerald-700 border-emerald-300',
   OTROS:         'bg-stone-100 text-stone-600 border-stone-300',
 };
 
@@ -52,15 +47,10 @@ export const PRIORIDAD_COLORS = {
 // Labels legibles
 export const CLASIFICACION_LABELS = {
   IDEA: 'Idea',
-  OBSERVACION: 'Observación',
-  ACUERDO: 'Acuerdo',
   INVESTIGACION: 'Investigación',
   CORRECCION: 'Corrección',
   ANALISIS: 'Análisis',
   MUESTRA: 'Muestra',
-  SEGUIMIENTO: 'Seguimiento',
-  SOLICITUD: 'Solicitud',
   POLITICAS: 'Políticas',
-  TAREA: 'Tarea',
   OTROS: 'Otros',
 };

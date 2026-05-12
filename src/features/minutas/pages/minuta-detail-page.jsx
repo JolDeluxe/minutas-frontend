@@ -1,236 +1,355 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getMinutaById } from '../api/minutas-api';
 import { useTareas } from '@/features/tareas/hooks/use-tareas';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { notify } from '@/components/notification/adaptive-notify';
 
-import { Icon, Button, GlassViewToggle, GlassFab, ScrollToTopButton, Skeleton } from '@/components/ui/z_index';
+import { Icon, Skeleton } from '@/components/ui/z_index';
+import { glassBase, GlassSheen } from '@/components/ui/liquid-glass-mobile';
 
-import { TareasTable } from '@/features/tareas/components/tareas-table';
-import { TareaCard } from '@/features/tareas/components/tarea-card';
-import { TareaFormModal } from '@/features/tareas/components/tarea-form-modal';
-import { TareaOrganizeModal } from '@/features/tareas/components/tarea-organize-modal';
+import { MinutaContextPanel } from '../components/context/minuta-context-panel';
+import { TimelineFilters } from '../components/timeline/timeline-filters';
+import { EntryFeed } from '../components/timeline/entry-feed';
+import { QuickComposer } from '../components/composer/quick-composer';
+import { OrganizeDrawer } from '../components/organization/organize-drawer';
+import { StickyNotesBoard } from '../components/notes/sticky-notes-board';
+import { cn } from '@/utils/cn';
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const LINEA_MAP = { CALZADO: 'Calzado', BOTA: 'Bota', ROPA: 'Ropa', ACCESORIOS: 'Accesorios' };
+
+// ─── Page Component ───────────────────────────────────────────────────────────
 
 export default function MinutaDetailPage() {
-    const { id } = useParams();
-    const navigate = useNavigate();
-    const isDesktop = useIsDesktop();
-    const [viewMode, setViewMode] = useState('table');
-    
-    // Minuta Data
-    const [minuta, setMinuta] = useState(null);
-    const [loadingMinuta, setLoadingMinuta] = useState(true);
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const isDesktop = useIsDesktop();
 
-    // Tareas Data
-    const {
-        tareas,
-        meta,
-        loading: loadingTareas,
-        submitting,
-        fetchTareas,
-        createTarea,
-        updateTarea,
-        changeStatus,
-    } = useTareas();
-    
-    const [page, setPage] = useState(1);
-    const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' });
-    
-    // Modals
-    const [showForm, setShowForm] = useState(false);
-    const [tareaToEdit, setTareaToEdit] = useState(null);
-    const [showOrganize, setShowOrganize] = useState(false);
-    const [tareaToOrganize, setTareaToOrganize] = useState(null);
+  // ── Minuta ──
+  const [minuta, setMinuta] = useState(null);
+  const [loadingMinuta, setLoadingMinuta] = useState(true);
 
-    // Initial Load Minuta
-    useEffect(() => {
-        const loadMinuta = async () => {
-            setLoadingMinuta(true);
-            try {
-                const res = await getMinutaById(id);
-                setMinuta(res.data);
-            } catch {
-                notify.error("No se pudo cargar la minuta");
-                navigate('/minutas');
-            } finally {
-                setLoadingMinuta(false);
-            }
-        };
-        loadMinuta();
-    }, [id, navigate]);
+  // ── Tareas ──
+  const {
+    tareas, loading: loadingTareas, submitting,
+    fetchTareas, createTarea, updateTarea, createNotaGeneral,
+  } = useTareas();
 
-    // Load Tareas
-    const loadTareas = useCallback(() => {
-        if (!id) return;
-        const params = {
-            minutaId: id,
-            page,
-            limit: 20,
-        };
-        if (sortConfig?.key) {
-            params.sort = JSON.stringify([{ [sortConfig.key]: sortConfig.direction }]);
-        }
-        fetchTareas(params);
-    }, [id, page, sortConfig, fetchTareas]);
+  // ── UI State ──
+  const [meetingMode, setMeetingMode] = useState(false);
+  const [filterClasif, setFilterClasif] = useState('TODAS');
+  const [showNotes, setShowNotes] = useState(true);
 
-    useEffect(() => {
-        loadTareas();
-    }, [loadTareas]);
+  // ── Organize ──
+  const [organizeEntry, setOrganizeEntry] = useState(null);
 
-    const handleSortChange = useCallback((key, direction) => { setSortConfig({ key, direction }); setPage(1); }, []);
-
-    // Handlers
-    const handleSaveTarea = async (payload) => {
-        if (tareaToEdit) {
-            // Not supported in batch form easily, just for demo
-            notify.info("Edición no implementada completamente en este demo");
-        } else {
-            await createTarea(payload);
-            notify.success('Entradas agregadas a la minuta.');
-        }
-        setShowForm(false);
-        setTareaToEdit(null);
-        await loadTareas();
+  // ── Load Minuta ──
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      setLoadingMinuta(true);
+      try {
+        const res = await getMinutaById(id);
+        if (!cancelled) setMinuta(res.data);
+      } catch {
+        notify.error('No se pudo cargar la minuta');
+        navigate('/minutas');
+      } finally {
+        if (!cancelled) setLoadingMinuta(false);
+      }
     };
+    load();
+    return () => { cancelled = true; };
+  }, [id, navigate]);
 
-    const handleSaveOrganize = async (tareaId, payload, newStatus) => {
-        await updateTarea(tareaId, payload);
-        if (newStatus) {
-            await changeStatus(tareaId, { estado: newStatus });
-        }
-        notify.success('Entrada organizada correctamente.');
-        setShowOrganize(false);
-        setTareaToOrganize(null);
-        await loadTareas();
+  // ── Load Tareas ──
+  const loadTareas = useCallback(() => {
+    if (!id) return;
+    const params = { 
+      minutaId: id, 
+      page: 1, 
+      limit: 100,
+      sort: JSON.stringify([{ createdAt: 'asc' }])
     };
+    fetchTareas(params);
+  }, [id, fetchTareas]);
 
-    if (loadingMinuta) {
-        return (
-            <div className="max-w-7xl mx-auto w-full p-4 space-y-4">
-                <Skeleton className="h-10 w-1/3" />
-                <Skeleton className="h-32 w-full rounded-2xl" />
-            </div>
-        );
+  useEffect(() => { loadTareas(); }, [loadTareas]);
+
+  // ── Filtrado ──
+  const filteredTareas = useMemo(() => {
+    if (filterClasif === 'TODAS') return tareas;
+    if (filterClasif === 'SIN_CLASIFICAR') return tareas.filter(t => !t.clasificacion);
+    if (filterClasif === 'SIN_ORGANIZAR') return tareas.filter(t => !t.formalizada);
+    return tareas.filter(t => t.clasificacion === filterClasif);
+  }, [tareas, filterClasif]);
+
+  // ── Resumen ──
+  const resumen = useMemo(() => {
+    const conceptual = {};
+    for (const t of tareas) {
+      const e = t.estadoConceptual || 'CAPTURADO';
+      conceptual[e] = (conceptual[e] || 0) + 1;
     }
+    return { totalEntradas: tareas.length, conceptual };
+  }, [tareas]);
 
-    if (!minuta) return null;
+  // ── Handlers ──
+  const handleCapture = async (payload) => {
+    await createTarea(payload);
+    notify.success('Entrada capturada');
+    loadTareas();
+  };
 
-    const hasContent = !loadingTareas && tareas.length > 0;
+  const handleSaveOrganize = async (entryId, payload) => {
+    try {
+      await updateTarea(entryId, payload);
+      notify.success('Entrada organizada');
+      setOrganizeEntry(null);
+      loadTareas();
+    } catch {
+      notify.error('Error al organizar');
+    }
+  };
 
+  const handleCreateNota = async (data) => {
+    await createNotaGeneral(data);
+    notify.success('Nota agregada');
+    // Refetch minuta to get updated notasGenerales
+    try {
+      const res = await getMinutaById(id);
+      setMinuta(res.data);
+    } catch (_e) {
+      console.warn('Error refreshing minuta:', _e);
+    }
+  };
+
+
+
+  // ── Loading ──
+  if (loadingMinuta) {
     return (
-        <div className="max-w-7xl mx-auto w-full p-2 lg:p-4 pb-24">
-            
-            {/* Header / Breadcrumb */}
-            <div className="flex items-center gap-3 mb-6">
-                <button 
-                    onClick={() => navigate('/minutas')}
-                    className="p-2 rounded-md hover:bg-slate-200 transition-colors text-slate-600"
-                >
-                    <Icon name="arrow_back" size="24px" />
-                </button>
-                <div>
-                    <h1 className="text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight fuente-titulos">
-                        {minuta.titulo}
-                    </h1>
-                    <p className="text-sm text-slate-500 font-mono mt-1">
-                        Minuta #{minuta.id} • Línea: {minuta.lineaDefault}
-                    </p>
-                </div>
-            </div>
-
-            {/* Toolbar */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-4 gap-4">
-                <div>
-                    <h2 className="text-lg font-bold text-slate-800">Entradas / Tareas</h2>
-                    <p className="text-sm text-slate-500">{meta.totalFiltrado} registradas</p>
-                </div>
-
-                <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-                    <GlassViewToggle value={viewMode} onChange={setViewMode} />
-                    
-                    <Button
-                        variant="guardar"
-                        icon="add_task"
-                        onClick={() => { setTareaToEdit(null); setShowForm(true); }}
-                        className={!isDesktop ? 'hidden' : ''}
-                    >
-                        Agregar Entrada
-                    </Button>
-                </div>
-            </div>
-
-            {/* Content */}
-            {viewMode === 'cards' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {loadingTareas ? (
-                        Array.from({ length: 6 }).map((_, i) => (
-                            <div key={i} className="bg-white border border-slate-200 rounded-2xl h-40 animate-pulse" />
-                        ))
-                    ) : !hasContent ? (
-                        <div className="col-span-full bg-white rounded-2xl p-10 text-center border border-slate-200 shadow-sm">
-                            <Icon name="check_circle_outline" className="text-slate-200 text-6xl mb-3" />
-                            <p className="text-slate-500 text-base font-medium">No hay entradas en esta minuta aún.</p>
-                        </div>
-                    ) : (
-                        tareas.map(tarea => (
-                            <TareaCard 
-                                key={tarea.id} 
-                                tarea={tarea} 
-                                onOrganize={(t) => { setTareaToOrganize(t); setShowOrganize(true); }}
-                                onEdit={(t) => { setTareaToEdit(t); setShowForm(true); }} 
-                            />
-                        ))
-                    )}
-                </div>
-            ) : (
-                <TareasTable
-                    tareas={tareas}
-                    loading={loadingTareas}
-                    page={page}
-                    limit={20}
-                    totalPages={meta.totalPages}
-                    totalItems={meta.totalFiltrado}
-                    sortConfig={sortConfig}
-                    onPageChange={setPage}
-                    onSortChange={handleSortChange}
-                    onOrganize={(t) => { setTareaToOrganize(t); setShowOrganize(true); }}
-                    onEdit={(t) => { setTareaToEdit(t); setShowForm(true); }}
-                />
-            )}
-
-            {!isDesktop && (
-                <>
-                    <GlassFab
-                        icon="add_task"
-                        onClick={() => { setTareaToEdit(null); setShowForm(true); }}
-                        variant="primary"
-                        size={56}
-                        bottom="84px"
-                        right="20px"
-                    />
-                    <ScrollToTopButton bottom="84px" left="20px" />
-                </>
-            )}
-
-            {/* Modals */}
-            <TareaFormModal
-                isOpen={showForm}
-                onClose={() => { setShowForm(false); setTareaToEdit(null); }}
-                minutaId={minuta.id}
-                lineaDefault={minuta.lineaDefault}
-                submitting={submitting}
-                onSuccess={handleSaveTarea}
-            />
-
-            <TareaOrganizeModal
-                isOpen={showOrganize}
-                onClose={() => { setShowOrganize(false); setTareaToOrganize(null); }}
-                tareaAOrganizar={tareaToOrganize}
-                submitting={submitting}
-                onSuccess={handleSaveOrganize}
-            />
-
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <Icon name="progress_activity" className="text-marca-primario animate-spin" size="32px" />
+          <p className="text-sm text-slate-500 mt-2">Cargando minuta...</p>
         </div>
+      </div>
     );
+  }
+
+  if (!minuta) return null;
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // ── DESKTOP LAYOUT — 3-column workspace ──────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────────
+  if (isDesktop) {
+    return (
+      <div className="h-full w-full flex overflow-hidden">
+        {/* Center: Context Panel + Timeline + Composer */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          {/* Top Context Panel */}
+          {!meetingMode && <MinutaContextPanel minuta={minuta} resumen={resumen} />}
+
+          {/* Toolbar compact */}
+          <div className="flex items-center gap-2 px-4 py-2 bg-white/50 backdrop-blur-sm border-b border-slate-200/50 shrink-0">
+            {/* Meeting mode */}
+            <button
+              onClick={() => setMeetingMode(m => !m)}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all active:scale-95',
+                meetingMode
+                  ? 'bg-marca-primario text-white shadow-md'
+                  : 'bg-white text-slate-600 border border-slate-200'
+              )}
+            >
+              <Icon name={meetingMode ? 'mic' : 'mic_none'} size="14px" />
+              {meetingMode ? 'En Junta' : 'Modo Reunión'}
+            </button>
+
+            {/* Filters */}
+            {!meetingMode && (
+              <div className="flex-1 overflow-hidden">
+                <TimelineFilters active={filterClasif} onChange={setFilterClasif} />
+              </div>
+            )}
+
+            {/* Notes toggle */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                onClick={() => setShowNotes(n => !n)}
+                className={cn(
+                  'flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all active:scale-95',
+                  showNotes
+                    ? 'bg-amber-500 text-white shadow-sm'
+                    : 'bg-white text-slate-600 border border-slate-200'
+                )}
+              >
+                <Icon name="sticky_note_2" size="14px" />
+                <span className="hidden xl:inline">Notas</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Composer Desktop */}
+          <QuickComposer
+            minutaId={minuta.id}
+            lineaDefault={minuta.lineaDefault}
+            onSubmit={handleCapture}
+            submitting={submitting}
+            isDesktop
+          />
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4 relative bg-slate-50/50">
+            <div className="w-full flex gap-4 lg:gap-6 items-start h-full">
+              {/* Entradas */}
+              <div className="flex-1 min-w-0 w-full">
+                <EntryFeed
+                  entries={filteredTareas}
+                  loading={loadingTareas}
+                  meetingMode={meetingMode}
+                  filterActive={filterClasif}
+                  onOrganize={(entry) => setOrganizeEntry(entry)}
+                />
+              </div>
+
+              {/* Panel de Notas */}
+              {showNotes && !meetingMode && (
+                <div className="w-72 shrink-0 sticky top-0 h-full max-h-full">
+                  <StickyNotesBoard
+                    notas={minuta.notasGenerales || []}
+                    minutaId={minuta.id}
+                    onCreateNota={handleCreateNota}
+                    onClose={() => setShowNotes(false)}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Organize Drawer */}
+        {organizeEntry && (
+          <OrganizeDrawer
+            key={organizeEntry.id}
+            isOpen={Boolean(organizeEntry)}
+            onClose={() => setOrganizeEntry(null)}
+            entry={organizeEntry}
+            onSave={handleSaveOrganize}
+            submitting={submitting}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // ── MOBILE LAYOUT — Stacked with fixed bottom composer ───────────────────────
+  // ─────────────────────────────────────────────────────────────────────────────
+  return (
+    <div className="flex flex-col min-h-full -m-4 relative">
+      {/* Mobile Header */}
+      <header
+        className="sticky top-0 z-40 px-3 py-2.5"
+        style={{ ...glassBase('surface'), borderRadius: 0, borderTop: 'none', borderLeft: 'none', borderRight: 'none' }}
+      >
+        <GlassSheen />
+        <div className="relative z-10 flex items-center gap-2">
+          <button
+            onClick={() => navigate('/minutas')}
+            className="p-1 -ml-1 rounded-lg hover:bg-black/5 active:scale-90 transition-all shrink-0"
+          >
+            <Icon name="arrow_back" size="20px" className="text-marca-primario" />
+          </button>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-base font-extrabold text-slate-900 fuente-titulos truncate leading-tight">
+              {minuta.titulo}
+            </h1>
+            <div className="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5">
+              <span className={cn(
+                'flex items-center gap-1 px-1.5 py-0.5 rounded-full font-bold',
+                minuta.estado === 'ACTIVA' ? 'bg-emerald-500/10 text-emerald-700' : 'bg-slate-500/10 text-slate-600'
+              )}>
+                <span className={cn('w-1.5 h-1.5 rounded-full', minuta.estado === 'ACTIVA' ? 'bg-emerald-500' : 'bg-slate-400')} />
+                {minuta.estado === 'ACTIVA' ? 'Activa' : 'Cerrada'}
+              </span>
+              <span className="font-mono">·</span>
+              <span>{tareas.length} entradas</span>
+              <span className="font-mono">·</span>
+              <span>{LINEA_MAP[minuta.lineaDefault] || minuta.lineaDefault}</span>
+            </div>
+          </div>
+
+          {/* Mobile actions */}
+          <button
+            onClick={() => setMeetingMode(m => !m)}
+            className={cn(
+              'p-2 rounded-xl transition-all active:scale-90',
+              meetingMode ? 'bg-marca-primario text-white' : 'bg-white/60 text-slate-500 border border-slate-200/80'
+            )}
+          >
+            <Icon name={meetingMode ? 'mic' : 'mic_none'} size="18px" />
+          </button>
+          <button
+            onClick={() => setShowNotes(true)}
+            className="p-2 rounded-xl bg-white/60 text-slate-500 border border-slate-200/80 active:scale-90 transition-all"
+          >
+            <Icon name="sticky_note_2" size="18px" />
+          </button>
+        </div>
+      </header>
+
+      {/* Filters (hidden in meeting mode) */}
+      {!meetingMode && (
+        <div className="sticky top-[52px] z-30 bg-cuadra-arena/80 backdrop-blur-sm px-2">
+          <TimelineFilters active={filterClasif} onChange={setFilterClasif} />
+        </div>
+      )}
+
+      {/* Feed */}
+      <main className={cn('flex-1 px-2', meetingMode ? 'pt-1' : 'pt-2')}>
+        <EntryFeed
+          entries={filteredTareas}
+          loading={loadingTareas}
+          meetingMode={meetingMode}
+          filterActive={filterClasif}
+          onOrganize={(entry) => setOrganizeEntry(entry)}
+        />
+      </main>
+
+      {/* Composer — fixed bottom */}
+      <QuickComposer
+        minutaId={minuta.id}
+        lineaDefault={minuta.lineaDefault}
+        onSubmit={handleCapture}
+        submitting={submitting}
+      />
+
+      {/* Notes Drawer (mobile) */}
+      {showNotes && (
+        <StickyNotesBoard
+          isDrawer
+          notas={minuta.notasGenerales || []}
+          minutaId={minuta.id}
+          onCreateNota={handleCreateNota}
+          onClose={() => setShowNotes(false)}
+        />
+      )}
+
+      {/* Organize Drawer */}
+      {organizeEntry && (
+        <OrganizeDrawer
+          key={organizeEntry.id}
+          isOpen={Boolean(organizeEntry)}
+          onClose={() => setOrganizeEntry(null)}
+          entry={organizeEntry}
+          onSave={handleSaveOrganize}
+          submitting={submitting}
+        />
+      )}
+    </div>
+  );
 }
