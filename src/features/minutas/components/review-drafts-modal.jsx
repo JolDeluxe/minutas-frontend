@@ -1,5 +1,6 @@
 import { Modal, ModalHeader, ModalBody, ModalFooter, Button, Icon } from '@/components/ui/z_index';
 import { CLASIFICACION_MAP, AREA_MAP, LINEA_MAP } from '../constants';
+import { LineIconSelector } from './icons/line-icons';
 
 /**
  * ReviewDraftsModal — Revisión final antes del guardado masivo.
@@ -50,9 +51,12 @@ export const ReviewDraftsModal = ({
                     <span className="px-2 py-0.5 rounded-lg bg-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-tighter">
                       {AREA_MAP[entry.area] || entry.area}
                     </span>
-                    <span className="px-2 py-0.5 rounded-lg bg-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-tighter">
-                      {LINEA_MAP[entry.linea] || 'N/A'}
-                    </span>
+                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-50 border border-slate-100">
+                      <LineIconSelector type={entry.linea} size={14} className="text-slate-900" />
+                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-tighter">
+                        {LINEA_MAP[entry.linea]?.label || entry.linea}
+                      </span>
+                    </div>
                     {entry.clasificacion && (
                       <span 
                         className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-tighter"

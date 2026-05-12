@@ -1,5 +1,7 @@
 import { Badge, Icon } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
+import { LINEA_MAP } from '../constants';
+import { LineIconSelector } from './icons/line-icons';
 
 const ESTADO_LABEL = {
     ACTIVA: 'Activa',
@@ -9,13 +11,6 @@ const ESTADO_LABEL = {
 const ESTADO_COLORS = {
     ACTIVA: 'bg-green-100 text-green-800 border-green-200',
     CERRADA: 'bg-slate-100 text-slate-600 border-slate-200',
-};
-
-const LINEA_MAP = {
-    CALZADO: 'Calzado',
-    BOTA: 'Bota',
-    ROPA: 'Ropa',
-    ACCESORIOS: 'Accesorios',
 };
 
 export const MinutaCard = ({ minuta, onViewDetail, onEdit }) => {
@@ -43,9 +38,9 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit }) => {
 
             <div className="space-y-1.5 mb-4 ml-1">
                 <p className="flex items-center gap-2">
-                    <Icon name="sell" size="xs" className="text-slate-300 shrink-0" />
+                    <LineIconSelector type={minuta.lineaDefault} size={14} className="text-slate-900 shrink-0" />
                     <span className="text-xs text-slate-600 font-medium">
-                        {LINEA_MAP[minuta.lineaDefault] || minuta.lineaDefault}
+                        {LINEA_MAP[minuta.lineaDefault]?.label || minuta.lineaDefault}
                     </span>
                 </p>
                 <p className="flex items-center gap-2">

@@ -1,5 +1,7 @@
 import { Table, Skeleton, Icon } from "@/components/ui/z_index";
 import { cn } from "@/utils/cn";
+import { LINEA_MAP } from '../constants';
+import { LineIconSelector } from './icons/line-icons';
 
 const ESTADO_LABEL = {
     ACTIVA: 'Activa',
@@ -9,13 +11,6 @@ const ESTADO_LABEL = {
 const ESTADO_COLORS = {
     ACTIVA: 'bg-green-100 text-green-800 border-green-200',
     CERRADA: 'bg-slate-100 text-slate-600 border-slate-200',
-};
-
-const LINEA_MAP = {
-    CALZADO: 'Calzado',
-    BOTA: 'Bota',
-    ROPA: 'Ropa',
-    ACCESORIOS: 'Accesorios',
 };
 
 export const MinutasTable = ({
@@ -59,7 +54,14 @@ export const MinutasTable = ({
             headerClassName: "w-[15%] min-w-[120px]",
             cell: (row) => {
                 if (row.isSkeleton) return <Skeleton className="h-4 w-20" />;
-                return <span className="text-sm font-medium text-slate-700">{LINEA_MAP[row.lineaDefault] || row.lineaDefault}</span>;
+                return (
+                    <div className="flex items-center gap-2">
+                        <LineIconSelector type={row.lineaDefault} size={16} className="text-slate-900" />
+                        <span className="text-sm font-medium text-slate-700">
+                            {LINEA_MAP[row.lineaDefault]?.label || row.lineaDefault}
+                        </span>
+                    </div>
+                );
             },
         },
         {

@@ -34,10 +34,10 @@ export const AREA_MAP = {
 };
 
 export const LINEA_MAP = {
-  CALZADO:    'Calzado',
-  BOTA:       'Bota',
-  ROPA:       'Ropa',
-  ACCESORIOS: 'Accesorios',
+  CALZADO:    { label: 'Calzado',    icon: 'shoe',         color: '#64748b' }, 
+  BOTA:       { label: 'Bota',       icon: 'boot',         color: '#475569' }, 
+  ROPA:       { label: 'Ropa',       icon: 'checkroom',    color: '#0f172a' },
+  ACCESORIOS: { label: 'Accesorios', icon: 'shopping_bag', color: '#94a3b8' },
 };
 
 export const PRIORIDAD_MAP = {

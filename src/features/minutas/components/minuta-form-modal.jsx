@@ -1,13 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Input, Label, Select } from '@/components/form/z_index';
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Icon } from '@/components/ui/z_index';
-
-const LINEA_MAP = {
-    CALZADO: 'Calzado',
-    BOTA: 'Bota',
-    ROPA: 'Ropa',
-    ACCESORIOS: 'Accesorios',
-};
+import { LINEA_MAP } from '../constants';
 
 export const MinutaFormModal = ({
     isOpen,
@@ -106,8 +100,8 @@ export const MinutaFormModal = ({
                             error={!!fe.lineaDefault}
                             helperText={fe.lineaDefault || "Esta línea se asignará por defecto a las nuevas entradas."}
                         >
-                            {Object.entries(LINEA_MAP).map(([value, label]) => (
-                                <option key={value} value={value}>{label}</option>
+                            {Object.entries(LINEA_MAP).map(([value, config]) => (
+                                <option key={value} value={value}>{config.label}</option>
                             ))}
                         </Select>
                     </div>
