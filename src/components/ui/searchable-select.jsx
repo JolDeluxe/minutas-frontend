@@ -52,7 +52,7 @@ export const SearchableSelect = ({
                 disabled={disabled}
                 onClick={() => !disabled && setIsOpen(!isOpen)}
                 className={cn(
-                    "flex items-center justify-between gap-2 px-3 py-1.5 text-sm font-medium rounded-xl border transition-all h-9.5",
+                    "flex items-center justify-between gap-2 px-2.5 py-1 text-xs font-medium rounded-xl border transition-all h-8",
                     disabled ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "cursor-pointer",
                     value && !disabled
                         ? "bg-marca-primario/[0.03] border-marca-primario/30 text-marca-primario shadow-sm"

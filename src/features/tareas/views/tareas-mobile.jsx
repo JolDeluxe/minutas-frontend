@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { GlassPaginationPill, GlassViewToggle, ScrollToTopButton, Icon } from '@/components/ui/z_index';
-import { TareasTable } from '../components/tareas-table';
-import { TareaCard } from '../components/tarea-card';
-import { cn } from '@/utils/cn';
+import { TareasTable } from '../components/historico/tareas-table';
+import { TareaCard } from '../components/common/tarea-card';
+import { TareaSummaryBar } from '../components/common/tarea-summary-bar';
+import { TareaFilterBar } from '../components/common/tarea-filter-bar';
 
 export const TareasMobile = ({
     tareas,
@@ -31,7 +32,7 @@ export const TareasMobile = ({
                     Todas las Entradas
                 </h1>
                 <p className="text-sm text-slate-500 mt-1 font-medium leading-snug">
-                    Vista global de tareas.
+                    Vista global de entradas.
                 </p>
             </div>
 

@@ -12,18 +12,41 @@ export const MODULES_CONFIG = [
     allowedRoles: ['GERENCIA', 'JEFE', 'COORDINADOR'],
   },
   {
-    id: 'entradas',
-    name: 'Entradas Organizacionales',
-    icon: 'fact_check',
-    route: '/entradas',
-    allowedRoles: ['GERENCIA', 'JEFE', 'COORDINADOR'],
-  },
-  {
     id: 'usuarios',
     name: 'Usuarios',
     icon: 'group',
     route: '/usuarios',
     allowedRoles: ['GERENCIA'],
+  },
+  {
+    id: 'tareas',
+    name: 'Tareas Operativas',
+    icon: 'task',
+    route: '/tareas',
+    allowedRoles: ['GERENCIA', 'JEFE', 'COORDINADOR'],
+    children: [
+      {
+        id: 'mis-tareas',
+        name: 'Mis Tareas',
+        icon: 'person_check',
+        route: '/tareas/mis-tareas',
+        allowedRoles: ['GERENCIA', 'JEFE', 'COORDINADOR'],
+      },
+      {
+        id: 'mis-seguimientos',
+        name: 'Mis Seguimientos',
+        icon: 'update',
+        route: '/tareas/mis-seguimientos',
+        allowedRoles: ['GERENCIA', 'JEFE', 'COORDINADOR'],
+      },
+      {
+        id: 'historico-tareas',
+        name: 'Histórico Global',
+        icon: 'history',
+        route: '/tareas/historico',
+        allowedRoles: ['GERENCIA', 'JEFE', 'COORDINADOR'],
+      }
+    ]
   },
   {
     id: 'notificaciones',

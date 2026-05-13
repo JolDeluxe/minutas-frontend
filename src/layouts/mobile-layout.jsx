@@ -20,21 +20,20 @@ export const MobileLayout = () => {
   const showSidebar = userModules.length > 5;
 
   return (
-    <div className="w-full flex flex-col bg-cuadra-arena min-h-screen">
+    <div className="h-screen w-full flex flex-col bg-cuadra-arena overflow-hidden relative">
       
-      {/* HEADER: Z-40 para estar debajo de modales pero sobre el contenido */}
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200 shadow-sm">
+      {/* HEADER: No es sticky, fluye con el contenido o se queda arriba según scroll del main */}
+      <div className="shrink-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200 shadow-sm relative">
         <MobileHeader showBurger={showSidebar} />
-      </header>
-
-      <div className="flex-1 relative flex flex-col min-h-0">
-        {showSidebar && <MobileSidebar userModules={userModules} />}
-        
-        {/* MAIN: El contenido (MinutaDetailPage) se renderiza aquí */}
-        <main className="flex-1">
-          <Outlet />
-        </main>
       </div>
+
+      {/* SIDEBAR MÓVIL (Condicional: > 5 módulos) */}
+      {showSidebar && <MobileSidebar userModules={userModules} />}
+      
+      {/* MAIN: Area de scroll principal */}
+      <main className="flex-1 overflow-y-auto relative z-10 custom-scrollbar pb-24">
+        <Outlet />
+      </main>
 
       {/* BOTTOM NAV: Z-[100] para estar SIEMPRE sobre cualquier drawer o sheet del contenido */}
       {showBottomNav && (

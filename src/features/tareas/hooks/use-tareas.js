@@ -17,6 +17,8 @@ export const useTareas = () => {
     const [meta, setMeta] = useState({
         totalFiltrado: 0,
         totalPages: 1,
+        counts: {},
+        totalAtrasadas: 0,
     });
 
     const lastFetchParams = useRef({});
@@ -33,8 +35,11 @@ export const useTareas = () => {
 
             setTareas(Array.isArray(listTareas) ? listTareas : []);
             setMeta({
-                totalFiltrado: payloadData.total ?? 0,
+                totalFiltrado: payloadData.totalFiltrado ?? payloadData.total ?? 0,
                 totalPages: payloadData.totalPages ?? 1,
+                counts: payloadData.counts || {},
+                totalAtrasadas: payloadData.totalAtrasadas ?? 0,
+                totalParaPaginador: payloadData.total ?? 0,
             });
         } catch (error) {
             console.error("Error fetching tareas:", error);

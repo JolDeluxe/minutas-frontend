@@ -1,5 +1,6 @@
 import { Badge, Icon } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
+import { formatFecha } from '@/lib/date';
 
 
 const ESTADO_TAREA_LABEL = {
@@ -56,14 +57,6 @@ export const TareaCard = ({ tarea, onViewDetail, onEdit, onOrganize }) => {
             </div>
 
             <div className="space-y-1.5 mb-4 ml-1">
-                {tarea.minutaId && (
-                    <p className="flex items-center gap-2">
-                        <Icon name="event_note" size="xs" className="text-slate-300 shrink-0" />
-                        <span className="text-xs text-slate-500 font-medium truncate">
-                            Minuta #{tarea.minutaId}
-                        </span>
-                    </p>
-                )}
                 
                 {tarea.prioridad && (
                     <p className="flex items-center gap-2">
@@ -78,7 +71,7 @@ export const TareaCard = ({ tarea, onViewDetail, onEdit, onOrganize }) => {
                     <p className="flex items-center gap-2">
                         <Icon name="event" size="xs" className="text-slate-300 shrink-0" />
                         <span className="text-xs text-slate-500">
-                            Vence: {new Date(tarea.fechaVencimiento).toLocaleDateString()}
+                            Vence: {formatFecha(tarea.fechaVencimiento)}
                         </span>
                     </p>
                 )}

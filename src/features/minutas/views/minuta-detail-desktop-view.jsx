@@ -7,8 +7,7 @@ import { EntryFeed } from '../components/timeline/entry-feed';
 import { StickyNotesBoard } from '../components/notes/sticky-notes-board';
 import { ReviewDraftsModal } from '../components/review-drafts-modal';
 import { OrganizeDrawer } from '../components/organization/organize-drawer';
-import { cn } from '@/utils/cn';
-
+  
 /**
  * MinutaDetailDesktopView — Vista especializada para estaciones de trabajo.
  * Muestra el panel de notas persistente y el composer como barra superior.

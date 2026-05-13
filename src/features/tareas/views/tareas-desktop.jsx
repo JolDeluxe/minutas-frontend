@@ -31,7 +31,7 @@ export const TareasDesktop = ({
                         Todas las Entradas
                     </h1>
                     <p className="text-sm text-slate-500 mt-1 font-medium">
-                        Vista global de todas las tareas y entradas del sistema.
+                        Vista global de todas las entradas y acuerdos del sistema.
                     </p>
                 </div>
                 

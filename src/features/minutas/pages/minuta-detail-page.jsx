@@ -99,7 +99,7 @@ export default function MinutaDetailPage() {
         const toSend = draftEntries.map((e) => {
           const entry = { ...e };
           delete entry.tempId;
-          delete entry._localImagenes;
+          // _localImagenes se mantiene para que createTareaApi las envíe via FormData
           return entry;
         });
         await createTareaApi({ tareas: toSend });
@@ -117,6 +117,11 @@ export default function MinutaDetailPage() {
       const res = await getMinutaById(id);
       setMinuta(res.data);
       fetchTareas({ minutaId: id, page: 1, limit: 100, sort: JSON.stringify([{ createdAt: 'asc' }]) });
+      
+      // Pequeño delay de cortesía para asegurar que el listado refrescado traiga las relaciones nuevas
+      setTimeout(() => {
+        fetchTareas({ minutaId: id, page: 1, limit: 100, sort: JSON.stringify([{ createdAt: 'asc' }]) });
+      }, 800);
     } catch {
       notify.error('Error al sincronizar');
     } finally {

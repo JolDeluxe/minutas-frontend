@@ -1,24 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useSyncExternalStore } from 'react';
 
 export function useMediaQuery(query) {
-  const [matches, setMatches] = useState(false);
-
-  useEffect(() => {
-    const media = window.matchMedia(query);
-    
-    // Sincronización inicial
-    if (media.matches !== matches) {
-      setMatches(media.matches);
-    }
-
-    // Listener reactivo a cambios de resolución
-    const listener = () => setMatches(media.matches);
-    media.addEventListener('change', listener);
-    
-    return () => media.removeEventListener('change', listener);
-  }, [matches, query]);
-
-  return matches;
+  return useSyncExternalStore(
+    (callback) => {
+      const media = window.matchMedia(query);
+      media.addEventListener('change', callback);
+      return () => media.removeEventListener('change', callback);
+    },
+    () => window.matchMedia(query).matches,
+    () => false // Snapshot para SSR
+  );
 }
 
 // Navaja suiza directa para usar en los componentes contenedores

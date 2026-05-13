@@ -1,21 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Input, Label, Select } from '@/components/form/z_index';
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Icon } from '@/components/ui/z_index';
 
-const AREA_MAP = {
-    DISENO: 'Diseño',
-    DIRECCION_MBC: 'Dirección MBC',
-    DIRECCION_CFI: 'Dirección CFI',
-    DIRECCION_ADJUNTA: 'Dirección Adjunta',
-    DIRECCION_TIENDAS: 'Dirección Tiendas',
-};
-
-const LINEA_MAP = {
-    CALZADO: 'Calzado',
-    BOTA: 'Bota',
-    ROPA: 'Ropa',
-    ACCESORIOS: 'Accesorios',
-};
+import { AREA_MAP, LINEA_MAP } from '../../../minutas/constants';
 
 export const TareaFormModal = ({
     isOpen,
@@ -25,23 +12,24 @@ export const TareaFormModal = ({
     lineaDefault,
     submitting,
 }) => {
-    // Para simplificar, este modal crea UNA tarea a la vez (aunque el backend soporte array).
-    // Si quisieras batch, podrías tener un array de {descripcion} en el estado.
     const [descripcion, setDescripcion] = useState('');
     const [area, setArea] = useState('DISENO');
     const [linea, setLinea] = useState(lineaDefault || '');
     const [submitted, setSubmitted] = useState(false);
     const [backendError, setBackendError] = useState('');
+    const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
 
-    useEffect(() => {
-        if (!isOpen) return;
-        // eslint-disable-next-line react-hooks/set-state-in-effect
+    // Sincronización síncrona para resetear formulario al abrir
+    if (isOpen && !prevIsOpen) {
         setSubmitted(false);
         setBackendError('');
         setDescripcion('');
         setArea('DISENO');
         setLinea(lineaDefault || '');
-    }, [isOpen, lineaDefault]);
+        setPrevIsOpen(true);
+    } else if (!isOpen && prevIsOpen) {
+        setPrevIsOpen(false);
+    }
 
     const getFormErrors = () => {
         const e = {};

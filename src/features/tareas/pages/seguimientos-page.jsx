@@ -1,15 +1,16 @@
+// src/features/tareas/pages/seguimientos-page.jsx
 import { useState, useEffect, useCallback } from 'react';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { notify } from '@/components/notification/adaptive-notify';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 import { useTareas } from '../hooks/use-tareas';
-import { TareasDesktopView } from '../views/tareas-desktop-view';
-import { TareasMobileView } from '../views/tareas-mobile-view';
+import { SeguimientosDesktop } from '../views/seguimientos-desktop';
+import { SeguimientosMobile } from '../views/seguimientos-mobile';
 import { TareaDetailDrawer } from '../components/common/tarea-detail-drawer';
 
 const LIMIT = 20;
 
-export default function TareasPages({ submodule = 'mis-tareas' }) {
+export default function SeguimientosPage() {
     const isDesktop = useIsDesktop();
     const { user } = useAuth();
     
@@ -28,47 +29,28 @@ export default function TareasPages({ submodule = 'mis-tareas' }) {
         prioridad: '',
         area: '',
         linea: '',
-        startDate: '',
-        endDate: '',
     });
     
     const [page, setPage] = useState(1);
-    const [viewMode, setViewMode] = useState('table'); // grid | table
-    const [prevSubmodule, setPrevSubmodule] = useState(submodule);
-    
     const [selectedTarea, setSelectedTarea] = useState(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-
-    // Sincronización síncrona al cambiar de submódulo
-    if (submodule !== prevSubmodule) {
-        setFilters(prev => ({ ...prev, status: 'TODOS', search: '' }));
-        setPage(1);
-        setPrevSubmodule(submodule);
-    }
 
     const loadTareas = useCallback(() => {
         const params = { 
             page, 
             limit: LIMIT,
-            sort: JSON.stringify([{ createdAt: 'desc' }])
+            sort: JSON.stringify([{ createdAt: 'desc' }]),
+            requiereSeguimiento: true
         };
-
-        if (submodule === 'mis-tareas') {
-            params.formalizada = true;
-        } else if (submodule === 'mis-seguimientos') {
-            params.requiereSeguimiento = true;
-        }
 
         if (filters.search) params.q = filters.search;
         if (filters.status !== 'TODOS') params.estadoOperativo = filters.status;
         if (filters.prioridad) params.prioridad = filters.prioridad;
         if (filters.area) params.area = filters.area;
         if (filters.linea) params.linea = filters.linea;
-        if (filters.startDate) params.fechaDesde = filters.startDate;
-        if (filters.endDate) params.fechaHasta = filters.endDate;
 
-        fetchTareas(params).catch(() => notify.error('Error al cargar tareas.'));
-    }, [page, filters, submodule, fetchTareas]);
+        fetchTareas(params).catch(() => notify.error('Error al cargar seguimientos.'));
+    }, [page, filters, fetchTareas]);
 
     useEffect(() => { loadTareas(); }, [loadTareas]);
 
@@ -90,30 +72,43 @@ export default function TareasPages({ submodule = 'mis-tareas' }) {
             setIsDrawerOpen(false);
             loadTareas();
         } catch {
-            notify.error('Error al actualizar la entrada.');
+            notify.error('Error al actualizar.');
         }
     };
+
+    const handleRefresh = useCallback(() => {
+        loadTareas();
+    }, [loadTareas]);
 
     const sharedProps = {
         tareas,
         loading,
+        currentUser: user,
+        totalParaPaginador: meta.totalParaPaginador,
+        totalParaSummary: meta.totalFiltrado,
+        conteos: meta.counts,
+        totalAtrasadasGlobal: meta.totalAtrasadas,
+        query: filters.search,
+        onSearchChange: (q) => handleFilterChange({ search: q }),
+        filtroPrioridad: filters.prioridad,
+        onPrioridadChange: (p) => handleFilterChange({ prioridad: p }),
+        filtroResponsable: filters.responsable,
+        onResponsableChange: (r) => handleFilterChange({ responsable: r }),
+        mostrarAtrasadas: filters.mostrarAtrasadas,
+        onToggleAtrasadas: () => handleFilterChange({ mostrarAtrasadas: !filters.mostrarAtrasadas }),
+        onFilterChange: handleFilterChange,
+        onPageChange: (p) => setPage(p),
+        onRefresh: handleRefresh,
+        onChangeStatus: handleViewDetail,
         page,
         totalPages: meta.totalPages,
-        totalItems: meta.totalFiltrado,
-        filters,
-        onFilterChange: handleFilterChange,
-        viewMode,
-        onViewModeChange: setViewMode,
-        onDetail: handleViewDetail,
-        submodule,
-        user,
     };
 
     return (
-        <div className="w-full max-w-[1600px] mx-auto px-4 lg:px-8 py-6">
+        <div className="w-full">
             {isDesktop
-                ? <TareasDesktopView {...sharedProps} />
-                : <TareasMobileView  {...sharedProps} />
+                ? <SeguimientosDesktop {...sharedProps} />
+                : <SeguimientosMobile  {...sharedProps} />
             }
 
             <TareaDetailDrawer 

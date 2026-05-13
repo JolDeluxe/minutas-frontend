@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Input, Label, Select } from '@/components/form/z_index';
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Icon } from '@/components/ui/z_index';
 
@@ -30,19 +30,24 @@ export const TareaOrganizeModal = ({
     const [fechaVencimiento, setFechaVencimiento] = useState('');
     const [backendError, setBackendError] = useState('');
 
-    useEffect(() => {
-        if (!isOpen || !tareaAOrganizar) return;
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setBackendError('');
+    const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+    const [prevTareaId, setPrevTareaId] = useState(tareaAOrganizar?.id);
 
-        setPrioridad(tareaAOrganizar.prioridad || 'MEDIA');
-        setEstado(tareaAOrganizar.estado || 'PENDIENTE');
+    // Sincronización síncrona para resetear formulario al abrir o cambiar tarea
+    if ((isOpen && !prevIsOpen) || (tareaAOrganizar && tareaAOrganizar.id !== prevTareaId)) {
+        setBackendError('');
+        setPrioridad(tareaAOrganizar?.prioridad || 'MEDIA');
+        setEstado(tareaAOrganizar?.estado || 'PENDIENTE');
         setFechaVencimiento(
-            tareaAOrganizar.fechaVencimiento 
+            tareaAOrganizar?.fechaVencimiento 
                 ? new Date(tareaAOrganizar.fechaVencimiento).toISOString().split('T')[0] 
                 : ''
         );
-    }, [isOpen, tareaAOrganizar]);
+        setPrevIsOpen(isOpen);
+        setPrevTareaId(tareaAOrganizar?.id);
+    } else if (!isOpen && prevIsOpen) {
+        setPrevIsOpen(false);
+    }
 
     const handleSubmit = async () => {
         setBackendError('');
@@ -54,7 +59,8 @@ export const TareaOrganizeModal = ({
         };
 
         if (fechaVencimiento) {
-            payload.fechaVencimiento = new Date(fechaVencimiento).toISOString();
+            // Enviamos el string crudo "YYYY-MM-DD"; el backend normaliza a 23:59:59 UTC
+            payload.fechaVencimiento = fechaVencimiento;
         }
 
         try {
