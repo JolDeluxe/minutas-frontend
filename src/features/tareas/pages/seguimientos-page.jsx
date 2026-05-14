@@ -40,7 +40,8 @@ export default function SeguimientosPage() {
             page, 
             limit: LIMIT,
             sort: JSON.stringify([{ createdAt: 'desc' }]),
-            requiereSeguimiento: true
+            requiereSeguimiento: true,
+            todo: true
         };
 
         if (filters.search) params.q = filters.search;

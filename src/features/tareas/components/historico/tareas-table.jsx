@@ -249,7 +249,7 @@ export const TareasTable = ({
             header: 'Acciones',
             accessorKey: 'acciones',
             align: 'center',
-            headerClassName: 'w-[12%] min-w-[50px]',
+            headerClassName: 'w-[12%] min-w-[140px]',
             cell: (row) => {
                 if (row.isSkeleton) return (
                     <div className="flex gap-1 justify-center">
@@ -288,6 +288,7 @@ export const TareasTable = ({
                 totalPages={totalPages}
                 totalItems={totalItems}
                 onPageChange={onPageChange}
+                onRowClick={onViewDetail}
                 sortConfig={sortConfig}
                 hidePagination={hidePagination}
                 rowClassName={(row) =>

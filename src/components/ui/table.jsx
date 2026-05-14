@@ -16,6 +16,7 @@ export const Table = ({
   onPageChange,
   sortConfig,
   onSortChange,
+  onRowClick,
   // Oculta la barra de paginación interna.
   // Usar cuando el consumidor provee su propio paginador (ej. GlassPaginationPill).
   hidePagination = false,
@@ -133,8 +134,10 @@ export const Table = ({
             {data.map((row, index) => (
               <tr
                 key={row[keyField] ?? index}
+                onClick={() => onRowClick?.(row)}
                 className={cn(
                   'transition duration-150',
+                  onRowClick && 'cursor-pointer',
                   rowClassName ? rowClassName(row) : 'bg-white hover:bg-slate-50'
                 )}
               >

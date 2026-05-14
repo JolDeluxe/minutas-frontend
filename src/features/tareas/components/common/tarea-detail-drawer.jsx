@@ -28,7 +28,8 @@ export const TareaDetailDrawer = ({
 
     const { rol, id: userId } = currentUser ?? {};
     const esJefe = ['ADMIN', 'JEFE', 'GERENCIA'].includes(rol);
-    const esResponsable = tarea.responsables?.some((r) => r.id == userId) || esJefe;
+    const esAsignadoDirecto = tarea.responsables?.some((r) => r.id == userId);
+    const esResponsable = esAsignadoDirecto || esJefe;
 
 
     const estado = tarea.estado?.toUpperCase();
@@ -49,7 +50,6 @@ export const TareaDetailDrawer = ({
     };
 
     const clasif = CLASIFICACION_MAP[tarea.clasificacion];
-
     const renderContent = () => (
         <div className="flex flex-col h-full bg-slate-50">
             {/* Header / Banner */}
@@ -181,10 +181,12 @@ export const TareaDetailDrawer = ({
                                     return (
                                         <button 
                                             key={opt.value}
+                                            disabled={isCerrado}
                                             onClick={() => onUpdate?.(tarea.id, { prioridad: opt.value })}
                                             className={cn(
                                                 "px-4 py-2.5 rounded-xl border-2 text-[10px] font-black uppercase transition-all active:scale-95",
-                                                isSelected ? "bg-slate-900 border-slate-900 text-white shadow-lg" : "bg-white border-slate-100 text-slate-400 hover:border-slate-300"
+                                                isSelected ? "bg-slate-900 border-slate-900 text-white shadow-lg" : "bg-white border-slate-100 text-slate-400 hover:border-slate-300",
+                                                isCerrado && "opacity-50 cursor-not-allowed grayscale-[0.5]"
                                             )}
                                         >
                                             {opt.label}
@@ -243,11 +245,16 @@ export const TareaDetailDrawer = ({
                 {isEnProgreso && (
                     <Button 
                         onClick={() => onChangeStatus?.(tarea.id, 'COMPLETADO')}
-                        className="w-full py-7 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white shadow-xl shadow-amber-500/20 font-black uppercase text-[12px] tracking-[0.2em] animate-in zoom-in duration-300 active:scale-95 transition-all" 
+                        className={cn(
+                            "w-full py-7 rounded-2xl font-black uppercase text-[12px] tracking-[0.2em] animate-in zoom-in duration-300 active:scale-95 transition-all shadow-xl",
+                            (esJefe && esAsignadoDirecto) 
+                                ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20" 
+                                : "bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20"
+                        )}
                         isLoading={submitting}
                     >
-                        <Icon name="check" className="mr-2" />
-                        Marcar como Completado
+                        <Icon name={(esJefe && esAsignadoDirecto) ? "verified" : "check"} className="mr-2" />
+                        {(esJefe && esAsignadoDirecto) ? "Terminar y Cerrar" : "Marcar como Completado"}
                     </Button>
                 )}
 
@@ -297,10 +304,20 @@ export const TareaDetailDrawer = ({
 
                 {isCerrado && (
                     <div className="space-y-3">
-                        <div className="flex items-center justify-center gap-2 py-5 px-6 bg-slate-200 border border-slate-300 text-slate-600 rounded-2xl mb-4">
-                            <Icon name="verified" size="20px" />
-                            <span className="text-xs font-black uppercase tracking-tight text-center">Entrada cerrada por Jefatura.</span>
-                        </div>
+                        {tarea.completadoAt && tarea.fechaVencimiento && new Date(tarea.completadoAt) > new Date(tarea.fechaVencimiento) && (
+                            <div 
+                                className="flex items-center justify-center gap-2 py-3 px-6 border rounded-2xl mb-4"
+                                style={{ backgroundColor: '#fef2f2', borderColor: '#fecaca' }}
+                            >
+                                <Icon name="history_toggle_off" size="20px" style={{ color: '#dc2626' }} />
+                                <span 
+                                    className="text-xs font-black uppercase tracking-widest text-center"
+                                    style={{ color: '#dc2626' }}
+                                >
+                                    Entrega Tardía
+                                </span>
+                            </div>
+                        )}
                         <Button variant="outline" onClick={onClose} className="w-full py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-400 border-2">
                             Cerrar Detalle
                         </Button>
@@ -312,7 +329,26 @@ export const TareaDetailDrawer = ({
                         Cerrar Detalle
                     </Button>
                 )}
+
+                 {/* 5. KILL SWITCH: Descarte Logico para Jefatura */}
+                 {!isCerrado && esJefe && (
+                    <div className="mt-6 pt-6 border-t border-slate-100">
+                        <Button 
+                            onClick={() => onUpdate?.(tarea.id, { estadoConceptual: 'DESCARTADO' })}
+                            variant="ghost"
+                            className="w-full py-4 text-red-500 hover:text-red-700 hover:bg-red-50 font-black uppercase text-[10px] tracking-widest transition-all"
+                            isLoading={submitting}
+                        >
+                            <Icon name="delete_sweep" className="mr-2" />
+                            Descartar Entrada (Fin de Vida)
+                        </Button>
+                        <p className="text-[9px] text-slate-400 font-medium text-center mt-2 px-6">
+                            Esta acción cerrará la tarea permanentemente y la sacará de los indicadores operativos.
+                        </p>
+                    </div>
+                )}
             </div>
+
         </div>
     );
 

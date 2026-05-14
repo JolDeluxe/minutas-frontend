@@ -202,10 +202,18 @@ export const HoyTareaCard = ({
                     </button>
                 )}
 
-                {isCerrado && (
-                    <div className="flex items-center gap-2 py-2 px-3 bg-slate-200 border border-slate-300 text-slate-600 rounded-xl">
-                        <Icon name="archive" size="14px" />
-                        <span className="text-[10px] font-bold uppercase tracking-tight text-center w-full">Cerrada por Jefatura</span>
+                {isCerrado && tarea.completadoAt && tarea.fechaVencimiento && new Date(tarea.completadoAt) > new Date(tarea.fechaVencimiento) && (
+                    <div 
+                        className="flex items-center gap-2 py-2.5 px-4 border rounded-xl"
+                        style={{ backgroundColor: '#fef2f2', borderColor: '#fecaca' }}
+                    >
+                        <Icon name="history_toggle_off" size="16px" style={{ color: '#dc2626' }} />
+                        <span 
+                            className="text-[11px] font-black uppercase tracking-[0.1em] text-center w-full italic"
+                            style={{ color: '#dc2626' }}
+                        >
+                            Entrega Tardía
+                        </span>
                     </div>
                 )}
             </div>

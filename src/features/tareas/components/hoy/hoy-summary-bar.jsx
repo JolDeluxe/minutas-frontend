@@ -1,13 +1,6 @@
 // src/features/tareas/components/hoy/hoy-summary-bar.jsx
 import { SummaryBar, Skeleton } from '@/components/ui/z_index';
 
-const ESTADOS_ACTIVOS = [
-    { id: 'TODOS', label: 'Total', color: 'gris' },
-    { id: 'PENDIENTE', label: 'Pendientes', color: 'asignada' },
-    { id: 'EN_PROGRESO', label: 'En Progreso', color: 'en_progreso' },
-    { id: 'COMPLETADO', label: 'Completadas', color: 'resuelto' },
-];
-
 const SummaryBarSkeleton = ({ count }) => (
     <>
         <div className={`hidden lg:grid gap-4 mb-4 grid-cols-${Math.min(count, 5)}`}>
@@ -49,10 +42,43 @@ export const HoySummaryBar = ({
         return <SummaryBarSkeleton count={5} />;
     }
 
-    const items = ESTADOS_ACTIVOS.map((e) => ({
-        ...e,
-        value: e.id === 'TODOS' ? totalParaSummary : (conteos[e.id] ?? 0),
-    }));
+    // Calculamos el total de activas (Pendiente + En Progreso)
+    const totalActivas = (conteos['PENDIENTE'] || 0) + (conteos['EN_PROGRESO'] || 0);
+
+    const items = [
+        { 
+            id: 'TODOS', 
+            label: 'Total Activas', 
+            color: 'gris', // Volvemos al gris limpio
+            value: totalActivas,
+            description: 'Pendientes + En Proceso' 
+        },
+        { 
+            id: 'PENDIENTE', 
+            label: 'Pendientes', 
+            color: 'asignada', 
+            value: conteos['PENDIENTE'] || 0 
+        },
+        { 
+            id: 'EN_PROGRESO', 
+            label: 'En Progreso', 
+            color: 'en_progreso', 
+            value: conteos['EN_PROGRESO'] || 0 
+        },
+        { 
+            id: 'COMPLETADO', 
+            label: 'Completadas', 
+            color: 'resuelto', 
+            value: conteos['COMPLETADO'] || 0 
+        },
+        { 
+            id: 'CERRADO', 
+            label: 'Cerradas', 
+            color: 'cerrado', 
+            value: conteos['CERRADO'] || 0,
+            className: 'opacity-70 scale-90 lg:scale-95 origin-right'
+        },
+    ];
 
     return (
         <SummaryBar
@@ -63,3 +89,4 @@ export const HoySummaryBar = ({
         />
     );
 };
+

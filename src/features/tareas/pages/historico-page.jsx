@@ -44,7 +44,8 @@ export default function HistoricoPage() {
         const params = { 
             page, 
             limit: LIMIT,
-            sort: JSON.stringify([{ createdAt: 'desc' }])
+            sort: JSON.stringify([{ createdAt: 'desc' }]),
+            todo: true
         };
 
         if (filters.search) params.q = filters.search;
