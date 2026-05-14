@@ -9,6 +9,7 @@ import { LINEA_MAP, CLASIFICACION_MAP } from '../../../minutas/constants';
 import { LineIconSelector } from '../../../minutas/components/icons/line-icons';
 
 const ESTADOS_FINALES = ['CERRADO', 'CANCELADA', 'DESCARTADO'];
+const ROLES_ADMIN = ['GERENCIA', 'JEFE', 'ADMIN'];
 
 const isVencida = (tarea) => {
     if (!tarea.fechaVencimiento) return false;
@@ -18,12 +19,15 @@ const isVencida = (tarea) => {
 
 export const HoyTareaCard = ({
     tarea,
+    currentUser,
     onViewDetail,
     onChangeStatus,
     className,
 }) => {
 
-    
+    const { rol } = currentUser || {};
+    const esJefe = rol ? ROLES_ADMIN.includes(rol) : false;
+
     const estado = tarea.estado?.toUpperCase();
     const isEnProgreso = estado === 'EN_PROGRESO';
     const isCompletado = estado === 'COMPLETADO';
@@ -164,28 +168,32 @@ export const HoyTareaCard = ({
                             <Icon name="fact_check" size="14px" />
                             <span className="text-[10px] font-bold uppercase tracking-tight">Esperando Aprobación</span>
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onChangeStatus?.(tarea.id, 'RECHAZADO');
-                                }}
-                                className="flex items-center justify-center gap-1 py-2 bg-white border-2 border-red-100 text-red-600 hover:bg-red-50 rounded-xl font-black text-[10px] uppercase tracking-wider transition-all"
-                            >
-                                <Icon name="close" size="xs" />
-                                Rechazar
-                            </button>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onChangeStatus?.(tarea.id, 'CERRADO');
-                                }}
-                                className="flex items-center justify-center gap-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-600/20 font-black text-[10px] uppercase tracking-wider transition-all"
-                            >
-                                <Icon name="verified" size="xs" />
-                                Aprobar
-                            </button>
-                        </div>
+                        
+                        {/* Solo Jefes/Gerentes pueden Aprobar/Rechazar */}
+                        {esJefe && (
+                            <div className="grid grid-cols-2 gap-2">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onChangeStatus?.(tarea.id, 'RECHAZADO');
+                                    }}
+                                    className="flex items-center justify-center gap-1 py-2 bg-white border-2 border-red-100 text-red-600 hover:bg-red-50 rounded-xl font-black text-[10px] uppercase tracking-wider transition-all"
+                                >
+                                    <Icon name="close" size="xs" />
+                                    Rechazar
+                                </button>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onChangeStatus?.(tarea.id, 'CERRADO');
+                                    }}
+                                    className="flex items-center justify-center gap-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-600/20 font-black text-[10px] uppercase tracking-wider transition-all"
+                                >
+                                    <Icon name="verified" size="xs" />
+                                    CERRAR
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -222,6 +230,3 @@ export const HoyTareaCard = ({
         </div>
     );
 };
-
-
-

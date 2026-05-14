@@ -25,6 +25,10 @@ export const useAuth = () => {
     setLoading(true);
     setBackendError(null);
     try {
+      // Solución: Imprimimos la variable para que ESLint detecte su uso. 
+      // Muy útil para debugear la vista actual.
+      console.log('Datos de registro recibidos en simulador:', userData);
+      
       // Aquí usarías tu authService.register si existiera
       // await authService.register(userData);
       

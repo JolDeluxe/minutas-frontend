@@ -9,7 +9,7 @@ export const MODULES_CONFIG = [
     name: 'Minutas',
     icon: 'description',
     route: '/minutas',
-    allowedRoles: ['GERENCIA', 'JEFE', 'COORDINADOR'],
+    allowedRoles: ['GERENCIA', 'JEFE'],
   },
   {
     id: 'usuarios',

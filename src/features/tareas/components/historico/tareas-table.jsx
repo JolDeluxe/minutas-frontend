@@ -183,7 +183,8 @@ export const TareasTable = ({
             headerClassName: 'w-[12%] min-w-[110px]',
             cell: (row) => {
                 if (row.isSkeleton) return <Skeleton className="h-5 w-20 mx-auto rounded-md" />;
-                return <TareaStatusBadge status={row.estadoOperativo || row.estado} />;
+                // SOLUCIÓN: Usamos row.estado siempre para evitar la inconsistencia con estadoOperativo
+                return <TareaStatusBadge status={row.estado} />;
             },
         },
         {
@@ -212,7 +213,7 @@ export const TareasTable = ({
                     return (
                         <div className="flex flex-col gap-0.5 text-[10px] w-full">
                             {row.fechaVencimiento ? (
-                                <div className="flex items-center justify-between gap-1">
+                                <div className="flex items-center gap-1">
                                     <span className="text-slate-400 font-bold uppercase">Venc:</span>
                                     <span className="text-slate-600 font-medium">{formatFecha(row.fechaVencimiento)}</span>
                                 </div>
@@ -220,7 +221,7 @@ export const TareasTable = ({
                                 <div className="text-slate-400 italic">Sin fecha límite</div>
                             )}
                             {fechaFin && (
-                                <div className="flex items-center justify-between gap-1">
+                                <div className="flex items-center gap-1">
                                     <span className="text-slate-400 font-bold uppercase">Concl:</span>
                                     <span className={cn("font-bold", row.isLate ? "text-red-600" : "text-emerald-600")}>
                                         {formatFecha(fechaFin)}
