@@ -1,6 +1,6 @@
 // src/features/tareas/components/tarea-detail-drawer.jsx
 import { useState } from 'react';
-import { Icon, Button, Badge } from '@/components/ui/z_index';
+import { Icon, Button, Badge } from '@/components/ui/z_index.html';
 import { cn } from '@/utils/cn';
 import { TAREA_STATUS_MAP, TAREA_STATUS_OPTS, TAREA_PRIORIDAD_OPTS } from '../../constants';
 import { CLASIFICACION_MAP, AREA_MAP, LINEA_MAP } from '../../../minutas/constants';
@@ -244,11 +244,11 @@ export const TareaDetailDrawer = ({
                 {/* 2. Flujo de Coordinador: Completar */}
                 {isEnProgreso && (
                     <Button 
-                        onClick={() => onChangeStatus?.(tarea.id, 'COMPLETADO')}
+                        onClick={() => onChangeStatus?.(tarea.id, (esJefe && esAsignadoDirecto) ? 'CERRADO' : 'COMPLETADO')}
                         className={cn(
                             "w-full py-7 rounded-2xl font-black uppercase text-[12px] tracking-[0.2em] animate-in zoom-in duration-300 active:scale-95 transition-all shadow-xl",
                             (esJefe && esAsignadoDirecto) 
-                                ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20" 
+                                ? "bg-black hover:bg-neutral-800 text-white shadow-black/20" 
                                 : "bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20"
                         )}
                         isLoading={submitting}
@@ -258,34 +258,22 @@ export const TareaDetailDrawer = ({
                     </Button>
                 )}
 
-                {/* 3. Flujo de JEFATURA: Aprobar o Rechazar */}
+                {/* 3. Flujo de JEFATURA: Aprobar y Cerrar */}
                 {isCompletado && esJefe && (
-                    <div className="flex flex-col gap-3 animate-in slide-in-from-bottom-4 duration-500">
-                        <div className="flex items-center justify-center gap-2 py-4 px-6 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-2xl mb-2">
+                    <div className="flex flex-col gap-4 animate-in slide-in-from-bottom-4 duration-500">
+                        <div className="flex items-center justify-center gap-2 py-4 px-6 bg-slate-50 border border-slate-100 text-slate-900 rounded-2xl mb-2">
                              <Icon name="fact_check" size="20px" />
-                             <span className="text-[10px] font-black uppercase tracking-widest text-center">Revisión de Jefatura Requerida</span>
+                             <span className="text-[10px] font-black uppercase tracking-widest text-center">Validación de Jefatura</span>
                         </div>
                         
-                        <div className="grid grid-cols-2 gap-3">
-                            <Button 
-                                onClick={() => onChangeStatus?.(tarea.id, 'RECHAZADO')}
-                                variant="outline"
-                                className="py-7 rounded-2xl border-2 border-red-100 text-red-600 hover:bg-red-50 font-black uppercase text-[11px] tracking-wider active:scale-95 transition-all"
-                                isLoading={submitting}
-                            >
-                                <Icon name="assignment_return" className="mr-2" />
-                                Rechazar
-                            </Button>
-                            
-                            <Button 
-                                onClick={() => onChangeStatus?.(tarea.id, 'CERRADO')}
-                                className="py-7 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20 font-black uppercase text-[11px] tracking-wider active:scale-95 transition-all"
-                                isLoading={submitting}
-                            >
-                                <Icon name="verified" className="mr-2" />
-                                Aprobar
-                            </Button>
-                        </div>
+                        <Button 
+                            onClick={() => onChangeStatus?.(tarea.id, 'CERRADO')}
+                            className="py-8 rounded-2xl bg-black hover:bg-neutral-800 text-white shadow-2xl shadow-black/20 font-black uppercase text-[12px] tracking-[0.2em] active:scale-95 transition-all w-full"
+                            isLoading={submitting}
+                        >
+                            <Icon name="verified" className="mr-3" />
+                            Aprobar y Cerrar Tarea
+                        </Button>
                     </div>
                 )}
 

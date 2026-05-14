@@ -49,6 +49,8 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
+        // Soporte para la regla obligatoria de extensión .z_index.html
+        '@/components/ui/z_index.html': path.resolve(__dirname, './src/components/ui/z_index.js'),
       },
     },
   };

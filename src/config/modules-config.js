@@ -45,6 +45,13 @@ export const MODULES_CONFIG = [
         icon: 'history',
         route: '/tareas/historico',
         allowedRoles: ['GERENCIA', 'JEFE', 'COORDINADOR'],
+      },
+      {
+        id: 'por-aprobar',
+        name: 'Por Aprobar',
+        icon: 'fact_check',
+        route: '/tareas/por-aprobar',
+        allowedRoles: ['GERENCIA', 'JEFE'],
       }
     ]
   },

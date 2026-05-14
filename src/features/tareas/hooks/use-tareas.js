@@ -72,6 +72,8 @@ export const useTareas = () => {
         setSubmitting(true);
         try { 
             const res = await changeTareaStatus(id, data);
+            // Disparamos evento global para que otros componentes se enteren (ej. Layouts con badges)
+            window.dispatchEvent(new CustomEvent('cuadra-sync-complete'));
             return res.data;
         } finally { 
             setSubmitting(false); 

@@ -17,6 +17,7 @@ import TareasPage from '@/features/tareas/pages/tareas-page';
 import MisTareasPage from '@/features/tareas/pages/mis-tareas-page';
 import SeguimientosPage from '@/features/tareas/pages/seguimientos-page';
 import HistoricoPage from '@/features/tareas/pages/historico-page';
+import PorAprobarPage from '@/features/tareas/pages/por-aprobar-page';
 
 import { DashboardLayout } from '@/layouts/dashboard-layout';
 import WelcomePage from '@/pages/welcome-page';
@@ -29,6 +30,7 @@ const ROLES = {
   misTareas: MODULES_CONFIG.find(m => m.id === 'tareas')?.children?.find(c => c.id === 'mis-tareas')?.allowedRoles || [],
   misSeguimientos: MODULES_CONFIG.find(m => m.id === 'tareas')?.children?.find(c => c.id === 'mis-seguimientos')?.allowedRoles || [],
   historicoTareas: MODULES_CONFIG.find(m => m.id === 'tareas')?.children?.find(c => c.id === 'historico-tareas')?.allowedRoles || [],
+  porAprobar: MODULES_CONFIG.find(m => m.id === 'tareas')?.children?.find(c => c.id === 'por-aprobar')?.allowedRoles || [],
 };
 
 export const AppRoutes = () => {
@@ -72,6 +74,10 @@ export const AppRoutes = () => {
 
               <Route element={<RoleGuard allowedRoles={ROLES.historicoTareas} />}>
                 <Route path="historico" element={<HistoricoPage />} />
+              </Route>
+
+              <Route element={<RoleGuard allowedRoles={ROLES.porAprobar} />}>
+                <Route path="por-aprobar" element={<PorAprobarPage />} />
               </Route>
             </Route>
           </Route>

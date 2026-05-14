@@ -1,7 +1,7 @@
 // src/features/tareas/views/tareas-layout-mobile.jsx
 import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { GlassViewToggle } from '@/components/ui/liquid-glass-mobile';
+import { GlassViewToggle, Icon } from '@/components/ui/z_index.html';
 import { MODULES_CONFIG } from '@/config/modules-config';
 import { useAuthStore } from '@/stores/auth-store';
 import { getTareas } from '../api/tareas-api';
@@ -25,35 +25,46 @@ export const TareasLayoutMobile = () => {
     const userRole = currentUser?.rol;
 
     const [unassignedCount, setUnassignedCount] = useState(0);
+    const [pendingApprovalCount, setPendingApprovalCount] = useState(0);
     const [hasCritical, setHasCritical] = useState(false);
 
     useEffect(() => {
         let isMounted = true;
-        const fetchCount = async () => {
+        const fetchCounts = async () => {
             try {
+                // Mis Tareas
                 const response = await getTareas({ formalizada: true, estadoOperativo: 'PENDIENTE' });
+                
+                // Por Aprobar
+                let resApprov = null;
+                if (['JEFE', 'GERENCIA'].includes(userRole)) {
+                    resApprov = await getTareas({ estado: 'COMPLETADO', limit: 1 });
+                }
+
                 if (isMounted) {
                     const list = response?.data?.tareas || [];
                     const count = response?.data?.total || 0;
                     const isCritical = list.some(t => calculateDaysWaiting(t.createdAt) >= 3);
                     setUnassignedCount(count);
                     setHasCritical(isCritical);
+                    setPendingApprovalCount(resApprov?.data?.total || 0);
                 }
             } catch (error) {
-                console.warn("Error al obtener conteo:", error);
+                console.warn("Error al obtener conteos:", error);
             }
         };
 
-        fetchCount();
-        const interval = setInterval(fetchCount, 60000);
+        fetchCounts();
+        const interval = setInterval(fetchCounts, 60000);
         return () => { isMounted = false; clearInterval(interval); };
-    }, []);
+    }, [userRole]);
 
     const { moduleInfo, menuOptions } = useMemo(() => {
         const config = MODULES_CONFIG.find(m => m.id === 'tareas');
         const baseMenuOptions = [
             { configId: 'mis-tareas', id: '/tareas/mis-tareas', label: 'Mis Entradas', icon: 'today' },
             { configId: 'mis-seguimientos', id: '/tareas/mis-seguimientos', label: 'Seguimientos', icon: 'update' },
+            { configId: 'por-aprobar', id: '/tareas/por-aprobar', label: 'Por Aprobar', icon: 'fact_check' },
             { configId: 'historico-tareas', id: '/tareas/historico', label: 'Historial', icon: 'history' }
         ];
 
@@ -64,9 +75,15 @@ export const TareasLayoutMobile = () => {
             })
             .map(({ configId, label, icon, ...rest }) => {
                 const isMisTareas = configId === 'mis-tareas';
-                const hasBadge = isMisTareas && unassignedCount > 0;
+                const isPorAprobar = configId === 'por-aprobar';
+                const hasBadge = (isMisTareas && unassignedCount > 0) || (isPorAprobar && pendingApprovalCount > 0);
                 const isActive = location.pathname.includes(rest.id);
                 const showRedAlert = isMisTareas && hasCritical && !isActive;
+
+                const currentCount = isMisTareas ? unassignedCount : pendingApprovalCount;
+                const badgeColor = isMisTareas 
+                    ? (hasCritical ? 'bg-red-100 !text-red-600 border-red-200 animate-pulse' : 'bg-amber-100 !text-amber-700 border-amber-200')
+                    : 'bg-slate-900 !text-white border-slate-800';
 
                 return {
                     ...rest,
@@ -77,8 +94,8 @@ export const TareasLayoutMobile = () => {
                                 <style>{`button:has(.alert-icon-trigger) .material-symbols-rounded { color: #ef4444 !important; transition: color 0.2s; }`}</style>
                             )}
                             <span>{label}</span>
-                            <span className={`relative z-10 text-[11px] font-black px-1.5 py-0.5 rounded-md flex items-center leading-none border ${hasCritical ? 'bg-red-100 !text-red-600 border-red-200 animate-pulse' : 'bg-amber-100 !text-amber-700 border-amber-200'}`}>
-                                {unassignedCount > 99 ? '99+' : unassignedCount}
+                            <span className={`relative z-10 text-[11px] font-black px-1.5 py-0.5 rounded-md flex items-center leading-none border ${badgeColor}`}>
+                                {currentCount > 99 ? '99+' : currentCount}
                             </span>
                         </div>
                     ) : (

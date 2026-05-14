@@ -4,6 +4,7 @@ export const TAREA_STATUS_MAP = {
     PENDIENTE:   { label: 'Pendiente',   icon: 'schedule',    color: '#f59e0b', border: '#fbbf24', bg: '#fffbeb', text: '#b45309' },
     EN_PROGRESO: { label: 'En Progreso', icon: 'play_circle', color: '#8b5cf6', border: '#a78bfa', bg: '#f5f3ff', text: '#6d28d9' },
     COMPLETADO:  { label: 'Completado',  icon: 'task_alt',    color: '#10b981', border: '#34d399', bg: '#f0fdf4', text: '#047857' },
+    CERRADO:     { label: 'Cerrado',     icon: 'verified',    color: '#000000', border: '#000000', bg: '#f8fafc', text: '#000000' },
     CANCELADO:   { label: 'Cancelado',   icon: 'cancel',      color: '#ef4444', border: '#f87171', bg: '#fef2f2', text: '#b91c1c' },
 };
 
@@ -11,6 +12,7 @@ export const TAREA_STATUS_OPTS = [
     { value: 'PENDIENTE', label: 'Pendiente' },
     { value: 'EN_PROGRESO', label: 'En Progreso' },
     { value: 'COMPLETADO', label: 'Completado' },
+    { value: 'CERRADO', label: 'Cerrado' },
     { value: 'CANCELADO', label: 'Cancelado' },
 ];
 

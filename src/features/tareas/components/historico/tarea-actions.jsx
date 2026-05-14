@@ -1,5 +1,5 @@
 // src/features/tareas/components/historico/tarea-actions.jsx
-import { Icon, Button } from '@/components/ui/z_index';
+import { Icon, Button } from '@/components/ui/z_index.html';
 import { cn } from '@/utils/cn';
 
 const ROLES_ADMIN = ['GERENCIA', 'JEFE', 'ADMIN'];
@@ -50,40 +50,34 @@ export const TareaActions = ({
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
-                                onChangeStatus?.(tarea.id, 'COMPLETADO');
+                                const esAsignadoDirecto = tarea.responsables?.some(r => r.id === userId);
+                                onChangeStatus?.(tarea.id, (esJefe && esAsignadoDirecto) ? 'CERRADO' : 'COMPLETADO');
                             }}
-                            title="Marcar como Completado"
-                            className="p-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20 active:scale-90 transition-all"
+                            title={(esJefe && tarea.responsables?.some(r => r.id === userId)) ? "Terminar y Cerrar" : "Marcar como Completado"}
+                            className={cn(
+                                "p-2 rounded-xl text-white shadow-lg active:scale-90 transition-all",
+                                (esJefe && tarea.responsables?.some(r => r.id === userId)) 
+                                    ? "bg-black hover:bg-neutral-800 shadow-black/20" 
+                                    : "bg-amber-500 hover:bg-amber-600 shadow-amber-500/20"
+                            )}
                         >
-                            <Icon name="check" size="sm" />
+                            <Icon name={(esJefe && tarea.responsables?.some(r => r.id === userId)) ? "verified" : "check"} size="sm" />
                         </button>
                     )}
 
-                    {/* Solo Jefatura puede Aprobar/Cerrar o Rechazar trabajo terminado */}
+                    {/* Solo Jefatura puede Aprobar y Cerrar (Estética Black) */}
                     {isCompletado && esJefe && (
-                        <>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onChangeStatus?.(tarea.id, 'RECHAZADO');
-                                }}
-                                title="Rechazar"
-                                className="p-2 rounded-xl bg-white border border-red-200 text-red-600 hover:bg-red-50 shadow-sm active:scale-90 transition-all"
-                            >
-                                <Icon name="close" size="sm" />
-                            </button>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onChangeStatus?.(tarea.id, 'CERRADO');
-                                }}
-                                title="Cerrar Tarea"
-                                className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20 active:scale-90 transition-all font-bold text-[10px] uppercase"
-                            >
-                                <Icon name="verified" size="sm" className="mr-1" />
-                                CERRAR
-                            </button>
-                        </>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onChangeStatus?.(tarea.id, 'CERRADO');
+                            }}
+                            title="Aprobar y Cerrar Tarea"
+                            className="px-3 py-2 rounded-xl bg-black hover:bg-neutral-800 text-white shadow-lg shadow-black/20 active:scale-90 transition-all font-black text-[9px] uppercase tracking-widest flex items-center gap-1.5"
+                        >
+                            <Icon name="verified" size="xs" />
+                            CERRAR
+                        </button>
                     )}
                 </div>
             )}

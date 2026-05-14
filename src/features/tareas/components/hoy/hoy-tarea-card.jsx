@@ -1,5 +1,5 @@
 // src/features/tareas/components/hoy/hoy-tarea-card.jsx
-import { Icon } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/z_index.html';
 import { TareaStatusBadge } from '../common/tarea-status-badge';
 import { TareaPriorityBadge } from '../common/tarea-priority-badge';
 
@@ -48,6 +48,8 @@ export const HoyTareaCard = ({
     };
 
     const currentStyle = stateStyles[estado] || 'border-slate-200 bg-white';
+
+    const esAsignadoDirecto = tarea.responsables?.some((r) => r.id == currentUser?.id);
 
     return (
         <div
@@ -153,46 +155,39 @@ export const HoyTareaCard = ({
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
-                            onChangeStatus?.(tarea.id, 'COMPLETADO');
+                            onChangeStatus?.(tarea.id, (esJefe && esAsignadoDirecto) ? 'CERRADO' : 'COMPLETADO');
                         }}
-                        className="w-full flex items-center justify-center gap-2 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl shadow-lg shadow-amber-500/20 active:scale-95 transition-all font-black text-[11px] uppercase tracking-widest"
+                        className={cn(
+                            "w-full flex items-center justify-center gap-2 py-2.5 rounded-xl shadow-lg active:scale-95 transition-all font-black text-[11px] uppercase tracking-widest",
+                            (esJefe && esAsignadoDirecto) 
+                                ? "bg-black hover:bg-neutral-800 text-white shadow-black/20" 
+                                : "bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20"
+                        )}
                     >
-                        <Icon name="check" size="sm" />
-                        Marcar como Completado
+                        <Icon name={(esJefe && esAsignadoDirecto) ? "verified" : "check"} size="sm" />
+                        {(esJefe && esAsignadoDirecto) ? "Terminar y Cerrar" : "Marcar como Completado"}
                     </button>
                 )}
 
                 {isCompletado && (
                     <div className="flex flex-col gap-2 animate-in zoom-in duration-300">
-                        <div className="flex items-center gap-2 py-2 px-3 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl">
+                        <div className="flex items-center gap-2 py-2 px-3 bg-slate-50 border border-slate-100 text-slate-900 rounded-xl">
                             <Icon name="fact_check" size="14px" />
                             <span className="text-[10px] font-bold uppercase tracking-tight">Esperando Aprobación</span>
                         </div>
                         
-                        {/* Solo Jefes/Gerentes pueden Aprobar/Rechazar */}
+                        {/* Solo Jefes/Gerentes pueden Aprobar (Estética Black) */}
                         {esJefe && (
-                            <div className="grid grid-cols-2 gap-2">
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onChangeStatus?.(tarea.id, 'RECHAZADO');
-                                    }}
-                                    className="flex items-center justify-center gap-1 py-2 bg-white border-2 border-red-100 text-red-600 hover:bg-red-50 rounded-xl font-black text-[10px] uppercase tracking-wider transition-all"
-                                >
-                                    <Icon name="close" size="xs" />
-                                    Rechazar
-                                </button>
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onChangeStatus?.(tarea.id, 'CERRADO');
-                                    }}
-                                    className="flex items-center justify-center gap-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-600/20 font-black text-[10px] uppercase tracking-wider transition-all"
-                                >
-                                    <Icon name="verified" size="xs" />
-                                    CERRAR
-                                </button>
-                            </div>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onChangeStatus?.(tarea.id, 'CERRADO');
+                                }}
+                                className="flex items-center justify-center gap-2 py-3 bg-black hover:bg-neutral-800 text-white rounded-xl shadow-2xl shadow-black/20 font-black text-[10px] uppercase tracking-widest transition-all w-full"
+                            >
+                                <Icon name="verified" size="xs" />
+                                Aprobar y Cerrar Tarea
+                            </button>
                         )}
                     </div>
                 )}

@@ -1,7 +1,7 @@
 // src/features/tareas/views/tareas-layout-desktop.jsx
 import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/z_index';
+import { Button, Icon } from '@/components/ui/z_index.html';
 import { MODULES_CONFIG } from '@/config/modules-config';
 import { useAuthStore } from '@/stores/auth-store';
 import { getTareas } from '../api/tareas-api';
@@ -13,30 +13,42 @@ export const TareasLayoutDesktop = () => {
     const { user } = useAuthStore();
     const currentUser = user?.data || user;
     
-    // Simulación de unassignedCount (pendientes de Mis Tareas)
+    // Conteos dinámicos
     const [unassignedCount, setUnassignedCount] = useState(0);
+    const [pendingApprovalCount, setPendingApprovalCount] = useState(0);
 
     useEffect(() => {
         let isMounted = true;
-        const fetchCount = async () => {
+        const fetchCounts = async () => {
             try {
-                const res = await getTareas({ formalizada: true, estadoOperativo: 'PENDIENTE', limit: 1 });
-                if (isMounted) setUnassignedCount(res?.data?.total || 0);
+                // Pendientes normales
+                const resPend = await getTareas({ formalizada: true, estadoOperativo: 'PENDIENTE', limit: 1 });
+                // Pendientes de aprobación (solo para Jefes/Gerentes)
+                let resApprov = null;
+                if (['JEFE', 'GERENCIA'].includes(currentUser?.rol)) {
+                    resApprov = await getTareas({ estado: 'COMPLETADO', limit: 1 });
+                }
+
+                if (isMounted) {
+                    setUnassignedCount(resPend?.data?.total || 0);
+                    setPendingApprovalCount(resApprov?.data?.total || 0);
+                }
             } catch (error) {
-                console.warn("Error al obtener conteo:", error);
+                console.warn("Error al obtener conteos:", error);
             }
         };
-        fetchCount();
-        const interval = setInterval(fetchCount, 60000);
+        fetchCounts();
+        const interval = setInterval(fetchCounts, 60000);
         return () => { isMounted = false; clearInterval(interval); };
-    }, []);
+    }, [currentUser?.rol]);
 
     const menu = useMemo(() => {
         const tareasModule = MODULES_CONFIG.find(m => m.id === 'tareas');
         const baseMenu = [
             { id: 'mis-tareas', label: 'Mis Entradas', path: '/tareas/mis-tareas', icon: 'today' },
             { id: 'mis-seguimientos', label: 'Seguimientos', path: '/tareas/mis-seguimientos', icon: 'update' },
-            { id: 'historico-tareas', label: 'Historial', path: '/tareas/historico', icon: 'assignment_globe' },
+            { id: 'por-aprobar', label: 'Por Aprobar', path: '/tareas/por-aprobar', icon: 'fact_check' },
+            { id: 'historico-tareas', label: 'Historial', path: '/tareas/historico', icon: 'history' },
         ];
         return baseMenu.filter(item => {
             const childConfig = tareasModule?.children?.find(c => c.id === item.id);
@@ -68,6 +80,12 @@ export const TareasLayoutDesktop = () => {
                         {isMisTareas && unassignedCount > 0 && (
                             <span className="absolute -top-2 -right-2 flex items-center justify-center min-w-5 h-5 px-1 rounded-full text-white text-[10px] font-bold border-2 border-white shadow-md z-10 bg-amber-500 leading-none">
                                 {unassignedCount > 99 ? '99+' : unassignedCount}
+                            </span>
+                        )}
+
+                        {item.id === 'por-aprobar' && pendingApprovalCount > 0 && (
+                            <span className="absolute -top-2 -right-2 flex items-center justify-center min-w-5 h-5 px-1 rounded-full text-white text-[10px] font-bold border-2 border-white shadow-md z-10 bg-black leading-none">
+                                {pendingApprovalCount > 99 ? '99+' : pendingApprovalCount}
                             </span>
                         )}
                     </div>
