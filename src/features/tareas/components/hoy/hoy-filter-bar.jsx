@@ -46,8 +46,6 @@ export const HoyFilterBar = ({
     onToggleAtrasadas,
     totalAtrasadasGlobal = 0,
     currentUser,
-    filtroArea,
-    onAreaChange,
     filtroLinea,
     onLineaChange,
     filtroClasificacion,

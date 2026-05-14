@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Icon, Button, SearchableSelect } from '@/components/ui/z_index';
 import { TAREA_PRIORIDAD_OPTS, ROLES_ADMIN } from '../../constants';
 import { TareaFechas } from './tarea-fechas';
+import { cn } from '@/utils/cn';
 
 const SearchInput = ({ localValue, onChange, onClear, className = "w-full" }) => (
     <div className={`relative ${className}`}>

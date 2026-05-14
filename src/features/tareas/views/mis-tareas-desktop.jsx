@@ -9,7 +9,9 @@ import { TareaFormModal } from '../components/common/tarea-form-modal';
 import { TareaDetailDrawer } from '../components/common/tarea-detail-drawer';
 import { MisEntradasDateSelector } from '../components/hoy/mis-entradas-date-selector';
 import { TareasTable } from '../components/historico/tareas-table';
+import { BossApprovalBanner } from '../components/common/boss-approval-banner';
 import { ROLES_ADMIN } from '../constants';
+
 
 const CardSkeleton = () => (
     <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col gap-3">
@@ -54,6 +56,7 @@ export const MisTareasDesktop = ({
     onToggleAtrasadas,
     onFilterChange,
     onChangeStatus,
+    onViewDetail,
     onRefresh,
     periodo,
     onPeriodoChange,
@@ -106,6 +109,15 @@ export const MisTareasDesktop = ({
                 onChange={onPeriodoChange}
                 loading={loading}
             />
+
+            {['ADMIN', 'JEFE', 'GERENCIA'].includes(currentUser?.rol) && (
+                <BossApprovalBanner 
+                    count={conteos?.COMPLETADO || 0}
+                    isActive={statusActual === 'COMPLETADO'}
+                    onClick={() => onFilterChange({ status: statusActual === 'COMPLETADO' ? 'TODOS' : 'COMPLETADO' })}
+                />
+            )}
+
 
             <HoySummaryBar 
                 totalParaSummary={totalParaSummary} 
@@ -160,7 +172,7 @@ export const MisTareasDesktop = ({
                                         key={tarea.id} 
                                         tarea={tarea} 
                                         currentUser={currentUser} 
-                                        onViewDetail={onChangeStatus} 
+                                        onViewDetail={onViewDetail} 
                                         onEdit={setEditTarget}
                                         onChangeStatus={onChangeStatus}
                                     />
@@ -173,7 +185,7 @@ export const MisTareasDesktop = ({
                                     loading={loading}
                                     currentUser={currentUser}
                                     onChangeStatus={onChangeStatus}
-                                    onViewDetail={onChangeStatus}
+                                    onViewDetail={onViewDetail}
                                     onEdit={setEditTarget}
                                     hidePagination={true}
                                     hideResponsables={true}

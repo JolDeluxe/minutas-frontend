@@ -10,6 +10,9 @@ import { TareaDetailDrawer } from '../components/common/tarea-detail-drawer';
 
 const LIMIT = 20;
 
+// Ordenar: atrasadas primero, luego por prioridad (URGENTE→ALTA→MEDIA→BAJA)
+const PRIORIDAD_PESO = { URGENTE: 0, CRITICA: 0, ALTA: 1, MEDIA: 2, BAJA: 3 };
+
 export default function MisTareasPage() {
     const isDesktop = useIsDesktop();
     const { user } = useAuth();
@@ -20,7 +23,7 @@ export default function MisTareasPage() {
         loading,
         submitting,
         fetchTareas,
-        updateTarea,
+        changeStatus,
     } = useTareas();
 
     const [filters, setFilters] = useState({
@@ -69,14 +72,32 @@ export default function MisTareasPage() {
         setIsDrawerOpen(true);
     };
 
-    const handleUpdateTarea = async (id, payload) => {
+    // Fix API Call: Extraer ID y pasar payload correcto
+    const handleDirectStatusChange = async (tareaId, nuevoEstado) => {
+        if (!tareaId) return;
         try {
-            await updateTarea(id, payload);
-            notify.success('Tarea actualizada correctamente.');
-            setIsDrawerOpen(false);
+            await changeStatus(tareaId, { estado: nuevoEstado });
+            notify.success('Estado actualizado.');
+            if (isDrawerOpen && selectedTarea?.id === tareaId) {
+                setIsDrawerOpen(false);
+            }
             loadTareas();
         } catch {
-            notify.error('Error al actualizar la tarea.');
+            notify.error('Error al actualizar estado.');
+        }
+    };
+
+    // Para actualizaciones genéricas desde el Drawer (ej. prioridad)
+    const handleUpdateGeneric = async (id, payload, shouldClose = false) => {
+        try {
+            await changeStatus(id, payload);
+            notify.success('Actualización exitosa.');
+            if (shouldClose && isDrawerOpen && selectedTarea?.id === id) {
+                setIsDrawerOpen(false);
+            }
+            loadTareas();
+        } catch {
+            notify.error('Error al actualizar.');
         }
     };
 
@@ -84,8 +105,6 @@ export default function MisTareasPage() {
         loadTareas();
     }, [loadTareas]);
 
-    // Ordenar: atrasadas primero, luego por prioridad (URGENTE→ALTA→MEDIA→BAJA)
-    const PRIORIDAD_PESO = { URGENTE: 0, CRITICA: 0, ALTA: 1, MEDIA: 2, BAJA: 3 };
     const tareasSorted = useMemo(() => {
         return [...tareas].sort((a, b) => {
             // 1. Atrasadas siempre primero
@@ -120,17 +139,17 @@ export default function MisTareasPage() {
         onToggleAtrasadas: () => handleFilterChange({ mostrarAtrasadas: !filters.mostrarAtrasadas }),
         onFilterChange: handleFilterChange,
         onRefresh: handleRefresh,
-        onChangeStatus: handleViewDetail,
+        onChangeStatus: handleDirectStatusChange,
+        onUpdateGeneric: handleUpdateGeneric,
+        onViewDetail: handleViewDetail,
         page,
         totalPages: meta.totalPages,
-        // Nuevos filtros
         periodo: filters.periodo,
         onPeriodoChange: (p) => handleFilterChange({ periodo: p }),
         filtroLinea: filters.linea,
         onLineaChange: (l) => handleFilterChange({ linea: l }),
         filtroClasificacion: filters.clasificacion,
         onClasificacionChange: (c) => handleFilterChange({ clasificacion: c }),
-        // Estado actual para el SummaryBar
         statusActual: filters.status,
     };
 
@@ -145,9 +164,12 @@ export default function MisTareasPage() {
                 isOpen={isDrawerOpen}
                 onClose={() => setIsDrawerOpen(false)}
                 tarea={selectedTarea}
-                onUpdate={handleUpdateTarea}
+                onChangeStatus={handleDirectStatusChange}
+                onUpdate={handleUpdateGeneric}
                 submitting={submitting}
+                currentUser={user}
             />
         </div>
     );
 }
+

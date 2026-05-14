@@ -6,6 +6,8 @@ import { HoySummaryBar } from '../components/hoy/hoy-summary-bar';
 import { HoyFilterBar } from '../components/hoy/hoy-filter-bar';
 import { TareaFormModal } from '../components/common/tarea-form-modal';
 import { MisEntradasDateSelector } from '../components/hoy/mis-entradas-date-selector';
+import { BossApprovalBanner } from '../components/common/boss-approval-banner';
+
 
 const CardSkeleton = () => (
     <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col gap-3">
@@ -41,9 +43,9 @@ export const MisTareasMobile = ({
     onFilterChange,
     onRefresh,
     onChangeStatus,
+    onViewDetail,
     page,
     totalPages,
-    // Nuevos filtros
     periodo,
     onPeriodoChange,
     filtroLinea,
@@ -100,6 +102,15 @@ export const MisTareasMobile = ({
                 />
             </div>
 
+            {['ADMIN', 'JEFE', 'GERENCIA'].includes(currentUser?.rol) && (
+                <BossApprovalBanner 
+                    count={conteos?.COMPLETADO || 0}
+                    isActive={statusActual === 'COMPLETADO'}
+                    onClick={() => onFilterChange({ status: statusActual === 'COMPLETADO' ? 'TODOS' : 'COMPLETADO' })}
+                />
+            )}
+
+
             <div className="flex flex-col gap-3">
                 {loading && tareas.length === 0
                     ? Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)
@@ -115,7 +126,7 @@ export const MisTareasMobile = ({
                                 key={tarea.id} 
                                 tarea={tarea} 
                                 currentUser={currentUser} 
-                                onViewDetail={onChangeStatus} 
+                                onViewDetail={onViewDetail} 
                                 onEdit={setEditTarget}
                                 onChangeStatus={onChangeStatus}
                             />

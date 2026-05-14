@@ -1,16 +1,14 @@
 // src/features/tareas/components/hoy/hoy-tarea-card.jsx
-import { useState, useRef, useEffect } from 'react';
-import { Icon, Tooltip, Badge } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/z_index';
 import { TareaStatusBadge } from '../common/tarea-status-badge';
 import { TareaPriorityBadge } from '../common/tarea-priority-badge';
-import { isPastDate, formatFecha, formatFechaHora } from '@/lib/date';
+
+import { isPastDate, formatFecha } from '@/lib/date';
 import { cn } from '@/utils/cn';
-import { LINEA_MAP, CLASIFICACION_MAP, AREA_MAP } from '../../../minutas/constants';
+import { LINEA_MAP, CLASIFICACION_MAP } from '../../../minutas/constants';
 import { LineIconSelector } from '../../../minutas/components/icons/line-icons';
 
-const ROLES_ADMIN = ['GERENCIA', 'JEFE'];
-const ROLES_SUPERVISOR = ['GERENCIA', 'JEFE'];
-const ESTADOS_FINALES = ['CERRADO', 'CANCELADA'];
+const ESTADOS_FINALES = ['CERRADO', 'CANCELADA', 'DESCARTADO'];
 
 const isVencida = (tarea) => {
     if (!tarea.fechaVencimiento) return false;
@@ -18,143 +16,53 @@ const isVencida = (tarea) => {
     return isPastDate(tarea.fechaVencimiento);
 };
 
-const getStatusLabelData = (tarea) => {
-    if (tarea.estado === 'RECHAZADO') {
-        return {
-            label: 'Atención requerida: Tarea rechazada',
-            icon: 'warning',
-            colorClasses: 'text-white bg-estado-rechazado border-estado-rechazado shadow-sm',
-            pulse: true,
-        };
-    }
-    if (tarea.estado === 'COMPLETADO') {
-        return {
-            label: 'Tarea en espera de aprobación',
-            icon: 'hourglass_top',
-            colorClasses: 'text-estado-resuelto bg-estado-resuelto/10 border-estado-resuelto/20',
-            pulse: false,
-        };
-    }
-    if (tarea.estado === 'EN_PROGRESO') {
-        return {
-            label: `Tarea en progreso`,
-            icon: 'timer',
-            colorClasses: 'text-estado-en-progreso bg-estado-en-progreso/10 border-estado-en-progreso/20',
-            pulse: true,
-        };
-    }
-    return null;
-};
-
-const getEstadoActionMeta = (estado) => {
-    switch (estado) {
-        case 'ASIGNADA': return { text: 'Iniciar', icon: 'play_arrow' };
-        case 'EN_PROGRESO': return { text: 'Finalizar', icon: 'check_circle' };
-        case 'EN_PAUSA': return { text: 'Reanudar', icon: 'play_arrow' };
-        case 'RECHAZADO': return { text: 'Reiniciar', icon: 'replay' };
-        default: return { text: 'Estado', icon: 'swap_horiz' };
-    }
-};
-
 export const HoyTareaCard = ({
     tarea,
-    currentUser,
     onViewDetail,
-    onEdit,
-    onAssign,
     onChangeStatus,
-    onReview,
-    onCancel,
-    isHighlighted = false,
     className,
 }) => {
-    const { rol, id: userId } = currentUser ?? {};
-    const [responsablesExpanded, setResponsablesExpanded] = useState(false);
-    const [showHighlight, setShowHighlight] = useState(false);
-    const cardRef = useRef(null);
 
-    useEffect(() => {
-        if (!isHighlighted) return;
-
-        const highlightTimer = setTimeout(() => {
-            setShowHighlight(true);
-            cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 150);
-
-        const fadeTimer = setTimeout(() => setShowHighlight(false), 4000);
-
-        return () => {
-            clearTimeout(highlightTimer);
-            clearTimeout(fadeTimer);
-        };
-    }, [isHighlighted]);
-
-    const esAdmin = ROLES_ADMIN.includes(rol);
-    const esSupervisor = ROLES_SUPERVISOR.includes(rol);
-    const esCoordinador = rol === 'COORDINADOR';
-    const esCreador = tarea.creadorId === userId;
-    const esResponsable = tarea.responsables?.some((r) => r.id === userId);
-    const tieneResponsables = tarea.responsables?.length > 0;
-
+    
+    const estado = tarea.estado?.toUpperCase();
+    const isEnProgreso = estado === 'EN_PROGRESO';
+    const isCompletado = estado === 'COMPLETADO';
+    const isRechazado = estado === 'RECHAZADO';
+    const isCerrado = ESTADOS_FINALES.includes(estado);
+    const isPendiente = !isEnProgreso && !isCompletado && !isCerrado && !isRechazado;
+    
     const vencida = isVencida(tarea);
-    const esRechazada = tarea.estado === 'RECHAZADO';
-    const statusLabelData = getStatusLabelData(tarea);
-    const actionMeta = getEstadoActionMeta(tarea.estado);
 
-    const puedeEditar =
-        !['EN_PROGRESO', 'COMPLETADO', ...ESTADOS_FINALES].includes(tarea.estado) &&
-        (esAdmin || (esCreador && tarea.estado === 'PENDIENTE'));
 
-    const puedeAsignar =
-        esAdmin &&
-        !['EN_PROGRESO', 'COMPLETADO', ...ESTADOS_FINALES].includes(tarea.estado);
+    // ── Clases de estado ───────────────────────────────────────────────────
+    const stateStyles = {
+        PENDIENTE:   'border-blue-500 bg-white',
+        EN_PROGRESO: 'border-amber-500 bg-amber-50/30',
+        COMPLETADO:  'border-emerald-500 bg-emerald-50/50',
+        RECHAZADO:   'border-red-500 bg-red-50/50',
+        CERRADO:     'border-slate-400 bg-slate-50 opacity-75 grayscale',
+    };
 
-    const puedeCambiarEstado =
-        tieneResponsables &&
-        !['COMPLETADO', ...ESTADOS_FINALES].includes(tarea.estado) &&
-        (esAdmin || (esCoordinador && esResponsable));
-
-    const puedeRevisar =
-        tarea.estado === 'COMPLETADO' &&
-        (esSupervisor || esCreador);
-
-    const puedeCancelar =
-        !ESTADOS_FINALES.includes(tarea.estado) &&
-        tarea.estado !== 'COMPLETADO' &&
-        (esSupervisor || (esCreador && tarea.estado === 'PENDIENTE'));
-
-    const esAsignarPrimario = tarea.estado === 'PENDIENTE';
-    const esEstadoPrimario = ['ASIGNADA', 'EN_PROGRESO', 'EN_PAUSA', 'RECHAZADO'].includes(tarea.estado);
-
-    const responsablesExtra = (tarea.responsables?.length || 0) - 2;
-    const responsablesMostrar = responsablesExpanded
-        ? tarea.responsables
-        : tarea.responsables?.slice(0, 2);
-
-    const baseClasses = esRechazada
-        ? 'border-estado-rechazado/40 bg-red-50/40'
-        : vencida
-            ? 'border-orange-300/50 bg-orange-50/30'
-            : 'border-slate-200';
+    const currentStyle = stateStyles[estado] || 'border-slate-200 bg-white';
 
     return (
         <div
-            ref={cardRef}
             onClick={() => onViewDetail?.(tarea)}
             className={cn(
-                'bg-white border rounded-[2rem] p-4 shadow-sm flex flex-col gap-2.5 transition-all duration-700 hover:shadow-md cursor-pointer',
-                showHighlight
-                    ? 'border-yellow-400 bg-yellow-50/50 shadow-[0_0_0_4px_rgba(250,204,21,0.45),0_8px_24px_rgba(250,204,21,0.2)] -translate-y-0.5'
-                    : baseClasses,
+                'relative border-l-[6px] rounded-2xl p-4 shadow-sm flex flex-col gap-3 transition-all duration-300 hover:shadow-md cursor-pointer',
+                currentStyle,
                 className
             )}
         >
-            <div
-                className="flex items-start gap-3"
-            >
+            {/* Status Badge (ELEGANTE) */}
+            <div className="absolute top-4 right-4">
+                <TareaStatusBadge status={estado} size="xs" />
+            </div>
+
+            <div className="flex items-start gap-3">
                 {/* Thumbnail de imágenes */}
                 {tarea.imagenes?.length > 0 && (
-                    <div className="relative w-14 h-14 shrink-0 rounded-xl overflow-hidden bg-slate-100 border border-slate-200">
+                    <div className="relative w-14 h-14 shrink-0 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shadow-sm">
                         <img src={tarea.imagenes[0].url} className="w-full h-full object-cover" alt="" />
                         {tarea.imagenes.length > 1 && (
                             <div className="absolute bottom-0.5 right-0.5 px-1 py-0.5 bg-slate-900/80 text-white text-[8px] font-black rounded-md">
@@ -163,153 +71,149 @@ export const HoyTareaCard = ({
                         )}
                     </div>
                 )}
+
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                         <span className="text-[10px] font-black font-mono text-slate-400 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100">
-                            #{tarea.id}
-                        </span>
-                        {vencida && !esRechazada && (
+                    <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-[10px] font-black font-mono text-slate-400">#{tarea.id}</span>
+                        {vencida && !isCompletado && !isCerrado && (
                             <span className="text-[9px] font-extrabold uppercase tracking-widest text-white bg-red-500 px-2 py-0.5 rounded-lg shadow-sm">
                                 Atrasada
                             </span>
                         )}
+                        {tarea.prioridad && <TareaPriorityBadge priority={tarea.prioridad} />}
                     </div>
                     
-                    <h3 className="text-[14px] font-black text-slate-900 leading-tight line-clamp-2 mb-1.5">
+                    <h3 className={cn(
+                        "text-sm font-black text-slate-900 leading-snug line-clamp-2",
+                        isCompletado && "line-through text-slate-400 opacity-70"
+                    )}>
                         {tarea.descripcion}
                     </h3>
-
-                    <div className="flex flex-wrap gap-1.5 items-center">
-                        {tarea.linea && (
-                            <div className="flex items-center gap-1 px-1.5 py-0.5 bg-slate-50 border border-slate-100 rounded-lg">
-                                <LineIconSelector type={tarea.linea} size={12} className="text-slate-500" />
-                                <span className="text-[9px] font-black text-slate-600 uppercase tracking-tight">
-                                    {LINEA_MAP[tarea.linea]?.label || tarea.linea}
-                                </span>
-                            </div>
-                        )}
-                         {tarea.clasificacion && (
-                            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg text-white shadow-xs" style={{ backgroundColor: CLASIFICACION_MAP[tarea.clasificacion]?.color }}>
-                                <Icon name={CLASIFICACION_MAP[tarea.clasificacion]?.icon || 'label'} size="11px" />
-                                <span className="text-[9px] font-black uppercase tracking-tight">
-                                    {CLASIFICACION_MAP[tarea.clasificacion]?.label || tarea.clasificacion}
-                                </span>
-                            </div>
-                        )}
-                        {tarea.fechaVencimiento && (
-                            <div className={cn('flex items-center gap-1 px-1.5 py-0.5 rounded-lg border', vencida ? 'bg-orange-50 border-orange-200' : 'bg-slate-50 border-slate-100')}>
-                                <Icon name="event" size="11px" className={cn(vencida ? 'text-orange-500' : 'text-slate-400')} />
-                                <span className={cn('text-[9px] font-bold', vencida ? 'text-orange-600' : 'text-slate-500')}>
-                                    {formatFecha(tarea.fechaVencimiento)}
-                                </span>
-                            </div>
-                        )}
-                    </div>
-                </div>
-                <div className="flex flex-col items-end gap-1 shrink-0">
-                    <TareaStatusBadge status={tarea.estadoOperativo || tarea.estado} />
-                    <TareaPriorityBadge priority={tarea.prioridad} />
                 </div>
             </div>
 
+            {/* Metadatos Rápidos */}
+            <div className="flex flex-wrap gap-1.5 items-center">
+                {tarea.linea && (
+                    <div className="flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 rounded-lg">
+                        <LineIconSelector type={tarea.linea} size={10} className="text-slate-500" />
+                        <span className="text-[9px] font-black text-slate-600 uppercase">
+                            {LINEA_MAP[tarea.linea]?.label || tarea.linea}
+                        </span>
+                    </div>
+                )}
+                {tarea.clasificacion && (
+                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg text-white" style={{ backgroundColor: CLASIFICACION_MAP[tarea.clasificacion]?.color }}>
+                        <Icon name={CLASIFICACION_MAP[tarea.clasificacion]?.icon || 'label'} size="10px" />
+                        <span className="text-[9px] font-black uppercase tracking-tight">
+                            {CLASIFICACION_MAP[tarea.clasificacion]?.label || tarea.clasificacion}
+                        </span>
+                    </div>
+                )}
+                {tarea.fechaVencimiento && (
+                    <div className={cn('flex items-center gap-1 px-1.5 py-0.5 rounded-lg border', vencida && !isCompletado ? 'bg-red-50 border-red-100' : 'bg-slate-100 border-slate-200')}>
+                        <Icon name="event" size="10px" className={cn(vencida && !isCompletado ? 'text-red-500' : 'text-slate-400')} />
+                        <span className={cn('text-[9px] font-bold', vencida && !isCompletado ? 'text-red-600' : 'text-slate-600')}>
+                            {formatFecha(tarea.fechaVencimiento)}
+                        </span>
+                    </div>
+                )}
+            </div>
+
+            {/* Origen (Minuta) */}
             {tarea.minuta && (
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50/50 border border-slate-100 rounded-xl">
                     <Icon name="description" size="12px" className="text-slate-300" />
-                    <span className="text-[10px] font-bold text-slate-600 truncate">
+                    <span className="text-[10px] font-bold text-slate-500 truncate italic">
                         {tarea.minuta.titulo || `Minuta #${tarea.minutaId}`}
                     </span>
                 </div>
             )}
 
-            {statusLabelData && (
-                <div className={cn('flex items-center gap-2 px-3 py-1.5 border rounded-lg', statusLabelData.colorClasses)}>
-                    <Icon
-                        name={statusLabelData.icon}
-                        size="xs"
-                        className={cn('shrink-0', statusLabelData.pulse && 'animate-pulse')}
-                    />
-                    <span className="text-[11px] font-bold font-mono">
-                        {statusLabelData.label}
-                    </span>
-                </div>
-            )}
-
-            <div className="flex items-center gap-2 pt-3 border-t border-slate-100 flex-wrap w-full mt-auto" onClick={(e) => e.stopPropagation()}>
-                {puedeCancelar && (
-                    <Tooltip text="Cancelar" variant="error">
-                        <button
-                            onClick={() => onCancel?.(tarea)}
-                            className="flex items-center justify-center p-1.5 rounded-lg text-estado-rechazado bg-estado-rechazado/10 hover:bg-estado-rechazado/20 active:scale-95 transition-all cursor-pointer"
-                        >
-                            <Icon name="cancel" size="xs" />
-                        </button>
-                    </Tooltip>
-                )}
-
-                <Tooltip text="Ver detalle" variant="dark">
+            {/* Área de Acción Principal */}
+            <div className="mt-2">
+                {isPendiente && (
                     <button
-                        onClick={() => onViewDetail?.(tarea)}
-                        className="flex items-center justify-center p-1.5 rounded-md text-slate-600 hover:bg-slate-600/10 transition-colors cursor-pointer"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onChangeStatus?.(tarea.id, 'EN_PROGRESO');
+                        }}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all font-black text-[11px] uppercase tracking-widest"
                     >
-                        <Icon name="visibility" size="sm" />
-                    </button>
-                </Tooltip>
-
-                <div className="flex-1 min-w-[8px]" />
-
-                {puedeEditar && (
-                    <Tooltip text="Editar" variant="dark">
-                        <button
-                            onClick={() => onEdit?.(tarea)}
-                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold text-prioridad-media bg-prioridad-media/10 hover:bg-prioridad-media/20 active:scale-95 transition-all cursor-pointer"
-                        >
-                            <Icon name="edit" size="xs" />
-                        </button>
-                    </Tooltip>
-                )}
-
-                {puedeCambiarEstado && (
-                    <button
-                        onClick={() => onChangeStatus?.(tarea)}
-                        className={cn(
-                            'flex items-center gap-1.5 rounded-lg text-xs font-bold active:scale-95 transition-all cursor-pointer',
-                            esEstadoPrimario
-                                ? 'px-3 py-1.5 text-white bg-estado-en-progreso shadow-sm'
-                                : 'px-2.5 py-1.5 text-estado-en-progreso bg-estado-en-progreso/10 hover:bg-estado-en-progreso/20'
-                        )}
-                    >
-                        <Icon name={actionMeta.icon} size="xs" />
-                        {esEstadoPrimario && <span className="hidden min-[360px]:inline">{actionMeta.text}</span>}
+                        <Icon name="play_arrow" size="sm" />
+                        Iniciar Trabajo
                     </button>
                 )}
 
-                {puedeAsignar && (
-                    <Tooltip text="Asignar responsables" variant="dark">
-                        <button
-                            onClick={() => onAssign?.(tarea)}
-                            className={cn(
-                                'flex items-center gap-1.5 rounded-lg text-xs font-bold active:scale-95 transition-all cursor-pointer',
-                                esAsignarPrimario
-                                    ? 'px-3 py-1.5 text-white bg-estado-asignada shadow-sm'
-                                    : 'px-2.5 py-1.5 text-estado-asignada bg-estado-asignada/10 hover:bg-estado-asignada/20'
-                            )}
-                        >
-                            <Icon name="person_add" size="xs" />
-                            {esAsignarPrimario && <span className="hidden min-[360px]:inline">Asignar</span>}
-                        </button>
-                    </Tooltip>
+                {isEnProgreso && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onChangeStatus?.(tarea.id, 'COMPLETADO');
+                        }}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl shadow-lg shadow-amber-500/20 active:scale-95 transition-all font-black text-[11px] uppercase tracking-widest"
+                    >
+                        <Icon name="check" size="sm" />
+                        Marcar como Completado
+                    </button>
                 )}
 
-                {puedeRevisar && (
+                {isCompletado && (
+                    <div className="flex flex-col gap-2 animate-in zoom-in duration-300">
+                        <div className="flex items-center gap-2 py-2 px-3 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl">
+                            <Icon name="fact_check" size="14px" />
+                            <span className="text-[10px] font-bold uppercase tracking-tight">Esperando Aprobación</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onChangeStatus?.(tarea.id, 'RECHAZADO');
+                                }}
+                                className="flex items-center justify-center gap-1 py-2 bg-white border-2 border-red-100 text-red-600 hover:bg-red-50 rounded-xl font-black text-[10px] uppercase tracking-wider transition-all"
+                            >
+                                <Icon name="close" size="xs" />
+                                Rechazar
+                            </button>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onChangeStatus?.(tarea.id, 'CERRADO');
+                                }}
+                                className="flex items-center justify-center gap-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-600/20 font-black text-[10px] uppercase tracking-wider transition-all"
+                            >
+                                <Icon name="verified" size="xs" />
+                                Aprobar
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {isRechazado && (
                     <button
-                        onClick={() => onReview?.(tarea)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-estado-resuelto active:scale-95 transition-all shadow-sm cursor-pointer"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onChangeStatus?.(tarea.id, 'EN_PROGRESO');
+                        }}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-500/20 active:scale-95 transition-all font-black text-[11px] uppercase tracking-widest"
                     >
-                        <Icon name="fact_check" size="xs" />
-                        <span className="hidden min-[360px]:inline">Revisar</span>
+                        <Icon name="replay" size="sm" />
+                        Reiniciar Trabajo
                     </button>
+                )}
+
+                {isCerrado && (
+                    <div className="flex items-center gap-2 py-2 px-3 bg-slate-200 border border-slate-300 text-slate-600 rounded-xl">
+                        <Icon name="archive" size="14px" />
+                        <span className="text-[10px] font-bold uppercase tracking-tight text-center w-full">Cerrada por Jefatura</span>
+                    </div>
                 )}
             </div>
+
+
         </div>
     );
 };
+
+
+
