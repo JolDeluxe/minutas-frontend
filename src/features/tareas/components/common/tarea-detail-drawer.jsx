@@ -1,6 +1,6 @@
 // src/features/tareas/components/tarea-detail-drawer.jsx
 import { useState } from 'react';
-import { Icon, Button, Badge } from '@/components/ui/z_index.html';
+import { Icon, Button, Badge } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
 import { TAREA_STATUS_MAP, TAREA_STATUS_OPTS, TAREA_PRIORIDAD_OPTS } from '../../constants';
 import { CLASIFICACION_MAP, AREA_MAP, LINEA_MAP } from '../../../minutas/constants';

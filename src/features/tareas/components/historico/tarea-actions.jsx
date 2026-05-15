@@ -1,5 +1,5 @@
 // src/features/tareas/components/historico/tarea-actions.jsx
-import { Icon, Button } from '@/components/ui/z_index.html';
+import { Icon, Button } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
 
 const ROLES_ADMIN = ['GERENCIA', 'JEFE', 'ADMIN'];

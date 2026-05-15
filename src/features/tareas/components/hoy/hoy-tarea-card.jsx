@@ -1,5 +1,5 @@
 // src/features/tareas/components/hoy/hoy-tarea-card.jsx
-import { Icon } from '@/components/ui/z_index.html';
+import { Icon } from '@/components/ui/z_index';
 import { TareaStatusBadge } from '../common/tarea-status-badge';
 import { TareaPriorityBadge } from '../common/tarea-priority-badge';
 

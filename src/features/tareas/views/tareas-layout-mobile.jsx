@@ -1,7 +1,7 @@
 // src/features/tareas/views/tareas-layout-mobile.jsx
 import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { GlassViewToggle, Icon } from '@/components/ui/z_index.html';
+import { GlassViewToggle, Icon } from '@/components/ui/z_index';
 import { MODULES_CONFIG } from '@/config/modules-config';
 import { useAuthStore } from '@/stores/auth-store';
 import { getTareas } from '../api/tareas-api';

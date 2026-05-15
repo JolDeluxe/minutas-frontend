@@ -14,10 +14,12 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [
-      react(),
+      react({
+        // Permite que el plugin procese tus componentes dentro de archivos .html
+        include: /\.(js|jsx|ts|tsx|html)$/ 
+      }),
       tailwindcss(),
       VitePWA({
-        // Pasamos a injectManifest para poder manejar push nativamente
         strategies: 'injectManifest',
         srcDir: 'src',
         filename: 'sw.js',
@@ -32,18 +34,21 @@ export default defineConfig(({ mode }) => {
           ],
         },
 
-        // Desactiva generación automática del manifest (usamos el externo)
         manifest: false,
-
         includeAssets: ['img/**/*.webp', 'img/**/*.png'],
 
         devOptions: {
-          // En dev se puede activar para probar el SW localmente si se necesita
           enabled: false,
           type: 'module',
         },
       }),
     ],
+
+    // Configuración crítica: Fuerza a esbuild a interpretar los archivos .html de la carpeta src como JSX
+    esbuild: {
+      loader: 'jsx',
+      include: /src\/.*\.html$/,
+    },
 
     server: {
       host: true,
@@ -54,8 +59,8 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
-        // Soporte para la regla obligatoria de extensión .z_index.html
-        '@/components/ui/z_index.html': path.resolve(__dirname, './src/components/ui/z_index.js'),
+        // Soporte explícito para resolver la ruta de tus componentes genéricos
+        '@/components/ui/z_index.html': path.resolve(__dirname, './src/components/ui/z_index.html'),
       },
     },
   };
