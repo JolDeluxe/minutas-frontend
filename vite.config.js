@@ -14,16 +14,12 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [
-      react({
-        // Permite que el plugin procese tus componentes dentro de archivos .html
-        include: /\.(js|jsx|ts|tsx|html)$/ 
-      }),
+      react(),
       tailwindcss(),
       VitePWA({
         strategies: 'injectManifest',
         srcDir: 'src',
         filename: 'sw.js',
-
         injectManifest: {
           maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
           globPatterns: ['**/*.{js,css,html,ico,png,webp,woff2,svg}'],
@@ -33,22 +29,14 @@ export default defineConfig(({ mode }) => {
             '**/MaterialSymbolsRounded*.woff2',
           ],
         },
-
         manifest: false,
         includeAssets: ['img/**/*.webp', 'img/**/*.png'],
-
         devOptions: {
           enabled: false,
           type: 'module',
         },
       }),
     ],
-
-    // Configuración crítica: Fuerza a esbuild a interpretar los archivos .html de la carpeta src como JSX
-    esbuild: {
-      loader: 'jsx',
-      include: /src\/.*\.html$/,
-    },
 
     server: {
       host: true,
@@ -59,8 +47,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
-        // Soporte explícito para resolver la ruta de tus componentes genéricos
-        '@/components/ui/z_index.html': path.resolve(__dirname, './src/components/ui/z_index.html'),
+        '@/components/ui/z_index.html': path.resolve(__dirname, './src/components/ui/z_index.js'),
       },
     },
   };
