@@ -38,7 +38,12 @@ export const MinutaDetailMobileView = ({
   showNotes,
   setShowNotes,
   handleUpdateSavedEntry,
-  handleCreateEntryNote
+  handleCreateEntryNote,
+  handleUpdateEntryNote,
+  handleDeleteEntryNote,
+  handleAddEntryImage,
+  handleDeleteEntryImage,
+  users
 }) => {
   return (
     <div className="flex h-full w-full flex-col bg-slate-50/50 relative overflow-hidden">
@@ -66,6 +71,11 @@ export const MinutaDetailMobileView = ({
           onUpdateDraft={updateDraftEntry}
           onUpdateSaved={handleUpdateSavedEntry}
           onCreateNote={handleCreateEntryNote}
+          onUpdateNote={handleUpdateEntryNote}
+          onDeleteNote={handleDeleteEntryNote}
+          onAddImage={handleAddEntryImage}
+          onDeleteImage={handleDeleteEntryImage}
+          users={users}
         />
       </main>
 

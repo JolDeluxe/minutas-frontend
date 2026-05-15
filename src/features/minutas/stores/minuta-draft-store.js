@@ -53,9 +53,14 @@ export const useMinutaDraftStore = create((set, get) => ({
   // ── Gestión de Entradas (Borradores de Tareas) ──────────────────────────
 
   addDraftEntry: (entryData) => {
+    // Fallback para crypto.randomUUID en contextos no seguros (móvil sin HTTPS)
+    const tempId = (typeof crypto !== 'undefined' && crypto.randomUUID) 
+      ? crypto.randomUUID() 
+      : Math.random().toString(36).substring(2, 15);
+
     const newEntry = {
       ...entryData,
-      tempId: crypto.randomUUID(),
+      tempId,
       createdAt: new Date().toISOString(),
       estadoConceptual: 'CAPTURADO',
       formalizada: false,
@@ -87,8 +92,13 @@ export const useMinutaDraftStore = create((set, get) => ({
 
   addDraftNote: (contenido) => {
     if (!contenido.trim()) return;
+    
+    const id = (typeof crypto !== 'undefined' && crypto.randomUUID) 
+      ? crypto.randomUUID() 
+      : Math.random().toString(36).substring(2, 15);
+
     const newNote = {
-      id: crypto.randomUUID(),
+      id,
       contenido: contenido.trim(),
       createdAt: new Date().toISOString(),
     };

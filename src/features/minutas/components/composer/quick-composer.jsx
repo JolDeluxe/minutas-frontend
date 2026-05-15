@@ -110,10 +110,10 @@ export const QuickComposer = ({
   return (
     <div className="w-full bg-white/80 backdrop-blur-xl border-b border-slate-200/60 sticky top-0 z-30 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.04)]">
       <div className="max-w-[1500px] mx-auto p-3 md:p-4 lg:px-8">
-        <div className="bg-slate-50/50 rounded-[1.75rem] p-3 border border-white shadow-inner flex items-start gap-4">
+        <div className="bg-slate-50/50 rounded-[1.75rem] p-3 border border-white shadow-inner flex items-start gap-0.5">
           
           {/* Contenedor Principal: Input + Controles */}
-          <div className="flex-1 flex flex-col gap-3 min-w-0">
+          <div className="flex-1 flex flex-col gap-0.5 min-w-0">
             
             {/* Input de Entrada Grande */}
             <div className="relative group">
@@ -128,9 +128,9 @@ export const QuickComposer = ({
               />
               
               {/* Controles Multimedia Integrados */}
-              <div className="absolute right-4 bottom-3 flex items-center gap-2">
+              <div className="absolute right-4 bottom-3 flex items-center gap-5">
                 {showLimitError && (
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-600 rounded-xl text-[10px] font-bold animate-in fade-in slide-in-from-right-2 duration-300">
+                  <div className="flex items-center gap-5 px-3 py-1.5 bg-rose-50 text-rose-600 rounded-xl text-[10px] font-bold animate-in fade-in slide-in-from-right-2 duration-300">
                     <AlertCircle size={14} />
                     Máximo 3 imágenes
                   </div>

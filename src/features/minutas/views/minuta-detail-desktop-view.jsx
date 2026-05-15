@@ -37,8 +37,15 @@ export const MinutaDetailDesktopView = ({
   isSubmittingFinal,
   showNotes,
   setShowNotes,
+  // --- AGREGA ESTAS TRES LÍNEAS AQUÍ ---
   handleUpdateSavedEntry,
-  handleCreateEntryNote
+  handleCreateEntryNote,
+  handleUpdateEntryNote,
+  // ------------------------------------
+  handleDeleteEntryNote,
+  handleAddEntryImage,
+  handleDeleteEntryImage,
+  users
 }) => {
   return (
     <div className="flex h-full w-full flex-col bg-slate-50/50 relative">
@@ -55,7 +62,7 @@ export const MinutaDetailDesktopView = ({
             isDesktop={true}
           />
 
-          <div className="flex-1 overflow-y-auto px-10 py-6 scrollbar-thin">
+          <div className="flex-1 overflow-y-auto px-10 py-1 scrollbar-thin">
             <div className="mx-auto max-w-[1500px] flex flex-col gap-8 pb-32">
               <div className="flex items-center gap-4 bg-white/40 p-2 rounded-2xl backdrop-blur-md border border-white/60 sticky top-0 z-20">
                 <div className="flex-1 overflow-hidden">
@@ -73,6 +80,11 @@ export const MinutaDetailDesktopView = ({
                 onUpdateDraft={updateDraftEntry}
                 onUpdateSaved={handleUpdateSavedEntry}
                 onCreateNote={handleCreateEntryNote}
+                onUpdateNote={handleUpdateEntryNote}
+                onDeleteNote={handleDeleteEntryNote}
+                onAddImage={handleAddEntryImage}
+                onDeleteImage={handleDeleteEntryImage}
+                users={users}
               />
             </div>
           </div>

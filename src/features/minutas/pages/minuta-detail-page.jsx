@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getMinutaById } from '../api/minutas-api';
 import { useTareas } from '@/features/tareas/hooks/use-tareas';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
+import { useUsers } from '@/features/usuarios/hooks/use-users';
 import { notify } from '@/components/notification/adaptive-notify';
 import { useMinutaDraftStore } from '../stores/minuta-draft-store';
 
@@ -28,14 +29,20 @@ export default function MinutaDetailPage() {
 
   const [minuta, setMinuta] = useState(null);
   const [loadingMinuta, setLoadingMinuta] = useState(true);
-  const {
-    tareas, loading: loadingTareas, fetchTareas, 
-    createTarea: createTareaApi, updateTarea, createNotaGeneral, createTareaNota
+
+  // ESTA ES LA PARTE CORREGIDA (Faltaba "const { tareas, fetchTareas, loadingTareas,")
+  const { 
+    tareas, fetchTareas, loadingTareas,
+    createTarea: createTareaApi, updateTarea, createNotaGeneral, 
+    createTareaNota, updateTareaNota, deleteTareaNota,
+    addTareaImagen, deleteTareaImagen
   } = useTareas();
+
+  const { users, fetchUsers } = useUsers();
 
   const [capturing, setCapturing] = useState(false);
   const [filterClasif, setFilterClasif] = useState('TODAS');
-  const [showNotes, setShowNotes] = useState(isDesktop);
+  const [showNotes, setShowNotes] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [organizeEntry, setOrganizeEntry] = useState(null);
   const [isSubmittingFinal, setIsSubmittingFinal] = useState(false);
@@ -63,8 +70,9 @@ export default function MinutaDetailPage() {
         }
       };
       load();
+      fetchUsers();
     }
-  }, [id, initStore, navigate, fetchTareas]);
+  }, [id, initStore, navigate, fetchTareas, fetchUsers]);
 
   const allEntries = useMemo(() => [...draftEntries, ...tareas], [draftEntries, tareas]);
   
@@ -162,6 +170,49 @@ export default function MinutaDetailPage() {
     }
   };
 
+  const handleUpdateEntryNote = async (noteId, contenido) => {
+    try {
+      await updateTareaNota(noteId, { contenido });
+      await refreshEntries();
+      return true;
+    } catch {
+      notify.error('No se pudo actualizar la nota');
+      return false;
+    }
+  };
+
+  const handleDeleteEntryNote = async (noteId) => {
+    try {
+      await deleteTareaNota(noteId);
+      await refreshEntries();
+      notify.success('Nota eliminada');
+      return true;
+    } catch {
+      notify.error('No se pudo eliminar la nota');
+      return false;
+    }
+  };
+
+  const handleAddEntryImage = async (entryId, file) => {
+    try {
+      await addTareaImagen(entryId, file);
+      await refreshEntries();
+      notify.success('Imagen agregada');
+    } catch {
+      notify.error('Error al subir imagen');
+    }
+  };
+
+  const handleDeleteEntryImage = async (entryId, imagenId) => {
+    try {
+      await deleteTareaImagen(entryId, imagenId);
+      await refreshEntries();
+      notify.success('Imagen eliminada');
+    } catch {
+      notify.error('Error al eliminar imagen');
+    }
+  };
+
   if (loadingMinuta) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-50">
@@ -193,12 +244,13 @@ export default function MinutaDetailPage() {
   }
 
   const commonProps = {
-    minuta, resumen, filteredEntries, loadingTareas, filterClasif, setFilterClasif,
+    minuta, users, resumen, filteredEntries, loadingTareas, filterClasif, setFilterClasif,
     handleCapture, draftEntries, draftNotes, addDraftNote, updateDraftNote,
     removeDraftNote, updateDraftEntry, removeDraftEntry, setOrganizeEntry,
     organizeEntry, updateTarea, fetchTareas, setShowReviewModal, showReviewModal,
     handleFinalSubmit, isSubmittingFinal, showNotes, setShowNotes,
-    handleUpdateSavedEntry, handleCreateEntryNote
+    handleUpdateSavedEntry, handleCreateEntryNote, handleUpdateEntryNote, handleDeleteEntryNote,
+    handleAddEntryImage, handleDeleteEntryImage
   };
 
   // Renderizado Condicional por Breakpoint

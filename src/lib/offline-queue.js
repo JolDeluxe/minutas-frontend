@@ -10,11 +10,15 @@ export const enqueue = async (action) => {
         const snapshot = await readSnapshot(QUEUE_STORE, QUEUE_KEY);
         const current = snapshot?.data || [];
 
+        const actionId = (typeof crypto !== 'undefined' && crypto.randomUUID) 
+            ? crypto.randomUUID() 
+            : Math.random().toString(36).substring(2, 15);
+
         const updated = [
             ...current,
             {
                 ...action,
-                id: crypto.randomUUID(),
+                id: actionId,
                 createdAt: Date.now(),
                 status: 'pending',
             },

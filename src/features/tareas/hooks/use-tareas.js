@@ -7,6 +7,10 @@ import {
     deleteTarea,
     createNotaGeneral,
     createTareaNota,
+    updateTareaNota,
+    deleteTareaNota,
+    addTareaImagen,
+    deleteTareaImagen
 } from '../api/tareas-api';
 
 export const useTareas = () => {
@@ -110,6 +114,46 @@ export const useTareas = () => {
         }
     }, []);
 
+    const handleUpdateTareaNota = useCallback(async (id, data) => {
+        setSubmitting(true);
+        try { 
+            const res = await updateTareaNota(id, data);
+            return res.data;
+        } finally { 
+            setSubmitting(false); 
+        }
+    }, []);
+
+    const handleDeleteTareaNota = useCallback(async (id) => {
+        setSubmitting(true);
+        try { 
+            const res = await deleteTareaNota(id);
+            return res.data;
+        } finally { 
+            setSubmitting(false); 
+        }
+    }, []);
+
+    const handleAddTareaImagen = useCallback(async (tareaId, file) => {
+        setSubmitting(true);
+        try {
+            const res = await addTareaImagen(tareaId, file);
+            return res.data;
+        } finally {
+            setSubmitting(false);
+        }
+    }, []);
+
+    const handleDeleteTareaImagen = useCallback(async (tareaId, imagenId) => {
+        setSubmitting(true);
+        try {
+            const res = await deleteTareaImagen(tareaId, imagenId);
+            return res.data;
+        } finally {
+            setSubmitting(false);
+        }
+    }, []);
+
     useEffect(() => {
         const handleSyncComplete = () => {
             if (Object.keys(lastFetchParams.current).length > 0 || tareas.length > 0) {
@@ -132,5 +176,9 @@ export const useTareas = () => {
         deleteTarea: handleDelete,
         createNotaGeneral: handleCreateNotaGeneral,
         createTareaNota: handleCreateTareaNota,
+        updateTareaNota: handleUpdateTareaNota,
+        deleteTareaNota: handleDeleteTareaNota,
+        addTareaImagen: handleAddTareaImagen,
+        deleteTareaImagen: handleDeleteTareaImagen
     };
 };

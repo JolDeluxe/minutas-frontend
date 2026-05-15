@@ -19,6 +19,7 @@ export const createTarea = async (data) => {
     if (!hasImages) {
         // Limpiamos _localImagenes antes de enviar (aunque estén vacías)
         const clean = {
+            // eslint-disable-next-line no-unused-vars
             tareas: data.tareas.map(({ _localImagenes, ...rest }) => rest)
         };
         return await api.post('/api/tareas', clean);
@@ -97,4 +98,27 @@ export const createNotaGeneral = async (data) => {
 export const createTareaNota = async (data) => {
     // data: { contenido, tareaId }
     return await api.post('/api/tareas/notas/tarea', data);
+};
+
+export const updateTareaNota = async (id, data) => {
+    // data: { contenido }
+    return await api.put(`/api/tareas/notas/tarea/${id}`, data);
+};
+
+export const deleteTareaNota = async (id) => {
+    return await api.delete(`/api/tareas/notas/tarea/${id}`);
+};
+
+// ── Imágenes ─────────────────────────────────────────────────────────────
+
+export const addTareaImagen = async (tareaId, file) => {
+    const formData = new FormData();
+    formData.append('imagen', file);
+    return await api.post(`/api/tareas/${tareaId}/imagenes`, formData, {
+        headers: { 'Content-Type': undefined }
+    });
+};
+
+export const deleteTareaImagen = async (tareaId, imagenId) => {
+    return await api.delete(`/api/tareas/${tareaId}/imagenes/${imagenId}`);
 };

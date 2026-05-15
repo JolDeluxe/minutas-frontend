@@ -16,6 +16,11 @@ export const EntryFeed = ({
   onUpdateDraft,
   onUpdateSaved,
   onCreateNote,
+  onUpdateNote,
+  onDeleteNote,
+  onAddImage,
+  onDeleteImage,
+  users
 }) => {
   const sections = useMemo(() => {
     const drafts = [];
@@ -97,6 +102,11 @@ export const EntryFeed = ({
                   onUpdate={onUpdateDraft}
                   onUpdateSaved={onUpdateSaved}
                   onCreateNote={onCreateNote}
+                  onUpdateNote={onUpdateNote}
+                  onDeleteNote={onDeleteNote}
+                  onAddImage={onAddImage}
+                  onDeleteImage={onDeleteImage}
+                  users={users}
                 />
               </div>
             ))}
