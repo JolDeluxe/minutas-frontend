@@ -30,7 +30,7 @@ export default function MinutaDetailPage() {
   const [loadingMinuta, setLoadingMinuta] = useState(true);
   const {
     tareas, loading: loadingTareas, fetchTareas, 
-    createTarea: createTareaApi, updateTarea, createNotaGeneral 
+    createTarea: createTareaApi, updateTarea, createNotaGeneral, createTareaNota
   } = useTareas();
 
   const [capturing, setCapturing] = useState(false);
@@ -130,6 +130,38 @@ export default function MinutaDetailPage() {
     }
   };
 
+  const refreshEntries = () => fetchTareas({
+    minutaId: id,
+    todo: true,
+    page: 1,
+    limit: 100,
+    sort: JSON.stringify([{ createdAt: 'asc' }]),
+  });
+
+  const handleUpdateSavedEntry = async (entryId, payload) => {
+    try {
+      await updateTarea(entryId, payload);
+      await refreshEntries();
+      notify.success('Entrada actualizada');
+      return true;
+    } catch {
+      notify.error('No se pudo actualizar la entrada');
+      return false;
+    }
+  };
+
+  const handleCreateEntryNote = async (entryId, contenido) => {
+    try {
+      await createTareaNota({ tareaId: entryId, contenido });
+      await refreshEntries();
+      notify.success('Nota agregada');
+      return true;
+    } catch {
+      notify.error('No se pudo agregar la nota');
+      return false;
+    }
+  };
+
   if (loadingMinuta) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-50">
@@ -165,7 +197,8 @@ export default function MinutaDetailPage() {
     handleCapture, draftEntries, draftNotes, addDraftNote, updateDraftNote,
     removeDraftNote, updateDraftEntry, removeDraftEntry, setOrganizeEntry,
     organizeEntry, updateTarea, fetchTareas, setShowReviewModal, showReviewModal,
-    handleFinalSubmit, isSubmittingFinal, showNotes, setShowNotes
+    handleFinalSubmit, isSubmittingFinal, showNotes, setShowNotes,
+    handleUpdateSavedEntry, handleCreateEntryNote
   };
 
   // Renderizado Condicional por Breakpoint

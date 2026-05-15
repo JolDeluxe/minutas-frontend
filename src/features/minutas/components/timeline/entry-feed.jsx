@@ -1,11 +1,10 @@
 import { useMemo } from 'react';
 import { Icon } from '@/components/ui/z_index';
-import { getTemporalGroup } from '../../constants';
 import { EntryCard } from './entry-card';
 
 /**
- * EntryFeed — Feed de alto rendimiento con grid adaptativo.
- * Inicia en una columna y expande a dos cuando el espacio en escritorio lo permite.
+ * EntryFeed — Feed de entradas separadas por estado de guardado.
+ * Prioriza borradores pendientes para evitar confundirlos con entradas persistidas.
  */
 export const EntryFeed = ({
   entries = [],
@@ -15,20 +14,32 @@ export const EntryFeed = ({
   onOrganize,
   onRemoveDraft,
   onUpdateDraft,
+  onUpdateSaved,
+  onCreateNote,
 }) => {
-  const grouped = useMemo(() => {
-    const groups = [];
-    let currentGroup = null;
-    
+  const sections = useMemo(() => {
+    const drafts = [];
+    const saved = [];
+
     for (const entry of entries) {
-      const label = getTemporalGroup(entry.createdAt);
-      if (label !== currentGroup) {
-        groups.push({ type: 'divider', label, key: `div-${label}-${entry.id || entry.tempId}` });
-        currentGroup = label;
-      }
-      groups.push({ type: 'entry', data: entry, key: `ent-${entry.id || entry.tempId}` });
+      if (entry.tempId) drafts.push(entry);
+      else saved.push(entry);
     }
-    return groups;
+
+    return [
+      {
+        key: 'drafts',
+        label: 'Pendientes por guardar',
+        tone: 'draft',
+        entries: drafts,
+      },
+      {
+        key: 'saved',
+        label: 'Guardadas',
+        tone: 'saved',
+        entries: saved,
+      },
+    ].filter((section) => section.entries.length > 0);
   }, [entries]);
 
   if (loading && entries.length === 0) {
@@ -41,7 +52,7 @@ export const EntryFeed = ({
     );
   }
 
-  if (grouped.length === 0) {
+  if (sections.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-32 text-center animate-in fade-in duration-700">
         <div className="w-24 h-24 bg-white rounded-4xl shadow-xl shadow-slate-200/50 flex items-center justify-center mb-6 border border-slate-100">
@@ -58,32 +69,40 @@ export const EntryFeed = ({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4 md:gap-6 pb-40 px-1">
-      {grouped.map((item) => {
-        if (item.type === 'divider') {
-          return (
-            <div key={item.key} className="col-span-full flex items-center gap-6 py-6 first:pt-0">
-              <div className="h-px bg-slate-200 flex-1" />
-              <span className="text-[11px] font-black uppercase tracking-[0.25em] text-slate-400 bg-transparent px-4">
-                {item.label}
-              </span>
-              <div className="h-px bg-slate-200 flex-1" />
+    <div className="flex flex-col gap-8 pb-40 px-1">
+      {sections.map((section) => (
+        <section key={section.key} className="flex flex-col gap-4">
+          <div className="flex items-center gap-4">
+            <div className="h-px flex-1 bg-slate-200" />
+            <div
+              className={
+                section.tone === 'draft'
+                  ? 'rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-emerald-700 shadow-sm'
+                  : 'rounded-full border border-slate-200 bg-white px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-slate-400 shadow-sm'
+              }
+            >
+              {section.label} ({section.entries.length})
             </div>
-          );
-        }
-        
-        return (
-          <div key={item.key} className="animate-in fade-in slide-in-from-bottom-6 duration-500 ease-out">
-            <EntryCard
-              entry={item.data}
-              onOrganize={onOrganize}
-              meetingMode={meetingMode}
-              onRemove={onRemoveDraft}
-              onUpdate={onUpdateDraft}
-            />
+            <div className="h-px flex-1 bg-slate-200" />
           </div>
-        );
-      })}
+
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,34rem),1fr))] gap-4 md:gap-6">
+            {section.entries.map((entry) => (
+              <div key={`ent-${entry.id || entry.tempId}`} className="animate-in fade-in slide-in-from-bottom-6 duration-500 ease-out">
+                <EntryCard
+                  entry={entry}
+                  onOrganize={onOrganize}
+                  meetingMode={meetingMode}
+                  onRemove={onRemoveDraft}
+                  onUpdate={onUpdateDraft}
+                  onUpdateSaved={onUpdateSaved}
+                  onCreateNote={onCreateNote}
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   );
 };

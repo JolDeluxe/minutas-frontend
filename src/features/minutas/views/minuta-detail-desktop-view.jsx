@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon, Button } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/z_index';
 import { MinutaContextPanel } from '../components/context/minuta-context-panel';
 import { QuickComposer } from '../components/composer/quick-composer';
 import { TimelineFilters } from '../components/timeline/timeline-filters';
@@ -36,7 +36,9 @@ export const MinutaDetailDesktopView = ({
   handleFinalSubmit,
   isSubmittingFinal,
   showNotes,
-  setShowNotes
+  setShowNotes,
+  handleUpdateSavedEntry,
+  handleCreateEntryNote
 }) => {
   return (
     <div className="flex h-full w-full flex-col bg-slate-50/50 relative">
@@ -69,24 +71,32 @@ export const MinutaDetailDesktopView = ({
                 onOrganize={setOrganizeEntry}
                 onRemoveDraft={removeDraftEntry}
                 onUpdateDraft={updateDraftEntry}
+                onUpdateSaved={handleUpdateSavedEntry}
+                onCreateNote={handleCreateEntryNote}
               />
             </div>
           </div>
         </main>
 
-        {/* Lateral Derecho: Notas Post-it */}
+        {/* Notas Post-it como overlay para no cambiar el layout del workspace */}
         {showNotes && (
-          <div className="shrink-0 w-[400px] border-l border-slate-200/60 bg-white/80 backdrop-blur-3xl transition-all duration-500">
-            <StickyNotesBoard
-              notas={[...draftNotes, ...(minuta.notasGenerales || [])]}
-              minutaId={minuta.id}
-              onCreateNota={(data) => addDraftNote(data.contenido)}
-              onUpdateNota={updateDraftNote}
-              onDeleteNota={removeDraftNote}
-              onClose={() => setShowNotes(false)}
-              isDrawer={false}
+          <>
+            <div
+              className="absolute inset-0 z-40 bg-slate-900/10 backdrop-blur-[1px] animate-in fade-in duration-200"
+              onClick={() => setShowNotes(false)}
             />
-          </div>
+            <div className="absolute right-5 top-5 bottom-5 z-50 w-[min(430px,calc(100%-2.5rem))] overflow-hidden rounded-[2rem] border border-amber-100 bg-white shadow-2xl shadow-slate-900/20 animate-in slide-in-from-right-4 fade-in duration-300">
+              <StickyNotesBoard
+                notas={[...draftNotes, ...(minuta.notasGenerales || [])]}
+                minutaId={minuta.id}
+                onCreateNota={(data) => addDraftNote(data.contenido)}
+                onUpdateNota={updateDraftNote}
+                onDeleteNota={removeDraftNote}
+                onClose={() => setShowNotes(false)}
+                isDrawer={false}
+              />
+            </div>
+          </>
         )}
 
         {/* Botones Flotantes */}

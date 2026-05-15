@@ -36,7 +36,9 @@ export const MinutaDetailMobileView = ({
   handleFinalSubmit,
   isSubmittingFinal,
   showNotes,
-  setShowNotes
+  setShowNotes,
+  handleUpdateSavedEntry,
+  handleCreateEntryNote
 }) => {
   return (
     <div className="flex h-full w-full flex-col bg-slate-50/50 relative overflow-hidden">
@@ -62,6 +64,8 @@ export const MinutaDetailMobileView = ({
           onOrganize={setOrganizeEntry}
           onRemoveDraft={removeDraftEntry}
           onUpdateDraft={updateDraftEntry}
+          onUpdateSaved={handleUpdateSavedEntry}
+          onCreateNote={handleCreateEntryNote}
         />
       </main>
 

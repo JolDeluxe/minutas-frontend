@@ -97,13 +97,18 @@ export const MinutasMobile = ({
             />
 
             {viewMode === 'cards' ? (
-                <div className={cn('flex flex-col gap-3 pb-24', hasPaginator && 'pb-36')}>
+                <div
+                    className={cn(
+                        'grid grid-cols-1 min-[520px]:grid-cols-2 min-[860px]:grid-cols-3 gap-3 pb-24',
+                        hasPaginator && 'pb-36'
+                    )}
+                >
                     {loading ? (
-                        Array.from({ length: 4 }).map((_, i) => (
+                        Array.from({ length: 6 }).map((_, i) => (
                             <div key={i} className="bg-white border border-slate-200 rounded-2xl h-32 animate-pulse" />
                         ))
                     ) : !hasContent ? (
-                        <div className="bg-white rounded-2xl p-6 text-center border border-slate-200 mt-4 shadow-sm">
+                        <div className="col-span-full bg-white rounded-2xl p-6 text-center border border-slate-200 mt-4 shadow-sm">
                             <Icon name="event_note" className="text-slate-200 text-5xl mb-3" />
                             <p className="text-slate-500 text-sm font-medium">No se encontraron minutas.</p>
                         </div>
