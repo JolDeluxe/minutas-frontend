@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 
 export const useUIStore = create(
   persist(
-    (set, get) => ({
+    (set) => ({
       sidebarExpanded: true,
       mobileMenuOpen: false,
 

@@ -26,12 +26,13 @@ registerRoute(
     })
 );
 
-// ── API → NetworkFirst ────────────────────────────────────────────────────────
+// ── API → NetworkFirst (Solo GETs) ───────────────────────────────────────────
 registerRoute(
-    ({ url }) => url.pathname.startsWith('/api/'),
+    ({ url, request }) => 
+        url.pathname.startsWith('/api/') && request.method === 'GET',
     new NetworkFirst({
         cacheName: 'cuadra-api-v1',
-        networkTimeoutSeconds: 5,
+        networkTimeoutSeconds: 7, // Aumentado un poco para redes móviles inestables
         plugins: [
             new CacheableResponsePlugin({ statuses: [0, 200] }),
             new ExpirationPlugin({ maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 }),
@@ -87,27 +88,27 @@ self.addEventListener('push', (event) => {
     );
 });
 
-self.addEventListener('notificationclick', (event) => {
-    event.notification.close();
+// self.addEventListener('notificationclick', (event) => {
+//     event.notification.close();
 
-    const targetUrl = event.notification.data?.url || '/';
+//     const targetUrl = event.notification.data?.url || '/';
 
-    event.waitUntil(
-        clients
-            .matchAll({ type: 'window', includeUncontrolled: true })
-            .then((windowClients) => {
-                // Si ya hay una ventana con esa ruta, enfocamos en vez de abrir nueva
-                for (const client of windowClients) {
-                    const clientPath = new URL(client.url).pathname;
-                    const targetPath = targetUrl.startsWith('http')
-                        ? new URL(targetUrl).pathname
-                        : targetUrl;
+//     event.waitUntil(
+//         clients
+//             .matchAll({ type: 'window', includeUncontrolled: true })
+//             .then((windowClients) => {
+//                 // Si ya hay una ventana con esa ruta, enfocamos en vez de abrir nueva
+//                 for (const client of windowClients) {
+//                     const clientPath = new URL(client.url).pathname;
+//                     const targetPath = targetUrl.startsWith('http')
+//                         ? new URL(targetUrl).pathname
+//                         : targetUrl;
 
-                    if (clientPath === targetPath && 'focus' in client) {
-                        return client.focus();
-                    }
-                }
-                return clients.openWindow(targetUrl);
-            })
-    );
-});
+//                     if (clientPath === targetPath && 'focus' in client) {
+//                         return client.focus();
+//                     }
+//                 }
+//                 return clients.openWindow(targetUrl);
+//             })
+//     );
+// });

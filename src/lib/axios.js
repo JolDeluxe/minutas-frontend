@@ -25,36 +25,36 @@ const saveToOfflineQueue = async (requestConfig) => {
   });
 };
 
-const processOfflineQueue = async () => {
-  const db = await openDB();
-  const tx = db.transaction(STORE_NAME, 'readwrite');
-  const store = tx.objectStore(STORE_NAME);
-  const request = store.getAll();
+// const processOfflineQueue = async () => {
+//   const db = await openDB();
+//   const tx = db.transaction(STORE_NAME, 'readwrite');
+//   const store = tx.objectStore(STORE_NAME);
+//   const request = store.getAll();
 
-  request.onsuccess = async () => {
-    const requests = request.result;
-    if (requests.length === 0) return;
+//   request.onsuccess = async () => {
+//     const requests = request.result;
+//     if (requests.length === 0) return;
 
-    console.log(`🔄 Sincronizando ${requests.length} peticiones encoladas...`);
-    let syncSuccessful = false;
+//     console.log(`🔄 Sincronizando ${requests.length} peticiones encoladas...`);
+//     let syncSuccessful = false;
 
-    for (const req of requests) {
-      try {
-        await api({ ...req, _isRetry: true });
-        syncSuccessful = true;
-      } catch (err) {
-        console.error('Fallo al sincronizar petición encolada:', err);
-      }
-    }
+//     for (const req of requests) {
+//       try {
+//         await api({ ...req, _isRetry: true });
+//         syncSuccessful = true;
+//       } catch (err) {
+//         console.error('Fallo al sincronizar petición encolada:', err);
+//       }
+//     }
     
-    store.clear();
+//     store.clear();
 
-    // Puente hacia React: Avisar que la BD local se vació y el backend tiene datos nuevos
-    if (syncSuccessful) {
-      window.dispatchEvent(new CustomEvent('cuadra-sync-complete'));
-    }
-  };
-};
+//     // Puente hacia React: Avisar que la BD local se vació y el backend tiene datos nuevos
+//     if (syncSuccessful) {
+//       window.dispatchEvent(new CustomEvent('cuadra-sync-complete'));
+//     }
+//   };
+// };
 // ------------------------------------------------------------------
 
 const api = axios.create({
