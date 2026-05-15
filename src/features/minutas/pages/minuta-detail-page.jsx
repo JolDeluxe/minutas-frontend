@@ -33,7 +33,7 @@ export default function MinutaDetailPage() {
   // ESTA ES LA PARTE CORREGIDA (Faltaba "const { tareas, fetchTareas, loadingTareas,")
   const { 
     tareas, fetchTareas, loadingTareas,
-    createTarea: createTareaApi, updateTarea, createNotaGeneral, 
+    createTarea: createTareaApi, updateTarea, changeStatus: changeTareaStatus, createNotaGeneral, 
     createTareaNota, updateTareaNota, deleteTareaNota,
     addTareaImagen, deleteTareaImagen
   } = useTareas();
@@ -79,7 +79,7 @@ export default function MinutaDetailPage() {
   const filteredEntries = useMemo(() => {
     if (filterClasif === 'TODAS') return allEntries;
     if (filterClasif === 'SIN_CLASIFICAR') return allEntries.filter(t => !t.clasificacion);
-    if (filterClasif === 'SIN_ORGANIZAR') return allEntries.filter(t => !t.formalizada);
+    if (filterClasif === 'SIN_ORGANIZAR') return allEntries.filter(t => !t.formalizada && !t.requiereSeguimiento);
     return allEntries.filter(t => t.clasificacion === filterClasif);
   }, [allEntries, filterClasif]);
 
@@ -93,8 +93,8 @@ export default function MinutaDetailPage() {
   }, [allEntries]);
 
   const showZeroState = useMemo(() => {
-    return !loadingMinuta && initialized && allEntries.length === 0 && !capturing;
-  }, [loadingMinuta, initialized, allEntries.length, capturing]);
+    return !loadingMinuta && !loadingTareas && initialized && allEntries.length === 0 && !capturing;
+  }, [loadingMinuta, loadingTareas, initialized, allEntries.length, capturing]);
 
   const handleCapture = (payload) => {
     payload.tareas.forEach(t => addDraftEntry(t));
@@ -125,11 +125,11 @@ export default function MinutaDetailPage() {
       
       const res = await getMinutaById(id);
       setMinuta(res.data);
-      fetchTareas({ minutaId: id, todo: true, page: 1, limit: 100, sort: JSON.stringify([{ createdAt: 'asc' }]) });
+      refreshEntries();
       
       // Pequeño delay de cortesía para asegurar que el listado refrescado traiga las relaciones nuevas
       setTimeout(() => {
-        fetchTareas({ minutaId: id, todo: true, page: 1, limit: 100, sort: JSON.stringify([{ createdAt: 'asc' }]) });
+        refreshEntries();
       }, 800);
     } catch {
       notify.error('Error al sincronizar');
@@ -154,6 +154,33 @@ export default function MinutaDetailPage() {
       return true;
     } catch {
       notify.error('No se pudo actualizar la entrada');
+      return false;
+    }
+  };
+
+  const handleOrganizeSave = async (entryId, payload) => {
+    try {
+      if (organizeEntry?.tempId) {
+        updateDraftEntry(organizeEntry.tempId, payload);
+        notify.success('Entrada organizada (Borrador)');
+      } else {
+        await handleUpdateSavedEntry(entryId, payload);
+      }
+      setOrganizeEntry(null);
+    } catch (error) {
+      console.error('Error al organizar:', error);
+      notify.error('No se pudo organizar la entrada');
+    }
+  };
+
+  const handleStatusChange = async (entryId, payload) => {
+    try {
+      await changeTareaStatus(entryId, payload);
+      await refreshEntries();
+      notify.success('Estado de la tarea actualizado');
+      return true;
+    } catch {
+      notify.error('No se pudo actualizar el estado de la tarea');
       return false;
     }
   };
@@ -247,10 +274,10 @@ export default function MinutaDetailPage() {
     minuta, users, resumen, filteredEntries, loadingTareas, filterClasif, setFilterClasif,
     handleCapture, draftEntries, draftNotes, addDraftNote, updateDraftNote,
     removeDraftNote, updateDraftEntry, removeDraftEntry, setOrganizeEntry,
-    organizeEntry, updateTarea, fetchTareas, setShowReviewModal, showReviewModal,
+    organizeEntry, handleOrganizeSave, updateTarea, changeTareaStatus: handleStatusChange, fetchTareas, refreshEntries, setShowReviewModal, showReviewModal,
     handleFinalSubmit, isSubmittingFinal, showNotes, setShowNotes,
-    handleUpdateSavedEntry, handleCreateEntryNote, handleUpdateEntryNote, handleDeleteEntryNote,
-    handleAddEntryImage, handleDeleteEntryImage
+    handleUpdateSavedEntry, handleCreateEntryNote, handleUpdateEntryNote,
+    handleDeleteEntryNote, handleAddEntryImage, handleDeleteEntryImage
   };
 
   // Renderizado Condicional por Breakpoint

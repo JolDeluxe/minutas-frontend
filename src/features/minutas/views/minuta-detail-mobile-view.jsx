@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/z_index.html';
 import { MinutaContextPanel } from '../components/context/minuta-context-panel';
 import { TimelineFilters } from '../components/timeline/timeline-filters';
 import { EntryFeed } from '../components/timeline/entry-feed';
@@ -29,8 +29,7 @@ export const MinutaDetailMobileView = ({
   removeDraftEntry,
   setOrganizeEntry,
   organizeEntry,
-  updateTarea,
-  fetchTareas,
+  handleOrganizeSave,
   setShowReviewModal,
   showReviewModal,
   handleFinalSubmit,
@@ -43,6 +42,7 @@ export const MinutaDetailMobileView = ({
   handleDeleteEntryNote,
   handleAddEntryImage,
   handleDeleteEntryImage,
+  changeTareaStatus,
   users
 }) => {
   return (
@@ -75,6 +75,7 @@ export const MinutaDetailMobileView = ({
           onDeleteNote={handleDeleteEntryNote}
           onAddImage={handleAddEntryImage}
           onDeleteImage={handleDeleteEntryImage}
+          onChangeStatus={changeTareaStatus}
           users={users}
         />
       </main>
@@ -145,15 +146,7 @@ export const MinutaDetailMobileView = ({
           isOpen={Boolean(organizeEntry)}
           onClose={() => setOrganizeEntry(null)}
           entry={organizeEntry}
-          onSave={async (id, payload) => {
-            if (organizeEntry.tempId) {
-              updateDraftEntry(organizeEntry.tempId, payload);
-            } else {
-              await updateTarea(id, payload);
-              fetchTareas({ minutaId: id, page: 1, limit: 100, sort: JSON.stringify([{ createdAt: 'asc' }]) });
-            }
-            setOrganizeEntry(null);
-          }}
+          onSave={handleOrganizeSave}
         />
       )}
     </div>

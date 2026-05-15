@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/z_index.html';
 import { MinutaContextPanel } from '../components/context/minuta-context-panel';
 import { QuickComposer } from '../components/composer/quick-composer';
 import { TimelineFilters } from '../components/timeline/timeline-filters';
@@ -29,22 +29,20 @@ export const MinutaDetailDesktopView = ({
   removeDraftEntry,
   setOrganizeEntry,
   organizeEntry,
-  updateTarea,
-  fetchTareas,
+  handleOrganizeSave,
   setShowReviewModal,
   showReviewModal,
   handleFinalSubmit,
   isSubmittingFinal,
   showNotes,
   setShowNotes,
-  // --- AGREGA ESTAS TRES LÍNEAS AQUÍ ---
   handleUpdateSavedEntry,
   handleCreateEntryNote,
   handleUpdateEntryNote,
-  // ------------------------------------
   handleDeleteEntryNote,
   handleAddEntryImage,
   handleDeleteEntryImage,
+  changeTareaStatus,
   users
 }) => {
   return (
@@ -84,6 +82,7 @@ export const MinutaDetailDesktopView = ({
                 onDeleteNote={handleDeleteEntryNote}
                 onAddImage={handleAddEntryImage}
                 onDeleteImage={handleDeleteEntryImage}
+                onChangeStatus={changeTareaStatus}
                 users={users}
               />
             </div>
@@ -97,7 +96,7 @@ export const MinutaDetailDesktopView = ({
               className="absolute inset-0 z-40 bg-slate-900/10 backdrop-blur-[1px] animate-in fade-in duration-200"
               onClick={() => setShowNotes(false)}
             />
-            <div className="absolute right-5 top-5 bottom-5 z-50 w-[min(430px,calc(100%-2.5rem))] overflow-hidden rounded-[2rem] border border-amber-100 bg-white shadow-2xl shadow-slate-900/20 animate-in slide-in-from-right-4 fade-in duration-300">
+            <div className="absolute right-5 top-5 bottom-5 z-50 w-[min(430px,calc(100%-2.5rem))] overflow-hidden rounded-4xl border border-amber-100 bg-white shadow-2xl shadow-slate-900/20 animate-in slide-in-from-right-4 fade-in duration-300">
               <StickyNotesBoard
                 notas={[...draftNotes, ...(minuta.notasGenerales || [])]}
                 minutaId={minuta.id}
@@ -149,15 +148,7 @@ export const MinutaDetailDesktopView = ({
           isOpen={Boolean(organizeEntry)}
           onClose={() => setOrganizeEntry(null)}
           entry={organizeEntry}
-          onSave={async (id, payload) => {
-            if (organizeEntry.tempId) {
-              updateDraftEntry(organizeEntry.tempId, payload);
-            } else {
-              await updateTarea(id, payload);
-              fetchTareas({ minutaId: minuta.id, page: 1, limit: 100, sort: JSON.stringify([{ createdAt: 'asc' }]) });
-            }
-            setOrganizeEntry(null);
-          }}
+          onSave={handleOrganizeSave}
         />
       )}
     </div>

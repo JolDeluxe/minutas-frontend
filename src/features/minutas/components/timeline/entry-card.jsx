@@ -24,6 +24,7 @@ import {
 import { LineIconSelector } from '../icons/line-icons';
 import { TareaStatusBadge } from '../../../tareas/components/common/tarea-status-badge';
 import { formatFecha, isPastDate } from '@/lib/date';
+import { useAuthStore } from '@/stores/auth-store';
 
 
 /**
@@ -261,6 +262,7 @@ export const EntryCard = ({
   onDeleteNote,
   onAddImage,
   onDeleteImage,
+  onChangeStatus,
   users = []
 }) => {
   const isDraft = Boolean(entry.tempId);
@@ -278,6 +280,31 @@ export const EntryCard = ({
   });
   const [savingEdit, setSavingEdit] = useState(false);
   const [showNotesPanel, setShowNotesPanel] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+  const { user } = useAuthStore();
+  const currentUser = user?.data || user;
+  const currentUserId = currentUser?.id;
+  const userRole = currentUser?.rol || 'GERENCIA';
+  const isJefe = userRole === 'JEFE' || userRole === 'GERENCIA';
+
+  const estadoActual = entry.estado || entry.estadoOperativo || 'PENDIENTE';
+  const isAsignado = entry.asignaciones?.some(asig => asig.usuarioId === currentUserId);
+  const isFormalizada = entry.formalizada;
+
+  const handleUpdateStatus = async (newStatus) => {
+    if (isUpdatingStatus || !onUpdateSaved) return;
+    setIsUpdatingStatus(true);
+    try {
+      if (onChangeStatus) {
+        await onChangeStatus(entry.id, { estado: newStatus });
+      } else {
+        await onUpdateSaved(entry.id, { estado: newStatus });
+      }
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
   const [isExpanded, setIsExpanded] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(null);
   const textareaRef = useRef(null);
@@ -386,7 +413,7 @@ export const EntryCard = ({
     <>
       <div
         className={cn(
-          'group relative flex flex-col bg-white transition-all duration-500 rounded-[1.35rem] border border-slate-100 overflow-hidden',
+          'group relative flex flex-col bg-white transition-all duration-500 rounded-[1.35rem] border border-slate-100',
           isExpanded ? 'shadow-xl ring-2 ring-slate-200' : 'shadow-sm hover:shadow-md',
           isDraft ? 'shadow-lg ring-1 ring-emerald-500/10' : '',
           isEditing && 'ring-2 ring-marca-primario/10',
@@ -396,7 +423,7 @@ export const EntryCard = ({
         {/* Etiqueta superior de tipo (Tarea/Seguimiento) - FULL WIDTH HEADER */}
         {!isDraft && (entry.formalizada || entry.requiereSeguimiento) && (
           <div className={cn(
-            "w-full py-0.5 text-center text-[6px] font-black uppercase tracking-[0.2em] text-white shadow-inner",
+            "w-full py-0.5 text-center text-[6px] font-black uppercase tracking-[0.2em] text-white shadow-inner rounded-t-[1.35rem]",
             entry.formalizada ? "bg-rose-400" : "bg-indigo-400"
           )}>
             {entry.formalizada ? "TAREA" : "SEGUIMIENTO"}
@@ -786,6 +813,7 @@ export const EntryCard = ({
                 )}
               </div>
             )}
+          </div>
 
             {/* Gestión de Imágenes para Borradores */}
             {isDraft && (
@@ -856,24 +884,11 @@ export const EntryCard = ({
                     </div>
                   </div>
                 )}
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Área Responsable</span>
-                    <span className="text-xs font-bold text-slate-700">{AREA_MAP[entry.area] || entry.area}</span>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Línea de Negocio</span>
-                    <span className="text-xs font-bold text-slate-700">{lineaLabel}</span>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
-
-          {/* Footer */}
+        )}
+      {/* Footer se queda adentro del contenedor con padding para que no se corte */}
           {!isDraft && (
-             <div className="mt-1.5 flex items-center justify-between gap-2 border-t border-slate-50 pt-1.5 sm:mt-2 sm:pt-2">
+             <div className="mt-1.5 flex items-center justify-between gap-2 border-t border-slate-50 pt-1.5 sm:mt-2 sm:pt-2 pb-1">
                 <div className="flex items-center gap-1.5">
                   {!isClosed && (
                     <button
@@ -895,6 +910,52 @@ export const EntryCard = ({
                     </button>
                   )}
                 </div>
+
+                {/* ACCIÓN PRIMARIA (Botón Azul en el centro del Footer) */}
+                {isFormalizada && !isDraft && (
+                  <div className="flex flex-1 justify-center px-2">
+                    {estadoActual === 'PENDIENTE' && isAsignado && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleUpdateStatus('EN_PROGRESO'); }}
+                        disabled={isUpdatingStatus}
+                        className="flex h-8 items-center gap-2 rounded-xl bg-blue-600 px-6 text-[9px] font-black uppercase tracking-[0.15em] text-white shadow-lg shadow-blue-600/30 transition-all hover:bg-blue-500 active:scale-95 disabled:opacity-50"
+                      >
+                        <Icon name="play_circle" size="16px" />
+                        Iniciar
+                      </button>
+                    )}
+                    {estadoActual === 'EN_PROGRESO' && isAsignado && (
+                      <button
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          handleUpdateStatus((isJefe && isAsignado) ? 'CERRADO' : 'COMPLETADO'); 
+                        }}
+                        disabled={isUpdatingStatus}
+                        className="flex h-8 items-center gap-2 rounded-xl bg-blue-600 px-6 text-[9px] font-black uppercase tracking-[0.15em] text-white shadow-lg shadow-blue-600/30 transition-all hover:bg-blue-500 active:scale-95 disabled:opacity-50"
+                      >
+                        <Icon name={(isJefe && isAsignado) ? "verified" : "check_circle"} size="16px" />
+                        {(isJefe && isAsignado) ? "Terminar" : "Completar"}
+                      </button>
+                    )}
+                    {estadoActual === 'COMPLETADO' && isJefe && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleUpdateStatus('CERRADO'); }}
+                        disabled={isUpdatingStatus}
+                        className="flex h-8 items-center gap-2 rounded-xl bg-slate-900 px-6 text-[9px] font-black uppercase tracking-[0.15em] text-white shadow-lg shadow-slate-900/30 transition-all hover:bg-slate-800 active:scale-95 disabled:opacity-50"
+                      >
+                        <Icon name="verified" size="16px" className="text-emerald-400" />
+                        Aprobar
+                      </button>
+                    )}
+                    {estadoActual === 'CERRADO' && (
+                       <div className="flex items-center gap-1.5 text-emerald-600">
+                         <Icon name="check_circle" size="14px" />
+                         <span className="text-[9px] font-black uppercase tracking-widest">Cerrado</span>
+                       </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex items-center gap-1.5">
                 <button
                   onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
@@ -917,32 +978,29 @@ export const EntryCard = ({
                       <span className="hidden sm:inline">Editar</span>
                     </button>
 
-                    {(() => {
-                      const isOrganized = entry.formalizada || entry.requiereSeguimiento;
-                      return (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); onOrganize(entry); }}
-                          className={cn(
-                            "flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[7px] font-black uppercase tracking-widest transition-all active:scale-95 sm:px-3 sm:text-[8px] border shadow-sm",
-                            isOrganized 
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100" 
-                              : "bg-slate-50 text-slate-400 border-slate-100 hover:border-slate-900 hover:text-slate-900"
-                          )}
-                        >
-                          <Settings2 size={12} /> 
-                          <span className="hidden sm:inline">{isOrganized ? "ORGANIZADO" : "ORGANIZAR"}</span>
-                        </button>
-                      );
-                    })()}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onOrganize(entry); }}
+                      className={cn(
+                        "flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[7px] font-black uppercase tracking-widest transition-all active:scale-95 sm:px-3 sm:text-[8px] border shadow-sm",
+                        (entry.formalizada || entry.requiereSeguimiento)
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100" 
+                          : "bg-slate-50 text-slate-400 border-slate-100 hover:border-slate-900 hover:text-slate-900"
+                      )}
+                    >
+                     <Settings2 size={12} /> 
+                      <span className="hidden sm:inline">{(entry.formalizada || entry.requiereSeguimiento) ? "ORGANIZADO" : "ORGANIZAR"}</span>
+                    </button>
                   </>
                 )}
                 </div>
-             </div>
-          )}
-        </div>
-      </div>
-    </div>
+              </div>
+            )}
+            
+          </div> {/* CIERRA: Columna Principal (Textos y Footer) */}
+        </div>   {/* CIERRA: Grid de la Tarjeta */}
+      </div>     {/* CIERRA: Tarjeta Blanca (Fondo general) */}
 
+      {/* Modal de Notas */}
       {showNotesPanel && !isDraft && (
         <EntryNotesPostIt
           entry={{ ...entry, readOnly: isClosed }}
