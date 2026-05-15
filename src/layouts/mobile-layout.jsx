@@ -7,8 +7,8 @@ import { useAuthStore } from '@/stores/auth-store';
 import { getModulesByRole } from '@/config/modules-config';
 
 /**
- * MobileLayout — Layout institucional para móviles.
- * Gestiona el Header y el BottomNav como anclas persistentes.
+ * MobileLayout — Layout Institucional Reforzado.
+ * Actúa como un contenedor rígido (App-like) que no "baila" en móvil.
  */
 export const MobileLayout = () => {
   const { user } = useAuthStore();
@@ -20,28 +20,29 @@ export const MobileLayout = () => {
   const showSidebar = userModules.length > 5;
 
   return (
-    <div className="h-screen w-full flex flex-col bg-cuadra-arena overflow-hidden relative">
+    /* h-[100dvh] asegura que el layout siempre ocupe el área visible real */
+    /* fixed inset-0 + overscroll-none evita que la app "baile" o rebote */
+    <div className="fixed inset-0 h-[100dvh] w-full flex flex-col bg-cuadra-arena overflow-hidden overscroll-none select-none">
       
-      {/* HEADER: No es sticky, fluye con el contenido o se queda arriba según scroll del main */}
-      <div className="shrink-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200 shadow-sm relative">
+      {/* HEADER: Z-40 para estar sobre el contenido pero bajo modales críticos */}
+      <header className="shrink-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200 shadow-sm">
         <MobileHeader showBurger={showSidebar} />
-      </div>
+      </header>
 
-      {/* SIDEBAR MÓVIL (Condicional: > 5 módulos) */}
+      {/* SIDEBAR MÓVIL: Se gestiona mediante el UI Store */}
       {showSidebar && <MobileSidebar userModules={userModules} />}
       
-      {/* MAIN: Area de scroll principal */}
-      <main className="flex-1 overflow-y-auto relative z-10 custom-scrollbar pb-24">
+      {/* MAIN: Área de scroll independiente y contenida */}
+      <main className="flex-1 overflow-y-auto overscroll-contain relative z-10 custom-scrollbar focus:outline-none">
         <Outlet />
       </main>
 
-      {/* BOTTOM NAV: Z-[100] para estar SIEMPRE sobre cualquier drawer o sheet del contenido */}
+      {/* BOTTOM NAV: Anclado físicamente al final del flexbox */}
       {showBottomNav && (
-        <footer className="sticky bottom-0 z-[100] bg-white border-t border-slate-200">
+        <footer className="shrink-0 z-40 bg-white border-t border-slate-200 pb-[env(safe-area-inset-bottom)]">
           <MobileBottomNav userModules={userModules} />
         </footer>
       )}
-
     </div>
   );
 };
