@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon } from '@/components/ui/z_index.html';
+import { Icon } from '@/components/ui/z_index';
 import { MinutaContextPanel } from '../components/context/minuta-context-panel';
 import { QuickComposer } from '../components/composer/quick-composer';
 import { TimelineFilters } from '../components/timeline/timeline-filters';

@@ -4,7 +4,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useTareas } from '../hooks/use-tareas';
 import { TareasTable } from '../components/historico/tareas-table';
 import { TareaDetailDrawer } from '../components/common/tarea-detail-drawer';
-import { Icon, Button, Skeleton } from '@/components/ui/z_index.html';
+import { Icon, Button, Skeleton } from '@/components/ui/z_index';
 import { notify } from '@/components/notification/adaptive-notify';
 
 export default function PorAprobarPage() {
