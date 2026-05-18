@@ -84,13 +84,43 @@ export default function MinutaDetailPage() {
   }, [allEntries, filterClasif]);
 
   const resumen = useMemo(() => {
+    // Usar resumen del backend si existe (incluye atrasadas, porClasificacion, porPrioridad)
+    const backendResumen = minuta?.resumen || {};
+    
     const conceptual = {};
+    const porClasificacion = {};
+    const porPrioridad = {};
+    let atrasadas = 0;
+    const now = new Date();
+
     allEntries.forEach(t => {
       const e = t.estadoConceptual || 'CAPTURADO';
       conceptual[e] = (conceptual[e] || 0) + 1;
+      
+      if (t.clasificacion) {
+        porClasificacion[t.clasificacion] = (porClasificacion[t.clasificacion] || 0) + 1;
+      }
+      if (t.prioridad) {
+        porPrioridad[t.prioridad] = (porPrioridad[t.prioridad] || 0) + 1;
+      }
+      if (
+        t.fechaVencimiento &&
+        new Date(t.fechaVencimiento) < now &&
+        t.estado !== 'COMPLETADO' &&
+        t.estado !== 'CERRADO'
+      ) {
+        atrasadas++;
+      }
     });
-    return { totalEntradas: allEntries.length, conceptual };
-  }, [allEntries]);
+    
+    return { 
+      totalEntradas: allEntries.length, 
+      conceptual,
+      atrasadas: backendResumen.atrasadas ?? atrasadas,
+      porClasificacion: Object.keys(porClasificacion).length > 0 ? porClasificacion : (backendResumen.porClasificacion || {}),
+      porPrioridad: Object.keys(porPrioridad).length > 0 ? porPrioridad : (backendResumen.porPrioridad || {}),
+    };
+  }, [allEntries, minuta?.resumen]);
 
   const showZeroState = useMemo(() => {
     return !loadingMinuta && !loadingTareas && initialized && allEntries.length === 0 && !capturing;

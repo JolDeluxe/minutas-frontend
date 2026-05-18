@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { notify } from '@/components/notification/adaptive-notify';
@@ -7,7 +7,7 @@ import { MinutasDesktop } from '../views/minutas-desktop';
 import { MinutasMobile } from '../views/minutas-mobile';
 import { MinutaFormModal } from '../components/minuta-form-modal';
 
-const LIMIT = 10;
+const LIMIT = 50; // Más alto para que el agrupamiento por fecha funcione bien
 
 const MinutasPage = () => {
     const navigate = useNavigate();
@@ -16,6 +16,7 @@ const MinutasPage = () => {
     const {
         minutas,
         meta,
+        navegacionEjecutiva,
         loading,
         submitting,
         fetchMinutas,
@@ -25,8 +26,19 @@ const MinutasPage = () => {
 
     const [query, setQuery] = useState('');
     const [page, setPage] = useState(1);
-    const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' });
+    const [sortConfig, setSortConfig] = useState({ key: 'fecha', direction: 'desc' });
     
+    // Filtros de periodo rápido
+    const [periodo, setPeriodo] = useState('all');
+    const [year, setYear] = useState(null);
+    const [month, setMonth] = useState(null);
+    
+    // DEFAULT: ACTIVAS — el dueño llega y ve las que importan
+    const [estadoFilter, setEstadoFilter] = useState('ACTIVA');
+    
+    // Quick Navigate — fecha seleccionada en el calendario
+    const [selectedDate, setSelectedDate] = useState(null);
+
     const [filters, setFilters] = useState({
         estado: '',
         lineaDefault: '',
@@ -45,19 +57,92 @@ const MinutasPage = () => {
         if (sortConfig?.key) {
             params.sort = JSON.stringify([{ [sortConfig.key]: sortConfig.direction }]);
         }
-        if (filters.estado) params.estado = filters.estado;
+        
+        // Estado filter (ACTIVA/CERRADA/TODAS) — prioridad sobre filtro avanzado
+        if (estadoFilter) {
+            params.estado = estadoFilter;
+        } else if (filters.estado) {
+            params.estado = filters.estado;
+        }
+
+        // Quick Navigate: si hay fecha seleccionada, filtra por ese día exacto
+        if (selectedDate) {
+            const d = new Date(selectedDate);
+            params.fechaDesde = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
+            params.fechaHasta = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999).toISOString();
+        } else if (periodo && periodo !== 'all') {
+            // Filtros de periodo rápido 
+            params.periodo = periodo;
+            if (year) params.year = year;
+            if (month) params.month = month;
+        } else {
+            // Filtros legacy de fecha
+            if (filters.fechaDesde) params.fechaDesde = new Date(filters.fechaDesde + 'T00:00:00').toISOString();
+            if (filters.fechaHasta) params.fechaHasta = new Date(filters.fechaHasta + 'T23:59:59').toISOString();
+            if (year) params.year = year;
+            if (month) params.month = month;
+        }
+
         if (filters.lineaDefault) params.lineaDefault = filters.lineaDefault;
-        if (filters.fechaDesde) params.fechaDesde = new Date(filters.fechaDesde + 'T00:00:00').toISOString();
-        if (filters.fechaHasta) params.fechaHasta = new Date(filters.fechaHasta + 'T23:59:59').toISOString();
         if (filters.creadoPorId) params.creadoPorId = filters.creadoPorId;
 
         return fetchMinutas(params).catch(() => notify.error('Error al cargar minutas.'));
-    }, [page, query, sortConfig, filters, fetchMinutas]);
+    }, [page, query, sortConfig, filters, periodo, year, month, estadoFilter, selectedDate, fetchMinutas]);
 
     useEffect(() => { loadMinutas(); }, [loadMinutas]);
 
+    // Extraer años disponibles de las minutas cargadas
+    const availableYears = useMemo(() => {
+        const yearsSet = new Set();
+        minutas.forEach(m => {
+            const d = new Date(m.fecha || m.createdAt);
+            if (!isNaN(d.getTime())) yearsSet.add(d.getFullYear());
+        });
+        return Array.from(yearsSet).sort((a, b) => b - a);
+    }, [minutas]);
+
     const handleSearchChange = useCallback((q) => { setQuery(q); setPage(1); }, []);
     const handleSortChange = useCallback((key, direction) => { setSortConfig({ key, direction }); setPage(1); }, []);
+
+    const handlePeriodoChange = useCallback((p) => {
+        setPeriodo(p);
+        setSelectedDate(null); // Limpiar selección de fecha al cambiar periodo
+        setPage(1);
+        if (p === 'all' || p === 'today' || p === 'week') {
+            setYear(null);
+            setMonth(null);
+        }
+    }, []);
+
+    const handleYearChange = useCallback((y) => {
+        setYear(y);
+        setSelectedDate(null);
+        setPage(1);
+    }, []);
+
+    const handleMonthChange = useCallback((m) => {
+        setMonth(m);
+        setSelectedDate(null);
+        setPage(1);
+    }, []);
+
+    const handleEstadoChange = useCallback((estado) => {
+        setEstadoFilter(estado);
+        setSelectedDate(null);
+        setPage(1);
+    }, []);
+
+    const handleSelectDate = useCallback((date) => {
+        // Si tocas la misma fecha, deselecciona
+        if (selectedDate && new Date(selectedDate).toDateString() === date.toDateString()) {
+            setSelectedDate(null);
+        } else {
+            setSelectedDate(date.toISOString());
+        }
+        // Limpiar periodo cuando se selecciona fecha directa
+        setPeriodo('all');
+        setPage(1);
+    }, [selectedDate]);
 
     const handleSaveMinuta = async (payload) => {
         if (minutaToEdit) {
@@ -106,6 +191,21 @@ const MinutasPage = () => {
         onEdit: handleEdit,
         onToggleFilters: () => setShowFilters(!showFilters),
         onApplyFilters: (f) => { setFilters(f); setPage(1); },
+        // Periodo
+        periodo,
+        year,
+        // Navegación ejecutiva (del backend, GLOBAL)
+        navegacionEjecutiva,
+        month,
+        estadoFilter,
+        availableYears,
+        onPeriodoChange: handlePeriodoChange,
+        onYearChange: handleYearChange,
+        onMonthChange: handleMonthChange,
+        onEstadoChange: handleEstadoChange,
+        // Quick navigate
+        selectedDate,
+        onSelectDate: handleSelectDate,
     };
 
     return (

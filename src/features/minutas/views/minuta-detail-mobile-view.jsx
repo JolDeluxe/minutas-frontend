@@ -50,7 +50,7 @@ export const MinutaDetailMobileView = ({
       
       {/* 1. Header de Contexto */}
       <div className="shrink-0">
-        <MinutaContextPanel minuta={minuta} resumen={resumen} />
+        <MinutaContextPanel minuta={minuta} resumen={resumen} entries={filteredEntries} />
       </div>
 
       {/* 2. Área de Feed */}

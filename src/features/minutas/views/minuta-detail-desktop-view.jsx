@@ -47,7 +47,19 @@ export const MinutaDetailDesktopView = ({
 }) => {
   return (
     <div className="flex h-full w-full flex-col bg-slate-50/50 relative">
-      <MinutaContextPanel minuta={minuta} resumen={resumen} />
+      <MinutaContextPanel 
+        minuta={minuta} 
+        resumen={resumen} 
+        entries={filteredEntries}
+        onFilterByStatus={(status) => {
+          // Map executive summary status to timeline filters
+          if (status === 'COMPLETADAS') setFilterClasif('TODAS');
+          else if (status === 'EN_PROGRESO') setFilterClasif('TODAS');
+          else if (status === 'ATRASADAS') setFilterClasif('TODAS');
+          else if (status === 'PENDIENTE') setFilterClasif('TODAS');
+          else setFilterClasif('TODAS');
+        }}
+      />
 
       <div className="flex flex-1 overflow-hidden relative">
         {/* Workspace Principal */}

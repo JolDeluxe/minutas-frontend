@@ -16,6 +16,12 @@ export const useMinutas = () => {
     totalPages: 1,
   });
 
+  // Navegación ejecutiva: IDs GLOBALES de última junta y anterior (del backend)
+  const [navegacionEjecutiva, setNavegacionEjecutiva] = useState({
+    ultimaJuntaId: null,
+    juntaAnteriorId: null,
+  });
+
   const lastFetchParams = useRef({});
 
   const fetchMinutas = useCallback(async (params = {}) => {
@@ -32,6 +38,13 @@ export const useMinutas = () => {
       setMeta({
         totalFiltrado: pagination.total ?? 0,
         totalPages: pagination.totalPages ?? 1,
+      });
+
+      // Navegación ejecutiva del backend (GLOBAL, no afectada por filtros)
+      const nav = response?.data?.navegacionEjecutiva || {};
+      setNavegacionEjecutiva({
+        ultimaJuntaId: nav.ultimaJuntaId ?? null,
+        juntaAnteriorId: nav.juntaAnteriorId ?? null,
       });
     } catch (error) {
       console.error("Error fetching minutas:", error);
@@ -85,6 +98,7 @@ export const useMinutas = () => {
   return {
     minutas,
     meta,
+    navegacionEjecutiva,
     loading,
     submitting,
     fetchMinutas,

@@ -25,6 +25,7 @@ import { LineIconSelector } from '../icons/line-icons';
 import { TareaStatusBadge } from '../../../tareas/components/common/tarea-status-badge';
 import { formatFecha, isPastDate } from '@/lib/date';
 import { useAuthStore } from '@/stores/auth-store';
+import { StatusTrafficLight } from '../status-traffic-light';
 
 
 /**
@@ -470,6 +471,10 @@ export const EntryCard = ({
             {/* Seccion 1: Identificación y Clasificación Principal */}
             <div className="flex items-center justify-between gap-2 sm:flex-1 sm:justify-start sm:gap-2.5">
               <div className="flex min-w-0 items-center gap-2">
+                {/* Semáforo Visual */}
+                {!isDraft && (
+                  <StatusTrafficLight entry={entry} size="md" className="shrink-0" />
+                )}
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-slate-100 bg-slate-50 text-slate-900 shadow-sm sm:h-9 sm:w-9">
                   <LineIconSelector type={entry.linea} size={16} />
                 </div>
