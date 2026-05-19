@@ -10,6 +10,8 @@ import { MODULES_CONFIG } from '@/config/modules-config';
 import LoginPage from '@/features/auth/pages/login-page';
 import ProfilePage from '@/features/auth/pages/profile-page';
 import UsersPage from '@/features/usuarios/pages/users-page';
+import PoliticasPage from '@/features/politicas/pages/politicas-page';
+import RecordatoriosPage from '@/features/recordatorios/pages/recordatorios-page';
 import MinutasPage from '@/features/minutas/pages/minutas-page';
 import MinutaDetailPage from '@/features/minutas/pages/minuta-detail-page';
 
@@ -26,6 +28,8 @@ import NotFound from '@/pages/not-found';
 const ROLES = {
   minutas: MODULES_CONFIG.find(m => m.id === 'minutas')?.allowedRoles || [],
   usuarios: MODULES_CONFIG.find(m => m.id === 'usuarios')?.allowedRoles || [],
+  politicas: MODULES_CONFIG.find(m => m.id === 'politicas')?.allowedRoles || [],
+  recordatorios: MODULES_CONFIG.find(m => m.id === 'recordatorios')?.allowedRoles || [],
   tareas: MODULES_CONFIG.find(m => m.id === 'tareas')?.allowedRoles || [],
   misTareas: MODULES_CONFIG.find(m => m.id === 'tareas')?.children?.find(c => c.id === 'mis-tareas')?.allowedRoles || [],
   misSeguimientos: MODULES_CONFIG.find(m => m.id === 'tareas')?.children?.find(c => c.id === 'mis-seguimientos')?.allowedRoles || [],
@@ -51,6 +55,16 @@ export const AppRoutes = () => {
           {/* Módulo: Usuarios (solo GERENCIA) */}
           <Route element={<RoleGuard allowedRoles={ROLES.usuarios} />}>
             <Route path="/usuarios" element={<UsersPage />} />
+          </Route>
+
+          {/* Módulo: Políticas (solo ADMIN y GERENCIA) */}
+          <Route element={<RoleGuard allowedRoles={ROLES.politicas} />}>
+            <Route path="/politicas" element={<PoliticasPage />} />
+          </Route>
+
+          {/* Módulo: Recordatorios (solo ADMIN, GERENCIA y JEFE) */}
+          <Route element={<RoleGuard allowedRoles={ROLES.recordatorios} />}>
+            <Route path="/recordatorios" element={<RecordatoriosPage />} />
           </Route>
 
           {/* Módulo: Minutas */}

@@ -77,13 +77,25 @@ export default function MinutaDetailPage() {
   }, [id, initStore, navigate, fetchTareas, fetchUsers]);
 
   const allEntries = useMemo(() => [...draftEntries, ...tareas], [draftEntries, tareas]);
+
+  const tareasReales = useMemo(() => {
+    return allEntries.filter(t => t.requiereSeguimiento === true && t.clasificacion !== 'POLITICAS');
+  }, [allEntries]);
+
+  const recordatoriosGenerales = useMemo(() => {
+    return allEntries.filter(t => t.requiereSeguimiento === false && t.clasificacion !== 'POLITICAS');
+  }, [allEntries]);
+
+  const politicasAcordadas = useMemo(() => {
+    return allEntries.filter(t => t.clasificacion === 'POLITICAS');
+  }, [allEntries]);
   
   const filteredEntries = useMemo(() => {
-    if (filterClasif === 'TODAS') return allEntries;
-    if (filterClasif === 'SIN_CLASIFICAR') return allEntries.filter(t => !t.clasificacion);
-    if (filterClasif === 'SIN_ORGANIZAR') return allEntries.filter(t => !t.formalizada && !t.requiereSeguimiento);
-    return allEntries.filter(t => t.clasificacion === filterClasif);
-  }, [allEntries, filterClasif]);
+    if (filterClasif === 'TODAS') return tareasReales;
+    if (filterClasif === 'SIN_CLASIFICAR') return tareasReales.filter(t => !t.clasificacion);
+    if (filterClasif === 'SIN_ORGANIZAR') return tareasReales.filter(t => !t.formalizada);
+    return tareasReales.filter(t => t.clasificacion === filterClasif);
+  }, [tareasReales, filterClasif]);
 
   const resumen = useMemo(() => {
     // Usar resumen del backend si existe (incluye atrasadas, porClasificacion, porPrioridad)
@@ -354,7 +366,7 @@ export default function MinutaDetailPage() {
   }
 
   const commonProps = {
-    minuta, users, resumen, filteredEntries, loadingTareas, filterClasif, setFilterClasif,
+    minuta, users, resumen, filteredEntries, politicasAcordadas, recordatoriosGenerales, loadingTareas, filterClasif, setFilterClasif,
     handleCapture, draftEntries, draftNotes, addDraftNote, updateDraftNote,
     removeDraftNote, updateDraftEntry, removeDraftEntry, setOrganizeEntry,
     organizeEntry, handleOrganizeSave, updateTarea, changeTareaStatus: handleStatusChange, fetchTareas, refreshEntries, setShowReviewModal, showReviewModal,

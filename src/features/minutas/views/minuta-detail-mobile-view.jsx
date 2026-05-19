@@ -16,6 +16,8 @@ export const MinutaDetailMobileView = ({
   minuta,
   resumen,
   filteredEntries,
+  politicasAcordadas = [],
+  recordatoriosGenerales = [],
   loadingTareas,
   filterClasif,
   setFilterClasif,
@@ -67,6 +69,59 @@ export const MinutaDetailMobileView = ({
 
       {/* 2. Área de Feed */}
       <main className="flex-1 overflow-y-auto relative custom-scrollbar px-4 pt-4 pb-32">
+        
+        {/* Políticas y Lineamientos Acordados (Mobile card format) */}
+        {politicasAcordadas.length > 0 && (
+          <div className="bg-gradient-to-br from-indigo-950 to-slate-900 border border-indigo-500/20 rounded-2xl p-4 shadow-xl text-white mb-6">
+            <h3 className="fuente-titulos text-sm font-black tracking-wide flex items-center gap-1.5 mb-3">
+              <span className="material-symbols-rounded text-brand text-xl">gavel</span>
+              Políticas y Lineamientos Acordados
+            </h3>
+            <div className="space-y-3">
+              {politicasAcordadas.map((p, idx) => (
+                <div 
+                  key={p.id || idx} 
+                  className="bg-white/5 border border-white/10 rounded-xl p-3 flex flex-col justify-between"
+                >
+                  <p className="text-white/90 text-xs font-medium leading-relaxed italic">
+                    "{p.descripcion}"
+                  </p>
+                  <div className="flex items-center justify-between mt-2 pt-1 border-t border-white/5 text-[9px] text-white/40 font-mono">
+                    <span>Área: {p.area}</span>
+                    {p.linea && <span>Línea: {p.linea}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Acuerdos y Recordatorios Generales (Mobile card format) */}
+        {recordatoriosGenerales.length > 0 && (
+          <div className="bg-gradient-to-br from-amber-50 to-orange-50/50 border border-amber-100 rounded-2xl p-4 shadow-md mb-6">
+            <h3 className="fuente-titulos text-sm font-extrabold text-slate-800 tracking-wide flex items-center gap-1.5 mb-3">
+              <span className="material-symbols-rounded text-amber-600 text-xl">push_pin</span>
+              Acuerdos y Recordatorios
+            </h3>
+            <div className="space-y-3">
+              {recordatoriosGenerales.map((r, idx) => (
+                <div 
+                  key={r.id || idx} 
+                  className="bg-white border border-amber-100 rounded-xl p-3 flex flex-col justify-between"
+                >
+                  <p className="text-slate-800 text-xs font-semibold leading-relaxed">
+                    "{r.descripcion}"
+                  </p>
+                  <div className="flex items-center justify-between mt-2 pt-1 border-t border-slate-100 text-[9px] text-slate-500 font-mono">
+                    <span>Área: {r.area}</span>
+                    {r.linea && <span>Línea: {r.linea}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center gap-4 bg-white p-2 rounded-2xl border border-slate-200 sticky top-0 z-20 mb-6">
           <div className="flex-1 overflow-hidden">
             <TimelineFilters active={filterClasif} onChange={setFilterClasif} />

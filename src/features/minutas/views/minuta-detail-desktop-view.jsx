@@ -16,6 +16,8 @@ export const MinutaDetailDesktopView = ({
   minuta,
   resumen,
   filteredEntries,
+  politicasAcordadas = [],
+  recordatoriosGenerales = [],
   loadingTareas,
   filterClasif,
   setFilterClasif,
@@ -81,6 +83,69 @@ export const MinutaDetailDesktopView = ({
 
           <div className="flex-1 overflow-y-auto px-10 py-1 scrollbar-thin">
             <div className="mx-auto max-w-[1500px] flex flex-col gap-8 pb-32">
+              
+              {/* Políticas y Lineamientos Acordados */}
+              {politicasAcordadas.length > 0 && (
+                <div className="bg-gradient-to-br from-indigo-950/90 to-slate-900/95 border border-indigo-500/20 rounded-3xl p-6 shadow-2xl text-white">
+                  <h3 className="fuente-titulos text-lg font-black tracking-wide flex items-center gap-2 mb-4">
+                    <span className="material-symbols-rounded text-brand text-2xl">gavel</span>
+                    Políticas y Lineamientos Acordados en esta Junta
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {politicasAcordadas.map((p, idx) => (
+                      <div 
+                        key={p.id || idx} 
+                        className="bg-white/5 border border-white/10 hover:border-brand/40 rounded-2xl p-4 transition duration-300 flex flex-col justify-between"
+                      >
+                        <p className="text-white/90 text-sm font-medium leading-relaxed italic">
+                          "{p.descripcion}"
+                        </p>
+                        <div className="flex items-center justify-between mt-4 pt-2 border-t border-white/5 text-[10px] text-white/40 font-mono">
+                          <span>Área: {p.area}</span>
+                          {p.linea && <span>Línea: {p.linea}</span>}
+                          {p.tempId && (
+                            <span className="bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider">
+                              Borrador
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Acuerdos y Recordatorios Generales */}
+              {recordatoriosGenerales.length > 0 && (
+                <div className="bg-gradient-to-br from-amber-50/50 to-orange-50/30 border border-amber-200/60 rounded-3xl p-6 shadow-md">
+                  <h3 className="fuente-titulos text-lg font-extrabold text-slate-800 tracking-wide flex items-center gap-2 mb-4">
+                    <span className="material-symbols-rounded text-amber-600 text-2xl">push_pin</span>
+                    Acuerdos y Recordatorios Generales
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {recordatoriosGenerales.map((r, idx) => (
+                      <div 
+                        key={r.id || idx} 
+                        className="bg-white border border-amber-100 hover:border-amber-300 rounded-2xl p-4 shadow-sm hover:shadow transition duration-300 flex flex-col justify-between"
+                      >
+                        <p className="text-slate-800 text-sm font-semibold leading-relaxed">
+                          "{r.descripcion}"
+                        </p>
+                        <div className="flex items-center justify-between mt-4 pt-2 border-t border-slate-100 text-[10px] text-slate-500 font-mono">
+                          <span>Área: {r.area}</span>
+                          {r.linea && <span>Línea: {r.linea}</span>}
+                          {r.tempId && (
+                            <span className="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider">
+                              Borrador
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center gap-4 bg-white/40 p-2 rounded-2xl backdrop-blur-md border border-white/60 sticky top-0 z-20">
                 <div className="flex-1 overflow-hidden">
                   <TimelineFilters active={filterClasif} onChange={setFilterClasif} />

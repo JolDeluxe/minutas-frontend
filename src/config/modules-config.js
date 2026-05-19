@@ -12,13 +12,6 @@ export const MODULES_CONFIG = [
     allowedRoles: ['ADMIN', 'GERENCIA', 'JEFE'],
   },
   {
-    id: 'usuarios',
-    name: 'Usuarios',
-    icon: 'group',
-    route: '/usuarios',
-    allowedRoles: ['ADMIN', 'GERENCIA'],
-  },
-  {
     id: 'tareas',
     name: 'Tareas Operativas',
     icon: 'task',
@@ -54,6 +47,28 @@ export const MODULES_CONFIG = [
         allowedRoles: ['ADMIN', 'GERENCIA', 'JEFE'],
       }
     ]
+  },
+  {
+    id: 'recordatorios',
+    name: 'Recordatorios',
+    icon: 'push_pin',
+    route: '/recordatorios',
+    allowedRoles: ['ADMIN', 'GERENCIA', 'JEFE'],
+  },
+  {
+    id: 'politicas',
+    name: 'Políticas',
+    icon: 'gavel',
+    route: '/politicas',
+    allowedRoles: ['ADMIN', 'GERENCIA'],
+  },
+  {
+    id: 'usuarios',
+    name: 'Usuarios',
+    icon: 'group',
+    route: '/usuarios',
+    allowedRoles: ['ADMIN', 'GERENCIA'],
+    divider: true,
   },
   {
     id: 'notificaciones',
