@@ -7,12 +7,15 @@ export const UserActions = ({
     onEdit,
     onToggleStatus
 }) => {
-    const esMismoUsuario = currentUser?.id === usuario.id;
+    const esAdmin = currentUser?.rol === "ADMIN";
     const esGerencia = currentUser?.rol === "GERENCIA";
+    const esMismoUsuario = currentUser?.id === usuario.id;
 
-    // Permisos simplificados para el sistema de minutas
-    const puedeEditar = esGerencia || esMismoUsuario;
-    const puedeToggle = esGerencia && !esMismoUsuario;
+    // ADMIN edita de todos los deptos. GERENCIA solo de su propio departamento.
+    const esMismoDepto = currentUser?.departamento === usuario.departamento;
+
+    const puedeEditar = esAdmin || (esGerencia && esMismoDepto) || esMismoUsuario;
+    const puedeToggle = (esAdmin || (esGerencia && esMismoDepto)) && !esMismoUsuario;
 
     const estadoActual = usuario.estado || usuario.estatus;
 

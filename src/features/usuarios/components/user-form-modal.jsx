@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Input, Label, Select } from '@/components/form/z_index';
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Icon } from '@/components/ui/z_index';
+import { useCatalogosStore } from '@/stores/catalogos-store';
 
 const ROL_MAP = {
     ADMIN: 'Administrador',
@@ -16,12 +17,7 @@ const DEPARTAMENTO_MAP = {
     MARKETING: 'Marketing',
 };
 
-const LINEA_MAP = {
-    CALZADO: 'Calzado',
-    BOTA: 'Bota',
-    ROPA: 'Ropa',
-    ACCESORIOS: 'Accesorios',
-};
+
 
 const sanitizeUsername = (text) =>
     text
@@ -43,6 +39,7 @@ export const UserFormModal = ({
     const esEdicion = Boolean(usuarioAEditar);
     const esGerencia = currentUser?.rol === 'GERENCIA';
     const fileInputRef = useRef(null);
+    const { fetchCatalogos, getLineasPorDepartamento, catalogos } = useCatalogosStore();
 
     const [nombre, setNombre] = useState('');
     const [username, setUsername] = useState('');
@@ -58,6 +55,7 @@ export const UserFormModal = ({
     const [backendError, setBackendError] = useState('');
 
     useEffect(() => {
+        fetchCatalogos();
         if (!isOpen) return;
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setSubmitted(false);
@@ -97,6 +95,8 @@ export const UserFormModal = ({
         { value: 'COORDINADOR', label: ROL_MAP.COORDINADOR, visible: true },
     ].filter((r) => r.visible);
 
+    const lineasDisponibles = getLineasPorDepartamento(departamento);
+
     const handleNombreChange = (e) => {
         const val = e.target.value;
         if (val.length > MAX_NOMBRE) return;
@@ -130,6 +130,9 @@ export const UserFormModal = ({
         if (password && password.length < 6) e.password = 'Mínimo 6 caracteres.';
         if (!rol) e.rol = 'Selecciona un rol.';
         if (rol !== 'ADMIN' && !departamento) e.departamento = 'Selecciona un departamento.';
+        if (rol === 'JEFE' && lineasDisponibles.length > 0 && !linea) {
+            e.linea = 'La línea es obligatoria para Jefes.';
+        }
         return e;
     };
 
@@ -272,7 +275,10 @@ export const UserFormModal = ({
                             <Select
                                 id="u-departamento"
                                 value={departamento}
-                                onChange={(e) => setDepartamento(e.target.value)}
+                                onChange={(e) => {
+                                    setDepartamento(e.target.value);
+                                    setLinea('');
+                                }}
                                 error={!!fe.departamento}
                                 helperText={fe.departamento}
                                 disabled={currentUser?.rol === 'GERENCIA'}
@@ -287,19 +293,25 @@ export const UserFormModal = ({
                             </Select>
                         </div>
 
-                        <div className="flex flex-col gap-1.5">
-                            <Label htmlFor="u-linea">Línea (Opcional)</Label>
-                            <Select
-                                id="u-linea"
-                                value={linea}
-                                onChange={(e) => setLinea(e.target.value)}
-                            >
-                                <option value="">Sin línea</option>
-                                {Object.entries(LINEA_MAP).map(([value, label]) => (
-                                    <option key={value} value={value}>{label}</option>
-                                ))}
-                            </Select>
-                        </div>
+                        {lineasDisponibles.length > 0 && (
+                            <div className="flex flex-col gap-1.5">
+                                <Label htmlFor="u-linea" error={!!fe.linea}>
+                                    Línea {rol === 'JEFE' ? '*' : '(Opcional)'}
+                                </Label>
+                                <Select
+                                    id="u-linea"
+                                    value={linea}
+                                    onChange={(e) => setLinea(e.target.value)}
+                                    error={!!fe.linea}
+                                    helperText={fe.linea}
+                                >
+                                    <option value="">Selecciona línea…</option>
+                                    {lineasDisponibles.map((l) => (
+                                        <option key={l.value} value={l.value}>{l.label}</option>
+                                    ))}
+                                </Select>
+                            </div>
+                        )}
                     </div>
 
                     {/* ── CONTACTO Y SEGURIDAD ── */}

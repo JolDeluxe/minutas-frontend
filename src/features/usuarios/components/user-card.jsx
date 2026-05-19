@@ -20,14 +20,27 @@ const DEPARTAMENTO_LABEL = {
 };
 
 const puedeEditar = (me, row) => {
-    if (me?.rol === 'GERENCIA') return true;
-    if (Number(me?.id) === Number(row.id)) return true;
+    const esAdmin = me?.rol === 'ADMIN';
+    const esGerencia = me?.rol === 'GERENCIA';
+    const esMismoUsuario = Number(me?.id) === Number(row.id);
+    const esMismoDepto = me?.departamento === row.departamento;
+
+    if (esAdmin) return true;
+    if (esGerencia && esMismoDepto) return true;
+    if (esMismoUsuario) return true;
     return false;
 };
 
 const puedeCambiarEstado = (me, row) => {
-    if (Number(me?.id) === Number(row.id)) return false;
-    if (me?.rol === 'GERENCIA') return true;
+    const esMismoUsuario = Number(me?.id) === Number(row.id);
+    if (esMismoUsuario) return false;
+
+    const esAdmin = me?.rol === 'ADMIN';
+    const esGerencia = me?.rol === 'GERENCIA';
+    const esMismoDepto = me?.departamento === row.departamento;
+
+    if (esAdmin) return true;
+    if (esGerencia && esMismoDepto) return true;
     return false;
 };
 
