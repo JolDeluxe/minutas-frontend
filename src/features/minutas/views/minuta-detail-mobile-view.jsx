@@ -43,14 +43,26 @@ export const MinutaDetailMobileView = ({
   handleAddEntryImage,
   handleDeleteEntryImage,
   changeTareaStatus,
-  users
+  users,
+  handleIniciar,
+  handleCancelar,
+  iniciando,
+  cancelando
 }) => {
   return (
     <div className="flex h-full w-full flex-col bg-slate-50/50 relative overflow-hidden">
       
       {/* 1. Header de Contexto */}
       <div className="shrink-0">
-        <MinutaContextPanel minuta={minuta} resumen={resumen} entries={filteredEntries} />
+        <MinutaContextPanel 
+          minuta={minuta} 
+          resumen={resumen} 
+          entries={filteredEntries} 
+          onIniciar={handleIniciar}
+          onCancelar={handleCancelar}
+          iniciando={iniciando}
+          cancelando={cancelando}
+        />
       </div>
 
       {/* 2. Área de Feed */}

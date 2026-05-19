@@ -19,3 +19,11 @@ export const updateMinuta = async (id, data) => {
 export const changeMinutaStatus = async (id, estado) => {
   return await api.patch(`/api/minutas/${id}/status`, { estado });
 };
+
+export const iniciarMinuta = async (id) => {
+  return await api.post(`/api/minutas/${id}/iniciar`);
+};
+
+export const cancelarMinuta = async (id) => {
+  return await api.post(`/api/minutas/${id}/cancelar`);
+};

@@ -1,16 +1,23 @@
+import { useMemo } from 'react';
 import { Badge, Icon } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
 import { LINEA_MAP } from '../constants';
 import { LineIconSelector } from './icons/line-icons';
 
 const ESTADO_LABEL = {
+    PROGRAMADA: 'Programada',
     ACTIVA: 'Activa',
+    EN_REVISION: 'En Revisión',
     CERRADA: 'Cerrada',
+    CANCELADA: 'Cancelada',
 };
 
 const ESTADO_COLORS = {
+    PROGRAMADA: 'bg-blue-50 text-blue-700 border-blue-200',
     ACTIVA: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    EN_REVISION: 'bg-amber-50 text-amber-700 border-amber-200',
     CERRADA: 'bg-slate-100 text-slate-500 border-slate-200',
+    CANCELADA: 'bg-red-50 text-red-700 border-red-200',
 };
 
 /**
@@ -38,7 +45,7 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, badge = null }) => {
     const pendientes = resumen.pendientes || 0;
     
     // Fecha REAL — lo que el jefe necesita para "la minuta del 28 de marzo"
-    const fechaReal = formatFechaReal(minuta.fecha || minuta.createdAt);
+    const fechaReal = formatFechaReal(minuta.fechaRealizada || minuta.fechaProgramada || minuta.createdAt);
     const lineaLabel = LINEA_MAP[minuta.lineaDefault]?.label || minuta.lineaDefault;
 
     const BADGE_CONFIG = {
@@ -55,21 +62,36 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, badge = null }) => {
     };
     const badgeCfg = badge ? BADGE_CONFIG[badge] : null;
 
+    const isPendiente = useMemo(() => {
+        if (minuta.estado !== 'PROGRAMADA' || !minuta.fechaProgramada) return false;
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        const programada = new Date(minuta.fechaProgramada);
+        programada.setHours(0, 0, 0, 0);
+        return programada < hoy;
+    }, [minuta.estado, minuta.fechaProgramada]);
+
+    const finalBadgeCfg = badgeCfg || (isPendiente ? {
+        label: 'Pendiente de realizar',
+        bg: 'bg-amber-500',
+        border: 'border-amber-300 ring-1 ring-amber-300/50 shadow-[0_0_15px_rgba(245,158,11,0.15)]',
+    } : null);
+
     return (
         <div 
             className={cn(
                 "bg-white border rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all group cursor-pointer relative",
-                badgeCfg ? badgeCfg.border : "border-slate-200"
+                finalBadgeCfg ? finalBadgeCfg.border : "border-slate-200"
             )}
             onClick={() => onViewDetail?.(minuta)}
         >
-            {/* Badge: Junta Actual / Junta Anterior */}
-            {badgeCfg && (
+            {/* Badge: Junta Actual / Junta Anterior / Pendiente */}
+            {finalBadgeCfg && (
                 <div className={cn(
                     "absolute top-0 left-0 text-white text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-br-xl z-10",
-                    badgeCfg.bg
+                    finalBadgeCfg.bg
                 )}>
-                    {badgeCfg.label}
+                    {finalBadgeCfg.label}
                 </div>
             )}
 
@@ -92,7 +114,7 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, badge = null }) => {
                     {minuta.titulo}
                 </h3>
 
-                {/* Fila 3: Metadatos — Fecha + Línea + Creador */}
+                {/* Fila 3: Metadatos — Fecha + Línea */}
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-3 text-[11px] text-slate-500">
                     <div className="flex items-center gap-1">
                         <Icon name="event" size="13px" className="text-slate-400" />
@@ -102,12 +124,6 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, badge = null }) => {
                         <LineIconSelector type={minuta.lineaDefault} size={13} className="text-slate-700" />
                         <span className="font-semibold">{lineaLabel}</span>
                     </div>
-                    {minuta.creadoPor && (
-                        <div className="flex items-center gap-1">
-                            <Icon name="person" size="13px" className="text-slate-400" />
-                            <span className="font-medium">{minuta.creadoPor.nombre}</span>
-                        </div>
-                    )}
                 </div>
 
                 {/* Fila 4: Barra de progreso + conteo de entradas */}

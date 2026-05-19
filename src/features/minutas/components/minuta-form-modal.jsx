@@ -14,6 +14,8 @@ export const MinutaFormModal = ({
 
     const [titulo, setTitulo] = useState('');
     const [lineaDefault, setLineaDefault] = useState('CALZADO');
+    const [fechaProgramada, setFechaProgramada] = useState('');
+    const [iniciarInmediatamente, setIniciarInmediatamente] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [backendError, setBackendError] = useState('');
 
@@ -26,9 +28,15 @@ export const MinutaFormModal = ({
         if (esEdicion) {
             setTitulo(minutaAEditar.titulo || '');
             setLineaDefault(minutaAEditar.lineaDefault || 'CALZADO');
+            setFechaProgramada(minutaAEditar.fechaProgramada ? new Date(minutaAEditar.fechaProgramada).toISOString().slice(0, 16) : '');
+            setIniciarInmediatamente(false);
         } else {
             setTitulo('');
             setLineaDefault('CALZADO');
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            setFechaProgramada(now.toISOString().slice(0, 16));
+            setIniciarInmediatamente(false);
         }
     }, [isOpen, esEdicion, minutaAEditar]);
 
@@ -37,6 +45,7 @@ export const MinutaFormModal = ({
         if (!titulo.trim()) e.titulo = 'El título es obligatorio.';
         if (titulo.length < 3) e.titulo = 'Debe tener al menos 3 caracteres.';
         if (!lineaDefault) e.lineaDefault = 'Selecciona una línea por defecto.';
+        if (!fechaProgramada) e.fechaProgramada = 'La fecha es obligatoria.';
         return e;
     };
 
@@ -50,6 +59,8 @@ export const MinutaFormModal = ({
         const payload = {
             titulo: titulo.trim(),
             lineaDefault,
+            fechaProgramada: new Date(fechaProgramada).toISOString(),
+            iniciarInmediatamente,
         };
 
         try {
@@ -105,6 +116,38 @@ export const MinutaFormModal = ({
                             ))}
                         </Select>
                     </div>
+
+                    <div className="flex flex-col gap-1.5">
+                        <Label htmlFor="m-fecha" error={!!fe.fechaProgramada}>Fecha Programada *</Label>
+                        <Input
+                            id="m-fecha"
+                            type="datetime-local"
+                            value={fechaProgramada}
+                            onChange={(e) => setFechaProgramada(e.target.value)}
+                            error={!!fe.fechaProgramada}
+                            helperText={fe.fechaProgramada}
+                        />
+                    </div>
+
+                    {!esEdicion && (
+                        <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                            <input 
+                                type="checkbox" 
+                                id="m-iniciar" 
+                                className="w-5 h-5 rounded text-marca-primario focus:ring-marca-primario border-slate-300"
+                                checked={iniciarInmediatamente}
+                                onChange={(e) => setIniciarInmediatamente(e.target.checked)}
+                            />
+                            <div className="flex flex-col">
+                                <Label htmlFor="m-iniciar" className="mb-0 cursor-pointer text-slate-800">
+                                    Iniciar Junta Inmediatamente (Junta Express)
+                                </Label>
+                                <span className="text-xs text-slate-500">
+                                    Pasa directo a la captura. El estado será Activa automáticamente.
+                                </span>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </ModalBody>
 

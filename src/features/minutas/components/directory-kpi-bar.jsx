@@ -8,8 +8,8 @@ import { cn } from '@/utils/cn';
 export const DirectoryKpiBar = ({ minutas = [], loading = false }) => {
   if (loading) {
     return (
-      <div className="grid grid-cols-3 gap-3 mb-4">
-        {[0,1,2].map(i => (
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        {[0,1].map(i => (
           <div key={i} className="bg-white border border-slate-200 rounded-2xl h-20 animate-pulse" />
         ))}
       </div>
@@ -19,14 +19,9 @@ export const DirectoryKpiBar = ({ minutas = [], loading = false }) => {
   const activas = minutas.filter(m => m.estado === 'ACTIVA').length;
   
   let totalEntradas = 0;
-  let actualizacionesSemana = 0;
-  const weekAgo = new Date();
-  weekAgo.setDate(weekAgo.getDate() - 7);
   
   for (const m of minutas) {
     totalEntradas += m.resumenOperativo?.totalEntradas || m._count?.tareas || 0;
-    const updatedAt = new Date(m.updatedAt || m.createdAt);
-    if (updatedAt >= weekAgo) actualizacionesSemana++;
   }
 
   const kpis = [
@@ -44,17 +39,10 @@ export const DirectoryKpiBar = ({ minutas = [], loading = false }) => {
       iconBg: 'bg-blue-50',
       iconColor: 'text-blue-600',
     },
-    {
-      icon: 'update',
-      value: actualizacionesSemana,
-      label: 'Actualizadas esta semana',
-      iconBg: 'bg-amber-50',
-      iconColor: 'text-amber-600',
-    },
   ];
 
   return (
-    <div className="grid grid-cols-3 gap-3 mb-4">
+    <div className="grid grid-cols-2 gap-3 mb-4">
       {kpis.map((kpi) => (
         <div 
           key={kpi.label}

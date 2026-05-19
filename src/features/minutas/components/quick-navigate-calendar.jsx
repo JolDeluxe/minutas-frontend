@@ -54,7 +54,7 @@ export const QuickNavigateCalendar = ({
   const datesWithMinutas = useMemo(() => {
     const set = new Set();
     for (const m of minutas) {
-      const d = new Date(m.fecha || m.createdAt);
+      const d = new Date(m.fechaRealizada || m.fechaProgramada || m.createdAt);
       if (!isNaN(d.getTime())) {
         set.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
       }

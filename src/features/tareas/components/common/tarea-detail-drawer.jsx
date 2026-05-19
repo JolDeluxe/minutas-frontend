@@ -133,7 +133,19 @@ export const TareaDetailDrawer = ({
                             {tarea.minuta && (
                                 <div className="col-span-2 p-5 bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col gap-1">
                                     <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Origen</span>
-                                    <p className="text-sm font-bold text-slate-800">{tarea.minuta.titulo || `Minuta #${tarea.minutaId}`}</p>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <p className="text-sm font-bold text-slate-800">{tarea.minuta.titulo || `Minuta #${tarea.minutaId}`}</p>
+                                        {tarea.minuta.isJuntaActual && (
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-700 border border-emerald-200/40 whitespace-nowrap shadow-sm">
+                                                Junta Actual
+                                            </span>
+                                        )}
+                                        {tarea.minuta.isJuntaAnterior && (
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-700 border border-indigo-200/40 whitespace-nowrap shadow-sm">
+                                                Anterior
+                                            </span>
+                                        )}
+                                    </div>
                                     <p className="text-[10px] text-slate-400 font-medium italic">Registrada el {formatFechaHora(tarea.createdAt)}</p>
                                 </div>
                             )}

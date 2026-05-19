@@ -95,7 +95,7 @@ const MinutasPage = () => {
     const availableYears = useMemo(() => {
         const yearsSet = new Set();
         minutas.forEach(m => {
-            const d = new Date(m.fecha || m.createdAt);
+            const d = new Date(m.fechaRealizada || m.fechaProgramada || m.createdAt);
             if (!isNaN(d.getTime())) yearsSet.add(d.getFullYear());
         });
         return Array.from(yearsSet).sort((a, b) => b - a);

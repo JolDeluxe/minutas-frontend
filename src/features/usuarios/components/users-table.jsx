@@ -9,15 +9,9 @@ import { UserDetailModal } from "./user-detail-modal";
 import { UserActions } from "./user-actions";
 import { updateUserStatus } from "../api/users-api";
 
-const AREA_LABEL = {
+const DEPARTAMENTO_LABEL = {
   DISENO: 'Diseño',
-  ADMON: 'Administración',
-  CONTABILIDAD: 'Contabilidad',
-  DIRECCION: 'Dirección',
-  PRODUCCION: 'Producción',
-  CALIDAD: 'Calidad',
-  ALMACEN: 'Almacén',
-  EXTERNA: 'Externa',
+  MARKETING: 'Marketing',
 };
 
 const ROL_LABEL = {
@@ -114,15 +108,15 @@ export const UsersTable = ({
       },
     },
     {
-      header: "Área",
-      accessorKey: "area",
+      header: "Departamento",
+      accessorKey: "departamento",
       sortable: true,
       headerClassName: "w-[18%] min-w-[130px] whitespace-nowrap",
       cell: (row) => {
         if (row.isSkeleton) return <Skeleton className="h-4 w-full max-w-30" />;
         return (
           <span className="text-sm font-medium text-slate-700">
-            {AREA_LABEL[row.area] || row.area || <span className="text-slate-400 italic">Sin área</span>}
+            {DEPARTAMENTO_LABEL[row.departamento] || row.departamento || <span className="text-slate-400 italic">Global (Sin departamento)</span>}
           </span>
         );
       },

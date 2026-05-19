@@ -30,8 +30,11 @@ const SearchInput = ({ localValue, onChange, onClear, mostrarInactivos }) => (
 export const UserFilterBar = ({
   query,
   onSearchChange,
+  departamentoFilter = 'TODOS',
+  onDepartamentoChange,
   mostrarInactivos,
   onToggleInactivos,
+  currentUser,
   mobileSearchOnly = false,
 }) => {
   const [localValue, setLocalValue] = useState(query || '');
@@ -48,7 +51,29 @@ export const UserFilterBar = ({
     mostrarInactivos,
   };
 
-  if (mobileSearchOnly) return <SearchInput {...searchProps} />;
+  const isSystemAdmin = currentUser?.rol === 'ADMIN';
+
+  if (mobileSearchOnly) {
+    return (
+      <div className="flex flex-col gap-2 w-full">
+        <SearchInput {...searchProps} />
+        {isSystemAdmin && (
+          <div className="relative w-full">
+            <select
+              value={departamentoFilter}
+              onChange={(e) => onDepartamentoChange?.(e.target.value)}
+              className="w-full pl-3 pr-8 py-2.5 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none text-slate-700 font-medium"
+            >
+              <option value="TODOS">Todos los departamentos</option>
+              <option value="DISENO">Diseño</option>
+              <option value="MARKETING">Marketing</option>
+              <option value="GLOBAL">Global (Sin departamento)</option>
+            </select>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-3 w-full">
@@ -57,7 +82,20 @@ export const UserFilterBar = ({
       <div className="flex flex-col gap-3 lg:hidden">
         <SearchInput {...searchProps} />
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          {isSystemAdmin && (
+            <select
+              value={departamentoFilter}
+              onChange={(e) => onDepartamentoChange?.(e.target.value)}
+              className="pl-3 pr-8 py-1.5 text-xs border border-slate-200 rounded-full bg-white focus:outline-none text-slate-700 font-medium shrink-0"
+            >
+              <option value="TODOS">Todos los departamentos</option>
+              <option value="DISENO">Diseño</option>
+              <option value="MARKETING">Marketing</option>
+              <option value="GLOBAL">Global (Sin departamento)</option>
+            </select>
+          )}
+
           <button
             onClick={onToggleInactivos}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all shrink-0 ${
@@ -76,6 +114,26 @@ export const UserFilterBar = ({
       <div className="hidden lg:flex items-center justify-between gap-3 w-full">
         <div className="flex items-center gap-3 flex-1">
           <SearchInput {...searchProps} />
+
+          {isSystemAdmin && (
+            <div className="relative shrink-0">
+              <select
+                value={departamentoFilter}
+                onChange={(e) => onDepartamentoChange?.(e.target.value)}
+                className="pl-3 pr-10 h-10 text-sm border border-slate-200 rounded-xl bg-white
+                           focus:outline-none focus:ring-2 focus:ring-marca-secundario/20
+                           focus:border-marca-secundario transition-all text-slate-700 font-semibold appearance-none"
+              >
+                <option value="TODOS">Todos los departamentos</option>
+                <option value="DISENO">Diseño</option>
+                <option value="MARKETING">Marketing</option>
+                <option value="GLOBAL">Global (Sin departamento)</option>
+              </select>
+              <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
+                <Icon name="arrow_drop_down" size="sm" />
+              </div>
+            </div>
+          )}
         </div>
 
         <Button

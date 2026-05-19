@@ -5,20 +5,15 @@ import { Input, Label, Select } from '@/components/form/z_index';
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Icon } from '@/components/ui/z_index';
 
 const ROL_MAP = {
+    ADMIN: 'Administrador',
     COORDINADOR: 'Coordinador',
     JEFE: 'Jefatura',
     GERENCIA: 'Gerencia',
 };
 
-const AREA_MAP = {
+const DEPARTAMENTO_MAP = {
     DISENO: 'Diseño',
-    ADMON: 'Administración',
-    CONTABILIDAD: 'Contabilidad',
-    DIRECCION: 'Dirección',
-    PRODUCCION: 'Producción',
-    CALIDAD: 'Calidad',
-    ALMACEN: 'Almacén',
-    EXTERNA: 'Externa',
+    MARKETING: 'Marketing',
 };
 
 const LINEA_MAP = {
@@ -54,7 +49,7 @@ export const UserFormModal = ({
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [rol, setRol] = useState('');
-    const [area, setArea] = useState('DISENO');
+    const [departamento, setDepartamento] = useState('DISENO');
     const [linea, setLinea] = useState('');
     const [imagenPreview, setImagenPreview] = useState(null);
     const [imagenFile, setImagenFile] = useState(undefined);
@@ -64,6 +59,7 @@ export const UserFormModal = ({
 
     useEffect(() => {
         if (!isOpen) return;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSubmitted(false);
         setBackendError('');
 
@@ -73,7 +69,7 @@ export const UserFormModal = ({
             setEmail(usuarioAEditar.email || '');
             setPassword('');
             setRol(usuarioAEditar.rol || '');
-            setArea(usuarioAEditar.area || 'DISENO');
+            setDepartamento(usuarioAEditar.departamento || '');
             setLinea(usuarioAEditar.linea || '');
             setImagenPreview(usuarioAEditar.imagen || null);
             setImagenFile(undefined);
@@ -84,18 +80,21 @@ export const UserFormModal = ({
             setEmail('');
             setPassword('');
             setRol('');
-            setArea('DISENO');
+            setDepartamento(currentUser?.rol === 'GERENCIA' ? (currentUser?.departamento ?? 'DISENO') : 'DISENO');
             setLinea('');
             setImagenPreview(null);
             setImagenFile(undefined);
             setUsernameEdited(false);
         }
-    }, [isOpen, esEdicion, usuarioAEditar]);
+    }, [isOpen, esEdicion, usuarioAEditar, currentUser]);
+
+    const esAdmin = currentUser?.rol === 'ADMIN';
 
     const rolesDisponibles = [
+        { value: 'ADMIN', label: ROL_MAP.ADMIN, visible: esAdmin || usuarioAEditar?.rol === 'ADMIN' },
+        { value: 'GERENCIA', label: ROL_MAP.GERENCIA, visible: esAdmin || esGerencia || usuarioAEditar?.rol === 'GERENCIA' },
+        { value: 'JEFE', label: ROL_MAP.JEFE, visible: esAdmin || esGerencia || usuarioAEditar?.rol === 'JEFE' },
         { value: 'COORDINADOR', label: ROL_MAP.COORDINADOR, visible: true },
-        { value: 'JEFE', label: ROL_MAP.JEFE, visible: esGerencia || usuarioAEditar?.rol === 'JEFE' },
-        { value: 'GERENCIA', label: ROL_MAP.GERENCIA, visible: esGerencia || usuarioAEditar?.rol === 'GERENCIA' },
     ].filter((r) => r.visible);
 
     const handleNombreChange = (e) => {
@@ -130,7 +129,7 @@ export const UserFormModal = ({
         if (!esEdicion && !password.trim()) e.password = 'Contraseña obligatoria (Mínimo 6 chars).';
         if (password && password.length < 6) e.password = 'Mínimo 6 caracteres.';
         if (!rol) e.rol = 'Selecciona un rol.';
-        if (!area) e.area = 'Selecciona un área.';
+        if (rol !== 'ADMIN' && !departamento) e.departamento = 'Selecciona un departamento.';
         return e;
     };
 
@@ -144,7 +143,7 @@ export const UserFormModal = ({
         const formData = new FormData();
         formData.append('nombre', nombre);
         formData.append('rol', rol);
-        formData.append('area', area);
+        formData.append('departamento', rol === 'ADMIN' ? '' : departamento);
 
         if (username) formData.append('username', username);
         if (email) formData.append('email', email);
@@ -269,17 +268,22 @@ export const UserFormModal = ({
                         </div>
 
                         <div className="flex flex-col gap-1.5">
-                            <Label htmlFor="u-area" error={!!fe.area}>Área *</Label>
+                            <Label htmlFor="u-departamento" error={!!fe.departamento}>Departamento *</Label>
                             <Select
-                                id="u-area"
-                                value={area}
-                                onChange={(e) => setArea(e.target.value)}
-                                error={!!fe.area}
-                                helperText={fe.area}
+                                id="u-departamento"
+                                value={departamento}
+                                onChange={(e) => setDepartamento(e.target.value)}
+                                error={!!fe.departamento}
+                                helperText={fe.departamento}
+                                disabled={currentUser?.rol === 'GERENCIA'}
                             >
-                                {Object.entries(AREA_MAP).map(([value, label]) => (
+                                <option value="" disabled>Selecciona departamento…</option>
+                                {Object.entries(DEPARTAMENTO_MAP).map(([value, label]) => (
                                     <option key={value} value={value}>{label}</option>
                                 ))}
+                                {rol === 'ADMIN' && (
+                                    <option value="">Global (Sin Departamento)</option>
+                                )}
                             </Select>
                         </div>
 

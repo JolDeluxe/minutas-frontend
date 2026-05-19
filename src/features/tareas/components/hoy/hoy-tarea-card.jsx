@@ -128,11 +128,23 @@ export const HoyTareaCard = ({
 
             {/* Origen (Minuta) */}
             {tarea.minuta && (
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50/50 border border-slate-100 rounded-xl">
-                    <Icon name="description" size="12px" className="text-slate-300" />
-                    <span className="text-[10px] font-bold text-slate-500 truncate italic">
-                        {tarea.minuta.titulo || `Minuta #${tarea.minutaId}`}
-                    </span>
+                <div className="flex items-center justify-between gap-2 px-3 py-1.5 bg-slate-50/50 border border-slate-100 rounded-xl flex-wrap">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <Icon name="description" size="12px" className="text-slate-300 shrink-0" />
+                        <span className="text-[10px] font-bold text-slate-500 truncate italic" title={tarea.minuta.titulo}>
+                            {tarea.minuta.titulo || `Minuta #${tarea.minutaId}`}
+                        </span>
+                    </div>
+                    {tarea.minuta.isJuntaActual && (
+                        <span className="inline-flex items-center px-1.5 py-px rounded-full text-[7px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-700 border border-emerald-200/40 whitespace-nowrap shadow-sm">
+                            Junta Actual
+                        </span>
+                    )}
+                    {tarea.minuta.isJuntaAnterior && (
+                        <span className="inline-flex items-center px-1.5 py-px rounded-full text-[7px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-700 border border-indigo-200/40 whitespace-nowrap shadow-sm">
+                            Anterior
+                        </span>
+                    )}
                 </div>
             )}
 

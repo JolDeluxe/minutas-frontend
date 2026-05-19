@@ -22,6 +22,7 @@ export const UsersMobile = ({
     totalParaPaginador,
     resumenRoles,
     filtroRol,
+    filtroDepartamento,
     query,
     sortConfig,
     mostrarInactivos,
@@ -33,6 +34,7 @@ export const UsersMobile = ({
     onOpenCreate,
     onFilterChange,
     onSearchChange,
+    onDepartamentoChange,
     onToggleInactivos,
 }) => {
     const [viewMode, setViewMode] = useState('cards');
@@ -79,8 +81,11 @@ export const UsersMobile = ({
                 <UserFilterBar
                     query={query}
                     onSearchChange={onSearchChange}
+                    departamentoFilter={filtroDepartamento}
+                    onDepartamentoChange={onDepartamentoChange}
                     mostrarInactivos={mostrarInactivos}
                     onToggleInactivos={onToggleInactivos}
+                    currentUser={currentUser}
                     mobileSearchOnly
                 />
 

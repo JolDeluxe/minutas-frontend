@@ -16,7 +16,7 @@ export const MODULES_CONFIG = [
     name: 'Usuarios',
     icon: 'group',
     route: '/usuarios',
-    allowedRoles: ['GERENCIA'],
+    allowedRoles: ['GERENCIA', 'ADMIN'],
   },
   {
     id: 'tareas',

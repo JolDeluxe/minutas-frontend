@@ -27,6 +27,7 @@ export const ESTADO_OPERATIVO_MAP = {
 
 export const AREA_MAP = {
   DISENO:            'Diseño',
+  MARKETING:         'Marketing',
   DIRECCION_MBC:     'Dirección MBC',
   DIRECCION_CFI:     'Dirección CFI',
   DIRECCION_ADJUNTA: 'Dirección Adjunta',
@@ -86,8 +87,8 @@ export const formatRelative = (dateStr) => {
 // ─── Eventos del sistema (para timeline-event) ──────────────────────────────
 
 export const EVENTO_MAP = {
-  CAPTURA:        { label: 'Entrada capturada',    icon: 'add_circle',   color: '#94a3b8' },
-  ACTUALIZACION:  { label: 'Actualizada',          icon: 'edit',         color: '#64748b' },
+  CAPTURA:        { label: 'Entrada capturada',     icon: 'add_circle',   color: '#94a3b8' },
+  ACTUALIZACION:  { label: 'Actualizada',           icon: 'edit',         color: '#64748b' },
   REVISION:       { label: 'Marcada en revisión',   icon: 'pending',      color: '#3b82f6' },
   FORMALIZACION:  { label: 'Formalizada',           icon: 'verified',     color: '#10b981' },
   ASIGNACION:     { label: 'Responsable asignado',  icon: 'person_add',   color: '#8b5cf6' },

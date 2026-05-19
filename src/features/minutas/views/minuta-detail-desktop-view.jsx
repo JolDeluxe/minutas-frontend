@@ -43,7 +43,11 @@ export const MinutaDetailDesktopView = ({
   handleAddEntryImage,
   handleDeleteEntryImage,
   changeTareaStatus,
-  users
+  users,
+  handleIniciar,
+  handleCancelar,
+  iniciando,
+  cancelando
 }) => {
   return (
     <div className="flex h-full w-full flex-col bg-slate-50/50 relative">
@@ -52,13 +56,16 @@ export const MinutaDetailDesktopView = ({
         resumen={resumen} 
         entries={filteredEntries}
         onFilterByStatus={(status) => {
-          // Map executive summary status to timeline filters
           if (status === 'COMPLETADAS') setFilterClasif('TODAS');
           else if (status === 'EN_PROGRESO') setFilterClasif('TODAS');
           else if (status === 'ATRASADAS') setFilterClasif('TODAS');
           else if (status === 'PENDIENTE') setFilterClasif('TODAS');
           else setFilterClasif('TODAS');
         }}
+        onIniciar={handleIniciar}
+        onCancelar={handleCancelar}
+        iniciando={iniciando}
+        cancelando={cancelando}
       />
 
       <div className="flex flex-1 overflow-hidden relative">

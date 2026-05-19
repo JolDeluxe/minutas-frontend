@@ -1,15 +1,9 @@
 import { Modal, ModalHeader, ModalBody, ModalFooter, Icon } from "@/components/ui/z_index";
 import { UserStatusBadge } from "./user-status-badge";
 
-const AREA_LABEL = {
+const DEPARTAMENTO_LABEL = {
   DISENO: 'Diseño',
-  ADMON: 'Administración',
-  CONTABILIDAD: 'Contabilidad',
-  DIRECCION: 'Dirección',
-  PRODUCCION: 'Producción',
-  CALIDAD: 'Calidad',
-  ALMACEN: 'Almacén',
-  EXTERNA: 'Externa',
+  MARKETING: 'Marketing',
 };
 
 const ROL_LABEL = {
@@ -90,9 +84,9 @@ export const UserDetailModal = ({ isOpen, onClose, usuario }) => {
                         </h4>
                         <DataRow
                             icon="business"
-                            label="Área"
-                            value={AREA_LABEL[usuario.area] || usuario.area}
-                            fallback="Sin área asignada"
+                            label="Departamento"
+                            value={DEPARTAMENTO_LABEL[usuario.departamento] || usuario.departamento}
+                            fallback="Global (Sin departamento)"
                         />
                         {usuario.linea && (
                             <DataRow icon="sell" label="Línea" value={usuario.linea} />

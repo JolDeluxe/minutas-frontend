@@ -15,6 +15,7 @@ export const UsersDesktop = ({
     sortConfig,
     query,
     filtroRol,
+    filtroDepartamento,
     totalParaSummary,
     totalParaPaginador,
     resumenRoles,
@@ -24,6 +25,7 @@ export const UsersDesktop = ({
     onSortChange,
     onSearchChange,
     onFilterChange,
+    onDepartamentoChange,
     onSave,
     onToggleStatus,
     onRefresh,
@@ -47,8 +49,11 @@ export const UsersDesktop = ({
             <UserFilterBar
                 query={query}
                 onSearchChange={onSearchChange}
+                departamentoFilter={filtroDepartamento}
+                onDepartamentoChange={onDepartamentoChange}
                 mostrarInactivos={mostrarInactivos}
                 onToggleInactivos={onToggleInactivos}
+                currentUser={currentUser}
             />
 
             <UsersTable

@@ -8,6 +8,7 @@ import { cn } from '@/utils/cn';
 
 const ESTADO_TABS = [
   { key: 'ACTIVA',  label: 'Activas',  icon: 'radio_button_checked' },
+  { key: 'PROGRAMADA', label: 'Por Realizar', icon: 'event_upcoming' },
   { key: 'CERRADA', label: 'Cerradas', icon: 'check_circle' },
   { key: '',        label: 'Todas',    icon: 'list' },
 ];

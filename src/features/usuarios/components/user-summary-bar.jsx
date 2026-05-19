@@ -1,7 +1,7 @@
 // src/features/usuarios/components/user-summary-bar.jsx
 import { SummaryBar, Skeleton } from '@/components/ui/z_index';
 
-const SummaryBarSkeleton = ({ count = 4 }) => (
+const SummaryBarSkeleton = ({ count = 5 }) => (
     <div className={`hidden lg:grid gap-4 mb-4 grid-cols-${count}`}>
         {Array.from({ length: count }).map((_, i) => (
             <div key={i} className="flex flex-col justify-center items-center py-4 px-3 rounded-2xl bg-white border border-slate-200/80 shadow-sm">
@@ -23,33 +23,35 @@ export const UserSummaryBar = ({
 }) => {
     const rol = currentUser?.rol;
 
-    // Solo GERENCIA ve la summary bar completa
-    if (rol !== 'GERENCIA') return null;
+    // GERENCIA y ADMIN ven la summary bar completa
+    if (rol !== 'GERENCIA' && rol !== 'ADMIN') return null;
+
+    const totalColumns = rol === 'ADMIN' ? 5 : 4;
 
     if (loading && total === 0 && Object.keys(conteos).length === 0) {
-        return <SummaryBarSkeleton count={mostrarInactivos ? 1 : 4} />;
+        return <SummaryBarSkeleton count={totalColumns} />;
     }
 
     const totalReal = total || Object.values(conteos).reduce((acc, v) => acc + (v || 0), 0);
 
-    if (mostrarInactivos) {
-        return (
-            <SummaryBar
-                items={[{ id: 'INACTIVOS', label: 'Total Inactivos', value: totalReal, color: 'rojo' }]}
-                activeId="INACTIVOS"
-                onSelect={() => { }}
-                loading={loading}
-                separateFirstMobile={true}
-            />
-        );
+    const items = [
+        { 
+            id: 'TODOS', 
+            label: mostrarInactivos ? 'Total Inactivos' : 'Total', 
+            value: totalReal, 
+            color: mostrarInactivos ? 'rojo' : 'gris' 
+        },
+    ];
+
+    if (rol === 'ADMIN') {
+        items.push({ id: 'ADMIN', label: 'Administrador', value: conteos['ADMIN'] || 0, color: 'rosa' });
     }
 
-    const items = [
-        { id: 'TODOS', label: 'Total', value: totalReal, color: 'gris' },
+    items.push(
         { id: 'GERENCIA', label: 'Gerencia', value: conteos['GERENCIA'] || 0, color: 'esmeralda' },
         { id: 'JEFE', label: 'Jefatura', value: conteos['JEFE'] || 0, color: 'amarillo' },
-        { id: 'COORDINADOR', label: 'Coordinador', value: conteos['COORDINADOR'] || 0, color: 'indigo' },
-    ];
+        { id: 'COORDINADOR', label: 'Coordinador', value: conteos['COORDINADOR'] || 0, color: 'indigo' }
+    );
 
     const visibleIds = new Set(items.map(i => i.id));
     const activeId = visibleIds.has(filtroActual) ? filtroActual : 'TODOS';

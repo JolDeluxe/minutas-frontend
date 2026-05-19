@@ -29,6 +29,7 @@ const UsersPage = () => {
     // ── Estado de la página ──
     const [query, setQuery] = useState('');
     const [filtroRol, setFiltroRol] = useState('TODOS');
+    const [filtroDepartamento, setFiltroDepartamento] = useState('TODOS');
     const [page, setPage] = useState(1);
     const [sortConfig, setSortConfig] = useState(null);
     const [showCreate, setShowCreate] = useState(false);
@@ -40,21 +41,23 @@ const UsersPage = () => {
 
         if (query) params.q = query;
         if (filtroRol !== 'TODOS') params.rol = filtroRol;
+        if (filtroDepartamento !== 'TODOS') params.departamento = filtroDepartamento;
         if (mostrarInactivos) params.estado = 'INACTIVO';
         if (sortConfig?.key) {
             params.sort = JSON.stringify([{ [sortConfig.key]: sortConfig.direction }]);
         }
 
         return fetchUsers(params).catch(() => notify.error('Error al cargar usuarios.'));
-    }, [page, query, filtroRol, sortConfig, mostrarInactivos, fetchUsers]);
+    }, [page, query, filtroRol, filtroDepartamento, sortConfig, mostrarInactivos, fetchUsers]);
 
     useEffect(() => { loadUsers(); }, [loadUsers]);
 
     // ── Handlers ──
     const handleSearchChange = useCallback((q) => { setQuery(q); setPage(1); }, []);
     const handleFilterChange = useCallback((rol) => { setFiltroRol(rol); setPage(1); }, []);
+    const handleDepartamentoChange = useCallback((dep) => { setFiltroDepartamento(dep); setPage(1); }, []);
     const handleSortChange = useCallback((key, direction) => { setSortConfig({ key, direction }); setPage(1); }, []);
-    const handleToggleInactivos = useCallback(() => { setMostrarInactivos(prev => !prev); setFiltroRol('TODOS'); setPage(1); }, []);
+    const handleToggleInactivos = useCallback(() => { setMostrarInactivos(prev => !prev); setFiltroRol('TODOS'); setFiltroDepartamento('TODOS'); setPage(1); }, []);
 
     const handleCreate = async (payload) => {
         try {
@@ -107,12 +110,14 @@ const UsersPage = () => {
         sortConfig,
         query,
         filtroRol,
+        filtroDepartamento,
         mostrarInactivos,
         onToggleInactivos: handleToggleInactivos,
         onPageChange: setPage,
         onSortChange: handleSortChange,
         onSearchChange: handleSearchChange,
         onFilterChange: handleFilterChange,
+        onDepartamentoChange: handleDepartamentoChange,
         onSave: handleUpdate,
         onToggleStatus: handleToggleStatus,
         onRefresh: loadUsers,

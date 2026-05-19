@@ -31,8 +31,8 @@ export const useMinutas = () => {
     try {
       const response = await getMinutas(params);
       
-      const data = response?.data?.data || response?.data || [];
-      const pagination = response?.data?.pagination || {};
+      const data = response?.data || [];
+      const pagination = response?.pagination || {};
 
       setMinutas(Array.isArray(data) ? data : []);
       setMeta({
@@ -41,7 +41,7 @@ export const useMinutas = () => {
       });
 
       // Navegación ejecutiva del backend (GLOBAL, no afectada por filtros)
-      const nav = response?.data?.navegacionEjecutiva || {};
+      const nav = response?.navegacionEjecutiva || {};
       setNavegacionEjecutiva({
         ultimaJuntaId: nav.ultimaJuntaId ?? null,
         juntaAnteriorId: nav.juntaAnteriorId ?? null,

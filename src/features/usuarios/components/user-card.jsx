@@ -14,15 +14,9 @@ const ROL_COLOR = {
     COORDINADOR: 'text-blue-700',
 };
 
-const AREA_LABEL = {
+const DEPARTAMENTO_LABEL = {
     DISENO: 'Diseño',
-    ADMON: 'Administración',
-    CONTABILIDAD: 'Contabilidad',
-    DIRECCION: 'Dirección',
-    PRODUCCION: 'Producción',
-    CALIDAD: 'Calidad',
-    ALMACEN: 'Almacén',
-    EXTERNA: 'Externa',
+    MARKETING: 'Marketing',
 };
 
 const puedeEditar = (me, row) => {
@@ -85,11 +79,11 @@ export const UserCard = ({ usuario, currentUser, onEdit, onToggleStatus, onViewD
                     </span>
                 </p>
 
-                {usuario.area && (
+                {usuario.departamento && (
                     <p className="flex items-center gap-2">
                         <Icon name="domain" size="xs" className="text-slate-300 shrink-0" />
                         <span className="text-xs text-slate-500 truncate">
-                            {AREA_LABEL[usuario.area] || usuario.area}
+                            {DEPARTAMENTO_LABEL[usuario.departamento] || usuario.departamento}
                         </span>
                     </p>
                 )}

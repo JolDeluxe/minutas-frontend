@@ -136,11 +136,21 @@ export const TareasTable = ({
                             )}
                         </div>
                         {row.minuta && (
-                            <div className="flex items-center gap-1.5 mt-1">
-                                <Icon name="description" size="10px" className="text-slate-300" />
-                                <span className="text-[10px] text-slate-400 font-bold truncate max-w-[150px]">
+                            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                <Icon name="description" size="10px" className="text-slate-300 shrink-0" />
+                                <span className="text-[10px] text-slate-400 font-bold truncate max-w-[150px]" title={row.minuta.titulo}>
                                     {row.minuta.titulo || `Minuta #${row.minutaId}`}
                                 </span>
+                                {row.minuta.isJuntaActual && (
+                                    <span className="inline-flex items-center px-1 py-px rounded-full text-[7px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-700 border border-emerald-200/40 whitespace-nowrap shadow-sm">
+                                        Junta Actual
+                                    </span>
+                                )}
+                                {row.minuta.isJuntaAnterior && (
+                                    <span className="inline-flex items-center px-1 py-px rounded-full text-[7px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-700 border border-indigo-200/40 whitespace-nowrap shadow-sm">
+                                        Anterior
+                                    </span>
+                                )}
                             </div>
                         )}
                     </div>

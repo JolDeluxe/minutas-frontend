@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getMinutaById } from '../api/minutas-api';
+import { getMinutaById, iniciarMinuta, cancelarMinuta } from '../api/minutas-api';
 import { useTareas } from '@/features/tareas/hooks/use-tareas';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { useUsers } from '@/features/usuarios/hooks/use-users';
@@ -46,6 +46,8 @@ export default function MinutaDetailPage() {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [organizeEntry, setOrganizeEntry] = useState(null);
   const [isSubmittingFinal, setIsSubmittingFinal] = useState(false);
+  const [iniciando, setIniciando] = useState(false);
+  const [cancelando, setCancelando] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -270,6 +272,34 @@ export default function MinutaDetailPage() {
     }
   };
 
+  const handleIniciar = async () => {
+    setIniciando(true);
+    try {
+      await iniciarMinuta(id);
+      notify.success("Junta iniciada con éxito");
+      const res = await getMinutaById(id);
+      setMinuta(res.data);
+    } catch {
+      notify.error("No se pudo iniciar la junta");
+    } finally {
+      setIniciando(false);
+    }
+  };
+
+  const handleCancelar = async () => {
+    if (!confirm("¿Estás seguro de que deseas cancelar esta minuta? Esta acción no se puede deshacer.")) return;
+    setCancelando(true);
+    try {
+      await cancelarMinuta(id);
+      notify.success("Minuta cancelada");
+      navigate('/minutas');
+    } catch {
+      notify.error("No se pudo cancelar la minuta. Verifica que no tenga tareas activas.");
+    } finally {
+      setCancelando(false);
+    }
+  };
+
   if (loadingMinuta) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-50">
@@ -281,21 +311,44 @@ export default function MinutaDetailPage() {
   // Si estamos en Zero State, mostramos el iniciador centrado (común para ambos)
   if (showZeroState) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in duration-700 bg-slate-50/50">
+      <div className="flex flex-1 flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in duration-700 bg-slate-50/50 min-h-screen">
         <div className="mb-12 flex h-48 w-48 items-center justify-center rounded-[3.5rem] bg-white shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] border border-slate-100/50 group hover:scale-105 transition-transform cursor-pointer" onClick={() => setCapturing(true)}>
           <Icon name="add" size="96px" className="text-marca-primario group-hover:rotate-90 transition-transform duration-500" />
         </div>
         <h2 className="fuente-titulos text-4xl font-black text-slate-900 mb-4 tracking-tight uppercase">Iniciar Minuta</h2>
         <p className="max-w-xs text-slate-400 mb-12 text-lg font-medium italic">Presiona el botón para comenzar el registro de acuerdos y tareas.</p>
-        <Button 
-          variant="marca" 
-          size="lg" 
-          icon="play_arrow"
-          className="h-20 px-16 rounded-4xl shadow-2xl shadow-marca-primario/30 active:scale-95 transition-all text-xl font-black uppercase tracking-[0.2em]"
-          onClick={() => setCapturing(true)}
-        >
-          Comenzar Sesión
-        </Button>
+        
+        <div className="flex flex-col gap-4 items-center w-full max-w-md">
+          <Button 
+            variant="marca" 
+            size="lg" 
+            icon="play_arrow"
+            className="h-20 w-full rounded-4xl shadow-2xl shadow-marca-primario/30 active:scale-95 transition-all text-xl font-black uppercase tracking-[0.2em]"
+            onClick={() => setCapturing(true)}
+          >
+            Comenzar Sesión
+          </Button>
+
+          <div className="flex gap-3 w-full justify-center mt-2">
+            <Button 
+              variant="secundario" 
+              icon="arrow_back"
+              onClick={() => navigate('/minutas')}
+            >
+              Regresar
+            </Button>
+            {minuta?.estado !== 'CANCELADA' && (
+              <Button 
+                variant="peligro" 
+                icon="cancel"
+                loading={cancelando}
+                onClick={handleCancelar}
+              >
+                Cancelar Minuta
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
     );
   }
@@ -307,7 +360,8 @@ export default function MinutaDetailPage() {
     organizeEntry, handleOrganizeSave, updateTarea, changeTareaStatus: handleStatusChange, fetchTareas, refreshEntries, setShowReviewModal, showReviewModal,
     handleFinalSubmit, isSubmittingFinal, showNotes, setShowNotes,
     handleUpdateSavedEntry, handleCreateEntryNote, handleUpdateEntryNote,
-    handleDeleteEntryNote, handleAddEntryImage, handleDeleteEntryImage
+    handleDeleteEntryNote, handleAddEntryImage, handleDeleteEntryImage,
+    handleIniciar, handleCancelar, iniciando, cancelando
   };
 
   // Renderizado Condicional por Breakpoint

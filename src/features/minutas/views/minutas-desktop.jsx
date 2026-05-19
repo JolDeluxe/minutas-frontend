@@ -15,7 +15,7 @@ import { Button, Icon, GlassViewToggle } from '@/components/ui/z_index';
 const groupByDate = (minutas) => {
     const groups = new Map();
     for (const m of minutas) {
-        const d = new Date(m.fecha || m.createdAt);
+        const d = new Date(m.fechaRealizada || m.fechaProgramada || m.createdAt);
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         if (!groups.has(key)) {
             groups.set(key, { date: d, key, minutas: [] });
@@ -108,14 +108,40 @@ export const MinutasDesktop = ({
                     </p>
                 </div>
                 
-                <Button
-                    variant="guardar"
-                    icon="add"
-                    onClick={onOpenCreate}
-                    className="shrink-0"
-                >
-                    Nueva Minuta
-                </Button>
+                <div className="flex items-center gap-2 shrink-0">
+                    {/* Atajos Ejecutivos de Dirección */}
+                    {ultimaJuntaId && (
+                        <div className="flex items-center gap-1.5 bg-slate-100/80 border border-slate-200/50 p-1 rounded-xl mr-1">
+                            <button
+                                onClick={() => onViewDetail({ id: ultimaJuntaId })}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-white hover:bg-emerald-50 text-emerald-700 hover:text-emerald-800 border border-slate-200 hover:border-emerald-200/50 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all active:scale-95 shadow-sm"
+                                title="Ver Junta Actual"
+                            >
+                                <Icon name="bolt" size="12px" className="text-emerald-600 animate-pulse" />
+                                Junta Actual
+                            </button>
+                            {juntaAnteriorId && (
+                                <button
+                                    onClick={() => onViewDetail({ id: juntaAnteriorId })}
+                                    className="flex items-center gap-1 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800 border border-slate-200 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all active:scale-95 shadow-sm"
+                                    title="Ver Junta Anterior"
+                                >
+                                    <Icon name="history" size="12px" className="text-slate-500" />
+                                    Anterior
+                                </button>
+                            )}
+                        </div>
+                    )}
+
+                    <Button
+                        variant="guardar"
+                        icon="add"
+                        onClick={onOpenCreate}
+                        className="shrink-0"
+                    >
+                        Nueva Minuta
+                    </Button>
+                </div>
             </div>
 
             {/* KPI BAR */}
@@ -242,6 +268,8 @@ export const MinutasDesktop = ({
                     onSortChange={onSortChange}
                     onViewDetail={onViewDetail}
                     onEdit={onEdit}
+                    ultimaJuntaId={ultimaJuntaId}
+                    juntaAnteriorId={juntaAnteriorId}
                 />
             )}
         </div>

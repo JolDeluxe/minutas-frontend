@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Icon } from '@/components/ui/z_index';
+import { Icon, Button } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
 import { LINEA_MAP } from '../../constants';
 import { LineIconSelector } from '../icons/line-icons';
@@ -11,13 +11,16 @@ import { MinutaJuntaComparison } from '../minuta-junta-comparison';
  * MinutaContextPanel — Panel de contexto de la minuta.
  * Ahora incluye el resumen ejecutivo visual y comparación con junta anterior.
  */
-export const MinutaContextPanel = ({ minuta, resumen, entries = [], onFilterByStatus }) => {
+export const MinutaContextPanel = ({ 
+  minuta, resumen, entries = [], onFilterByStatus,
+  onIniciar, onCancelar, iniciando, cancelando 
+}) => {
   const navigate = useNavigate();
   const isDesktop = useIsDesktop();
 
   if (!minuta) return null;
 
-  const fecha = new Date(minuta.fecha || minuta.createdAt).toLocaleDateString('es-MX', {
+  const fecha = new Date(minuta.fechaRealizada || minuta.fechaProgramada || minuta.createdAt).toLocaleDateString('es-MX', {
     weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
   });
 
@@ -58,6 +61,18 @@ export const MinutaContextPanel = ({ minuta, resumen, entries = [], onFilterBySt
                 {minuta.estado === 'ACTIVA' ? 'Activa' : 'Cerrada'}
               </span>
 
+              {/* Atajos Ejecutivos */}
+              {minuta.isJuntaActual && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-700 border border-emerald-200/40 whitespace-nowrap shadow-sm">
+                  Junta Actual
+                </span>
+              )}
+              {minuta.isJuntaAnterior && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-700 border border-indigo-200/40 whitespace-nowrap shadow-sm">
+                  Anterior
+                </span>
+              )}
+
               <span className="w-1 h-1 rounded-full bg-slate-300" />
 
               {/* Línea */}
@@ -67,6 +82,33 @@ export const MinutaContextPanel = ({ minuta, resumen, entries = [], onFilterBySt
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2">
+          {minuta.estado === 'PROGRAMADA' && (
+            <Button
+              variant="marca"
+              icon="play_arrow"
+              onClick={onIniciar}
+              loading={iniciando}
+              size="sm"
+            >
+              Iniciar Junta
+            </Button>
+          )}
+
+          {minuta.estado !== 'CANCELADA' && resumen?.totalValidas === 0 && (
+            <Button
+              variant="peligro"
+              icon="cancel"
+              onClick={onCancelar}
+              loading={cancelando}
+              size="sm"
+            >
+              Cancelar Minuta
+            </Button>
+          )}
         </div>
       </header>
 
