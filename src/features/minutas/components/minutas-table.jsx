@@ -152,7 +152,12 @@ export const MinutasTable = ({
                         </div>
                         <div className="relative h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
                             <div 
-                                className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-500"
+                                className={cn(
+                                    "absolute inset-y-0 left-0 rounded-full transition-all duration-500",
+                                    porcentaje < 100 
+                                        ? "bg-gradient-to-r from-amber-500 to-amber-400" 
+                                        : "bg-gradient-to-r from-emerald-500 to-emerald-400"
+                                )}
                                 style={{ width: `${porcentaje}%` }}
                             />
                         </div>

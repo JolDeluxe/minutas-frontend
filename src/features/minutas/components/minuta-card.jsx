@@ -164,7 +164,12 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, badge = null, isAdmin
                     <div>
                         <div className="relative h-2 rounded-full bg-slate-100 overflow-hidden mb-1.5">
                             <div 
-                                className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-700"
+                                className={cn(
+                                    "absolute inset-y-0 left-0 rounded-full transition-all duration-700",
+                                    porcentaje < 100 
+                                        ? "bg-gradient-to-r from-amber-500 to-amber-400" 
+                                        : "bg-gradient-to-r from-emerald-500 to-emerald-400"
+                                )}
                                 style={{ width: `${porcentaje}%` }}
                             />
                         </div>

@@ -73,7 +73,12 @@ export const MinutaExecutiveSummary = ({ resumen, entries = [], onFilterByStatus
         </div>
         <div className="relative h-3 md:h-4 rounded-full bg-slate-100 overflow-hidden shadow-inner">
           <div 
-            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-1000 ease-out shadow-sm"
+            className={cn(
+              "absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ease-out shadow-sm",
+              porcentaje < 100 
+                ? "bg-gradient-to-r from-amber-500 to-amber-400" 
+                : "bg-gradient-to-r from-emerald-500 to-emerald-400"
+            )}
             style={{ width: `${porcentaje}%` }}
           />
           {atrasadas > 0 && (
