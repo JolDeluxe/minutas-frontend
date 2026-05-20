@@ -13,7 +13,7 @@ export const MODULES_CONFIG = [
   },
   {
     id: 'tareas',
-    name: 'Tareas Operativas',
+    name: 'Tareas',
     icon: 'task',
     route: '/tareas',
     allowedRoles: ['ADMIN', 'GERENCIA', 'JEFE', 'COORDINADOR'],

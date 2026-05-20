@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Badge, Icon } from '@/components/ui/z_index';
+import { Badge, Icon, Card } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
 import { LINEA_MAP } from '../constants';
 import { LineIconSelector } from './icons/line-icons';
@@ -7,7 +7,6 @@ import { LineIconSelector } from './icons/line-icons';
 const ESTADO_LABEL = {
     PROGRAMADA: 'Programada',
     ACTIVA: 'Activa',
-    EN_REVISION: 'En Revisión',
     CERRADA: 'Cerrada',
     CANCELADA: 'Cancelada',
 };
@@ -15,7 +14,6 @@ const ESTADO_LABEL = {
 const ESTADO_COLORS = {
     PROGRAMADA: 'bg-blue-50 text-blue-700 border-blue-200',
     ACTIVA: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    EN_REVISION: 'bg-amber-50 text-amber-700 border-amber-200',
     CERRADA: 'bg-slate-100 text-slate-500 border-slate-200',
     CANCELADA: 'bg-red-50 text-red-700 border-red-200',
 };
@@ -31,7 +29,7 @@ const formatFechaReal = (dateStr) => {
     });
 };
 
-export const MinutaCard = ({ minuta, onViewDetail, onEdit, badge = null }) => {
+export const MinutaCard = ({ minuta, onViewDetail, onEdit, badge = null, isAdmin = false }) => {
     const estadoLabel = ESTADO_LABEL[minuta.estado] || minuta.estado;
     const estadoColor = ESTADO_COLORS[minuta.estado] || 'bg-slate-50 text-slate-600 border-slate-200';
     
@@ -46,7 +44,13 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, badge = null }) => {
     
     // Fecha REAL — lo que el jefe necesita para "la minuta del 28 de marzo"
     const fechaReal = formatFechaReal(minuta.fechaRealizada || minuta.fechaProgramada || minuta.createdAt);
-    const lineaLabel = LINEA_MAP[minuta.lineaDefault]?.label || minuta.lineaDefault;
+    
+    const dept = minuta.departamento || minuta.creadoPor?.departamento;
+    const isMarketing = dept === 'MARKETING';
+    const isDiseno = dept === 'DISENO';
+    const lineInfo = isMarketing 
+        ? { label: 'Campaña', color: '#8b5cf6' } 
+        : (LINEA_MAP[minuta.lineaDefault] || { label: minuta.lineaDefault, color: '#64748b' });
 
     const BADGE_CONFIG = {
         current: {
@@ -78,10 +82,15 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, badge = null }) => {
     } : null);
 
     return (
-        <div 
+        <Card 
             className={cn(
-                "bg-white border rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all group cursor-pointer relative",
-                finalBadgeCfg ? finalBadgeCfg.border : "border-slate-200"
+                "transition-all duration-200 overflow-hidden group border cursor-pointer relative rounded-2xl shadow-sm hover:shadow-lg",
+                finalBadgeCfg ? finalBadgeCfg.border : "border-slate-200/80",
+                isAdmin 
+                    ? (isMarketing 
+                        ? "bg-purple-50 border-purple-200 hover:bg-purple-100 hover:border-purple-300 border-l-4 border-l-purple-500" 
+                        : "bg-blue-50 border-blue-200 hover:bg-blue-100 hover:border-blue-300 border-l-4 border-l-blue-500")
+                    : "bg-white border-slate-200 hover:border-slate-300"
             )}
             onClick={() => onViewDetail?.(minuta)}
         >
@@ -96,15 +105,33 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, badge = null }) => {
             )}
 
             <div className="p-4">
-                {/* Fila 1: ID + Estado */}
+                {/* Fila 1: ID + Departamento (Admin) + Estado */}
                 <div className="flex justify-between items-center mb-2">
-                    <span className="text-[11px] font-mono font-bold text-slate-400 tracking-wide">
-                        MN-{String(minuta.id).padStart(3, '0')}
-                    </span>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-mono font-bold text-slate-400 tracking-wide">
+                            MN-{String(minuta.id).padStart(3, '0')}
+                        </span>
+                        {isAdmin && (
+                            <span className={cn(
+                                "px-1.5 py-0.5 text-[8.5px] font-black uppercase tracking-wider rounded border",
+                                isMarketing 
+                                    ? "bg-purple-50 text-purple-700 border-purple-200/60" 
+                                    : "bg-blue-50 text-blue-700 border-blue-200/60"
+                            )}>
+                                {isMarketing ? 'Marketing' : 'Diseño'}
+                            </span>
+                        )}
+                    </div>
                     <div className={cn(
-                        "px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-md border",
+                        "flex items-center gap-1.5 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-md border",
                         estadoColor
                     )}>
+                        {minuta.estado === 'ACTIVA' && (
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
+                        )}
                         {estadoLabel}
                     </div>
                 </div>
@@ -116,13 +143,19 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, badge = null }) => {
 
                 {/* Fila 3: Metadatos — Fecha + Línea */}
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-3 text-[11px] text-slate-500">
-                    <div className="flex items-center gap-1">
-                        <Icon name="event" size="13px" className="text-slate-400" />
-                        <span className="font-semibold">{fechaReal}</span>
+                    <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200/60">
+                        <Icon name="event" size="14px" className="text-slate-400" />
+                        <span className="font-bold text-slate-600">{fechaReal}</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                        <LineIconSelector type={minuta.lineaDefault} size={13} className="text-slate-700" />
-                        <span className="font-semibold">{lineaLabel}</span>
+                    <div className="flex flex-col items-center gap-1 px-2.5 py-1.5 rounded-xl" style={{ backgroundColor: `${lineInfo.color}0a`, border: `1.5px solid ${lineInfo.color}25` }}>
+                        {isMarketing ? (
+                            <Icon name="campaign" size="35px" style={{ color: lineInfo.color }} />
+                        ) : (
+                            <LineIconSelector type={minuta.lineaDefault} size={35} style={{ color: lineInfo.color }} />
+                        )}
+                        <span className="font-black tracking-[0.15em] text-[6px] uppercase font-mono text-center leading-none" style={{ color: lineInfo.color }}>
+                            {lineInfo.label}
+                        </span>
                     </div>
                 </div>
 
@@ -166,6 +199,6 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, badge = null }) => {
                     </div>
                 )}
             </div>
-        </div>
+        </Card>
     );
 };

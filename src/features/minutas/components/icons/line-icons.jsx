@@ -77,12 +77,14 @@ export const RopaIcon = ({ size = 28, className = "" }) => (
 /**
  * LineIconSelector — Componente centralizado para elegir el icono de línea.
  */
-export const LineIconSelector = ({ type, size = 28, className = "" }) => {
+export const LineIconSelector = ({ type, size = 28, className = "", style }) => {
   switch (type) {
     case 'CALZADO':    return <ZapatoIcon size={size} className={className} />;
     case 'BOTA':       return <BotaIcon size={size} className={className} />;
     case 'ACCESORIOS': return <BolsaIcon size={size} className={className} />;
     case 'ROPA':       return <RopaIcon size={size} className={className} />;
-    default:           return <Icon name="category" size={`${size}px`} className={className} />;
+    case 'CAMPANA':
+    case 'CAMPAÑA':    return <Icon name="campaign" size={`${size}px`} className={className} style={style} />;
+    default:           return <Icon name="category" size={`${size}px`} className={className} style={style} />;
   }
 };

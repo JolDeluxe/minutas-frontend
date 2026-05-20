@@ -3,10 +3,11 @@ import { Button, GlassFab, GlassPaginationPill, GlassViewToggle, ScrollToTopButt
 import { MinutasTable } from '../components/minutas-table';
 import { MinutaCard } from '../components/minuta-card';
 import { MinutasInlineFilters } from '../components/minutas-inline-filters';
-import { TimePeriodSelector } from '../components/time-period-selector';
 import { QuickNavigateCalendar } from '../components/quick-navigate-calendar';
+import { DirectoryKpiBar } from '../components/directory-kpi-bar';
 import { glassBase, GlassSheen } from '@/components/ui/liquid-glass-mobile';
 import { cn } from '@/utils/cn';
+import { useAuthStore } from '@/stores/auth-store';
 
 /**
  * Agrupa las minutas por fecha para headers tipo "15 MAY 2026"
@@ -69,16 +70,51 @@ export const MinutasMobile = ({
     onSelectDate,
     // Navegación ejecutiva (del backend, GLOBAL)
     navegacionEjecutiva,
+    // Global Filter
+    departamentoGlobal,
+    setDepartamentoGlobal,
 }) => {
-    const [viewMode, setViewMode] = useState('cards');
-    const hasContent = !loading && minutas.length > 0;
+    const { user } = useAuthStore();
+    const [viewMode, setViewModeState] = useState(() => {
+        return localStorage.getItem('minutas_view_mode') || 'table';
+    });
+
+    const setViewMode = (mode) => {
+        setViewModeState(mode);
+        localStorage.setItem('minutas_view_mode', mode);
+    };
+
+    // Filtrar por selectedDate SOLO para las tarjetas/tabla, no para el calendario
+    const displayMinutas = useMemo(() => {
+        if (!selectedDate) return minutas;
+        return minutas.filter(m => {
+            const d = new Date(m.fechaRealizada || m.fechaProgramada || m.createdAt);
+            const sel = new Date(selectedDate);
+            return d.getFullYear() === sel.getFullYear() && 
+                   d.getMonth() === sel.getMonth() && 
+                   d.getDate() === sel.getDate();
+        });
+    }, [minutas, selectedDate]);
+
+    const hasContent = !loading && displayMinutas.length > 0;
     const hasPaginator = hasContent && totalPages > 1;
 
-    const dateGroups = useMemo(() => groupByDate(minutas), [minutas]);
+    const dateGroups = useMemo(() => groupByDate(displayMinutas), [displayMinutas]);
 
-    // IDs del backend — GLOBALES, no afectados por filtros
+    const currentUser = user?.data || user;
+    const isAdmin = currentUser?.rol === 'ADMIN' || currentUser?.rol === 'SUPER_ADMIN';
+    const userDept = currentUser?.departamento === 'DISEÑO' ? 'DISENO' : currentUser?.departamento;
+
+    const activeDept = isAdmin
+        ? (departamentoGlobal === 'DISEÑO' ? 'DISENO' : departamentoGlobal === 'MARKETING' ? 'MARKETING' : null)
+        : userDept;
+
+    // IDs del backend por departamento
     const ultimaJuntaId = navegacionEjecutiva?.ultimaJuntaId;
     const juntaAnteriorId = navegacionEjecutiva?.juntaAnteriorId;
+
+    const currentJuntaId = activeDept ? ultimaJuntaId?.[activeDept] : null;
+    const prevJuntaId = activeDept ? juntaAnteriorId?.[activeDept] : null;
 
     return (
         <>
@@ -91,19 +127,47 @@ export const MinutasMobile = ({
                 </p>
             </div>
 
+            {isAdmin && (
+                <div className="flex items-center mx-1 mb-3 bg-slate-100/80 p-1 rounded-xl border border-slate-200/50 shadow-inner">
+                    {['TODAS', 'DISEÑO', 'MARKETING'].map(opt => (
+                        <button
+                            key={opt}
+                            onClick={() => setDepartamentoGlobal(opt)}
+                            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                                departamentoGlobal === opt 
+                                    ? 'bg-white text-marca-primario shadow-sm ring-1 ring-slate-200/50' 
+                                    : 'text-slate-500 hover:text-slate-700'
+                            }`}
+                        >
+                            {opt}
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            {/* KPI Bar for Mobile */}
+            <div className="px-1 mb-1">
+                <DirectoryKpiBar 
+                    minutas={displayMinutas} 
+                    loading={loading} 
+                    departamentoGlobal={departamentoGlobal}
+                    isAdmin={isAdmin}
+                />
+            </div>
+
             {/* ACCESO RÁPIDO EJECUTIVO MÓVIL ( Diseño Premium Minimalista ) */}
-            {ultimaJuntaId && (
+            {currentJuntaId && (
                 <div className="flex gap-2 w-full mb-3 px-1">
                     <button
-                        onClick={() => onViewDetail({ id: ultimaJuntaId })}
+                        onClick={() => onViewDetail({ id: currentJuntaId })}
                         className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-emerald-50 hover:bg-emerald-100/80 text-emerald-700 border border-emerald-200/40 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm"
                     >
                         <Icon name="bolt" size="12px" className="text-emerald-600 animate-pulse" />
                         Junta Actual
                     </button>
-                    {juntaAnteriorId && (
+                    {prevJuntaId && (
                         <button
-                            onClick={() => onViewDetail({ id: juntaAnteriorId })}
+                            onClick={() => onViewDetail({ id: prevJuntaId })}
                             className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/80 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm"
                         >
                             <Icon name="history" size="12px" className="text-slate-500" />
@@ -116,9 +180,21 @@ export const MinutasMobile = ({
             {/* Quick Navigate Calendar */}
             <QuickNavigateCalendar
                 minutas={minutas}
+                ultimaJuntaId={ultimaJuntaId}
+                juntaAnteriorId={juntaAnteriorId}
+                activeDept={activeDept}
                 selectedDate={selectedDate}
                 onSelectDate={onSelectDate}
-                className="mb-3"
+                periodo={periodo}
+                year={year}
+                month={month}
+                availableYears={availableYears}
+                onPeriodoChange={onPeriodoChange}
+                onYearChange={onYearChange}
+                onMonthChange={onMonthChange}
+                filters={filters}
+                onApplyFilters={onApplyFilters}
+                className="mb-3 mx-1"
             />
 
             {/* Search + filtros */}
@@ -169,20 +245,6 @@ export const MinutasMobile = ({
                 </div>
             </div>
 
-            {/* Filtros de Periodo */}
-            <TimePeriodSelector
-                periodo={periodo}
-                year={year}
-                month={month}
-                estadoFilter={estadoFilter}
-                availableYears={availableYears}
-                onPeriodoChange={onPeriodoChange}
-                onYearChange={onYearChange}
-                onMonthChange={onMonthChange}
-                onEstadoChange={onEstadoChange}
-                className="mb-3"
-            />
-
             <MinutasInlineFilters 
                 isOpen={showFilters} 
                 filters={filters} 
@@ -218,10 +280,21 @@ export const MinutasMobile = ({
                                             minuta={minuta} 
                                             onViewDetail={onViewDetail}
                                             onEdit={onEdit}
+                                            isAdmin={isAdmin}
                                             badge={
-                                                minuta.id === ultimaJuntaId ? 'current'
-                                                : minuta.id === juntaAnteriorId ? 'previous'
-                                                : null
+                                                ultimaJuntaId && (minuta.id === (
+                                                    (minuta.departamento || minuta.creadoPor?.departamento) === 'MARKETING'
+                                                        ? ultimaJuntaId.MARKETING
+                                                        : ultimaJuntaId.DISENO
+                                                ))
+                                                    ? 'current'
+                                                    : juntaAnteriorId && (minuta.id === (
+                                                        (minuta.departamento || minuta.creadoPor?.departamento) === 'MARKETING'
+                                                            ? juntaAnteriorId.MARKETING
+                                                            : juntaAnteriorId.DISENO
+                                                    ))
+                                                        ? 'previous'
+                                                        : null
                                             }
                                         />
                                     ))}
@@ -233,7 +306,7 @@ export const MinutasMobile = ({
             ) : (
                 <div className={cn('pb-24', hasPaginator && 'pb-36')}>
                     <MinutasTable
-                        minutas={minutas}
+                        minutas={displayMinutas}
                         loading={loading}
                         page={page}
                         limit={limit}
@@ -244,8 +317,10 @@ export const MinutasMobile = ({
                         onSortChange={onSortChange}
                         onViewDetail={onViewDetail}
                         onEdit={onEdit}
+                        isAdmin={isAdmin}
                         ultimaJuntaId={ultimaJuntaId}
                         juntaAnteriorId={juntaAnteriorId}
+                        hidePagination={true}
                     />
                 </div>
             )}

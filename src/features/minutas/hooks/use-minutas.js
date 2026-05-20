@@ -26,10 +26,20 @@ export const useMinutas = () => {
 
   const fetchMinutas = useCallback(async (params = {}) => {
     setLoading(true);
-    lastFetchParams.current = params;
+    
+    // Sanitize parameters to avoid validation issues (like 'TODAS' enums)
+    const cleanParams = { ...params };
+    if (cleanParams.estado === 'TODAS' || cleanParams.estado === '') {
+      delete cleanParams.estado;
+    }
+    if (cleanParams.departamentoGlobal === 'TODAS' || cleanParams.departamentoGlobal === '') {
+      delete cleanParams.departamentoGlobal;
+    }
+    
+    lastFetchParams.current = cleanParams;
 
     try {
-      const response = await getMinutas(params);
+      const response = await getMinutas(cleanParams);
       
       const data = response?.data || [];
       const pagination = response?.pagination || {};

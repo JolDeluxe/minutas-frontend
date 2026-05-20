@@ -30,7 +30,7 @@ export const Sidebar = () => {
           {userModules.map((module) => (
             <React.Fragment key={module.id}>
               {module.divider && (
-                <li className="h-px bg-white/10 my-4 mx-2" listStyle="none" />
+                <li className="h-px bg-white/10 my-4 mx-2" />
               )}
               <SidebarItem module={module} />
             </React.Fragment>

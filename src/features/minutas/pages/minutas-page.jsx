@@ -33,8 +33,11 @@ const MinutasPage = () => {
     const [year, setYear] = useState(null);
     const [month, setMonth] = useState(null);
     
-    // DEFAULT: ACTIVAS — el dueño llega y ve las que importan
-    const [estadoFilter, setEstadoFilter] = useState('ACTIVA');
+    // DEFAULT: TODAS — el dueño pidió TODAS por defecto en la vista general
+    const [estadoFilter, setEstadoFilter] = useState('TODAS');
+    
+    // Filtro Global de Departamento (ADMIN)
+    const [departamentoGlobal, setDepartamentoGlobal] = useState('TODAS');
     
     // Quick Navigate — fecha seleccionada en el calendario
     const [selectedDate, setSelectedDate] = useState(null);
@@ -59,35 +62,29 @@ const MinutasPage = () => {
         }
         
         // Estado filter (ACTIVA/CERRADA/TODAS) — prioridad sobre filtro avanzado
-        if (estadoFilter) {
+        if (estadoFilter && estadoFilter !== 'TODAS') {
             params.estado = estadoFilter;
-        } else if (filters.estado) {
+        } else if (filters.estado && filters.estado !== 'TODAS') {
             params.estado = filters.estado;
         }
 
-        // Quick Navigate: si hay fecha seleccionada, filtra por ese día exacto
-        if (selectedDate) {
-            const d = new Date(selectedDate);
-            params.fechaDesde = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
-            params.fechaHasta = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999).toISOString();
-        } else if (periodo && periodo !== 'all') {
-            // Filtros de periodo rápido 
+        if (periodo && periodo !== 'all') {
             params.periodo = periodo;
-            if (year) params.year = year;
-            if (month) params.month = month;
-        } else {
-            // Filtros legacy de fecha
-            if (filters.fechaDesde) params.fechaDesde = new Date(filters.fechaDesde + 'T00:00:00').toISOString();
-            if (filters.fechaHasta) params.fechaHasta = new Date(filters.fechaHasta + 'T23:59:59').toISOString();
-            if (year) params.year = year;
-            if (month) params.month = month;
         }
+        if (year) params.year = year;
+        if (month) params.month = month;
+        if (filters.fechaDesde) params.fechaDesde = new Date(filters.fechaDesde + 'T00:00:00').toISOString();
+        if (filters.fechaHasta) params.fechaHasta = new Date(filters.fechaHasta + 'T23:59:59').toISOString();
 
         if (filters.lineaDefault) params.lineaDefault = filters.lineaDefault;
         if (filters.creadoPorId) params.creadoPorId = filters.creadoPorId;
+        
+        if (departamentoGlobal !== 'TODAS') {
+            params.departamentoGlobal = departamentoGlobal;
+        }
 
         return fetchMinutas(params).catch(() => notify.error('Error al cargar minutas.'));
-    }, [page, query, sortConfig, filters, periodo, year, month, estadoFilter, selectedDate, fetchMinutas]);
+    }, [page, query, sortConfig, filters, periodo, year, month, estadoFilter, selectedDate, departamentoGlobal, fetchMinutas]);
 
     useEffect(() => { loadMinutas(); }, [loadMinutas]);
 
@@ -133,6 +130,11 @@ const MinutasPage = () => {
     }, []);
 
     const handleSelectDate = useCallback((date) => {
+        if (!date) {
+            setSelectedDate(null);
+            setPage(1);
+            return;
+        }
         // Si tocas la misma fecha, deselecciona
         if (selectedDate && new Date(selectedDate).toDateString() === date.toDateString()) {
             setSelectedDate(null);
@@ -206,6 +208,12 @@ const MinutasPage = () => {
         // Quick navigate
         selectedDate,
         onSelectDate: handleSelectDate,
+        // Global Filter
+        departamentoGlobal,
+        setDepartamentoGlobal: (val) => {
+            setDepartamentoGlobal(val);
+            setPage(1);
+        },
     };
 
     return (

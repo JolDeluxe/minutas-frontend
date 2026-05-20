@@ -37,7 +37,7 @@ export const MobileSidebar = ({ userModules = [] }) => {
             {userModules.map((module) => (
               <React.Fragment key={module.id}>
                 {module.divider && (
-                  <li className="h-px bg-marca-primario/10 my-4 mx-2" listStyle="none" />
+                  <li className="h-px bg-marca-primario/10 my-4 mx-2" />
                 )}
                 <li>
                   <NavLink
