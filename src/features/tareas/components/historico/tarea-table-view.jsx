@@ -19,7 +19,7 @@ export const TareaTableView = ({ tareas = [], onDetail }) => {
                 </thead>
                 <tbody className="divide-y divide-slate-50">
                     {tareas.map((tarea) => {
-                        const status = TAREA_STATUS_MAP[tarea.estadoOperativo] || TAREA_STATUS_MAP.PENDIENTE;
+                        const status = TAREA_STATUS_MAP[tarea.estado] || TAREA_STATUS_MAP.PENDIENTE;
                         const clasif = CLASIFICACION_MAP[tarea.clasificacion];
                         
                         return (

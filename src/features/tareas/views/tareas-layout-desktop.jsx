@@ -22,7 +22,7 @@ export const TareasLayoutDesktop = () => {
         const fetchCounts = async () => {
             try {
                 // Pendientes normales
-                const resPend = await getTareas({ formalizada: true, estadoOperativo: 'PENDIENTE', limit: 1 });
+                const resPend = await getTareas({ tipo: 'TAREA', estado: 'PENDIENTE', limit: 1 });
                 // Pendientes de aprobación (solo para Jefes/Gerentes)
                 let resApprov = null;
                 if (['JEFE', 'GERENCIA'].includes(currentUser?.rol)) {

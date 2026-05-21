@@ -45,11 +45,11 @@ export default function MisTareasPage() {
             page, 
             limit: LIMIT,
             sort: JSON.stringify([{ createdAt: 'desc' }]),
-            formalizada: true
+            tipo: 'TAREA'
         };
 
         if (filters.search) params.q = filters.search;
-        if (filters.status !== 'TODOS') params.estadoOperativo = filters.status;
+        if (filters.status !== 'TODOS') params.estado = filters.status;
         if (filters.prioridad) params.prioridad = filters.prioridad;
         if (filters.linea) params.linea = filters.linea;
         if (filters.clasificacion) params.clasificacion = filters.clasificacion;

@@ -46,10 +46,10 @@ export const MinutaExecutiveSummary = ({ resumen, entries = [], onFilterByStatus
   let cerradas = 0;
 
   for (const e of entries) {
-    const estado = e.estado || e.estadoOperativo;
-    if (estado === 'CERRADO') cerradas++;
-    else if (estado === 'COMPLETADO') completadas++;
-    else if (estado === 'EN_PROGRESO' || e.estadoOperativo === 'EN_PROGRESO') enProgreso++;
+    const estado = e.estado;
+    if (estado === 'CERRADA') cerradas++;
+    else if (estado === 'EN_REVISION') completadas++;
+    else if (estado === 'EN_PROGRESO') enProgreso++;
     else pendientes++;
   }
 

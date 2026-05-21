@@ -12,17 +12,19 @@ export const CLASIFICACION_MAP = {
   OTROS:         { label: 'Otros',         icon: 'more_horiz',     color: '#64748b', border: '#cbd5e1' },
 };
 
-export const ESTADO_CONCEPTUAL_MAP = {
-  CAPTURADO:   { label: 'Capturado',   icon: 'radio_button_unchecked', color: '#94a3b8' },
-  EN_REVISION: { label: 'En Revisión', icon: 'pending',                color: '#3b82f6' },
-  CERRADO:     { label: 'Cerrado',     icon: 'check_circle',           color: '#10b981' },
-  DESCARTADO:  { label: 'Descartado',  icon: 'cancel',                 color: '#ef4444' },
+export const TIPO_ENTRADA_MAP = {
+  TAREA:          { label: 'Tarea / Seguimiento',     icon: 'task',           color: '#10b981' },
+  RECORDATORIO:   { label: 'Recordatorio',            icon: 'notifications',  color: '#3b82f6' },
+  POLITICA:       { label: 'Política / Lineamiento',  icon: 'policy',         color: '#8b5cf6' },
+  DESCARTADA:     { label: 'Descartada',              icon: 'cancel',         color: '#ef4444' },
+  SIN_ORGANIZAR:  { label: 'Sin Organizar',           icon: 'pending_actions',color: '#f59e0b' },
 };
 
-export const ESTADO_OPERATIVO_MAP = {
+export const ESTADO_TAREA_MAP = {
   PENDIENTE:   { label: 'Pendiente',   icon: 'schedule',           color: '#f59e0b' },
-  EN_PROGRESO: { label: 'En Progreso', icon: 'play_circle',        color: '#8b5cf6' },
-  COMPLETADO:  { label: 'Completado',  icon: 'task_alt',           color: '#10b981' },
+  EN_REVISION: { label: 'En Revisión', icon: 'visibility',         color: '#3b82f6' },
+  CERRADA:     { label: 'Cerrada',     icon: 'check_circle',       color: '#10b981' },
+  CANCELADA:   { label: 'Cancelada',   icon: 'cancel',             color: '#ef4444' },
 };
 
 export const AREA_MAP = {

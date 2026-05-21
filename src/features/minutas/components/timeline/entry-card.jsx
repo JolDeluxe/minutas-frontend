@@ -289,9 +289,9 @@ export const EntryCard = ({
   const userRole = currentUser?.rol || 'GERENCIA';
   const isJefe = userRole === 'JEFE' || userRole === 'GERENCIA';
 
-  const estadoActual = entry.estado || entry.estadoOperativo || 'PENDIENTE';
+  const estadoActual = entry.estado || 'PENDIENTE';
   const isAsignado = entry.asignaciones?.some(asig => asig.usuarioId === currentUserId);
-  const isFormalizada = entry.formalizada;
+  const isFormalizada = entry.tipo === 'TAREA';
 
   const handleUpdateStatus = async (newStatus) => {
     if (isUpdatingStatus || !onUpdateSaved) return;
@@ -324,10 +324,10 @@ export const EntryCard = ({
   ];
   const hasImages = allImages.length > 0;
   const entryNotes = entry.notas || [];
-  const isClosed = (entry.estado || entry.estadoOperativo) === 'CERRADO';
-  const isCompletado = (entry.estado || entry.estadoOperativo) === 'COMPLETADO';
+  const isClosed = entry.estado === 'CERRADA';
+  const isCompletado = entry.estado === 'EN_REVISION';
   const vencida = entry.fechaVencimiento && !isCompletado && !isClosed && isPastDate(entry.fechaVencimiento);
-  const isOrganized = entry.formalizada || entry.requiereSeguimiento;
+  const isOrganized = entry.tipo !== 'SIN_ORGANIZAR';
 
   useEffect(() => {
     if (isEditing) {
@@ -422,12 +422,12 @@ export const EntryCard = ({
         )}
       >
         {/* Etiqueta superior de tipo (Tarea/Seguimiento) - FULL WIDTH HEADER */}
-        {!isDraft && (entry.formalizada || entry.requiereSeguimiento) && (
+        {!isDraft && entry.tipo !== 'SIN_ORGANIZAR' && entry.tipo !== 'DESCARTADA' && (
           <div className={cn(
             "w-full py-0.5 text-center text-[6px] font-black uppercase tracking-[0.2em] text-white shadow-inner rounded-t-[1.35rem]",
-            entry.formalizada ? "bg-rose-400" : "bg-indigo-400"
+            entry.tipo === 'TAREA' ? "bg-rose-400" : entry.tipo === 'RECORDATORIO' ? "bg-indigo-400" : "bg-purple-400"
           )}>
-            {entry.formalizada ? "TAREA" : "SEGUIMIENTO"}
+            {entry.tipo}
           </div>
         )}
 
@@ -490,9 +490,9 @@ export const EntryCard = ({
 
               {/* Badges de Estado y Clasif (En móvil se alinean a la derecha de la identificación) */}
               <div className="flex shrink-0 items-center gap-1 sm:hidden">
-                {!isDraft && (entry.formalizada || entry.requiereSeguimiento) && (
+                {!isDraft && (entry.tipo === 'TAREA' || entry.tipo === 'RECORDATORIO') && (
                   <TareaStatusBadge 
-                    status={entry.estado || entry.estadoOperativo || 'PENDIENTE'} 
+                    status={entry.estado || 'PENDIENTE'} 
                     className="scale-[0.75] origin-right" 
                   />
                 )}
@@ -538,9 +538,9 @@ export const EntryCard = ({
                  )}
                  {/* En Desktop volvemos a mostrar los badges aquí para mantener el flujo horizontal */}
                  <div className="hidden sm:flex sm:items-center sm:gap-1.5">
-                   {!isDraft && (entry.formalizada || entry.requiereSeguimiento) && (
+                   {!isDraft && (entry.tipo === 'TAREA' || entry.tipo === 'RECORDATORIO') && (
                      <TareaStatusBadge 
-                       status={entry.estado || entry.estadoOperativo || 'PENDIENTE'} 
+                       status={entry.estado || 'PENDIENTE'} 
                        className="scale-90 sm:scale-100" 
                      />
                    )}
@@ -683,9 +683,9 @@ export const EntryCard = ({
                   <div className="grid gap-2 sm:grid-cols-2 mt-2 border-t border-slate-100 pt-2">
                     <div className="space-y-1">
                       <label className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                        {entry.formalizada ? 'Fecha de Vencimiento' : 'Fecha de Seguimiento'}
+                        {entry.tipo === 'TAREA' ? 'Fecha de Vencimiento' : 'Fecha de Seguimiento'}
                       </label>
-                      {entry.formalizada ? (
+                      {entry.tipo === 'TAREA' ? (
                         <input 
                           type="date"
                           value={editForm.fechaVencimiento}
@@ -933,16 +933,16 @@ export const EntryCard = ({
                       <button
                         onClick={(e) => { 
                           e.stopPropagation(); 
-                          handleUpdateStatus((isJefe && isAsignado) ? 'CERRADO' : 'COMPLETADO'); 
+                          handleUpdateStatus('EN_REVISION'); 
                         }}
                         disabled={isUpdatingStatus}
                         className="flex h-8 items-center gap-2 rounded-xl bg-blue-600 px-6 text-[9px] font-black uppercase tracking-[0.15em] text-white shadow-lg shadow-blue-600/30 transition-all hover:bg-blue-500 active:scale-95 disabled:opacity-50"
                       >
-                        <Icon name={(isJefe && isAsignado) ? "verified" : "check_circle"} size="16px" />
-                        {(isJefe && isAsignado) ? "Terminar" : "Completar"}
+                        <Icon name="check_circle" size="16px" />
+                        Terminar
                       </button>
                     )}
-                    {estadoActual === 'COMPLETADO' && isJefe && (
+                    {estadoActual === 'EN_REVISION' && isJefe && (
                       <button
                         onClick={(e) => { e.stopPropagation(); handleUpdateStatus('CERRADO'); }}
                         disabled={isUpdatingStatus}
@@ -952,10 +952,10 @@ export const EntryCard = ({
                         Aprobar
                       </button>
                     )}
-                    {estadoActual === 'CERRADO' && (
+                    {estadoActual === 'CERRADA' && (
                        <div className="flex items-center gap-1.5 text-emerald-600">
                          <Icon name="check_circle" size="14px" />
-                         <span className="text-[9px] font-black uppercase tracking-widest">Cerrado</span>
+                         <span className="text-[9px] font-black uppercase tracking-widest">Cerrada</span>
                        </div>
                     )}
                   </div>
@@ -987,13 +987,13 @@ export const EntryCard = ({
                       onClick={(e) => { e.stopPropagation(); onOrganize(entry); }}
                       className={cn(
                         "flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[7px] font-black uppercase tracking-widest transition-all active:scale-95 sm:px-3 sm:text-[8px] border shadow-sm",
-                        (entry.formalizada || entry.requiereSeguimiento)
+                        isOrganized
                           ? "bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100" 
                           : "bg-slate-50 text-slate-400 border-slate-100 hover:border-slate-900 hover:text-slate-900"
                       )}
                     >
                      <Settings2 size={12} /> 
-                      <span className="hidden sm:inline">{(entry.formalizada || entry.requiereSeguimiento) ? "ORGANIZADO" : "ORGANIZAR"}</span>
+                      <span className="hidden sm:inline">{isOrganized ? "ORGANIZADO" : "ORGANIZAR"}</span>
                     </button>
                   </>
                 )}

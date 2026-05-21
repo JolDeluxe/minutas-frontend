@@ -8,7 +8,7 @@ export const TareaCardGrid = ({ tareas = [], onDetail }) => {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {tareas.map((tarea) => {
-                const status = TAREA_STATUS_MAP[tarea.estadoOperativo] || TAREA_STATUS_MAP.PENDIENTE;
+                const status = TAREA_STATUS_MAP[tarea.estado] || TAREA_STATUS_MAP.PENDIENTE;
                 const clasif = CLASIFICACION_MAP[tarea.clasificacion];
 
                 return (

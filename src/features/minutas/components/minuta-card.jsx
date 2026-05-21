@@ -35,7 +35,7 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, badge = null, isAdmin
     
     // Resumen operativo del backend
     const resumen = minuta.resumenOperativo || {};
-    const total = resumen.totalEntradas || minuta._count?.tareas || 0;
+    const totalTareas = (resumen.completadas || 0) + (resumen.cerradas || 0) + (resumen.pendientes || 0);
     const porcentaje = resumen.porcentajeCompletado || 0;
     const atrasadas = resumen.atrasadas || 0;
     const completadas = (resumen.completadas || 0) + (resumen.cerradas || 0);
@@ -159,8 +159,8 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, badge = null, isAdmin
                     </div>
                 </div>
 
-                {/* Fila 4: Barra de progreso + conteo de entradas */}
-                {total > 0 ? (
+                {/* Fila 4: Barra de progreso + conteo de tareas */}
+                {totalTareas > 0 ? (
                     <div>
                         <div className="relative h-2 rounded-full bg-slate-100 overflow-hidden mb-1.5">
                             <div 
@@ -193,14 +193,14 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, badge = null, isAdmin
                                 )}
                             </div>
                             <span className="text-[10px] font-bold text-slate-400">
-                                <span className="font-black text-slate-600">{total}</span> entradas · {porcentaje}%
+                                <span className="font-black text-slate-600">{completadas}/{totalTareas}</span> tareas · {porcentaje}%
                             </span>
                         </div>
                     </div>
                 ) : (
                     <div className="flex items-center gap-1.5 text-slate-400">
                         <Icon name="format_list_bulleted" size="14px" />
-                        <span className="text-[11px] font-medium">Sin entradas</span>
+                        <span className="text-[11px] font-medium">Sin tareas</span>
                     </div>
                 )}
             </div>

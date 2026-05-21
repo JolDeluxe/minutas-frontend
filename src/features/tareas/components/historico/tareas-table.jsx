@@ -216,7 +216,7 @@ export const TareasTable = ({
             cell: (row) => {
                 if (row.isSkeleton) return <Skeleton className="h-8 w-24 rounded-md" />;
 
-                const isResolvedOrClosed = row.estado === 'COMPLETADO' || row.estado === 'CERRADO';
+                const isResolvedOrClosed = row.estado === 'EN_REVISION' || row.estado === 'CERRADA';
 
                 if (isResolvedOrClosed) {
                     const fechaFin = row.finalizadoAt || row.updatedAt;

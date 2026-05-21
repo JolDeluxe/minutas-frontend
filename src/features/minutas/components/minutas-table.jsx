@@ -128,15 +128,15 @@ export const MinutasTable = ({
             cell: (row) => {
                 if (row.isSkeleton) return <Skeleton className="h-4 w-32" />;
                 const resumen = row.resumenOperativo || {};
-                const total = resumen.totalEntradas || row._count?.tareas || 0;
+                const totalTareas = (resumen.completadas || 0) + (resumen.cerradas || 0) + (resumen.pendientes || 0);
                 const porcentaje = resumen.porcentajeCompletado || 0;
                 const atrasadas = resumen.atrasadas || 0;
                 const completadas = (resumen.completadas || 0) + (resumen.cerradas || 0);
                 const enProgreso = resumen.enProgreso || 0;
 
-                if (total === 0) {
+                if (totalTareas === 0) {
                     return (
-                        <span className="text-xs text-slate-400 italic">Sin entradas</span>
+                        <span className="text-xs text-slate-400 italic">Sin tareas</span>
                     );
                 }
 
@@ -147,7 +147,7 @@ export const MinutasTable = ({
                                 {porcentaje}%
                             </span>
                             <span className="text-[9px] font-semibold text-slate-400">
-                                {completadas}/{total} entr.
+                                {completadas}/{totalTareas} tareas
                             </span>
                         </div>
                         <div className="relative h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
@@ -204,17 +204,7 @@ export const MinutasTable = ({
                 );
             },
         },
-        {
-            header: "Entradas",
-            accessorKey: "tareas",
-            sortable: false,
-            align: "center",
-            headerClassName: "w-[10%] min-w-[80px]",
-            cell: (row) => {
-                if (row.isSkeleton) return <Skeleton className="h-4 w-10 mx-auto" />;
-                return <span className="text-sm font-bold text-slate-700">{row._count?.tareas || 0}</span>;
-            },
-        },
+
         {
             header: "Acciones",
             accessorKey: "acciones",

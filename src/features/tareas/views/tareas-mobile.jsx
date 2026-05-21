@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { GlassPaginationPill, GlassViewToggle, ScrollToTopButton, Icon } from '@/components/ui/z_index';
+import { cn } from '@/utils/cn';
 import { TareasTable } from '../components/historico/tareas-table';
 import { TareaCard } from '../components/common/tarea-card';
 import { TareaSummaryBar } from '../components/common/tarea-summary-bar';

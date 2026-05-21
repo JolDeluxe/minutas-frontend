@@ -79,23 +79,23 @@ export default function MinutaDetailPage() {
   const allEntries = useMemo(() => [...draftEntries, ...tareas], [draftEntries, tareas]);
 
   const tareasReales = useMemo(() => {
-    return allEntries.filter(t => t.requiereSeguimiento === true && t.clasificacion !== 'POLITICAS');
+    return allEntries.filter(t => t.tipo === 'TAREA');
   }, [allEntries]);
 
   const recordatoriosGenerales = useMemo(() => {
-    return allEntries.filter(t => t.requiereSeguimiento === false && t.clasificacion !== 'POLITICAS');
+    return allEntries.filter(t => t.tipo === 'RECORDATORIO');
   }, [allEntries]);
 
   const politicasAcordadas = useMemo(() => {
-    return allEntries.filter(t => t.clasificacion === 'POLITICAS');
+    return allEntries.filter(t => t.tipo === 'POLITICA');
   }, [allEntries]);
   
   const filteredEntries = useMemo(() => {
-    if (filterClasif === 'TODAS') return tareasReales;
-    if (filterClasif === 'SIN_CLASIFICAR') return tareasReales.filter(t => !t.clasificacion);
-    if (filterClasif === 'SIN_ORGANIZAR') return tareasReales.filter(t => !t.formalizada);
-    return tareasReales.filter(t => t.clasificacion === filterClasif);
-  }, [tareasReales, filterClasif]);
+    if (filterClasif === 'TODAS') return allEntries.filter(t => t.tipo !== 'DESCARTADA');
+    if (filterClasif === 'SIN_CLASIFICAR') return allEntries.filter(t => !t.clasificacion && t.tipo !== 'DESCARTADA');
+    if (filterClasif === 'SIN_ORGANIZAR') return allEntries.filter(t => t.tipo === 'SIN_ORGANIZAR' || !t.tipo);
+    return allEntries.filter(t => t.clasificacion === filterClasif && t.tipo !== 'DESCARTADA');
+  }, [allEntries, filterClasif]);
 
   const resumen = useMemo(() => {
     // Usar resumen del backend si existe (incluye atrasadas, porClasificacion, porPrioridad)

@@ -11,11 +11,11 @@ const PRIORIDAD_MAP = {
 };
 
 const ESTADO_MAP = {
-    NUEVO: 'Nueva',
     PENDIENTE: 'Pendiente',
     EN_PROGRESO: 'En Progreso',
-    COMPLETADO: 'Completada',
-    CANCELADO: 'Cancelada',
+    EN_REVISION: 'En Revisión',
+    CERRADA: 'Cerrada',
+    CANCELADA: 'Cancelada',
 };
 
 export const TareaOrganizeModal = ({
@@ -54,7 +54,7 @@ export const TareaOrganizeModal = ({
 
         const payload = {
             prioridad,
-            estadoOperativo: estado === 'EN_PROGRESO' || estado === 'COMPLETADO' ? estado : undefined,
+            estado: estado,
             // changeEstado se usa si quieres cambiar el estado conceptual/operativo principal
         };
 

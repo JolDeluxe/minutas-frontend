@@ -30,10 +30,10 @@ const RecordatoriosPage = () => {
     fetchCatalogos();
   }, [fetchCatalogos]);
 
-  // Carga de Recordatorios (Tareas con requiereSeguimiento = false y clasificacion != 'POLITICAS')
+  // Carga de Recordatorios Generales (Políticas)
   const loadRecordatorios = useCallback(() => {
     const params = {
-      requiereSeguimiento: false,
+      tipo: 'POLITICA',
       todo: true
     };
 

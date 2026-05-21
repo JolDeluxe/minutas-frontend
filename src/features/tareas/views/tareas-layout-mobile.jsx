@@ -33,7 +33,7 @@ export const TareasLayoutMobile = () => {
         const fetchCounts = async () => {
             try {
                 // Mis Tareas
-                const response = await getTareas({ formalizada: true, estadoOperativo: 'PENDIENTE' });
+                const response = await getTareas({ tipo: 'TAREA', estado: 'PENDIENTE' });
                 
                 // Por Aprobar
                 let resApprov = null;

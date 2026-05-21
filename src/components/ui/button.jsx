@@ -135,6 +135,7 @@ export const Button = ({
   icon,
   iconSize,
   isLoading = false,
+  loading,
   isActive = false,
   disabled = false,
   className,
@@ -152,7 +153,9 @@ export const Button = ({
 
   const sizeClass = sizes[size] || sizes.md;
   const resolvedIconSize = iconSize || size;
-  const isDisabled = disabled || isLoading;
+  
+  const isButtonLoading = isLoading || !!loading;
+  const isDisabled = disabled || isButtonLoading;
 
   return (
     <button
@@ -161,7 +164,7 @@ export const Button = ({
       className={cn(baseClass, variantClass, sizeClass, className)}
       {...props}
     >
-      {isLoading ? (
+      {isButtonLoading ? (
         <Icon
           name="progress_activity"
           className="animate-spin"
@@ -173,7 +176,7 @@ export const Button = ({
         icon && <Icon name={icon} size={resolvedIconSize} opsz={20} wght={500} />
       )}
 
-      <span>{isLoading ? 'Cargando...' : children}</span>
+      <span>{isButtonLoading ? 'Cargando...' : children}</span>
     </button>
   );
 };

@@ -46,9 +46,9 @@ const STATUS_CONFIG = {
 };
 
 const getStatus = (entry) => {
-  const estado = entry.estado || entry.estadoOperativo;
-  const isClosed = estado === 'CERRADO';
-  const isCompleted = estado === 'COMPLETADO';
+  const estado = entry.estado;
+  const isClosed = estado === 'CERRADA';
+  const isCompleted = estado === 'EN_REVISION';
   
   if (isClosed) return 'closed';
   if (isCompleted) return 'completed';
@@ -59,7 +59,7 @@ const getStatus = (entry) => {
   
   if (isOverdue) return 'overdue';
   
-  const isInProgress = estado === 'EN_PROGRESO' || entry.estadoOperativo === 'EN_PROGRESO';
+  const isInProgress = estado === 'EN_PROGRESO';
   if (isInProgress) return 'inProgress';
   
   return 'pending';
