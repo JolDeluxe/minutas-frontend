@@ -104,12 +104,16 @@ export const QuickComposer = ({
   const handleSubmit = useCallback(() => {
     if (!descripcion.trim() || submitting) return;
 
+    // Regla de Negocio: Si la clasificación es POLITICAS, se auto-asigna el tipo POLITICA
+    const esPolitica = clasificacion === 'POLITICAS';
+
     const payload = {
       tareas: [{
         descripcion: descripcion.trim(),
         area,
         linea: tieneLineas ? linea : null,
         clasificacion: clasificacion || 'OTROS',
+        tipo: esPolitica ? 'POLITICA' : undefined, // undefined para que el backend asigne SIN_ORGANIZAR
         minutaId: Number(minutaId),
         _localImagenes: imagenes,
       }],

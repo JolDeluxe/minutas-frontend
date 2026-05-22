@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getMinutaById, iniciarMinuta, cancelarMinuta, cerrarMinuta, reabrirMinuta, finalizarMinuta } from '../api/minutas-api';
 import { useTareas } from '@/features/tareas/hooks/use-tareas';
-import { useIsDesktop } from '@/hooks/useMediaQuery';
+import { useIsDesktop, useMediaQuery } from '@/hooks/useMediaQuery';
 import { useUsers } from '@/features/usuarios/hooks/use-users';
 import { notify } from '@/components/notification/adaptive-notify';
 import { useMinutaDraftStore } from '../stores/minuta-draft-store';
@@ -18,7 +18,8 @@ import { MinutaDetailMobileView } from '../views/minuta-detail-mobile-view';
 export default function MinutaDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const isDesktop = useIsDesktop();
+  // Forzamos que a partir de 768px (Tablets/Laptops como 1024) se use la lógica de Desktop
+  const isDesktop = useMediaQuery('(min-width: 768px)');
 
   const {
     draftEntries, draftNotes, initStore, initialized,
@@ -52,14 +53,29 @@ export default function MinutaDetailPage() {
 
   // ── Filtro unificado (multi-dimensión) ─────────────────────
   const [activeFilter, setActiveFilter] = useState({
-    tipo: 'TAREA',        // por defecto solo tareas
+    tipo: 'TODAS',        // por defecto mostrar todo (incluyendo lo sin organizar)
     estado: null,         // null = todos los estados
     clasificacion: null,
     area: null,
     linea: null,
     search: '',
   });
-  const [viewMode, setViewMode] = useState('cards'); // 'cards' | 'table'
+
+  // ── Persistencia y Lógica de Vista (Table vs Cards) ─────────────────────
+  const [viewMode, setViewMode] = useState(() => {
+    // 1. Intentar cargar preferencia guardada
+    const saved = localStorage.getItem('minutas_view_mode');
+    if (saved) return saved;
+
+    // 2. Fallback automático basado en resolución (md = 768px)
+    return window.innerWidth >= 768 ? 'table' : 'cards';
+  });
+
+  // Guardar preferencia cuando cambie manualmente
+  const handleSetViewMode = (mode) => {
+    setViewMode(mode);
+    localStorage.setItem('minutas_view_mode', mode);
+  };
 
   useEffect(() => {
     if (id) {
@@ -68,7 +84,9 @@ export default function MinutaDetailPage() {
         setLoadingMinuta(true);
         try {
           const res = await getMinutaById(id);
-          setMinuta(res.data);
+          // CORRECCIÓN: Extraer datos correctamente
+          setMinuta(res.data?.data || res.data);
+          
           await fetchTareas({ 
             minutaId: id, 
             todo: true,
@@ -89,13 +107,14 @@ export default function MinutaDetailPage() {
   }, [id, initStore, navigate, fetchTareas, fetchUsers]);
 
   const allEntries = useMemo(() => [...draftEntries, ...tareas], [draftEntries, tareas]);
+  const departamento = minuta?.departamento || 'DISENO';
 
   // ── Entradas filtradas por el filtro activo ─────────────────
   const filteredEntries = useMemo(() => {
     return allEntries.filter(entry => {
       if (entry.tipo === 'DESCARTADA') return false;
       // Filtros de tipo organizacional
-      if (activeFilter.tipo && entry.tipo !== activeFilter.tipo) {
+      if (activeFilter.tipo && activeFilter.tipo !== 'TODAS' && entry.tipo !== activeFilter.tipo) {
         // Los borradores (tempId) aún no tienen tipo, mostrarlos si filtro es TAREA o SIN_ORGANIZAR
         if (entry.tempId && (activeFilter.tipo === 'TAREA' || activeFilter.tipo === 'SIN_ORGANIZAR')) {
           // Los borradores se muestran siempre en modo TAREA y SIN_ORGANIZAR
@@ -131,7 +150,7 @@ export default function MinutaDetailPage() {
     setActiveFilter(prev => ({ ...prev, tipo: prev.tipo === tipo ? 'TAREA' : tipo, estado: null }));
 
   const handleResetFilter = () =>
-    setActiveFilter({ tipo: 'TAREA', estado: null, clasificacion: null, area: null, linea: null, search: '' });
+    setActiveFilter({ tipo: 'TODAS', estado: null, clasificacion: null, area: null, linea: null, search: '' });
 
   // ── Resumen centrado en Tareas tipo TAREA ──────────────────
   const resumen = useMemo(() => {
@@ -145,7 +164,17 @@ export default function MinutaDetailPage() {
     let totalRecordatorios = 0;
 
     for (const t of allEntries) {
-      if (t.tipo === 'TAREA') {
+      // Regla Crítica: Tareas Externas no cuentan para los KPIs operativos ni afectan el cierre
+      // Asumimos que si el departamento de la minuta es DISENO, y el área es MARKETING (o viceversa), es externa.
+      const isExterna = (departamento === 'DISENO' && t.area === 'MARKETING') || 
+                        (departamento === 'MARKETING' && t.area === 'DISENO');
+
+      if (t.tipo === 'POLITICA') {
+        totalPoliticas++;
+      } else if (t.tipo === 'RECORDATORIO') {
+        totalRecordatorios++;
+      } else if (t.tipo === 'TAREA' && !isExterna) {
+        // Solo las TAREAS INTERNAS afectan los KPIs operativos
         totalTareas++;
         if (t.estado === 'PENDIENTE') pendientes++;
         else if (t.estado === 'EN_REVISION') enRevision++;
@@ -159,10 +188,6 @@ export default function MinutaDetailPage() {
         ) {
           atrasadas++;
         }
-      } else if (t.tipo === 'POLITICA') {
-        totalPoliticas++;
-      } else if (t.tipo === 'RECORDATORIO') {
-        totalRecordatorios++;
       }
     }
 
@@ -179,11 +204,7 @@ export default function MinutaDetailPage() {
       totalRecordatorios,
       totalEntradas: allEntries.length,
     };
-  }, [allEntries]);
-
-
-
-  const departamento = minuta?.departamento || 'DISENO';
+  }, [allEntries, departamento]);
 
   const handleCapture = (payload) => {
     payload.tareas.forEach(t => addDraftEntry(t));
@@ -226,7 +247,7 @@ export default function MinutaDetailPage() {
       }
       
       const res = await getMinutaById(id);
-      setMinuta(res.data);
+      setMinuta(res.data?.data || res.data);
       refreshEntries();
       
       // Pequeño delay de cortesía para asegurar que el listado refrescado traiga las relaciones nuevas
@@ -348,7 +369,7 @@ export default function MinutaDetailPage() {
       await iniciarMinuta(id);
       notify.success("Junta iniciada con éxito");
       const res = await getMinutaById(id);
-      setMinuta(res.data);
+      setMinuta(res.data?.data || res.data);
     } catch {
       notify.error("No se pudo iniciar la junta");
     } finally {
@@ -387,7 +408,7 @@ export default function MinutaDetailPage() {
         notify.success("Junta cerrada con éxito");
       }
       const resMinuta = await getMinutaById(id);
-      setMinuta(resMinuta.data);
+      setMinuta(resMinuta.data?.data || resMinuta.data);
     } catch {
       notify.error("No se pudo cerrar la junta");
     } finally {
@@ -402,7 +423,7 @@ export default function MinutaDetailPage() {
       await reabrirMinuta(id);
       notify.success("Junta reabierta con éxito");
       const resMinuta = await getMinutaById(id);
-      setMinuta(resMinuta.data);
+      setMinuta(resMinuta.data?.data || resMinuta.data);
     } catch {
       notify.error("No se pudo reabrir la junta");
     } finally {
@@ -421,7 +442,8 @@ export default function MinutaDetailPage() {
     try {
       const res = await finalizarMinuta(id);
       notify.success("Junta finalizada con éxito");
-      setMinuta(res.data.data);
+      // res.data trae { status: 'success', data: {...minuta} } según 09_finish.ts
+      setMinuta(res.data?.data || res.data);
     } catch {
       notify.error("No se pudo finalizar la junta");
     } finally {
@@ -437,12 +459,16 @@ export default function MinutaDetailPage() {
     );
   }
 
+  // Separar para visualización
+  const politicasAcordadas = allEntries.filter(e => e.tipo === 'POLITICA');
+  const recordatoriosGenerales = allEntries.filter(e => e.tipo === 'RECORDATORIO');
 
 
   const commonProps = {
     minuta, users, resumen, allEntries, filteredEntries, loadingTareas, departamento,
+    politicasAcordadas, recordatoriosGenerales,
     activeFilter, setActiveFilter, handleFilterByStatus, handleFilterByTipo, handleResetFilter,
-    viewMode, setViewMode,
+    viewMode, setViewMode: handleSetViewMode,
     handleCapture, draftEntries, draftNotes, addDraftNote, updateDraftNote,
     removeDraftNote, updateDraftEntry, removeDraftEntry, setOrganizeEntry,
     organizeEntry, handleOrganizeSave, updateTarea, changeTareaStatus: handleStatusChange, fetchTareas, refreshEntries, setShowReviewModal, showReviewModal,
@@ -450,7 +476,8 @@ export default function MinutaDetailPage() {
     handleUpdateSavedEntry, handleCreateEntryNote, handleUpdateEntryNote,
     handleDeleteEntryNote, handleAddEntryImage, handleDeleteEntryImage,
     handleIniciar, handleCancelar, handleCerrar, handleReabrir, handleFinalizar,
-    iniciando, cancelando, cerrando, reabriendo, finalizando
+    iniciando, cancelando, cerrando, reabriendo, finalizando,
+    minutaEstado: minuta?.estado
   };
 
   // Renderizado Condicional por Breakpoint

@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@theme {
+  --breakpoint-xs: 400px;
+}
+
 /* ─────────────────────────────────────────────────────────────────────
    FUENTES E ÍCONOS LOCALES (Soporte Offline PWA estricto)
 ───────────────────────────────────────────────────────────────────── */

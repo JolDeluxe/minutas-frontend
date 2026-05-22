@@ -14,8 +14,11 @@ export const ReviewDraftsModal = ({
   entries = [],
   notesCount = 0,
   submitting,
+  minutaEstado = 'ACTIVA',
 }) => {
   const [closeAfterSave, setCloseAfterSave] = useState(true);
+  
+  const isEnCurso = minutaEstado === 'EN_CURSO';
 
   return (
     <Modal 
@@ -110,8 +113,12 @@ export const ReviewDraftsModal = ({
             {closeAfterSave && <Icon name="check" size="16px" className="font-black" />}
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-bold text-slate-800">Cerrar y finalizar junta tras guardar</span>
-            <span className="text-[11px] font-medium text-slate-500">Ya no se podrán agregar más acuerdos ni tareas a esta minuta.</span>
+            <span className="text-sm font-bold text-slate-800">
+              {isEnCurso ? 'Finalizar sesión de junta tras guardar' : 'Cerrar minuta tras guardar'}
+            </span>
+            <span className="text-[11px] font-medium text-slate-500">
+              {isEnCurso ? 'Pasará a la etapa de organización post-junta.' : 'Ya no se podrán agregar más acuerdos ni tareas a esta minuta.'}
+            </span>
           </div>
         </div>
 

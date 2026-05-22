@@ -31,6 +31,10 @@ export const EntryFeed = ({
     const saved = [];
 
     for (const entry of entries) {
+      // Regla Crítica: POLITICAS y RECORDATORIOS no van en el feed principal (van en sus propios paneles superiores)
+      // Nota: Los borradores (tempId) se asume que aún no son formales, o si lo son por auto-tipado (POLITICA), los excluimos aquí.
+      if (entry.tipo === 'POLITICA' || entry.tipo === 'RECORDATORIO') continue;
+
       if (entry.tempId) drafts.push(entry);
       else saved.push(entry);
     }
@@ -70,7 +74,7 @@ export const EntryFeed = ({
         <h3 className="text-xl font-black text-slate-900">Historial vacío</h3>
         <p className="text-sm text-slate-400 max-w-xs mt-2 font-medium">
           {filterActive !== 'TODAS'
-            ? `No hay registros con el filtro "${filterActive}".`
+            ? `No hay registros operativos con el filtro "${filterActive}".`
             : 'Captura la primera entrada para comenzar el seguimiento.'}
         </p>
       </div>

@@ -89,6 +89,8 @@ export const MobileQuickComposer = ({
     }
     if (!texto.trim() || submitting) return;
 
+    const esPolitica = clasificacion === 'POLITICAS';
+
     onSubmit({
       tareas: [{
         tempId: Date.now(),
@@ -96,6 +98,7 @@ export const MobileQuickComposer = ({
         area,
         linea: tieneLineas ? linea : null,
         clasificacion: clasificacion || 'OTROS',
+        tipo: esPolitica ? 'POLITICA' : undefined,
         minutaId: Number(minutaId),
         fecha: new Date().toISOString(),
         _localImagenes: localImages

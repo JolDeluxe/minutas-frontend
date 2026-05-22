@@ -33,7 +33,7 @@ import { StatusTrafficLight } from '../status-traffic-light';
  * ImageViewer — Modal premium para ver imágenes con navegación y zoom.
  * SE USA PORTAL PARA RENDERIZAR FUERA DE LA JERARQUÍA DEL DOM (Encima de Sidebar).
  */
-const ImageViewer = ({ images, initialIndex, onClose }) => {
+export const ImageViewer = ({ images, initialIndex, onClose }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   
   // Bloquear el scroll del body cuando el visor está abierto
@@ -414,15 +414,35 @@ export const EntryCard = ({
     }
   };
 
+  const getCardStyles = () => {
+    if (isDraft) return 'bg-emerald-50/40 hover:bg-emerald-100/60 ring-1 ring-emerald-500/10';
+    if (vencida) return 'bg-red-50/40 hover:bg-red-100/60 ring-1 ring-red-500/20';
+    if (isClosed) return 'opacity-75 grayscale bg-slate-50/50 hover:bg-slate-100/60';
+    if (isEditing) return 'bg-white ring-2 ring-marca-primario/10';
+    
+    const estadoStyle = estadoActual || 'PENDIENTE';
+    switch (estadoStyle) {
+      case 'PENDIENTE': return 'bg-amber-50/30 hover:bg-amber-100/50';
+      case 'EN_REVISION': return 'bg-blue-50/30 hover:bg-blue-100/50';
+      default: return 'bg-white hover:bg-slate-50/30';
+    }
+  };
+
+  const isMarketing = departamento === 'MARKETING';
+  const lineInfo = isMarketing
+      ? { label: 'Campaña', color: '#8b5cf6' }
+      : (LINEA_MAP[entry.linea] || {
+          label: entry.linea || '—',
+          color: '#64748b'
+      });
+
   return (
     <>
       <div
         className={cn(
-          'group relative flex flex-col bg-white transition-all duration-500 rounded-[1.35rem] border border-slate-100',
+          'group relative flex flex-col transition-all duration-500 rounded-[1.35rem] border border-slate-100',
           isExpanded ? 'shadow-xl ring-2 ring-slate-200' : 'shadow-sm hover:shadow-md',
-          isDraft ? 'shadow-lg ring-1 ring-emerald-500/10' : '',
-          isEditing && 'ring-2 ring-marca-primario/10',
-          isClosed && 'opacity-75 grayscale bg-slate-50/50'
+          getCardStyles()
         )}
       >
         {/* Etiqueta superior de tipo (Tarea/Seguimiento) - FULL WIDTH HEADER */}
@@ -436,38 +456,12 @@ export const EntryCard = ({
         )}
 
         <div className={cn(
-          "grid flex-1",
-          isExpanded ? "" : "min-h-[6.75rem] sm:min-h-[7.5rem]",
-          hasImages
-            ? '[grid-template-columns:clamp(4.5rem,24%,6.5rem)_minmax(0,1fr)] sm:[grid-template-columns:clamp(5.25rem,22%,7.5rem)_minmax(0,1fr)]'
-            : 'grid-cols-1'
+          "flex flex-col flex-1",
+          isExpanded ? "" : "min-h-[6.75rem] sm:min-h-[7.5rem]"
         )}>
 
-
-        {/* LADO IZQUIERDO: Preview cuadrado fijo */}
-        {hasImages && (
-        <div className="min-w-0 p-2.5 pr-0 sm:p-3 sm:pr-0">
-          <div
-            className="relative aspect-square w-full cursor-pointer overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 shadow-sm"
-            onClick={() => setViewerIndex(0)}
-          >
-            <img
-              src={allImages[0].preview || allImages[0].url}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-              alt="Preview de entrada"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/20 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-            {allImages.length > 1 && (
-              <div className="absolute bottom-2 right-2 rounded-lg bg-slate-950/85 px-2 py-1 text-[9px] font-black text-white shadow-lg">
-                +{allImages.length - 1}
-              </div>
-            )}
-          </div>
-        </div>
-        )}
-
         {/* CONTENIDO PRINCIPAL */}
-        <div className="flex min-w-0 flex-col p-2.5 sm:p-3.5">
+        <div className="flex min-w-0 flex-col p-3 sm:p-4">
           
           {/* Header Row: Linea Icon + Info + Badges */}
           <div className="mb-2 flex flex-col gap-1.5 sm:mb-3 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
@@ -479,16 +473,26 @@ export const EntryCard = ({
                 {!isDraft && (
                   <StatusTrafficLight entry={entry} size="md" className="shrink-0" />
                 )}
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-slate-100 bg-slate-50 text-slate-900 shadow-sm sm:h-9 sm:w-9">
-                  <LineIconSelector type={entry.linea} size={16} />
-                </div>
-                <div className="flex min-w-0 flex-col leading-tight">
-                  <span className="truncate text-[8px] font-black uppercase tracking-tighter text-slate-400 sm:text-[9px]">
-                    {AREA_MAP[entry.area] || entry.area}
-                  </span>
-                  <span className="truncate text-[8px] font-bold text-slate-500 sm:text-[9px]">
-                    {lineaLabel}
-                  </span>
+                <div className="flex flex-col items-center justify-center shrink-0 w-10 sm:w-12">
+                    {isMarketing ? (
+                        <Icon
+                            name="campaign"
+                            size="24px"
+                            style={{ color: lineInfo.color }}
+                        />
+                    ) : (
+                        <LineIconSelector
+                            type={entry.linea}
+                            size={32}
+                            style={{ color: lineInfo.color }}
+                        />
+                    )}
+                    <span
+                        className="text-[6px] sm:text-[7px] font-black uppercase tracking-widest font-mono leading-none text-center mt-0.5"
+                        style={{ color: lineInfo.color }}
+                    >
+                        {lineInfo.label}
+                    </span>
                 </div>
               </div>
 
@@ -828,23 +832,57 @@ export const EntryCard = ({
             )}
           </div>
 
+            {/* GALERÍA DE IMÁGENES (Modo Lectura) */}
+            {hasImages && !isSavedEditing && !isDraft && (
+              <div className="mt-3 flex flex-wrap gap-2 pt-2 border-t border-slate-50">
+                {allImages.map((img, idx) => (
+                  <div key={img.id || idx} className="relative group/img flex items-center justify-center">
+                    <div
+                      className="relative h-12 w-12 sm:h-14 sm:w-14 shrink-0 cursor-pointer overflow-hidden rounded-xl border border-slate-200 bg-slate-100/80 shadow-sm flex items-center justify-center p-1"
+                      onClick={() => setViewerIndex(idx)}
+                    >
+                      <img
+                        src={img.preview || img.url}
+                        className="h-full w-full object-contain rounded-lg drop-shadow-sm"
+                        alt={`Adjunto ${idx + 1}`}
+                      />
+                    </div>
+                    {/* Hover flotante */}
+                    <div className="absolute left-1/2 bottom-full -translate-x-1/2 mb-2 z-50 opacity-0 invisible group-hover/img:opacity-100 group-hover/img:visible transition-all duration-200 pointer-events-none drop-shadow-2xl">
+                      <div className="w-48 h-48 flex items-center justify-center relative overflow-hidden rounded-[1.5rem] bg-white border border-slate-200 p-2 shadow-2xl">
+                        <img src={img.preview || img.url} alt="Preview Zoom" className="w-full h-full object-contain drop-shadow-md rounded-xl" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Gestión de Imágenes para Borradores */}
             {isDraft && (
               <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-50 pt-3">
                  <span className="text-[8px] font-black uppercase tracking-widest text-slate-300 mr-1">Imágenes</span>
                  <div className="flex flex-wrap gap-2">
                     {entry._localImagenes?.map((img, idx) => (
-                      <div key={img.id || idx} className="relative w-10 h-10 rounded-xl overflow-hidden border border-slate-100 shadow-sm group">
-                        <img src={img.preview} className="w-full h-full object-cover" alt="Preview borrador" />
-                        <button 
-                          onClick={() => {
-                            const newImgs = entry._localImagenes.filter((_, i) => i !== idx);
-                            handleUpdateField('_localImagenes', newImgs);
-                          }}
-                          className="absolute inset-0 bg-rose-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
-                        >
-                          <X size={14} strokeWidth={3} />
-                        </button>
+                      <div key={img.id || idx} className="relative group/img flex items-center justify-center">
+                        <div className="relative w-12 h-12 rounded-xl border border-slate-200 bg-slate-100/80 flex items-center justify-center p-1 overflow-hidden shadow-sm">
+                          <img src={img.preview} className="w-full h-full object-contain rounded-lg" alt="Preview borrador" />
+                          <button 
+                            onClick={() => {
+                              const newImgs = entry._localImagenes.filter((_, i) => i !== idx);
+                              handleUpdateField('_localImagenes', newImgs);
+                            }}
+                            className="absolute inset-0 bg-rose-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-10"
+                          >
+                            <X size={14} strokeWidth={3} />
+                          </button>
+                        </div>
+                        {/* Hover flotante (borrador) */}
+                        <div className="absolute left-1/2 bottom-full -translate-x-1/2 mb-2 z-50 opacity-0 invisible group-hover/img:opacity-100 group-hover/img:visible transition-all duration-200 pointer-events-none drop-shadow-2xl">
+                          <div className="w-48 h-48 flex items-center justify-center relative overflow-hidden rounded-[1.5rem] bg-white border border-slate-200 p-2 shadow-2xl">
+                            <img src={img.preview} alt="Preview Zoom" className="w-full h-full object-contain drop-shadow-md rounded-xl" />
+                          </div>
+                        </div>
                       </div>
                     ))}
                     {(entry._localImagenes?.length || 0) < 3 && (
@@ -869,7 +907,7 @@ export const EntryCard = ({
                           };
                           input.click();
                         }}
-                        className="w-10 h-10 rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-300 hover:border-slate-400 hover:text-slate-400 transition-all hover:bg-slate-50 active:scale-95"
+                        className="w-12 h-12 rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-300 hover:border-slate-400 hover:text-slate-400 transition-all hover:bg-slate-50 active:scale-95 shadow-sm bg-white"
                         title="Agregar imágenes"
                       >
                         <Camera size={16} />
@@ -887,11 +925,19 @@ export const EntryCard = ({
                     <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Responsable</span>
                     <div className="flex flex-wrap gap-1.5">
                       {entry.asignaciones.map((asig) => (
-                        <div key={asig.id} className="flex items-center gap-1.5 rounded-lg border border-slate-100 bg-slate-50 px-2 py-1">
-                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-600">
-                            {asig.usuario?.nombre?.charAt(0)}
+                        <div key={asig.id} className="relative group/tooltip inline-flex cursor-help">
+                          <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full border border-slate-200 overflow-hidden bg-slate-100 text-[10px] font-bold text-slate-600 shadow-sm">
+                            {asig.usuario?.imagen ? (
+                              <img src={asig.usuario.imagen} alt={asig.usuario.nombre} className="h-full w-full object-cover" />
+                            ) : (
+                              asig.usuario?.nombre?.charAt(0)
+                            )}
                           </div>
-                          <span className="text-[10px] font-bold text-slate-700 truncate max-w-[100px]">{asig.usuario?.nombre}</span>
+                          {/* Tooltip */}
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-xs bg-slate-900 text-white text-[10px] font-bold py-1.5 px-3 rounded-lg shadow-xl opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all pointer-events-none z-50">
+                            {asig.usuario?.nombre}
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900" />
+                          </div>
                         </div>
                       ))}
                     </div>

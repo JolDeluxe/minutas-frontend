@@ -3,13 +3,21 @@
 // badges pequeños. Los fondos de las cards permanecen neutros/blancos.
 
 export const CLASIFICACION_MAP = {
-  IDEA:          { label: 'Idea',          icon: 'lightbulb',      color: '#d97706', border: '#fbbf24' },
-  INVESTIGACION: { label: 'Investigación', icon: 'science',        color: '#2563eb', border: '#60a5fa' },
-  CORRECCION:    { label: 'Corrección',    icon: 'build',          color: '#dc2626', border: '#f87171' },
-  ANALISIS:      { label: 'Análisis',      icon: 'analytics',      color: '#7c3aed', border: '#a78bfa' },
-  MUESTRA:       { label: 'Muestra',       icon: 'palette',        color: '#db2777', border: '#f472b6' },
-  POLITICAS:     { label: 'Políticas',     icon: 'policy',         color: '#475569', border: '#94a3b8' },
-  OTROS:         { label: 'Otros',         icon: 'more_horiz',     color: '#64748b', border: '#cbd5e1' },
+  // DISEÑO
+  IDEA:          { label: 'Idea',          icon: 'emoji_objects',     color: '#8b5cf6', border: '#a78bfa' },
+  INVESTIGACION: { label: 'Investigación', icon: 'travel_explore',    color: '#3b82f6', border: '#60a5fa' },
+  CORRECCION:    { label: 'Corrección',    icon: 'edit_location_alt', color: '#ef4444', border: '#f87171' },
+  ANALISIS:      { label: 'Análisis',      icon: 'search_insights',   color: '#f59e0b', border: '#fbbf24' },
+  MUESTRA:       { label: 'Muestra',       icon: 'design_services',   color: '#10b981', border: '#34d399' },
+  BOCETO:        { label: 'Boceto',        icon: 'draw',              color: '#f97316', border: '#fb923c' },
+  POLITICAS:     { label: 'Políticas',     icon: 'policy',            color: '#6366f1', border: '#818cf8' },
+  // MARKETING
+  REDES_SOCIALES:{ label: 'Redes Sociales',icon: 'share',             color: '#10b981', border: '#34d399' },
+  DISENO_INSUMOS:{ label: 'Diseño Insumos',icon: 'brush',             color: '#f59e0b', border: '#fbbf24' },
+  TIENDAS:       { label: 'Tiendas',       icon: 'store',             color: '#3b82f6', border: '#60a5fa' },
+  CATALOGOS:     { label: 'Catálogos',     icon: 'menu_book',         color: '#ec4899', border: '#f472b6' },
+  // GENERAL
+  OTROS:         { label: 'Otros',         icon: 'more_horiz',        color: '#64748b', border: '#94a3b8' },
 };
 
 export const TIPO_ENTRADA_MAP = {
@@ -126,13 +134,14 @@ export const CATALOGOS_POR_DEPARTAMENTO = {
       { value: 'DIRECCION_TIENDAS', label: 'Dirección Tiendas' },
     ],
     clasificaciones: [
-      { value: 'IDEA',          label: 'Idea',          color: '#8b5cf6', icon: 'lightbulb' },
-      { value: 'INVESTIGACION', label: 'Investigación', color: '#3b82f6', icon: 'search' },
-      { value: 'CORRECCION',    label: 'Corrección',    color: '#ef4444', icon: 'build' },
-      { value: 'ANALISIS',      label: 'Análisis',      color: '#f59e0b', icon: 'analytics' },
-      { value: 'MUESTRA',       label: 'Muestra',       color: '#10b981', icon: 'inventory_2' },
-      { value: 'POLITICAS',     label: 'Políticas',     color: '#6366f1', icon: 'gavel' },
-      { value: 'OTROS',         label: 'Otros',         color: '#64748b', icon: 'more_horiz' },
+      { value: "IDEA", label: "Idea", color: "#8b5cf6", icon: "emoji_objects" },
+      { value: "INVESTIGACION", label: "Investigación", color: "#3b82f6", icon: "travel_explore" },
+      { value: "CORRECCION", label: "Corrección", color: "#ef4444", icon: "edit_location_alt" },
+      { value: "ANALISIS", label: "Análisis", color: "#f59e0b", icon: "search_insights" },
+      { value: "MUESTRA", label: "Muestra", color: "#10b981", icon: "design_services" },
+      { value: "BOCETO", label: "Boceto", color: "#f97316", icon: "draw" },
+      { value: "POLITICAS", label: "Políticas", color: "#6366f1", icon: "policy" },
+      { value: "OTROS", label: "Otros", color: "#64748b", icon: "more_horiz" },
     ],
     lineas: [
       { value: 'CALZADO',    label: 'Calzado',    color: '#f97316', icon: 'footprint' },

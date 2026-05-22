@@ -59,6 +59,7 @@ export const OrganizeDrawer = ({
       payload.prioridad = prioridad || undefined;
       payload.fechaVencimiento = fechaVencimiento ? new Date(fechaVencimiento).toISOString() : undefined;
       payload.responsables = responsables;
+      payload.estado = 'PENDIENTE'; // Asegurar que inicie en PENDIENTE
     } else if (tipo === 'RECORDATORIO') {
       payload.alcanceRecordatorio = alcanceRecordatorio;
       payload.responsables = responsables;

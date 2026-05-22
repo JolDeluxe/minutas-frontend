@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Icon } from '@/components/ui/z_index';
 import { MinutaContextPanel } from '../components/context/minuta-context-panel';
 import { MinutaExecutiveSummary } from '../components/minuta-executive-summary';
@@ -60,8 +60,14 @@ export const MinutaDetailMobileView = ({
   cancelando,
   cerrando,
   reabriendo,
-  finalizando
+  finalizando,
+  minutaEstado
 }) => {
+  const [showPoliticas, setShowPoliticas] = useState(false);
+  const [showRecordatorios, setShowRecordatorios] = useState(false);
+
+  if (!minuta) return null;
+
   return (
     <div className="flex h-full w-full flex-col bg-slate-50/50 relative overflow-hidden">
       
@@ -131,55 +137,92 @@ export const MinutaDetailMobileView = ({
           <MinutaJuntaComparison minutaId={minuta.id} />
         </div>
 
-        {/* Políticas y Lineamientos Acordados (Mobile card format) */}
-        {politicasAcordadas.length > 0 && (
-          <div className="bg-gradient-to-br from-indigo-950 to-slate-900 border border-indigo-500/20 rounded-2xl p-4 shadow-xl text-white mb-6">
-            <h3 className="fuente-titulos text-sm font-black tracking-wide flex items-center gap-1.5 mb-3">
-              <span className="material-symbols-rounded text-brand text-xl">gavel</span>
-              Políticas y Lineamientos Acordados
-            </h3>
-            <div className="space-y-3">
-              {politicasAcordadas.map((p, idx) => (
-                <div 
-                  key={p.id || idx} 
-                  className="bg-white/5 border border-white/10 rounded-xl p-3 flex flex-col justify-between"
-                >
-                  <p className="text-white/90 text-xs font-medium leading-relaxed italic">
-                    "{p.descripcion}"
-                  </p>
-                  <div className="flex items-center justify-between mt-2 pt-1 border-t border-white/5 text-[9px] text-white/40 font-mono">
-                    <span>Área: {p.area}</span>
-                    {p.linea && <span>Línea: {p.linea}</span>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Sección de Acuerdos Compactos (Mobile) */}
+        {(politicasAcordadas.length > 0 || recordatoriosGenerales.length > 0) && (
+          <div className="flex flex-col gap-2 mb-6">
+            
+            {/* Políticas */}
+            {politicasAcordadas.length > 0 && (
+              <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-lg transition-all duration-300">
+                <div className="w-full flex items-center justify-between active:bg-white/5 pr-2">
+                  <button 
+                    onClick={() => setShowPoliticas(!showPoliticas)}
+                    className="flex-1 p-3 flex items-center gap-2"
+                  >
+                    <Icon name="policy" size="14px" className="text-brand" />
+                    <h3 className="fuente-titulos text-[10px] font-black tracking-widest uppercase text-white opacity-90">Políticas</h3>
+                    <span className="px-1.5 py-0.5 rounded bg-white/10 text-[8px] font-mono text-slate-400">{politicasAcordadas.length}</span>
+                    <Icon name="expand_more" size="16px" className={`text-slate-500 transition-transform duration-300 ${showPoliticas ? 'rotate-180' : ''}`} />
+                  </button>
 
-        {/* Acuerdos y Recordatorios Generales (Mobile card format) */}
-        {recordatoriosGenerales.length > 0 && (
-          <div className="bg-gradient-to-br from-amber-50 to-orange-50/50 border border-amber-100 rounded-2xl p-4 shadow-md mb-6">
-            <h3 className="fuente-titulos text-sm font-extrabold text-slate-800 tracking-wide flex items-center gap-1.5 mb-3">
-              <span className="material-symbols-rounded text-amber-600 text-xl">push_pin</span>
-              Acuerdos y Recordatorios
-            </h3>
-            <div className="space-y-3">
-              {recordatoriosGenerales.map((r, idx) => (
-                <div 
-                  key={r.id || idx} 
-                  className="bg-white border border-amber-100 rounded-xl p-3 flex flex-col justify-between"
-                >
-                  <p className="text-slate-800 text-xs font-semibold leading-relaxed">
-                    "{r.descripcion}"
-                  </p>
-                  <div className="flex items-center justify-between mt-2 pt-1 border-t border-slate-100 text-[9px] text-slate-500 font-mono">
-                    <span>Área: {r.area}</span>
-                    {r.linea && <span>Línea: {r.linea}</span>}
-                  </div>
+                  {showPoliticas && canAccessModule(userRole, 'politicas') && (
+                    <Link to="/politicas" className="p-2 text-slate-500 active:text-brand animate-in fade-in duration-300">
+                      <Icon name="arrow_forward" size="16px" />
+                    </Link>
+                  )}
                 </div>
-              ))}
-            </div>
+
+                {showPoliticas && (
+                  <div className="px-2 pb-3 pt-1 space-y-1.5 animate-in slide-in-from-top-1 duration-200 bg-slate-900/40 border-t border-white/5">
+                    {politicasAcordadas.map((p, idx) => (
+                      <div key={p.id || idx} className="bg-white/5 border border-white/5 rounded-lg p-2 flex items-start gap-2 relative overflow-hidden">
+                        <div className="w-0.5 h-full bg-brand/40 absolute left-0 top-0" />
+                        <p className="text-white/80 text-[10px] leading-tight italic flex-1 pl-1">"{p.descripcion}"</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Recordatorios */}
+            {recordatoriosGenerales.length > 0 && (
+              <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden transition-all duration-300">
+                <div className="w-full flex items-center justify-between active:bg-slate-50 pr-2">
+                  <button 
+                    onClick={() => setShowRecordatorios(!showRecordatorios)}
+                    className="flex-1 p-3 flex items-center gap-2"
+                  >
+                    <Icon name="notification_important" size="14px" className="text-violet-600" />
+                    <h3 className="fuente-titulos text-[10px] font-black tracking-widest uppercase text-slate-700 opacity-90">Recordatorios</h3>
+                    <span className="px-1.5 py-0.5 rounded bg-slate-50 text-[8px] font-mono text-slate-400">{recordatoriosGenerales.length}</span>
+                    <Icon name="expand_more" size="16px" className={`text-slate-300 transition-transform duration-300 ${showRecordatorios ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {showRecordatorios && canAccessModule(userRole, 'recordatorios') && (
+                    <Link to="/recordatorios" className="p-2 text-slate-400 active:text-violet-600 animate-in fade-in duration-300">
+                      <Icon name="arrow_forward" size="16px" />
+                    </Link>
+                  )}
+                </div>
+
+                {showRecordatorios && (
+                  <div className="px-2 pb-3 pt-1 space-y-1.5 animate-in slide-in-from-top-1 duration-200 bg-slate-50/30 border-t border-slate-100">
+                    {recordatoriosGenerales.map((r, idx) => (
+                      <div key={r.id || idx} className="bg-white border border-slate-100 rounded-lg p-2 flex items-center gap-2 relative overflow-hidden shadow-xs">
+                        <div className="w-0.5 h-full bg-violet-500 absolute left-0 top-0" />
+                        <p className="text-slate-700 text-[10px] leading-tight flex-1 pl-1">"{r.descripcion}"</p>
+                        
+                        {/* Avatares (Mobile) */}
+                        {r.asignaciones && r.asignaciones.length > 0 && (
+                          <div className="flex -space-x-1 shrink-0">
+                            {r.asignaciones.map((asig) => (
+                              <div key={asig.id} className="h-5 w-5 rounded-full border border-white overflow-hidden bg-slate-100 flex items-center justify-center text-[7px] font-bold text-slate-500 shadow-xs">
+                                {asig.usuario?.imagen ? (
+                                  <img src={asig.usuario.imagen} alt={asig.usuario.nombre} className="h-full w-full object-cover" />
+                                ) : (
+                                  asig.usuario?.nombre?.charAt(0)
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -257,7 +300,7 @@ export const MinutaDetailMobileView = ({
         </button>
       </div>
 
-      {minuta.estado !== 'CERRADA' && minuta.estado !== 'CANCELADA' && (
+      {(minuta?.estado === 'EN_CURSO' || minuta?.estado === 'PROGRAMADA') && (
         <MobileQuickComposer
           minutaId={minuta.id}
           lineaDefault={minuta.lineaDefault}
@@ -278,6 +321,7 @@ export const MinutaDetailMobileView = ({
         entries={draftEntries}
         notesCount={draftNotes.length}
         submitting={isSubmittingFinal}
+        minutaEstado={minutaEstado}
       />
 
       {organizeEntry && (

@@ -196,7 +196,7 @@ const renderMinutasBadges = (minutasDia, isSelected) => {
             {isMarketing ? (
               <Icon name="campaign" size="10px" style={{ color: style.iconColor }} className="shrink-0" />
             ) : (
-              <LineIconSelector type={m.lineaDefault} size={10} style={{ color: style.iconColor }} className="shrink-0" />
+              <LineIconSelector type={m.lineaDefault} size={15} style={{ color: style.iconColor }} className="shrink-0" />
             )}
             
             {showText && (

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Icon } from '@/components/ui/z_index';
 import { MinutaContextPanel } from '../components/context/minuta-context-panel';
 import { QuickComposer } from '../components/composer/quick-composer';
@@ -7,6 +8,8 @@ import { EntryFeed } from '../components/timeline/entry-feed';
 import { StickyNotesBoard } from '../components/notes/sticky-notes-board';
 import { ReviewDraftsModal } from '../components/review-drafts-modal';
 import { OrganizeDrawer } from '../components/organization/organize-drawer';
+import { useAuthStore } from '@/stores/auth-store';
+import { canAccessModule } from '@/config/modules-config';
   
 /**
  * MinutaDetailDesktopView — Vista especializada para estaciones de trabajo.
@@ -58,8 +61,16 @@ export const MinutaDetailDesktopView = ({
   cancelando,
   cerrando,
   reabriendo,
-  finalizando
+  finalizando,
+  minutaEstado
 }) => {
+  const [showPoliticas, setShowPoliticas] = useState(false);
+  const [showRecordatorios, setShowRecordatorios] = useState(false);
+  const { user } = useAuthStore();
+  const userRole = user?.data?.rol || user?.rol;
+
+  if (!minuta) return null;
+
   return (
     <div className="flex h-full w-full flex-col bg-slate-50/50 relative">
       <MinutaContextPanel 
@@ -99,7 +110,7 @@ export const MinutaDetailDesktopView = ({
       <div className="flex flex-1 overflow-hidden relative">
         {/* Workspace Principal */}
         <main className="relative flex flex-1 flex-col min-w-0 bg-transparent">
-          {minuta.estado !== 'CERRADA' && minuta.estado !== 'CANCELADA' && (
+          {(minuta?.estado === 'EN_CURSO' || minuta?.estado === 'PROGRAMADA') && (
             <QuickComposer
               minutaId={minuta.id}
               lineaDefault={minuta.lineaDefault}
@@ -114,71 +125,118 @@ export const MinutaDetailDesktopView = ({
           )}
 
           <div className={`flex-1 px-10 py-1 scrollbar-thin ${filteredEntries.length === 0 ? 'overflow-hidden' : 'overflow-y-auto'}`}>
-            <div className={`mx-auto max-w-[1500px] flex flex-col gap-8 ${filteredEntries.length === 0 ? 'pb-4' : 'pb-32'}`}>
+            <div className={`mx-auto max-w-[1500px] flex flex-col gap-6 ${filteredEntries.length === 0 ? 'pb-4' : 'pb-32'}`}>
               
-              {/* Políticas y Lineamientos Acordados */}
-              {politicasAcordadas.length > 0 && (
-                <div className="bg-gradient-to-br from-indigo-950/90 to-slate-900/95 border border-indigo-500/20 rounded-3xl p-6 shadow-2xl text-white">
-                  <h3 className="fuente-titulos text-lg font-black tracking-wide flex items-center gap-2 mb-4">
-                    <span className="material-symbols-rounded text-brand text-2xl">gavel</span>
-                    Políticas y Lineamientos Acordados en esta Junta
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {politicasAcordadas.map((p, idx) => (
-                      <div 
-                        key={p.id || idx} 
-                        className="bg-white/5 border border-white/10 hover:border-brand/40 rounded-2xl p-4 transition duration-300 flex flex-col justify-between"
-                      >
-                        <p className="text-white/90 text-sm font-medium leading-relaxed italic">
-                          "{p.descripcion}"
-                        </p>
-                        <div className="flex items-center justify-between mt-4 pt-2 border-t border-white/5 text-[10px] text-white/40 font-mono">
-                          <span>Área: {p.area}</span>
-                          {p.linea && <span>Línea: {p.linea}</span>}
-                          {p.tempId && (
-                            <span className="bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider">
-                              Borrador
-                            </span>
-                          )}
-                        </div>
+              {/* Sección de Acuerdos Compactos */}
+              {(politicasAcordadas.length > 0 || recordatoriosGenerales.length > 0) && (
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                  
+                  {/* Políticas y Lineamientos */}
+                  {politicasAcordadas.length > 0 && (
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg h-fit">
+                      <div className="w-full flex items-center justify-between hover:bg-white/5 transition-colors pr-2">
+                        <button 
+                          onClick={() => setShowPoliticas(!showPoliticas)}
+                          className="flex-1 px-4 py-2 flex items-center gap-2.5 text-white"
+                        >
+                          <Icon name="policy" size="16px" className="text-brand" />
+                          <h3 className="fuente-titulos text-[11px] font-black tracking-widest uppercase opacity-90">Políticas</h3>
+                          <span className="px-1.5 py-0.5 rounded bg-white/10 text-[9px] font-mono text-slate-400">{politicasAcordadas.length}</span>
+                          <Icon name="expand_more" size="18px" className={`text-slate-500 transition-transform duration-300 ${showPoliticas ? 'rotate-180' : ''}`} />
+                        </button>
+                        
+                        {showPoliticas && canAccessModule(userRole, 'politicas') && (
+                          <Link 
+                            to="/politicas" 
+                            className="px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest text-slate-500 hover:text-brand hover:bg-brand/10 transition-all flex items-center gap-1 animate-in fade-in duration-300"
+                          >
+                            <span>Ver Todas</span>
+                            <Icon name="arrow_forward" size="12px" />
+                          </Link>
+                        )}
                       </div>
-                    ))}
-                  </div>
+
+                      {showPoliticas && (
+                        <div className="px-3 pb-3 pt-1 animate-in slide-in-from-top-1 duration-200 border-t border-white/5 bg-slate-900/40">
+                          <div className="flex flex-col gap-2">
+                            {politicasAcordadas.map((p, idx) => (
+                              <div key={p.id || idx} className="bg-white/5 border border-white/5 rounded-xl p-2.5 flex items-start gap-3 relative overflow-hidden">
+                                <div className="w-0.5 h-full bg-brand/40 absolute left-0 top-0" />
+                                <p className="text-white/90 text-[11px] leading-snug italic flex-1 pl-1">"{p.descripcion}"</p>
+                                <span className="text-[8px] font-mono text-white/20 uppercase shrink-0 pt-0.5">{p.area}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Acuerdos y Recordatorios */}
+                  {recordatoriosGenerales.length > 0 && (
+                    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm h-fit">
+                      <div className="w-full flex items-center justify-between hover:bg-slate-50 transition-colors pr-2">
+                        <button 
+                          onClick={() => setShowRecordatorios(!showRecordatorios)}
+                          className="flex-1 px-4 py-2 flex items-center gap-2.5 text-slate-700"
+                        >
+                          <Icon name="notification_important" size="16px" className="text-violet-500" />
+                          <h3 className="fuente-titulos text-[11px] font-black tracking-widest uppercase opacity-90">Recordatorios</h3>
+                          <span className="px-1.5 py-0.5 rounded bg-slate-100 text-[9px] font-mono text-slate-400">{recordatoriosGenerales.length}</span>
+                          <Icon name="expand_more" size="18px" className={`text-slate-300 transition-transform duration-300 ${showRecordatorios ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {showRecordatorios && canAccessModule(userRole, 'recordatorios') && (
+                          <Link 
+                            to="/recordatorios" 
+                            className="px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-all flex items-center gap-1 animate-in fade-in duration-300"
+                          >
+                            <span>Ver Todos</span>
+                            <Icon name="arrow_forward" size="12px" />
+                          </Link>
+                        )}
+                      </div>
+
+                      {showRecordatorios && (
+                        <div className="px-3 pb-3 pt-1 animate-in slide-in-from-top-1 duration-200 border-t border-slate-100 bg-slate-50/30">
+                          <div className="flex flex-col gap-2">
+                            {recordatoriosGenerales.map((r, idx) => (
+                              <div key={r.id || idx} className="bg-white border border-slate-200 rounded-xl p-2.5 flex items-center gap-3 relative overflow-hidden shadow-xs">
+                                <div className="w-0.5 h-full bg-violet-400 absolute left-0 top-0" />
+                                <p className="text-slate-700 text-[11px] font-medium leading-snug flex-1 pl-1">"{r.descripcion}"</p>
+                                
+                                {/* Avatares de Responsables */}
+                                {r.asignaciones && r.asignaciones.length > 0 && (
+                                  <div className="flex -space-x-1.5 shrink-0">
+                                    {r.asignaciones.map((asig) => (
+                                      <div key={asig.id} className="relative group/tooltip inline-block">
+                                        <div className="h-6 w-6 rounded-full border-2 border-white overflow-hidden bg-slate-100 flex items-center justify-center text-[8px] font-bold text-slate-500 shadow-sm">
+                                          {asig.usuario?.imagen ? (
+                                            <img src={asig.usuario.imagen} alt={asig.usuario.nombre} className="h-full w-full object-cover" />
+                                          ) : (
+                                            asig.usuario?.nombre?.charAt(0)
+                                          )}
+                                        </div>
+                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 w-max bg-slate-900 text-white text-[8px] font-bold py-1 px-2 rounded-md shadow-xl opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all pointer-events-none z-50">
+                                          {asig.usuario?.nombre}
+                                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900" />
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                <span className="text-[8px] font-mono text-slate-300 uppercase shrink-0">{r.area}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* Acuerdos y Recordatorios Generales */}
-              {recordatoriosGenerales.length > 0 && (
-                <div className="bg-gradient-to-br from-amber-50/50 to-orange-50/30 border border-amber-200/60 rounded-3xl p-6 shadow-md">
-                  <h3 className="fuente-titulos text-lg font-extrabold text-slate-800 tracking-wide flex items-center gap-2 mb-4">
-                    <span className="material-symbols-rounded text-amber-600 text-2xl">push_pin</span>
-                    Acuerdos y Recordatorios Generales
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {recordatoriosGenerales.map((r, idx) => (
-                      <div 
-                        key={r.id || idx} 
-                        className="bg-white border border-amber-100 hover:border-amber-300 rounded-2xl p-4 shadow-sm hover:shadow transition duration-300 flex flex-col justify-between"
-                      >
-                        <p className="text-slate-800 text-sm font-semibold leading-relaxed">
-                          "{r.descripcion}"
-                        </p>
-                        <div className="flex items-center justify-between mt-4 pt-2 border-t border-slate-100 text-[10px] text-slate-500 font-mono">
-                          <span>Área: {r.area}</span>
-                          {r.linea && <span>Línea: {r.linea}</span>}
-                          {r.tempId && (
-                            <span className="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider">
-                              Borrador
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center gap-4 bg-white/40 p-2 rounded-2xl backdrop-blur-md border border-white/60 sticky top-0 z-20">
+              <div className="flex items-center gap-4 bg-white/40 p-2 rounded-2xl backdrop-blur-md border border-white/60 sticky top-0 z-20 shadow-sm">
                 <div className="flex-1 overflow-hidden">
                   <EntryFiltersBar 
                     activeFilter={activeFilter} 
@@ -264,6 +322,7 @@ export const MinutaDetailDesktopView = ({
         entries={draftEntries}
         notesCount={draftNotes.length}
         submitting={isSubmittingFinal}
+        minutaEstado={minutaEstado}
       />
 
       {organizeEntry && (
