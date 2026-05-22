@@ -236,7 +236,7 @@ export const MinutaDetailDesktopView = ({
                 </div>
               )}
 
-              <div className="flex items-center gap-4 bg-white/40 p-2 rounded-2xl backdrop-blur-md border border-white/60 sticky top-0 z-20 shadow-sm">
+              <div className="flex items-center gap-4 bg-white/40 p-2 rounded-2xl backdrop-blur-md border border-white/60 sticky top-0 z-50 shadow-sm">
                 <div className="flex-1 overflow-hidden">
                   <EntryFiltersBar 
                     activeFilter={activeFilter} 
@@ -275,10 +275,10 @@ export const MinutaDetailDesktopView = ({
         {showNotes && (
           <>
             <div
-              className="absolute inset-0 z-40 bg-slate-900/10 backdrop-blur-[1px] animate-in fade-in duration-200"
+              className="absolute inset-0 z-[90] bg-slate-900/10 backdrop-blur-[1px] animate-in fade-in duration-200"
               onClick={() => setShowNotes(false)}
             />
-            <div className="absolute right-5 top-5 bottom-5 z-50 w-[min(430px,calc(100%-2.5rem))] overflow-hidden rounded-4xl border border-amber-100 bg-white shadow-2xl shadow-slate-900/20 animate-in slide-in-from-right-4 fade-in duration-300">
+            <div className="absolute right-5 top-5 bottom-5 z-[100] w-[min(430px,calc(100%-2.5rem))] overflow-hidden rounded-4xl border border-amber-100 bg-white shadow-2xl shadow-slate-900/20 animate-in slide-in-from-right-4 fade-in duration-300">
               <StickyNotesBoard
                 notas={[...draftNotes, ...(minuta.notasGenerales || [])]}
                 minutaId={minuta.id}
@@ -293,23 +293,32 @@ export const MinutaDetailDesktopView = ({
         )}
 
         {/* Botones Flotantes */}
-        <div className="fixed bottom-10 right-10 z-30 flex gap-4">
+        <div className="fixed bottom-10 right-10 z-[60] flex gap-4">
           {draftEntries.length > 0 && (
             <button
               onClick={() => setShowReviewModal(true)}
-              className="flex h-16 px-6 items-center gap-3 rounded-2xl bg-emerald-600 text-white shadow-2xl shadow-emerald-600/40 hover:bg-emerald-500 hover:scale-105 active:scale-95 transition-all group"
+              className="flex h-16 px-6 items-center gap-3 rounded-2xl bg-emerald-600 text-white shadow-2xl shadow-emerald-600/40 hover:bg-emerald-500 hover:scale-105 active:scale-95 transition-all group relative"
             >
               <Icon name="cloud_upload" size="28px" className="group-hover:animate-bounce" />
               <span className="text-xs font-black uppercase tracking-widest pr-2">Guardar</span>
+              <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-lg animate-in zoom-in">
+                {draftEntries.length}
+              </div>
             </button>
           )}
 
           {!showNotes && (
             <button
               onClick={() => setShowNotes(true)}
-              className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-2xl shadow-amber-500/40 hover:bg-amber-400 hover:scale-110 active:scale-95 transition-all"
+              className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-2xl shadow-amber-500/40 hover:bg-amber-400 hover:scale-110 active:scale-95 transition-all relative group"
             >
               <Icon name="sticky_note_2" size="32px" />
+              {/* Contador de Notas Generales */}
+              {(draftNotes.length + (minuta.notasGenerales?.length || 0)) > 0 && (
+                <div className="absolute -top-2 -right-2 w-7 h-7 bg-amber-950 text-white text-[11px] font-black rounded-full flex items-center justify-center border-2 border-amber-500 shadow-lg group-hover:scale-110 transition-transform">
+                   {draftNotes.length + (minuta.notasGenerales?.length || 0)}
+                </div>
+              )}
             </button>
           )}
         </div>

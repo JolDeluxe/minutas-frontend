@@ -59,7 +59,7 @@ export const MinutasTable = ({
                     ? row.id === (isMarketing ? ultimaJuntaId.MARKETING : ultimaJuntaId.DISENO)
                     : row.id === ultimaJuntaId);
                 const isPrevious = juntaAnteriorId && (typeof juntaAnteriorId === 'object' 
-                    ? row.id === (isMarketing ? juntaAnteriorId.MARKETING : juntaAnteriorId.DISENO)
+                    ? row.id === (isMarketing ? juntaAnteriorId.MARKETING : ultimaJuntaId.DISENO)
                     : row.id === juntaAnteriorId);
 
                 return (
@@ -90,140 +90,140 @@ export const MinutasTable = ({
             },
         },
         {
-    header: "Línea",
-    accessorKey: "lineaDefault",
-    sortable: true,
-    align: "center",
-    headerClassName: "w-[15%] min-w-[120px]",
-    cell: (row) => {
-        if (row.isSkeleton) return <Skeleton className="h-4 w-20 mx-auto" />;
+            header: "Línea",
+            accessorKey: "lineaDefault",
+            sortable: true,
+            align: "center",
+            headerClassName: "w-[15%] min-w-[120px]",
+            cell: (row) => {
+                if (row.isSkeleton) return <Skeleton className="h-4 w-20 mx-auto" />;
 
-        const isMarketing = row.creadoPor?.departamento === 'MARKETING';
+                const isMarketing = row.creadoPor?.departamento === 'MARKETING';
 
-        const lineInfo = isMarketing
-            ? { label: 'Campaña', color: '#8b5cf6' }
-            : (LINEA_MAP[row.lineaDefault] || {
-                label: row.lineaDefault,
-                color: '#64748b'
-            });
+                const lineInfo = isMarketing
+                    ? { label: 'Campaña', color: '#8b5cf6' }
+                    : (LINEA_MAP[row.lineaDefault] || {
+                        label: row.lineaDefault,
+                        color: '#64748b'
+                    });
 
-        return (
-            <div className="flex flex-col items-center justify-center gap-1">
-                <div className="flex items-center justify-center">
-                    {isMarketing ? (
-                        <Icon
-                            name="campaign"
-                            size="32px"
+                return (
+                    <div className="flex flex-col items-center justify-center gap-1">
+                        <div className="flex items-center justify-center">
+                            {isMarketing ? (
+                                <Icon
+                                    name="campaign"
+                                    size="32px"
+                                    style={{ color: lineInfo.color }}
+                                />
+                            ) : (
+                                <LineIconSelector
+                                    type={row.lineaDefault}
+                                    size={70}
+                                    style={{ color: lineInfo.color }}
+                                />
+                            )}
+                        </div>
+
+                        <span
+                            className="text-[7px] font-black uppercase tracking-widest font-mono leading-none text-center"
                             style={{ color: lineInfo.color }}
-                        />
-                    ) : (
-                        <LineIconSelector
-                            type={row.lineaDefault}
-                            size={70}
-                            style={{ color: lineInfo.color }}
-                        />
-                    )}
-                </div>
+                        >
+                            {lineInfo.label}
+                        </span>
+                    </div>
+                );
+            },
+        },
+        {
+            header: "Progreso",
+            accessorKey: "progreso",
+            sortable: false,
+            align: "center",
+            headerClassName: "w-[18%] min-w-[180px]",
+            cell: (row) => {
+                if (row.isSkeleton) return <Skeleton className="h-5 w-40" />;
 
-                <span
-                    className="text-[7px] font-black uppercase tracking-widest font-mono leading-none text-center"
-                    style={{ color: lineInfo.color }}
-                >
-                    {lineInfo.label}
-                </span>
-            </div>
-        );
-    },
-},
-{
-    header: "Progreso",
-    accessorKey: "progreso",
-    sortable: false,
-    align: "center",
-    headerClassName: "w-[18%] min-w-[180px]",
-    cell: (row) => {
-        if (row.isSkeleton) return <Skeleton className="h-5 w-40" />;
+                const resumen = row.resumenOperativo || {};
 
-        const resumen = row.resumenOperativo || {};
+                const totalTareas =
+                    (resumen.completadas || 0) +
+                    (resumen.cerradas || 0) +
+                    (resumen.pendientes || 0);
 
-        const totalTareas =
-            (resumen.completadas || 0) +
-            (resumen.cerradas || 0) +
-            (resumen.pendientes || 0);
+                const porcentaje = resumen.porcentajeCompletado || 0;
+                const atrasadas = resumen.atrasadas || 0;
+                const completadas =
+                    (resumen.completadas || 0) +
+                    (resumen.cerradas || 0);
 
-        const porcentaje = resumen.porcentajeCompletado || 0;
-        const atrasadas = resumen.atrasadas || 0;
-        const completadas =
-            (resumen.completadas || 0) +
-            (resumen.cerradas || 0);
+                const enProgreso = resumen.enProgreso || 0;
 
-        const enProgreso = resumen.enProgreso || 0;
+                if (totalTareas === 0) {
+                    return (
+                        <span className="text-sm text-slate-400 italic">
+                            Sin tareas
+                        </span>
+                    );
+                }
 
-        if (totalTareas === 0) {
-            return (
-                <span className="text-sm text-slate-400 italic">
-                    Sin tareas
-                </span>
-            );
-        }
+                return (
+                    <div className="flex flex-col w-full max-w-[300px]">
+                        <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[11px] font-bold text-slate-500">
+                                {porcentaje}%
+                            </span>
 
-        return (
-            <div className="flex flex-col w-full max-w-[300px]">
-                <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[11px] font-bold text-slate-500">
-                        {porcentaje}%
-                    </span>
+                            <span className="text-[10px] font-semibold text-slate-400">
+                                {completadas}/{totalTareas} tareas
+                            </span>
+                        </div>
 
-                    <span className="text-[10px] font-semibold text-slate-400">
-                        {completadas}/{totalTareas} tareas
-                    </span>
-                </div>
-
-                <div className="relative h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                    <div
-                        className={cn(
-                            "absolute inset-y-0 left-0 rounded-full transition-all duration-500",
-                            porcentaje < 100
-                                ? "bg-gradient-to-r from-amber-500 to-amber-400"
-                                : "bg-gradient-to-r from-emerald-500 to-emerald-400"
-                        )}
-                        style={{ width: `${porcentaje}%` }}
-                    />
-                </div>
-
-                {(enProgreso > 0 || atrasadas > 0) && (
-                    <div className="flex items-center gap-2 mt-1.5">
-                        {enProgreso > 0 && (
+                        <div className="relative h-2 w-full rounded-full bg-slate-100 overflow-hidden">
                             <div
-                                className="flex items-center gap-1"
-                                title="En progreso"
-                            >
-                                <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                                className={cn(
+                                    "absolute inset-y-0 left-0 rounded-full transition-all duration-500",
+                                    porcentaje < 100
+                                        ? "bg-gradient-to-r from-amber-500 to-amber-400"
+                                        : "bg-gradient-to-r from-emerald-500 to-emerald-400"
+                                )}
+                                style={{ width: `${porcentaje}%` }}
+                            />
+                        </div>
 
-                                <span className="text-[9px] font-bold font-mono text-slate-400">
-                                    {enProgreso}
-                                </span>
-                            </div>
-                        )}
+                        {(enProgreso > 0 || atrasadas > 0) && (
+                            <div className="flex items-center gap-2 mt-1.5">
+                                {enProgreso > 0 && (
+                                    <div
+                                        className="flex items-center gap-1"
+                                        title="En progreso"
+                                    >
+                                        <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
 
-                        {atrasadas > 0 && (
-                            <div
-                                className="flex items-center gap-1"
-                                title="Atrasadas"
-                            >
-                                <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                                        <span className="text-[9px] font-bold font-mono text-slate-400">
+                                            {enProgreso}
+                                        </span>
+                                    </div>
+                                )}
 
-                                <span className="text-[9px] font-black font-mono text-red-500">
-                                    {atrasadas}
-                                </span>
+                                {atrasadas > 0 && (
+                                    <div
+                                        className="flex items-center gap-1"
+                                        title="Atrasadas"
+                                    >
+                                        <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+
+                                        <span className="text-[9px] font-black font-mono text-red-500">
+                                            {atrasadas}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
-                )}
-            </div>
-        );
-    },
-},
+                );
+            },
+        },
         {
             header: "Estado",
             accessorKey: "estado",

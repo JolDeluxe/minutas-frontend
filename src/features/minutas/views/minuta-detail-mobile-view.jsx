@@ -226,7 +226,7 @@ export const MinutaDetailMobileView = ({
           </div>
         )}
 
-        <div className="sticky top-0 z-30 bg-white/40 backdrop-blur-lg px-1 py-2 mb-3 rounded-2xl border border-white/40 shadow-sm flex flex-col gap-2 transition-all duration-300"> 
+        <div className="sticky top-0 z-50 bg-white/40 backdrop-blur-lg px-1 py-2 mb-3 rounded-2xl border border-white/40 shadow-sm flex flex-col gap-2 transition-all duration-300"> 
           <EntryFiltersBar 
             activeFilter={activeFilter} 
             onChange={setActiveFilter}
@@ -279,14 +279,14 @@ export const MinutaDetailMobileView = ({
       )}
 
       {/* 4. Botones Flotantes */}
-      <div className="fixed bottom-48 right-6 z-30 flex flex-col gap-4">
+      <div className="fixed bottom-48 right-6 z-[60] flex flex-col gap-4">
         {draftEntries.length > 0 && (
           <button
             onClick={() => setShowReviewModal(true)}
             className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-2xl active:scale-90 transition-all relative"
           >
             <Icon name="cloud_upload" size="32px" />
-            <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white">
+            <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-lg animate-in zoom-in">
               {draftEntries.length}
             </div>
           </button>
@@ -294,9 +294,15 @@ export const MinutaDetailMobileView = ({
 
         <button
           onClick={() => setShowNotes(true)}
-          className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-2xl active:scale-90 transition-all"
+          className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-2xl active:scale-90 transition-all relative group"
         >
           <Icon name="sticky_note_2" size="32px" />
+          {/* Contador de Notas Generales */}
+          {(draftNotes.length + (minuta.notasGenerales?.length || 0)) > 0 && (
+            <div className="absolute -top-2 -right-2 w-7 h-7 bg-amber-950 text-white text-[11px] font-black rounded-full flex items-center justify-center border-2 border-amber-500 shadow-lg">
+               {draftNotes.length + (minuta.notasGenerales?.length || 0)}
+            </div>
+          )}
         </button>
       </div>
 
