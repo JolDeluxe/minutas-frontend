@@ -12,8 +12,9 @@ import { MinutaJuntaComparison } from '../minuta-junta-comparison';
  * Ahora incluye el resumen ejecutivo visual y comparación con junta anterior.
  */
 export const MinutaContextPanel = ({ 
-  minuta, resumen, entries = [], onFilterByStatus,
-  onIniciar, onCancelar, iniciando, cancelando 
+  minuta, resumen, onFilterByStatus, onFilterByTipo, onResetFilter, activeFilter,
+  onIniciar, onCancelar, onCerrar, onReabrir, onFinalizar,
+  iniciando, cancelando, cerrando, reabriendo, finalizando
 }) => {
   const navigate = useNavigate();
   const isDesktop = useIsDesktop();
@@ -50,15 +51,23 @@ export const MinutaContextPanel = ({
               {/* Estado */}
               <span className={cn(
                 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-wider',
-                minuta.estado === 'ACTIVA'
-                  ? 'bg-emerald-500/10 text-emerald-700'
-                  : 'bg-slate-500/10 text-slate-600'
+                minuta.estado === 'EN_CURSO' ? 'bg-blue-500/10 text-blue-700' :
+                minuta.estado === 'EN_ORGANIZACION' ? 'bg-orange-500/10 text-orange-700' :
+                minuta.estado === 'ACTIVA' ? 'bg-emerald-500/10 text-emerald-700' :
+                minuta.estado === 'PROGRAMADA' ? 'bg-slate-500/10 text-slate-600' :
+                minuta.estado === 'CANCELADA' ? 'bg-red-500/10 text-red-700' :
+                'bg-slate-500/10 text-slate-600'
               )}>
                 <span className={cn(
                   'w-1 h-1 md:w-1.5 md:h-1.5 rounded-full',
-                  minuta.estado === 'ACTIVA' ? 'bg-emerald-500' : 'bg-slate-400'
+                  minuta.estado === 'EN_CURSO' ? 'bg-blue-500' :
+                  minuta.estado === 'EN_ORGANIZACION' ? 'bg-orange-500' :
+                  minuta.estado === 'ACTIVA' ? 'bg-emerald-500' :
+                  minuta.estado === 'PROGRAMADA' ? 'bg-slate-400' :
+                  minuta.estado === 'CANCELADA' ? 'bg-red-500' :
+                  'bg-slate-400'
                 )} />
-                {minuta.estado === 'ACTIVA' ? 'Activa' : 'Cerrada'}
+                {minuta.estado.replace('_', ' ')}
               </span>
 
               {/* Atajos Ejecutivos */}
@@ -98,7 +107,43 @@ export const MinutaContextPanel = ({
             </Button>
           )}
 
-          {minuta.estado !== 'CANCELADA' && resumen?.totalValidas === 0 && (
+          {minuta.estado === 'EN_CURSO' && (
+            <Button
+              variant="marca"
+              icon="stop_circle"
+              onClick={onFinalizar}
+              loading={finalizando}
+              size="sm"
+            >
+              Finalizar Junta
+            </Button>
+          )}
+
+          {(minuta.estado === 'ACTIVA' || minuta.estado === 'EN_ORGANIZACION') && (
+            <Button
+              variant="dark"
+              icon="check_circle"
+              onClick={onCerrar}
+              loading={cerrando}
+              size="sm"
+            >
+              Forzar Cierre
+            </Button>
+          )}
+
+          {minuta.estado === 'CERRADA' && (
+            <Button
+              variant="outline"
+              icon="lock_open"
+              onClick={onReabrir}
+              loading={reabriendo}
+              size="sm"
+            >
+              Reabrir Minuta
+            </Button>
+          )}
+
+          {minuta.estado !== 'CANCELADA' && resumen?.totalEntradas === 0 && (
             <Button
               variant="peligro"
               icon="cancel"
@@ -112,15 +157,19 @@ export const MinutaContextPanel = ({
         </div>
       </header>
 
-      {/* Panel Ejecutivo */}
-      <div className="px-4 md:px-6 pb-3 space-y-2">
-        <MinutaExecutiveSummary 
-          resumen={resumen} 
-          entries={entries}
-          onFilterByStatus={onFilterByStatus}
-        />
-        <MinutaJuntaComparison minutaId={minuta.id} />
-      </div>
+      {/* Panel Ejecutivo - Solo en Desktop en el header estático */}
+      {isDesktop && (
+        <div className="px-4 md:px-6 pb-3 space-y-2">
+          <MinutaExecutiveSummary 
+            resumen={resumen} 
+            onFilterByStatus={onFilterByStatus}
+            onFilterByTipo={onFilterByTipo}
+            onResetFilter={onResetFilter}
+            activeFilter={activeFilter}
+          />
+          <MinutaJuntaComparison minutaId={minuta.id} />
+        </div>
+      )}
     </div>
   );
 };

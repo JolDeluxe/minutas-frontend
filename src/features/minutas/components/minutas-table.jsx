@@ -90,97 +90,140 @@ export const MinutasTable = ({
             },
         },
         {
-            header: "Línea",
-            accessorKey: "lineaDefault",
-            sortable: true,
-            headerClassName: "w-[15%] min-w-[120px]",
-            cell: (row) => {
-                if (row.isSkeleton) return <Skeleton className="h-4 w-20" />;
-                const isMarketing = row.creadoPor?.departamento === 'MARKETING';
-                const lineInfo = isMarketing 
-                    ? { label: 'Campaña', color: '#8b5cf6' } 
-                    : (LINEA_MAP[row.lineaDefault] || { label: row.lineaDefault, color: '#64748b' });
-                
-                return (
-                    <div className="flex flex-col items-center gap-1">
-                        <div 
-                        className="flex items-center justify-center w-12 h-12 rounded-xl shadow-sm bg-white shrink-0"
-                        style={{ border: `2px solid ${lineInfo.color}35`, backgroundColor: `${lineInfo.color}08` }}
-                        >
-                        {isMarketing ? (
-                            <Icon name="campaign" size="32px" style={{ color: lineInfo.color }} />
-                        ) : (
-                            <LineIconSelector type={row.lineaDefault} size={32} style={{ color: lineInfo.color }} />
+    header: "Línea",
+    accessorKey: "lineaDefault",
+    sortable: true,
+    align: "center",
+    headerClassName: "w-[15%] min-w-[120px]",
+    cell: (row) => {
+        if (row.isSkeleton) return <Skeleton className="h-4 w-20 mx-auto" />;
+
+        const isMarketing = row.creadoPor?.departamento === 'MARKETING';
+
+        const lineInfo = isMarketing
+            ? { label: 'Campaña', color: '#8b5cf6' }
+            : (LINEA_MAP[row.lineaDefault] || {
+                label: row.lineaDefault,
+                color: '#64748b'
+            });
+
+        return (
+            <div className="flex flex-col items-center justify-center gap-1">
+                <div className="flex items-center justify-center">
+                    {isMarketing ? (
+                        <Icon
+                            name="campaign"
+                            size="32px"
+                            style={{ color: lineInfo.color }}
+                        />
+                    ) : (
+                        <LineIconSelector
+                            type={row.lineaDefault}
+                            size={70}
+                            style={{ color: lineInfo.color }}
+                        />
+                    )}
+                </div>
+
+                <span
+                    className="text-[7px] font-black uppercase tracking-widest font-mono leading-none text-center"
+                    style={{ color: lineInfo.color }}
+                >
+                    {lineInfo.label}
+                </span>
+            </div>
+        );
+    },
+},
+{
+    header: "Progreso",
+    accessorKey: "progreso",
+    sortable: false,
+    align: "center",
+    headerClassName: "w-[18%] min-w-[180px]",
+    cell: (row) => {
+        if (row.isSkeleton) return <Skeleton className="h-5 w-40" />;
+
+        const resumen = row.resumenOperativo || {};
+
+        const totalTareas =
+            (resumen.completadas || 0) +
+            (resumen.cerradas || 0) +
+            (resumen.pendientes || 0);
+
+        const porcentaje = resumen.porcentajeCompletado || 0;
+        const atrasadas = resumen.atrasadas || 0;
+        const completadas =
+            (resumen.completadas || 0) +
+            (resumen.cerradas || 0);
+
+        const enProgreso = resumen.enProgreso || 0;
+
+        if (totalTareas === 0) {
+            return (
+                <span className="text-sm text-slate-400 italic">
+                    Sin tareas
+                </span>
+            );
+        }
+
+        return (
+            <div className="flex flex-col w-full max-w-[300px]">
+                <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[11px] font-bold text-slate-500">
+                        {porcentaje}%
+                    </span>
+
+                    <span className="text-[10px] font-semibold text-slate-400">
+                        {completadas}/{totalTareas} tareas
+                    </span>
+                </div>
+
+                <div className="relative h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                    <div
+                        className={cn(
+                            "absolute inset-y-0 left-0 rounded-full transition-all duration-500",
+                            porcentaje < 100
+                                ? "bg-gradient-to-r from-amber-500 to-amber-400"
+                                : "bg-gradient-to-r from-emerald-500 to-emerald-400"
                         )}
-                        </div>
-                        <span className="text-[7px] font-black uppercase tracking-widest font-mono leading-none text-center" style={{ color: lineInfo.color }}>
-                            {lineInfo.label}
-                        </span>
-                    </div>
-                );
-            },
-        },
-        {
-            header: "Progreso",
-            accessorKey: "progreso",
-            sortable: false,
-            headerClassName: "w-[18%] min-w-[160px]",
-            cell: (row) => {
-                if (row.isSkeleton) return <Skeleton className="h-4 w-32" />;
-                const resumen = row.resumenOperativo || {};
-                const totalTareas = (resumen.completadas || 0) + (resumen.cerradas || 0) + (resumen.pendientes || 0);
-                const porcentaje = resumen.porcentajeCompletado || 0;
-                const atrasadas = resumen.atrasadas || 0;
-                const completadas = (resumen.completadas || 0) + (resumen.cerradas || 0);
-                const enProgreso = resumen.enProgreso || 0;
+                        style={{ width: `${porcentaje}%` }}
+                    />
+                </div>
 
-                if (totalTareas === 0) {
-                    return (
-                        <span className="text-xs text-slate-400 italic">Sin tareas</span>
-                    );
-                }
+                {(enProgreso > 0 || atrasadas > 0) && (
+                    <div className="flex items-center gap-2 mt-1.5">
+                        {enProgreso > 0 && (
+                            <div
+                                className="flex items-center gap-1"
+                                title="En progreso"
+                            >
+                                <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
 
-                return (
-                    <div className="flex flex-col w-full max-w-[150px]">
-                        <div className="flex items-center justify-between mb-1">
-                            <span className="text-[10px] font-bold text-slate-500">
-                                {porcentaje}%
-                            </span>
-                            <span className="text-[9px] font-semibold text-slate-400">
-                                {completadas}/{totalTareas} tareas
-                            </span>
-                        </div>
-                        <div className="relative h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
-                            <div 
-                                className={cn(
-                                    "absolute inset-y-0 left-0 rounded-full transition-all duration-500",
-                                    porcentaje < 100 
-                                        ? "bg-gradient-to-r from-amber-500 to-amber-400" 
-                                        : "bg-gradient-to-r from-emerald-500 to-emerald-400"
-                                )}
-                                style={{ width: `${porcentaje}%` }}
-                            />
-                        </div>
-                        {(enProgreso > 0 || atrasadas > 0) && (
-                            <div className="flex items-center gap-1.5 mt-1">
-                                {enProgreso > 0 && (
-                                    <div className="flex items-center gap-0.5" title="En progreso">
-                                        <div className="w-1 h-1 rounded-full bg-amber-400" />
-                                        <span className="text-[8px] font-bold font-mono text-slate-400">{enProgreso}</span>
-                                    </div>
-                                )}
-                                {atrasadas > 0 && (
-                                    <div className="flex items-center gap-0.5" title="Atrasadas">
-                                        <div className="w-1 h-1 rounded-full bg-red-500 animate-pulse" />
-                                        <span className="text-[8px] font-black font-mono text-red-500">{atrasadas}</span>
-                                    </div>
-                                )}
+                                <span className="text-[9px] font-bold font-mono text-slate-400">
+                                    {enProgreso}
+                                </span>
+                            </div>
+                        )}
+
+                        {atrasadas > 0 && (
+                            <div
+                                className="flex items-center gap-1"
+                                title="Atrasadas"
+                            >
+                                <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+
+                                <span className="text-[9px] font-black font-mono text-red-500">
+                                    {atrasadas}
+                                </span>
                             </div>
                         )}
                     </div>
-                );
-            },
-        },
+                )}
+            </div>
+        );
+    },
+},
         {
             header: "Estado",
             accessorKey: "estado",

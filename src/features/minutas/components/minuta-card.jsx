@@ -151,7 +151,7 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, badge = null, isAdmin
                         {isMarketing ? (
                             <Icon name="campaign" size="35px" style={{ color: lineInfo.color }} />
                         ) : (
-                            <LineIconSelector type={minuta.lineaDefault} size={35} style={{ color: lineInfo.color }} />
+                            <LineIconSelector type={minuta.lineaDefault} size={60} style={{ color: lineInfo.color }} />
                         )}
                         <span className="font-black tracking-[0.15em] text-[6px] uppercase font-mono text-center leading-none" style={{ color: lineInfo.color }}>
                             {lineInfo.label}

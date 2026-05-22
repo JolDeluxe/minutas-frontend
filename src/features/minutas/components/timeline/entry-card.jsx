@@ -5,8 +5,9 @@ import {
   AREA_MAP,
   LINEA_MAP,
   formatTime,
+  getCatalogos,
 } from '../../constants';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { 
   ChevronLeft,
@@ -254,6 +255,7 @@ const EntryNotesPostIt = ({ entry, notes, onClose, onAddNote, onUpdateNote, onDe
  */
 export const EntryCard = ({ 
   entry, 
+  departamento = 'DISENO',
   onOrganize, 
   onRemove,
   onUpdate,
@@ -266,6 +268,8 @@ export const EntryCard = ({
   onChangeStatus,
   users = []
 }) => {
+  const catalogos = useMemo(() => getCatalogos(departamento), [departamento]);
+  const tieneLineas = catalogos.lineas.length > 0;
   const isDraft = Boolean(entry.tempId);
   const [isEditing, setIsEditing] = useState(false);
   const [isSavedEditing, setIsSavedEditing] = useState(false);
@@ -569,27 +573,29 @@ export const EntryCard = ({
                       className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                       aria-label="Cambiar área"
                     >
-                      {Object.entries(AREA_MAP).map(([k, v]) => (
-                        <option key={k} value={k}>{v}</option>
+                      {catalogos.areas.map(({ value, label }) => (
+                        <option key={value} value={value}>{label}</option>
                       ))}
                     </select>
                   </label>
 
                   {/* Selector de Línea */}
-                  <label className="relative inline-flex h-6 sm:h-7 max-w-[5.5rem] cursor-pointer items-center gap-1 rounded-lg border border-slate-100 bg-white px-1.5 pr-4 text-[6.5px] sm:text-[8px] font-black uppercase tracking-widest text-slate-500 shadow-sm transition-all active:scale-95">
-                    <span className="truncate text-[7px] sm:text-[8px]">{lineaLabel}</span>
-                    <ChevronDown size={10} className="absolute right-1 top-1/2 -translate-y-1/2 opacity-40" />
-                    <select
-                      value={entry.linea}
-                      onChange={(e) => handleUpdateField('linea', e.target.value)}
-                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                      aria-label="Cambiar línea"
-                    >
-                      {Object.entries(LINEA_MAP).map(([k, v]) => (
-                        <option key={k} value={k}>{v.label}</option>
-                      ))}
-                    </select>
-                  </label>
+                  {tieneLineas && (
+                    <label className="relative inline-flex h-6 sm:h-7 max-w-[5.5rem] cursor-pointer items-center gap-1 rounded-lg border border-slate-100 bg-white px-1.5 pr-4 text-[6.5px] sm:text-[8px] font-black uppercase tracking-widest text-slate-500 shadow-sm transition-all active:scale-95">
+                      <span className="truncate text-[7px] sm:text-[8px]">{lineaLabel}</span>
+                      <ChevronDown size={10} className="absolute right-1 top-1/2 -translate-y-1/2 opacity-40" />
+                      <select
+                        value={entry.linea}
+                        onChange={(e) => handleUpdateField('linea', e.target.value)}
+                        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                        aria-label="Cambiar línea"
+                      >
+                        {catalogos.lineas.map(({ value, label }) => (
+                          <option key={value} value={value}>{label}</option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
 
                   <label
                     className="relative inline-flex h-6 sm:h-7 max-w-[5.5rem] sm:max-w-[7.5rem] cursor-pointer items-center gap-1 rounded-lg border px-1.5 sm:px-2 pr-4 sm:pr-5 text-[6.5px] sm:text-[8px] font-black uppercase tracking-widest shadow-sm transition-all active:scale-95"
@@ -609,8 +615,8 @@ export const EntryCard = ({
                       className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                       aria-label="Cambiar clasificación"
                     >
-                      {Object.entries(CLASIFICACION_MAP).map(([k, v]) => (
-                        <option key={k} value={k}>{v.label}</option>
+                      {catalogos.clasificaciones.map(({ value, label }) => (
+                        <option key={value} value={value}>{label}</option>
                       ))}
                     </select>
                   </label>
@@ -634,7 +640,7 @@ export const EntryCard = ({
                   rows={2}
                   className="w-full resize-none rounded-xl border border-slate-100 bg-slate-50 p-2 text-[11px] sm:p-2.5 sm:text-[13px] font-semibold leading-relaxed text-slate-900 placeholder:text-slate-200 focus:border-marca-primario/30 focus:outline-none focus:ring-4 focus:ring-marca-primario/10"
                 />
-                <div className="grid gap-1.5 grid-cols-3">
+                <div className={cn("grid gap-1.5", tieneLineas ? "grid-cols-3" : "grid-cols-2")}>
                   <label className="relative flex h-6 sm:h-8 items-center justify-center rounded-lg border border-slate-100 bg-white px-1 pr-3 text-[6.5px] sm:text-[9px] font-black uppercase text-slate-600 shadow-sm transition-all active:scale-95">
                     <span className="truncate">{AREA_MAP[editForm.area] || editForm.area}</span>
                     <ChevronDown size={10} className="absolute right-0.5 top-1/2 -translate-y-1/2 opacity-40" />
@@ -643,25 +649,27 @@ export const EntryCard = ({
                       onChange={(e) => handleSavedField('area', e.target.value)}
                       className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                     >
-                      {Object.entries(AREA_MAP).map(([key, label]) => (
-                        <option key={key} value={key}>{label}</option>
+                      {catalogos.areas.map(({ value, label }) => (
+                        <option key={value} value={value}>{label}</option>
                       ))}
                     </select>
                   </label>
 
-                  <label className="relative flex h-6 sm:h-8 items-center justify-center rounded-lg border border-slate-100 bg-white px-1 pr-3 text-[6.5px] sm:text-[9px] font-black uppercase text-slate-600 shadow-sm transition-all active:scale-95">
-                    <span className="truncate">{LINEA_MAP[editForm.linea]?.label || editForm.linea}</span>
-                    <ChevronDown size={10} className="absolute right-0.5 top-1/2 -translate-y-1/2 opacity-40" />
-                    <select
-                      value={editForm.linea}
-                      onChange={(e) => handleSavedField('linea', e.target.value)}
-                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                    >
-                      {Object.entries(LINEA_MAP).map(([key, value]) => (
-                        <option key={key} value={key}>{value.label}</option>
-                      ))}
-                    </select>
-                  </label>
+                  {tieneLineas && (
+                    <label className="relative flex h-6 sm:h-8 items-center justify-center rounded-lg border border-slate-100 bg-white px-1 pr-3 text-[6.5px] sm:text-[9px] font-black uppercase text-slate-600 shadow-sm transition-all active:scale-95">
+                      <span className="truncate">{LINEA_MAP[editForm.linea]?.label || editForm.linea}</span>
+                      <ChevronDown size={10} className="absolute right-0.5 top-1/2 -translate-y-1/2 opacity-40" />
+                      <select
+                        value={editForm.linea}
+                        onChange={(e) => handleSavedField('linea', e.target.value)}
+                        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                      >
+                        {catalogos.lineas.map(({ value, label }) => (
+                          <option key={value} value={value}>{label}</option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
 
                   <label className="relative flex h-6 sm:h-8 items-center justify-center rounded-lg border border-slate-100 bg-white px-1 pr-3 text-[6.5px] sm:text-[9px] font-black uppercase text-slate-600 shadow-sm transition-all active:scale-95">
                     <span className="truncate">{CLASIFICACION_MAP[editForm.clasificacion]?.label || editForm.clasificacion}</span>
@@ -671,8 +679,8 @@ export const EntryCard = ({
                       onChange={(e) => handleSavedField('clasificacion', e.target.value)}
                       className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                     >
-                      {Object.entries(CLASIFICACION_MAP).map(([key, value]) => (
-                        <option key={key} value={key}>{value.label}</option>
+                      {catalogos.clasificaciones.map(({ value, label }) => (
+                        <option key={value} value={value}>{label}</option>
                       ))}
                     </select>
                   </label>

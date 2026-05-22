@@ -1,3 +1,5 @@
+// minutas-frontend\src\features\minutas\views\minutas-mobile.jsx
+
 import { useState, useMemo } from 'react';
 import { Button, GlassFab, GlassPaginationPill, GlassViewToggle, ScrollToTopButton, Icon } from '@/components/ui/z_index';
 import { MinutasTable } from '../components/minutas-table';
@@ -9,9 +11,6 @@ import { glassBase, GlassSheen } from '@/components/ui/liquid-glass-mobile';
 import { cn } from '@/utils/cn';
 import { useAuthStore } from '@/stores/auth-store';
 
-/**
- * Agrupa las minutas por fecha para headers tipo "15 MAY 2026"
- */
 const groupByDate = (minutas) => {
     const groups = new Map();
     for (const m of minutas) {
@@ -55,7 +54,6 @@ export const MinutasMobile = ({
     onToggleFilters,
     onApplyFilters,
     activeFiltersCount,
-    // Periodo
     periodo,
     year,
     month,
@@ -65,12 +63,9 @@ export const MinutasMobile = ({
     onYearChange,
     onMonthChange,
     onEstadoChange,
-    // Quick navigate
     selectedDate,
     onSelectDate,
-    // Navegación ejecutiva (del backend, GLOBAL)
     navegacionEjecutiva,
-    // Global Filter
     departamentoGlobal,
     setDepartamentoGlobal,
 }) => {
@@ -84,7 +79,6 @@ export const MinutasMobile = ({
         localStorage.setItem('minutas_view_mode', mode);
     };
 
-    // Filtrar por selectedDate SOLO para las tarjetas/tabla, no para el calendario
     const displayMinutas = useMemo(() => {
         if (!selectedDate) return minutas;
         return minutas.filter(m => {
@@ -109,7 +103,6 @@ export const MinutasMobile = ({
         ? (departamentoGlobal === 'DISEÑO' ? 'DISENO' : departamentoGlobal === 'MARKETING' ? 'MARKETING' : null)
         : userDept;
 
-    // IDs del backend por departamento
     const ultimaJuntaId = navegacionEjecutiva?.ultimaJuntaId;
     const juntaAnteriorId = navegacionEjecutiva?.juntaAnteriorId;
 
@@ -118,6 +111,7 @@ export const MinutasMobile = ({
 
     return (
         <>
+            {/* Elementos Estáticos de Cabecera */}
             <div className="px-1 mb-3">
                 <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight fuente-titulos">
                     Directorio
@@ -145,7 +139,6 @@ export const MinutasMobile = ({
                 </div>
             )}
 
-            {/* KPI Bar for Mobile */}
             <div className="px-1 mb-1">
                 <DirectoryKpiBar 
                     minutas={displayMinutas} 
@@ -155,7 +148,6 @@ export const MinutasMobile = ({
                 />
             </div>
 
-            {/* ACCESO RÁPIDO EJECUTIVO MÓVIL ( Diseño Premium Minimalista ) */}
             {currentJuntaId && (
                 <div className="flex gap-2 w-full mb-3 px-1">
                     <button
@@ -177,7 +169,6 @@ export const MinutasMobile = ({
                 </div>
             )}
 
-            {/* Quick Navigate Calendar */}
             <QuickNavigateCalendar
                 minutas={minutas}
                 ultimaJuntaId={ultimaJuntaId}
@@ -197,8 +188,10 @@ export const MinutasMobile = ({
                 className="mb-3 mx-1"
             />
 
-            {/* Search + filtros */}
-            <div className="mb-3 flex flex-col gap-2">
+            {/* 🌟 BARRA ULTRA PREMIUM: STICKY + LIQUID GLASS FILTER BOARD */}
+            <div className="sticky top-0 z-30 bg-white/40 backdrop-blur-lg px-1 py-2 mb-3 rounded-2xl border border-white/40 shadow-sm flex flex-col gap-2 transition-all duration-300">
+                
+                {/* Caja del Buscador con diseño limpio */}
                 <div className="relative w-full">
                     <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                         <Icon name="search" size="sm" className="text-slate-400" />
@@ -208,32 +201,34 @@ export const MinutasMobile = ({
                         value={query}
                         onChange={(e) => onSearchChange(e.target.value)}
                         placeholder="Buscar por ID, Título o Tema..."
-                        className="w-full pl-9 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-marca-secundario/20 focus:border-marca-secundario transition-all placeholder:text-slate-400"
+                        className="w-full pl-9 pr-4 py-2.5 text-sm border border-slate-200/70 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-marca-secundario/20 focus:border-marca-secundario transition-all placeholder:text-slate-400 shadow-inner"
                     />
                 </div>
-                <div className="flex justify-between items-center w-full">
+
+                {/* Fila de Botones de control */}
+                <div className="flex justify-between items-center w-full px-0.5">
                     <button
                         onClick={onToggleFilters}
                         style={{
-                            ...glassBase(activeFiltersCount > 0 ? 'primary' : 'light'),
+                            ...glassBase(showFilters || activeFiltersCount > 0 ? 'primary' : 'light'),
                             borderRadius: 14,
-                            padding: '6px 14px',
+                            padding: '7px 16px',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '6px',
                             position: 'relative',
                             overflow: 'hidden',
                         }}
-                        className="active:scale-95 transition-all outline-none"
+                        className="active:scale-95 transition-all outline-none border border-slate-200/50 shadow-sm"
                     >
-                        {activeFiltersCount > 0 && <GlassSheen />}
+                        {(showFilters || activeFiltersCount > 0) && <GlassSheen />}
                         <Icon 
                             name="filter_list" 
                             size="sm" 
-                            className={activeFiltersCount > 0 ? "text-white relative z-10" : "text-slate-700 relative z-10"} 
+                            className={showFilters || activeFiltersCount > 0 ? "text-white relative z-10" : "text-slate-700 relative z-10"} 
                         />
-                        <span className={cn("text-xs font-bold relative z-10", activeFiltersCount > 0 ? "text-white" : "text-slate-700")}>
-                            Filtros
+                        <span className={cn("text-xs font-bold relative z-10", showFilters || activeFiltersCount > 0 ? "text-white" : "text-slate-700")}>
+                            Filtros Avanzados
                         </span>
                         {activeFiltersCount > 0 && (
                             <span className="absolute top-1 right-1 bg-white text-marca-primario text-[10px] w-4 h-4 flex items-center justify-center rounded-full font-bold z-20 shadow-sm">
@@ -241,19 +236,22 @@ export const MinutasMobile = ({
                             </span>
                         )}
                     </button>
+                    
                     <GlassViewToggle value={viewMode} onChange={setViewMode} />
                 </div>
+
+                {/* El panel expansible inyectado internamente para que comparta el contexto Sticky */}
+                <MinutasInlineFilters 
+                    isOpen={showFilters} 
+                    filters={filters} 
+                    onApplyFilters={onApplyFilters} 
+                    isMobile={true} 
+                />
             </div>
 
-            <MinutasInlineFilters 
-                isOpen={showFilters} 
-                filters={filters} 
-                onApplyFilters={onApplyFilters} 
-                isMobile={true} 
-            />
-
+            {/* Listado de Contenido (Cards / Tabla) */}
             {viewMode === 'cards' ? (
-                <div className={cn('flex flex-col gap-5 pb-24', hasPaginator && 'pb-36')}>
+                <div className={cn('flex flex-col gap-5 pb-24 px-1', hasPaginator && 'pb-36')}>
                     {loading ? (
                         <div className="grid grid-cols-1 min-[520px]:grid-cols-2 gap-3">
                             {Array.from({ length: 4 }).map((_, i) => (
@@ -304,7 +302,7 @@ export const MinutasMobile = ({
                     )}
                 </div>
             ) : (
-                <div className={cn('pb-24', hasPaginator && 'pb-36')}>
+                <div className={cn('pb-24 px-1', hasPaginator && 'pb-36')}>
                     <MinutasTable
                         minutas={displayMinutas}
                         loading={loading}

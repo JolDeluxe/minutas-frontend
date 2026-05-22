@@ -1,7 +1,9 @@
 import React from 'react';
 import { Icon } from '@/components/ui/z_index';
 import { MinutaContextPanel } from '../components/context/minuta-context-panel';
-import { TimelineFilters } from '../components/timeline/timeline-filters';
+import { MinutaExecutiveSummary } from '../components/minuta-executive-summary';
+import { MinutaJuntaComparison } from '../components/minuta-junta-comparison';
+import { EntryFiltersBar } from '../components/timeline/entry-filters-bar';
 import { EntryFeed } from '../components/timeline/entry-feed';
 import { StickyNotesBoard } from '../components/notes/sticky-notes-board';
 import { MobileQuickComposer } from '../components/composer/mobile-quick-composer';
@@ -19,8 +21,11 @@ export const MinutaDetailMobileView = ({
   politicasAcordadas = [],
   recordatoriosGenerales = [],
   loadingTareas,
-  filterClasif,
-  setFilterClasif,
+  departamento,
+  activeFilter,
+  setActiveFilter,
+  viewMode,
+  setViewMode,
   handleCapture,
   draftEntries,
   draftNotes,
@@ -48,8 +53,14 @@ export const MinutaDetailMobileView = ({
   users,
   handleIniciar,
   handleCancelar,
+  handleCerrar,
+  handleReabrir,
+  handleFinalizar,
   iniciando,
-  cancelando
+  cancelando,
+  cerrando,
+  reabriendo,
+  finalizando
 }) => {
   return (
     <div className="flex h-full w-full flex-col bg-slate-50/50 relative overflow-hidden">
@@ -60,16 +71,66 @@ export const MinutaDetailMobileView = ({
           minuta={minuta} 
           resumen={resumen} 
           entries={filteredEntries} 
+          onFilterByStatus={(status) => {
+            setActiveFilter(prev => ({
+              ...prev,
+              estado: prev.estado === status ? null : status,
+              tipo: 'TAREA'
+            }));
+          }}
+          onFilterByTipo={(tipo) => {
+            setActiveFilter(prev => ({
+              ...prev,
+              tipo: prev.tipo === tipo ? 'TAREA' : tipo,
+              estado: null
+            }));
+          }}
+          onResetFilter={() => {
+            setActiveFilter({ tipo: 'TAREA', estado: null, clasificacion: null, area: null, linea: null, search: '' });
+          }}
+          activeFilter={activeFilter}
           onIniciar={handleIniciar}
           onCancelar={handleCancelar}
+          onCerrar={handleCerrar}
+          onReabrir={handleReabrir}
+          onFinalizar={handleFinalizar}
           iniciando={iniciando}
           cancelando={cancelando}
+          cerrando={cerrando}
+          reabriendo={reabriendo}
+          finalizando={finalizando}
         />
       </div>
 
       {/* 2. Área de Feed */}
-      <main className="flex-1 overflow-y-auto relative custom-scrollbar px-4 pt-4 pb-32">
+      <main className={`flex-1 relative custom-scrollbar px-4 pt-4 ${filteredEntries.length === 0 ? 'overflow-hidden pb-4' : 'overflow-y-auto pb-32'}`}>
         
+        {/* Resumen Ejecutivo y Comparación (en móviles se renderizan dentro del scroll) */}
+        <div className="mb-5 space-y-2">
+          <MinutaExecutiveSummary 
+            resumen={resumen} 
+            onFilterByStatus={(status) => {
+              setActiveFilter(prev => ({
+                ...prev,
+                estado: prev.estado === status ? null : status,
+                tipo: 'TAREA'
+              }));
+            }}
+            onFilterByTipo={(tipo) => {
+              setActiveFilter(prev => ({
+                ...prev,
+                tipo: prev.tipo === tipo ? 'TAREA' : tipo,
+                estado: null
+              }));
+            }}
+            onResetFilter={() => {
+              setActiveFilter({ tipo: 'TAREA', estado: null, clasificacion: null, area: null, linea: null, search: '' });
+            }}
+            activeFilter={activeFilter}
+          />
+          <MinutaJuntaComparison minutaId={minuta.id} />
+        </div>
+
         {/* Políticas y Lineamientos Acordados (Mobile card format) */}
         {politicasAcordadas.length > 0 && (
           <div className="bg-gradient-to-br from-indigo-950 to-slate-900 border border-indigo-500/20 rounded-2xl p-4 shadow-xl text-white mb-6">
@@ -122,17 +183,24 @@ export const MinutaDetailMobileView = ({
           </div>
         )}
 
-        <div className="flex items-center gap-4 bg-white p-2 rounded-2xl border border-slate-200 sticky top-0 z-20 mb-6">
-          <div className="flex-1 overflow-hidden">
-            <TimelineFilters active={filterClasif} onChange={setFilterClasif} />
-          </div>
+        <div className="sticky top-0 z-30 bg-white/40 backdrop-blur-lg px-1 py-2 mb-3 rounded-2xl border border-white/40 shadow-sm flex flex-col gap-2 transition-all duration-300"> 
+          <EntryFiltersBar 
+            activeFilter={activeFilter} 
+            onChange={setActiveFilter}
+            departamento={departamento}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            isMobile={true}
+          />
         </div>
 
         <EntryFeed
           entries={filteredEntries}
           loading={loadingTareas}
           meetingMode={true}
-          filterActive={filterClasif}
+          filterActive={activeFilter.clasificacion || 'TODAS'}
+          viewMode={viewMode}
+          departamento={departamento}
           onOrganize={setOrganizeEntry}
           onRemoveDraft={removeDraftEntry}
           onUpdateDraft={updateDraftEntry}
@@ -189,13 +257,18 @@ export const MinutaDetailMobileView = ({
         </button>
       </div>
 
-      {/* 5. Bottom Sheet Composer */}
-      <MobileQuickComposer
-        minutaId={minuta.id}
-        lineaDefault={minuta.lineaDefault}
-        onSubmit={handleCapture}
-        submitting={loadingTareas}
-      />
+      {minuta.estado !== 'CERRADA' && minuta.estado !== 'CANCELADA' && (
+        <MobileQuickComposer
+          minutaId={minuta.id}
+          lineaDefault={minuta.lineaDefault}
+          departamento={departamento}
+          onSubmit={handleCapture}
+          submitting={loadingTareas}
+          estado={minuta.estado}
+          onIniciar={handleIniciar}
+          iniciando={iniciando}
+        />
+      )}
 
       {/* 6. Modales */}
       <ReviewDraftsModal
@@ -214,6 +287,7 @@ export const MinutaDetailMobileView = ({
           onClose={() => setOrganizeEntry(null)}
           entry={organizeEntry}
           onSave={handleOrganizeSave}
+          departamento={departamento}
         />
       )}
     </div>

@@ -27,3 +27,16 @@ export const iniciarMinuta = async (id) => {
 export const cancelarMinuta = async (id) => {
   return await api.post(`/api/minutas/${id}/cancelar`);
 };
+
+export const cerrarMinuta = async (id) => {
+  return await api.patch(`/api/minutas/${id}/cerrar`);
+};
+
+export const reabrirMinuta = async (id) => {
+  return await api.patch(`/api/minutas/${id}/reabrir`);
+};
+
+export const finalizarMinuta = async (id) => {
+  return await api.post(`/api/minutas/${id}/finalizar`);
+};
+

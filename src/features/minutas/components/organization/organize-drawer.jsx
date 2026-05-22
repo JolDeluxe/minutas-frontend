@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon, Button, Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
-import { CLASIFICACION_MAP, TIPO_ENTRADA_MAP, PRIORIDAD_MAP } from '../../constants';
+import { getCatalogos, TIPO_ENTRADA_MAP, PRIORIDAD_MAP } from '../../constants';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { useUsers } from '@/features/usuarios/hooks/use-users';
 import { SearchableSelect } from '@/components/ui/searchable-select';
@@ -13,6 +13,7 @@ export const OrganizeDrawer = ({
   entry,
   onSave,
   submitting = false,
+  departamento = 'DISENO',
 }) => {
   const isDesktop = useIsDesktop();
   const { users, fetchUsers } = useUsers();
@@ -36,7 +37,10 @@ export const OrganizeDrawer = ({
 
   const [alcanceRecordatorio, setAlcanceRecordatorio] = useState(() => entry?.alcanceRecordatorio || 'DEPARTAMENTO');
 
-  const clasif = useMemo(() => CLASIFICACION_MAP[entry?.clasificacion] || null, [entry?.clasificacion]);
+  const catalogos = useMemo(() => getCatalogos(departamento), [departamento]);
+  const clasif = useMemo(() => 
+    catalogos.clasificaciones.find(c => c.value === entry?.clasificacion) || null,
+  [catalogos.clasificaciones, entry?.clasificacion]);
 
   if (!isOpen || !entry) return null;
 

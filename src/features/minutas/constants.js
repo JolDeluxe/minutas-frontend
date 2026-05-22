@@ -27,6 +27,15 @@ export const ESTADO_TAREA_MAP = {
   CANCELADA:   { label: 'Cancelada',   icon: 'cancel',             color: '#ef4444' },
 };
 
+export const ESTADO_MINUTA_MAP = {
+  PROGRAMADA:      { label: 'Programada',      icon: 'event',            color: '#94a3b8' }, // gris
+  EN_CURSO:        { label: 'En Curso',        icon: 'play_circle',      color: '#3b82f6' }, // azul
+  EN_ORGANIZACION: { label: 'En Organización', icon: 'account_tree',     color: '#f97316' }, // naranja
+  ACTIVA:          { label: 'Activa',          icon: 'trending_up',      color: '#10b981' }, // verde
+  CERRADA:         { label: 'Cerrada',         icon: 'check_circle',     color: '#64748b' }, // neutral
+  CANCELADA:       { label: 'Cancelada',       icon: 'cancel',           color: '#ef4444' }, // rojo
+};
+
 export const AREA_MAP = {
   DISENO:            'Diseño',
   MARKETING:         'Marketing',
@@ -102,3 +111,56 @@ export const EVENTO_MAP = {
   COMENTARIO:     { label: 'Comentario',            icon: 'comment',      color: '#64748b' },
   ADJUNTO:        { label: 'Adjunto agregado',      icon: 'attach_file',  color: '#64748b' },
 };
+
+// ─── Catálogos por Departamento ──────────────────────────────────────────────
+// Espejo de la estructura en backend configuracion/controller.ts.
+// Cada departamento define sus propias áreas, clasificaciones y líneas.
+
+export const CATALOGOS_POR_DEPARTAMENTO = {
+  DISENO: {
+    areas: [
+      { value: 'DISENO',            label: 'Diseño' },
+      { value: 'DIRECCION_MBC',     label: 'Dirección MBC' },
+      { value: 'DIRECCION_CFI',     label: 'Dirección CFI' },
+      { value: 'DIRECCION_ADJUNTA', label: 'Dirección Adjunta' },
+      { value: 'DIRECCION_TIENDAS', label: 'Dirección Tiendas' },
+    ],
+    clasificaciones: [
+      { value: 'IDEA',          label: 'Idea',          color: '#8b5cf6', icon: 'lightbulb' },
+      { value: 'INVESTIGACION', label: 'Investigación', color: '#3b82f6', icon: 'search' },
+      { value: 'CORRECCION',    label: 'Corrección',    color: '#ef4444', icon: 'build' },
+      { value: 'ANALISIS',      label: 'Análisis',      color: '#f59e0b', icon: 'analytics' },
+      { value: 'MUESTRA',       label: 'Muestra',       color: '#10b981', icon: 'inventory_2' },
+      { value: 'POLITICAS',     label: 'Políticas',     color: '#6366f1', icon: 'gavel' },
+      { value: 'OTROS',         label: 'Otros',         color: '#64748b', icon: 'more_horiz' },
+    ],
+    lineas: [
+      { value: 'CALZADO',    label: 'Calzado',    color: '#f97316', icon: 'footprint' },
+      { value: 'BOTA',       label: 'Bota',       color: '#8b5cf6', icon: 'hiking' },
+      { value: 'ROPA',       label: 'Ropa',       color: '#ec4899', icon: 'checkroom' },
+      { value: 'ACCESORIOS', label: 'Accesorios', color: '#14b8a6', icon: 'watch' },
+      { value: 'OTROS',      label: 'Otros',      color: '#64748b', icon: 'more_horiz' },
+    ],
+  },
+  MARKETING: {
+    areas: [
+      { value: 'MARKETING',         label: 'Marketing' },
+      { value: 'DIRECCION_MBC',     label: 'Dirección MBC' },
+      { value: 'DIRECCION_CFI',     label: 'Dirección CFI' },
+      { value: 'DIRECCION_ADJUNTA', label: 'Dirección Adjunta' },
+      { value: 'DIRECCION_TIENDAS', label: 'Dirección Tiendas' },
+    ],
+    clasificaciones: [
+      { value: 'REDES_SOCIALES',  label: 'Redes Sociales',  color: '#10b981', icon: 'share' },
+      { value: 'DISENO_INSUMOS',  label: 'Diseño Insumos',  color: '#f59e0b', icon: 'brush' },
+      { value: 'TIENDAS',         label: 'Tiendas',         color: '#3b82f6', icon: 'store' },
+      { value: 'CATALOGOS',       label: 'Catálogos',       color: '#ec4899', icon: 'menu_book' },
+      { value: 'OTROS',           label: 'Otros',           color: '#64748b', icon: 'more_horiz' },
+    ],
+    lineas: [], // Marketing no usa líneas
+  },
+};
+
+/** Helper: obtiene catálogos del departamento, con fallback a DISENO */
+export const getCatalogos = (departamento) =>
+  CATALOGOS_POR_DEPARTAMENTO[departamento] || CATALOGOS_POR_DEPARTAMENTO.DISENO;

@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Icon } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
-import { CLASIFICACION_MAP, AREA_MAP, LINEA_MAP } from '../../constants';
+import { getCatalogos, AREA_MAP } from '../../constants';
 import { LineIconSelector } from '../icons/line-icons';
 import { Camera, X, Plus, AlertCircle } from 'lucide-react';
 
@@ -12,20 +12,40 @@ import { Camera, X, Plus, AlertCircle } from 'lucide-react';
 export const QuickComposer = ({
   minutaId,
   lineaDefault,
+  departamento,
   onSubmit,
   submitting = false,
   isDesktop = false,
+  estado,
+  onIniciar,
+  iniciando = false,
 }) => {
+  const catalogos = useMemo(() => getCatalogos(departamento), [departamento]);
+  const tieneLineas = catalogos.lineas.length > 0;
+
   const [descripcion, setDescripcion] = useState('');
   const [clasificacion, setClasificacion] = useState('');
-  const [area, setArea] = useState('DISENO');
-  const [linea, setLinea] = useState(lineaDefault || 'CALZADO');
+  const [area, setArea] = useState(catalogos.areas[0]?.value || 'DISENO');
+  const [linea, setLinea] = useState(tieneLineas ? (lineaDefault || catalogos.lineas[0]?.value) : null);
   const [imagenes, setImagenes] = useState([]);
   const [showLimitError, setShowLimitError] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [composerMode, setComposerMode] = useState(() => localStorage.getItem('composer_mode') || 'compact');
 
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  useEffect(() => localStorage.setItem('composer_mode', composerMode), [composerMode]);
+
+  // Autofocus when expanded
+  useEffect(() => {
+    if (!isCollapsed && isDesktop) {
+      const timer = setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [isCollapsed, isDesktop]);
 
   useEffect(() => {
     const ta = textareaRef.current;
@@ -88,8 +108,8 @@ export const QuickComposer = ({
       tareas: [{
         descripcion: descripcion.trim(),
         area,
-        linea,
-        clasificacion: area === 'DISENO' ? (clasificacion || 'OTROS') : 'OTROS',
+        linea: tieneLineas ? linea : null,
+        clasificacion: clasificacion || 'OTROS',
         minutaId: Number(minutaId),
         _localImagenes: imagenes,
       }],
@@ -99,7 +119,7 @@ export const QuickComposer = ({
     setDescripcion('');
     setImagenes([]);
     if (isDesktop) textareaRef.current?.focus();
-  }, [descripcion, area, linea, clasificacion, minutaId, imagenes, onSubmit, submitting, isDesktop]);
+  }, [descripcion, area, linea, clasificacion, minutaId, imagenes, onSubmit, submitting, isDesktop, tieneLineas]);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -110,17 +130,21 @@ export const QuickComposer = ({
 
   return (
     <div className={cn(
-      "w-full bg-white/80 backdrop-blur-xl border-b border-slate-200/60 sticky top-0 z-30 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.04)] transition-all duration-300",
-      isCollapsed ? "h-12" : "py-1"
+      "transition-all duration-300 relative overflow-hidden",
+      (isCollapsed && estado !== 'PROGRAMADA')
+        ? "w-full sticky top-0 h-12 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.04)] z-30" 
+        : "absolute inset-0 bg-slate-50/98 backdrop-blur-md flex flex-col p-4 md:p-6 lg:p-8 z-30"
     )}>
-      {/* Botón de Toggle Flotante (Pestaña) */}
-      <button 
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -bottom-3 left-1/2 -translate-x-1/2 z-40 bg-white border border-slate-200 rounded-full w-7 h-7 flex items-center justify-center text-slate-400 hover:text-slate-900 shadow-sm transition-all active:scale-90 outline-none"
-        title={isCollapsed ? "Mostrar Estación de Captura" : "Ocultar"}
-      >
-        <Icon name={isCollapsed ? "expand_more" : "expand_less"} size="18px" />
-      </button>
+      {/* Botón de Toggle Flotante (Pestaña) - Solo visible en modo colapsado */}
+      {isCollapsed && (
+        <button 
+          onClick={() => setIsCollapsed(false)}
+          className="absolute -bottom-3 left-1/2 -translate-x-1/2 z-40 bg-white border border-slate-200 rounded-full w-7 h-7 flex items-center justify-center text-slate-400 hover:text-slate-900 shadow-sm transition-all active:scale-90 outline-none"
+          title="Mostrar Estación de Captura"
+        >
+          <Icon name="expand_more" size="18px" />
+        </button>
+      )}
 
       {isCollapsed ? (
         <div className="h-full flex items-center justify-center gap-4 animate-in fade-in slide-in-from-top-1 duration-300">
@@ -140,173 +164,187 @@ export const QuickComposer = ({
            </button>
         </div>
       ) : (
-        <div className="max-w-[1500px] mx-auto p-3 md:p-4 lg:px-8 animate-in fade-in duration-300">
-          <div className="bg-slate-50/50 rounded-[1.75rem] p-3 border border-white shadow-inner flex items-start gap-0.5">
+        <div className="flex flex-col h-full w-full gap-4 animate-in fade-in zoom-in-95 duration-300 min-h-0 flex-1">
+          
+          {/* Header del Workspace */}
+          <div className="flex items-center justify-between px-2 shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Estación de Captura Ejecutiva</span>
+            </div>
             
-            {/* Contenedor Principal: Input + Controles */}
-            <div className="flex-1 flex flex-col gap-0.5 min-w-0">
+            <button 
+              onClick={() => setIsCollapsed(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-200/60 hover:bg-slate-250 text-slate-700 hover:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 cursor-pointer shadow-sm border border-slate-300/20"
+              title="Minimizar y volver a la minuta"
+            >
+              <X size={14} />
+              Volver a la Minuta
+            </button>
+          </div>
+
+          {/* Tarjeta del Formulario Principal */}
+          <div className="flex-1 bg-white border border-slate-200/60 rounded-[2.5rem] p-6 lg:p-8 shadow-xl flex flex-col gap-6 min-h-0">
+            
+            {/* Textarea de gran tamaño */}
+            <div className="relative flex-1 min-h-0 flex flex-col group">
+              <textarea
+                ref={textareaRef}
+                value={descripcion}
+                onChange={(e) => setDescripcion(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Escribe la idea, acuerdo o tarea aquí..."
+                className="w-full flex-1 bg-slate-50/50 border border-slate-100 rounded-2xl px-5 py-4 text-base lg:text-lg font-bold text-slate-800 focus:outline-none focus:ring-4 focus:ring-marca-primario/5 transition-all resize-none placeholder:text-slate-300 shadow-inner"
+              />
               
-              {/* Input de Entrada Grande */}
-              <div className="relative group">
-                <textarea
-                  ref={textareaRef}
-                  value={descripcion}
-                  onChange={(e) => setDescripcion(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Escribe la idea, acuerdo o tarea aquí..."
-                  className="w-full bg-white border border-slate-100 rounded-[1.5rem] px-5 py-4 text-base lg:text-lg font-bold text-slate-800 focus:outline-none focus:ring-4 focus:ring-marca-primario/5 transition-all resize-none placeholder:text-slate-300 shadow-sm leading-tight"
-                  style={{ minHeight: 64 }}
-                />
+              {/* Cámara flotante dentro del Textarea */}
+              <div className="absolute right-4 bottom-4 flex items-center gap-3">
+                {showLimitError && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-50 text-rose-600 rounded-xl text-[10px] font-bold animate-in fade-in slide-in-from-right-2 duration-300">
+                    <AlertCircle size={14} />
+                    Máximo 3 imágenes
+                  </div>
+                )}
                 
-                {/* Controles Multimedia Integrados */}
-                <div className="absolute right-4 bottom-3 flex items-center gap-5">
-                  {showLimitError && (
-                    <div className="flex items-center gap-5 px-3 py-1.5 bg-rose-50 text-rose-600 rounded-xl text-[10px] font-bold animate-in fade-in slide-in-from-right-2 duration-300">
-                      <AlertCircle size={14} />
-                      Máximo 3 imágenes
-                    </div>
+                <button 
+                  type="button"
+                  title="Subir Imágenes"
+                  onClick={() => fileInputRef.current?.click()}
+                  className={cn(
+                    "p-2.5 text-slate-400 hover:text-marca-primario transition-all rounded-xl hover:bg-white active:scale-90 border border-slate-100/50 shadow-sm",
+                    imagenes.length >= 3 && "opacity-50 cursor-not-allowed grayscale"
                   )}
-                  
-                  <button 
-                    type="button"
-                    title="Subir Imágenes"
-                    onClick={() => fileInputRef.current?.click()}
-                    className={cn(
-                      "p-2 text-slate-400 hover:text-marca-primario transition-all rounded-xl hover:bg-white active:scale-90 border border-transparent hover:border-slate-100",
-                      imagenes.length >= 3 && "opacity-50 cursor-not-allowed grayscale"
-                    )}
-                    disabled={imagenes.length >= 3}
-                  >
-                    <Camera size={21} />
-                  </button>
-                  <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" multiple className="hidden" />
-                </div>
-              </div>
-
-              {/* Fila de Clasificadores, Contexto y PREVIEW DE IMÁGENES */}
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-3 px-2 py-1">
-                
-                {/* Sección de Previsualización de Imágenes Mejorada */}
-                {imagenes.length > 0 && (
-                  <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-300">
-                     <div className="flex flex-col mr-1">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Imágenes</span>
-                        <span className={cn("text-[10px] font-bold", imagenes.length === 3 ? "text-amber-500" : "text-slate-500")}>
-                          {imagenes.length}/3
-                        </span>
-                     </div>
-                     <div className="flex gap-2">
-                      {imagenes.map((img) => (
-                        <div key={img.id} className="relative w-12 h-12 rounded-2xl overflow-hidden border-2 border-white shadow-md ring-1 ring-slate-100 group transition-all hover:scale-105">
-                          <img src={img.preview} className="w-full h-full object-cover" alt="Preview" />
-                          <button 
-                            type="button" 
-                            onClick={() => removeImagen(img.id)} 
-                            className="absolute inset-0 bg-slate-900/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <X size={18} strokeWidth={3} />
-                          </button>
-                        </div>
-                      ))}
-                      {imagenes.length < 3 && (
-                        <button 
-                          onClick={() => fileInputRef.current?.click()}
-                          className="w-12 h-12 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-300 hover:border-slate-400 hover:text-slate-400 transition-all bg-white/50 active:scale-95"
-                        >
-                          <Plus size={18} />
-                        </button>
-                      )}
-                     </div>
-                  </div>
-                )}
-
-                {/* Área Selector */}
-                <div className="flex items-center gap-3 border-l border-slate-200 pl-4 min-h-8">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Área:</span>
-                  <div className="flex gap-1.5">
-                    {Object.entries(AREA_MAP).map(([key, label]) => (
-                      <button key={key} onClick={() => setArea(key)}
-                        className={cn("px-3 py-1.5 rounded-xl text-[10px] font-black transition-all uppercase tracking-tighter border",
-                        area === key ? "bg-slate-900 text-white border-slate-900 shadow-lg" : "bg-white text-slate-500 border-slate-100 hover:bg-slate-50")}>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Línea y Tipo (Solo si es DISEÑO) */}
-                {area === 'DISENO' && (
-                  <>
-                    {/* Línea Selector */}
-                    <div className="flex items-center gap-3 border-l border-slate-200 pl-4 min-h-8 animate-in fade-in slide-in-from-left-2 duration-300">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Línea:</span>
-                      <div className="flex gap-1.5">
-                        {Object.entries(LINEA_MAP).map(([key, val]) => (
-                          <button key={key} onClick={() => setLinea(key)}
-                            className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black transition-all uppercase tracking-tighter border",
-                            linea === key ? "bg-marca-primario text-white border-marca-primario shadow-lg" : "bg-white text-slate-500 border-slate-100 hover:bg-slate-50")}>
-                            <LineIconSelector type={key} size={16} />
-                            {val.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Clasificación (Solo si es DISEÑO) */}
-                    <div className="flex items-center gap-3 border-l border-slate-200 pl-4 min-h-8 animate-in fade-in slide-in-from-left-3 duration-500">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo:</span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {Object.entries(CLASIFICACION_MAP).map(([key, val]) => (
-                          <button
-                            key={key}
-                            onClick={() => setClasificacion(key)}
-                            title={val.label}
-                            className={cn(
-                              "flex items-center gap-1.5 px-2.5 h-8 rounded-xl transition-all border whitespace-nowrap",
-                              clasificacion === key 
-                                ? "text-white shadow-md scale-105" 
-                                : "bg-white text-slate-300 border-slate-100 hover:border-slate-200"
-                            )}
-                            style={clasificacion === key ? { backgroundColor: val.color, borderColor: val.color } : {}}
-                          >
-                            <Icon name={val.icon} size="16px" />
-                            <span className={cn(
-                              "text-[10px] font-black uppercase tracking-tighter",
-                              clasificacion === key ? "text-white" : "text-slate-400"
-                            )}>
-                              {val.label}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                )}
+                  disabled={imagenes.length >= 3}
+                >
+                  <Camera size={21} />
+                </button>
+                <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" multiple className="hidden" />
               </div>
             </div>
 
-            {/* Botón de Registro Primario (Círculo Grande) */}
-            <button
-              onClick={handleSubmit}
-              disabled={!descripcion.trim() || submitting}
-              className={cn(
-                "w-[4.5rem] h-[4.5rem] lg:w-20 lg:h-20 rounded-full flex items-center justify-center transition-all active:scale-90 shadow-2xl shrink-0 group relative",
-                descripcion.trim() 
-                  ? "bg-emerald-600 text-white shadow-emerald-600/40 hover:bg-emerald-500" 
-                  : "bg-slate-100 text-slate-200 cursor-not-allowed border border-slate-200"
-              )}
-            >
-              {submitting ? (
-                <Icon name="progress_activity" size="34px" className="animate-spin" />
+            {/* Previsualización de Imágenes */}
+            {imagenes.length > 0 && (
+              <div className="flex items-center gap-3 shrink-0 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
+                <div className="flex flex-col mr-2">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Imágenes</span>
+                  <span className="text-[10px] font-bold text-slate-500">{imagenes.length}/3</span>
+                </div>
+                <div className="flex gap-2">
+                  {imagenes.map((img) => (
+                    <div key={img.id} className="relative w-16 h-16 rounded-2xl overflow-hidden border-2 border-white shadow-md group transition-all hover:scale-105">
+                      <img src={img.preview} className="w-full h-full object-cover" alt="Preview" />
+                      <button 
+                        type="button" 
+                        onClick={() => removeImagen(img.id)} 
+                        className="absolute inset-0 bg-slate-900/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X size={20} strokeWidth={3} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Configuración y Selectores en Grid Espacioso */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0 bg-slate-50/30 p-4 rounded-2xl border border-slate-100">
+              
+              {/* Área Select */}
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Área de Responsabilidad:</span>
+                <select
+                  value={area}
+                  onChange={(e) => setArea(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-marca-primario/20 transition-all shadow-sm"
+                >
+                  {catalogos.areas.map(({ value, label }) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Línea Select (si aplica) */}
+              {tieneLineas ? (
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Línea de Producto:</span>
+                  <select
+                    value={linea || ''}
+                    onChange={(e) => setLinea(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-marca-primario/20 transition-all shadow-sm"
+                  >
+                    {catalogos.lineas.map(({ value, label }) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
+                  </select>
+                </div>
               ) : (
-                <Icon 
-                  name="add" 
-                  size="44px" 
-                  className={cn("transition-transform duration-500", descripcion.trim() && "group-hover:rotate-90")} 
-                />
+                <div className="hidden md:block" />
               )}
-            </button>
+
+              {/* Clasificación Select */}
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Clasificación / Tipo:</span>
+                <select
+                  value={clasificacion}
+                  onChange={(e) => setClasificacion(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-marca-primario/20 transition-all shadow-sm"
+                >
+                  <option value="">— Seleccionar —</option>
+                  {catalogos.clasificaciones.map(({ value, label }) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Botón de Envío Grande al final */}
+            <div className="flex justify-end gap-3 shrink-0 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={!descripcion.trim() || submitting}
+                className={cn(
+                  "flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 shadow-lg cursor-pointer",
+                  descripcion.trim() 
+                    ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20" 
+                    : "bg-slate-100 text-slate-300 cursor-not-allowed border border-slate-200 shadow-none"
+                )}
+              >
+                {submitting ? (
+                  <Icon name="progress_activity" size="16px" className="animate-spin" />
+                ) : (
+                  <Plus size={16} />
+                )}
+                Registrar Entrada
+              </button>
+            </div>
+
           </div>
+        </div>
+      )}
+
+      {/* Overlay de bloqueo para juntas Programadas */}
+      {estado === 'PROGRAMADA' && (
+        <div className="absolute inset-0 bg-slate-50/80 backdrop-blur-md z-[60] flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-indigo-50 text-indigo-600 shadow-md border border-indigo-100">
+            <Icon name="event" size="32px" />
+          </div>
+          <h3 className="fuente-titulos text-xl font-black text-slate-800 uppercase tracking-wider">Minuta Programada</h3>
+          <p className="max-w-md text-sm text-slate-400 mt-2 font-medium">
+            Esta junta aún no ha comenzado. Debes iniciar la junta para poder capturar acuerdos, tareas y subir imágenes.
+          </p>
+          <button
+            onClick={onIniciar}
+            disabled={iniciando}
+            className="mt-6 flex items-center gap-2 px-6 py-3 bg-marca-primario hover:bg-marca-primario/90 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg shadow-marca-primario/25 transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+          >
+            {iniciando ? (
+              <Icon name="progress_activity" size="16px" className="animate-spin" />
+            ) : (
+              <Icon name="play_arrow" size="16px" />
+            )}
+            {iniciando ? 'Iniciando...' : 'Iniciar Junta Ahora'}
+          </button>
         </div>
       )}
     </div>

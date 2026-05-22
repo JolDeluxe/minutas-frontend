@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Icon } from '@/components/ui/z_index';
 import { EntryCard } from './entry-card';
+import { EntryTable } from './entry-table';
 
 /**
  * EntryFeed — Feed de entradas separadas por estado de guardado.
@@ -11,6 +12,8 @@ export const EntryFeed = ({
   loading = false,
   meetingMode = false,
   filterActive = 'TODAS',
+  viewMode = 'cards',
+  departamento = 'DISENO',
   onOrganize,
   onRemoveDraft,
   onUpdateDraft,
@@ -60,7 +63,7 @@ export const EntryFeed = ({
 
   if (sections.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 text-center animate-in fade-in duration-700">
+      <div className="flex flex-col items-center justify-center py-12 md:py-20 text-center animate-in fade-in duration-700">
         <div className="w-24 h-24 bg-white rounded-4xl shadow-xl shadow-slate-200/50 flex items-center justify-center mb-6 border border-slate-100">
           <Icon name="auto_stories" className="text-slate-200" size="48px" />
         </div>
@@ -93,25 +96,41 @@ export const EntryFeed = ({
           </div>
 
           <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,34rem),1fr))] gap-4 md:gap-6">
-            {section.entries.map((entry) => (
-              <div key={`ent-${entry.id || entry.tempId}`} className="animate-in fade-in slide-in-from-bottom-6 duration-500 ease-out">
-                <EntryCard
-                  entry={entry}
+            {viewMode === 'table' ? (
+              <div className="col-span-full animate-in fade-in slide-in-from-bottom-6 duration-500 ease-out">
+                <EntryTable
+                  entries={section.entries}
+                  departamento={departamento}
                   onOrganize={onOrganize}
-                  meetingMode={meetingMode}
-                  onRemove={onRemoveDraft}
-                  onUpdate={onUpdateDraft}
+                  onRemoveDraft={onRemoveDraft}
+                  onUpdateDraft={onUpdateDraft}
                   onUpdateSaved={onUpdateSaved}
-                  onCreateNote={onCreateNote}
-                  onUpdateNote={onUpdateNote}
-                  onDeleteNote={onDeleteNote}
-                  onAddImage={onAddImage}
-                  onDeleteImage={onDeleteImage}
                   onChangeStatus={onChangeStatus}
                   users={users}
                 />
               </div>
-            ))}
+            ) : (
+              section.entries.map((entry) => (
+                <div key={`ent-${entry.id || entry.tempId}`} className="animate-in fade-in slide-in-from-bottom-6 duration-500 ease-out">
+                  <EntryCard
+                    entry={entry}
+                    departamento={departamento}
+                    onOrganize={onOrganize}
+                    meetingMode={meetingMode}
+                    onRemove={onRemoveDraft}
+                    onUpdate={onUpdateDraft}
+                    onUpdateSaved={onUpdateSaved}
+                    onCreateNote={onCreateNote}
+                    onUpdateNote={onUpdateNote}
+                    onDeleteNote={onDeleteNote}
+                    onAddImage={onAddImage}
+                    onDeleteImage={onDeleteImage}
+                    onChangeStatus={onChangeStatus}
+                    users={users}
+                  />
+                </div>
+              ))
+            )}
           </div>
         </section>
       ))}

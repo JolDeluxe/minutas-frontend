@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Modal, ModalHeader, ModalBody, ModalFooter, Button, Icon } from '@/components/ui/z_index';
 import { CLASIFICACION_MAP, AREA_MAP, LINEA_MAP } from '../constants';
 import { LineIconSelector } from './icons/line-icons';
@@ -14,6 +15,8 @@ export const ReviewDraftsModal = ({
   notesCount = 0,
   submitting,
 }) => {
+  const [closeAfterSave, setCloseAfterSave] = useState(true);
+
   return (
     <Modal 
       isOpen={isOpen} 
@@ -97,24 +100,40 @@ export const ReviewDraftsModal = ({
         </div>
       </ModalBody>
 
-      <ModalFooter className="flex gap-4">
-        <Button 
-          variant="neutro" 
-          onClick={onClose} 
-          disabled={submitting}
-          className="flex-1 h-16 rounded-2xl font-black uppercase tracking-[0.2em] text-xs border-2 border-slate-100"
+      <ModalFooter className="flex flex-col gap-4">
+        {/* Toggle / Checkbox for closing the meeting */}
+        <div 
+          className="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl cursor-pointer hover:bg-slate-100 transition-colors"
+          onClick={() => setCloseAfterSave(!closeAfterSave)}
         >
-          Regresar
-        </Button>
-        <Button 
-          variant="guardar" 
-          icon="check_circle" 
-          onClick={onConfirm} 
-          isLoading={submitting}
-          className="flex-2 h-16 rounded-2xl font-black uppercase tracking-[0.2em] text-sm shadow-2xl shadow-emerald-500/20"
-        >
-          Guardar Todo
-        </Button>
+          <div className={`w-6 h-6 rounded-md flex items-center justify-center border-2 transition-colors ${closeAfterSave ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 bg-white'}`}>
+            {closeAfterSave && <Icon name="check" size="16px" className="font-black" />}
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-bold text-slate-800">Cerrar y finalizar junta tras guardar</span>
+            <span className="text-[11px] font-medium text-slate-500">Ya no se podrán agregar más acuerdos ni tareas a esta minuta.</span>
+          </div>
+        </div>
+
+        <div className="flex gap-4 w-full">
+          <Button 
+            variant="neutro" 
+            onClick={onClose} 
+            disabled={submitting}
+            className="flex-1 h-16 rounded-2xl font-black uppercase tracking-[0.2em] text-xs border-2 border-slate-100"
+          >
+            Regresar
+          </Button>
+          <Button 
+            variant="guardar" 
+            icon="check_circle" 
+            onClick={() => onConfirm(closeAfterSave)} 
+            isLoading={submitting}
+            className="flex-2 h-16 rounded-2xl font-black uppercase tracking-[0.2em] text-sm shadow-2xl shadow-emerald-500/20"
+          >
+            Guardar Todo
+          </Button>
+        </div>
       </ModalFooter>
     </Modal>
   );

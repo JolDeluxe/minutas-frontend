@@ -2,7 +2,7 @@ import React from 'react';
 import { Icon } from '@/components/ui/z_index';
 import { MinutaContextPanel } from '../components/context/minuta-context-panel';
 import { QuickComposer } from '../components/composer/quick-composer';
-import { TimelineFilters } from '../components/timeline/timeline-filters';
+import { EntryFiltersBar } from '../components/timeline/entry-filters-bar';
 import { EntryFeed } from '../components/timeline/entry-feed';
 import { StickyNotesBoard } from '../components/notes/sticky-notes-board';
 import { ReviewDraftsModal } from '../components/review-drafts-modal';
@@ -19,8 +19,11 @@ export const MinutaDetailDesktopView = ({
   politicasAcordadas = [],
   recordatoriosGenerales = [],
   loadingTareas,
-  filterClasif,
-  setFilterClasif,
+  departamento,
+  activeFilter,
+  setActiveFilter,
+  viewMode,
+  setViewMode,
   handleCapture,
   draftEntries,
   draftNotes,
@@ -48,8 +51,14 @@ export const MinutaDetailDesktopView = ({
   users,
   handleIniciar,
   handleCancelar,
+  handleCerrar,
+  handleReabrir,
+  handleFinalizar,
   iniciando,
-  cancelando
+  cancelando,
+  cerrando,
+  reabriendo,
+  finalizando
 }) => {
   return (
     <div className="flex h-full w-full flex-col bg-slate-50/50 relative">
@@ -58,31 +67,54 @@ export const MinutaDetailDesktopView = ({
         resumen={resumen} 
         entries={filteredEntries}
         onFilterByStatus={(status) => {
-          if (status === 'COMPLETADAS') setFilterClasif('TODAS');
-          else if (status === 'EN_PROGRESO') setFilterClasif('TODAS');
-          else if (status === 'ATRASADAS') setFilterClasif('TODAS');
-          else if (status === 'PENDIENTE') setFilterClasif('TODAS');
-          else setFilterClasif('TODAS');
+          setActiveFilter(prev => ({
+            ...prev,
+            estado: prev.estado === status ? null : status,
+            tipo: 'TAREA'
+          }));
         }}
+        onFilterByTipo={(tipo) => {
+          setActiveFilter(prev => ({
+            ...prev,
+            tipo: prev.tipo === tipo ? 'TAREA' : tipo,
+            estado: null
+          }));
+        }}
+        onResetFilter={() => {
+          setActiveFilter({ tipo: 'TAREA', estado: null, clasificacion: null, area: null, linea: null, search: '' });
+        }}
+        activeFilter={activeFilter}
         onIniciar={handleIniciar}
         onCancelar={handleCancelar}
+        onCerrar={handleCerrar}
+        onReabrir={handleReabrir}
+        onFinalizar={handleFinalizar}
         iniciando={iniciando}
         cancelando={cancelando}
+        cerrando={cerrando}
+        reabriendo={reabriendo}
+        finalizando={finalizando}
       />
 
       <div className="flex flex-1 overflow-hidden relative">
         {/* Workspace Principal */}
-        <main className="flex flex-1 flex-col min-w-0 bg-transparent">
-          <QuickComposer
-            minutaId={minuta.id}
-            lineaDefault={minuta.lineaDefault}
-            onSubmit={handleCapture}
-            submitting={loadingTareas}
-            isDesktop={true}
-          />
+        <main className="relative flex flex-1 flex-col min-w-0 bg-transparent">
+          {minuta.estado !== 'CERRADA' && minuta.estado !== 'CANCELADA' && (
+            <QuickComposer
+              minutaId={minuta.id}
+              lineaDefault={minuta.lineaDefault}
+              departamento={departamento}
+              onSubmit={handleCapture}
+              submitting={loadingTareas}
+              isDesktop={true}
+              estado={minuta.estado}
+              onIniciar={handleIniciar}
+              iniciando={iniciando}
+            />
+          )}
 
-          <div className="flex-1 overflow-y-auto px-10 py-1 scrollbar-thin">
-            <div className="mx-auto max-w-[1500px] flex flex-col gap-8 pb-32">
+          <div className={`flex-1 px-10 py-1 scrollbar-thin ${filteredEntries.length === 0 ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+            <div className={`mx-auto max-w-[1500px] flex flex-col gap-8 ${filteredEntries.length === 0 ? 'pb-4' : 'pb-32'}`}>
               
               {/* Políticas y Lineamientos Acordados */}
               {politicasAcordadas.length > 0 && (
@@ -148,7 +180,13 @@ export const MinutaDetailDesktopView = ({
 
               <div className="flex items-center gap-4 bg-white/40 p-2 rounded-2xl backdrop-blur-md border border-white/60 sticky top-0 z-20">
                 <div className="flex-1 overflow-hidden">
-                  <TimelineFilters active={filterClasif} onChange={setFilterClasif} />
+                  <EntryFiltersBar 
+                    activeFilter={activeFilter} 
+                    onChange={setActiveFilter}
+                    departamento={departamento}
+                    viewMode={viewMode}
+                    setViewMode={setViewMode}
+                  />
                 </div>
               </div>
 
@@ -156,7 +194,9 @@ export const MinutaDetailDesktopView = ({
                 entries={filteredEntries}
                 loading={loadingTareas}
                 meetingMode={true}
-                filterActive={filterClasif}
+                filterActive={activeFilter.clasificacion || 'TODAS'}
+                viewMode={viewMode}
+                departamento={departamento}
                 onOrganize={setOrganizeEntry}
                 onRemoveDraft={removeDraftEntry}
                 onUpdateDraft={updateDraftEntry}
@@ -233,6 +273,7 @@ export const MinutaDetailDesktopView = ({
           onClose={() => setOrganizeEntry(null)}
           entry={organizeEntry}
           onSave={handleOrganizeSave}
+          departamento={departamento}
         />
       )}
     </div>

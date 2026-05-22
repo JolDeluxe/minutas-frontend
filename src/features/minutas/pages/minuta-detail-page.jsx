@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getMinutaById, iniciarMinuta, cancelarMinuta } from '../api/minutas-api';
+import { getMinutaById, iniciarMinuta, cancelarMinuta, cerrarMinuta, reabrirMinuta, finalizarMinuta } from '../api/minutas-api';
 import { useTareas } from '@/features/tareas/hooks/use-tareas';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { useUsers } from '@/features/usuarios/hooks/use-users';
@@ -40,14 +40,26 @@ export default function MinutaDetailPage() {
 
   const { users, fetchUsers } = useUsers();
 
-  const [capturing, setCapturing] = useState(false);
-  const [filterClasif, setFilterClasif] = useState('TODAS');
   const [showNotes, setShowNotes] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [organizeEntry, setOrganizeEntry] = useState(null);
   const [isSubmittingFinal, setIsSubmittingFinal] = useState(false);
   const [iniciando, setIniciando] = useState(false);
   const [cancelando, setCancelando] = useState(false);
+  const [cerrando, setCerrando] = useState(false);
+  const [reabriendo, setReabriendo] = useState(false);
+  const [finalizando, setFinalizando] = useState(false);
+
+  // ── Filtro unificado (multi-dimensión) ─────────────────────
+  const [activeFilter, setActiveFilter] = useState({
+    tipo: 'TAREA',        // por defecto solo tareas
+    estado: null,         // null = todos los estados
+    clasificacion: null,
+    area: null,
+    linea: null,
+    search: '',
+  });
+  const [viewMode, setViewMode] = useState('cards'); // 'cards' | 'table'
 
   useEffect(() => {
     if (id) {
@@ -78,74 +90,106 @@ export default function MinutaDetailPage() {
 
   const allEntries = useMemo(() => [...draftEntries, ...tareas], [draftEntries, tareas]);
 
-  const tareasReales = useMemo(() => {
-    return allEntries.filter(t => t.tipo === 'TAREA');
-  }, [allEntries]);
-
-  const recordatoriosGenerales = useMemo(() => {
-    return allEntries.filter(t => t.tipo === 'RECORDATORIO');
-  }, [allEntries]);
-
-  const politicasAcordadas = useMemo(() => {
-    return allEntries.filter(t => t.tipo === 'POLITICA');
-  }, [allEntries]);
-  
+  // ── Entradas filtradas por el filtro activo ─────────────────
   const filteredEntries = useMemo(() => {
-    if (filterClasif === 'TODAS') return allEntries.filter(t => t.tipo !== 'DESCARTADA');
-    if (filterClasif === 'SIN_CLASIFICAR') return allEntries.filter(t => !t.clasificacion && t.tipo !== 'DESCARTADA');
-    if (filterClasif === 'SIN_ORGANIZAR') return allEntries.filter(t => t.tipo === 'SIN_ORGANIZAR' || !t.tipo);
-    return allEntries.filter(t => t.clasificacion === filterClasif && t.tipo !== 'DESCARTADA');
-  }, [allEntries, filterClasif]);
-
-  const resumen = useMemo(() => {
-    // Usar resumen del backend si existe (incluye atrasadas, porClasificacion, porPrioridad)
-    const backendResumen = minuta?.resumen || {};
-    
-    const conceptual = {};
-    const porClasificacion = {};
-    const porPrioridad = {};
-    let atrasadas = 0;
-    const now = new Date();
-
-    allEntries.forEach(t => {
-      const e = t.estadoConceptual || 'CAPTURADO';
-      conceptual[e] = (conceptual[e] || 0) + 1;
-      
-      if (t.clasificacion) {
-        porClasificacion[t.clasificacion] = (porClasificacion[t.clasificacion] || 0) + 1;
+    return allEntries.filter(entry => {
+      if (entry.tipo === 'DESCARTADA') return false;
+      // Filtros de tipo organizacional
+      if (activeFilter.tipo && entry.tipo !== activeFilter.tipo) {
+        // Los borradores (tempId) aún no tienen tipo, mostrarlos si filtro es TAREA o SIN_ORGANIZAR
+        if (entry.tempId && (activeFilter.tipo === 'TAREA' || activeFilter.tipo === 'SIN_ORGANIZAR')) {
+          // Los borradores se muestran siempre en modo TAREA y SIN_ORGANIZAR
+        } else {
+          return false;
+        }
       }
-      if (t.prioridad) {
-        porPrioridad[t.prioridad] = (porPrioridad[t.prioridad] || 0) + 1;
+      if (activeFilter.estado) {
+        if (activeFilter.estado === 'ATRASADA') {
+          const ahora = new Date();
+          const vence = entry.fechaVencimiento ? new Date(entry.fechaVencimiento) : null;
+          if (!vence || vence >= ahora || entry.estado === 'CERRADA' || entry.estado === 'EN_REVISION') return false;
+        } else if (entry.estado !== activeFilter.estado) {
+          return false;
+        }
       }
-      if (
-        t.fechaVencimiento &&
-        new Date(t.fechaVencimiento) < now &&
-        t.estado !== 'COMPLETADO' &&
-        t.estado !== 'CERRADO'
-      ) {
-        atrasadas++;
+      if (activeFilter.clasificacion && entry.clasificacion !== activeFilter.clasificacion) return false;
+      if (activeFilter.area && entry.area !== activeFilter.area) return false;
+      if (activeFilter.linea && entry.linea !== activeFilter.linea) return false;
+      if (activeFilter.search) {
+        const s = activeFilter.search.toLowerCase();
+        if (!entry.descripcion?.toLowerCase().includes(s)) return false;
       }
+      return true;
     });
-    
-    return { 
-      totalEntradas: allEntries.length, 
-      conceptual,
-      atrasadas: backendResumen.atrasadas ?? atrasadas,
-      porClasificacion: Object.keys(porClasificacion).length > 0 ? porClasificacion : (backendResumen.porClasificacion || {}),
-      porPrioridad: Object.keys(porPrioridad).length > 0 ? porPrioridad : (backendResumen.porPrioridad || {}),
-    };
-  }, [allEntries, minuta?.resumen]);
+  }, [allEntries, activeFilter]);
 
-  const showZeroState = useMemo(() => {
-    return !loadingMinuta && !loadingTareas && initialized && allEntries.length === 0 && !capturing;
-  }, [loadingMinuta, loadingTareas, initialized, allEntries.length, capturing]);
+  // ── Handlers de filtro para KPIs y barra ───────────────────
+  const handleFilterByStatus = (estado) =>
+    setActiveFilter(prev => ({ ...prev, estado: prev.estado === estado ? null : estado, tipo: 'TAREA' }));
+
+  const handleFilterByTipo = (tipo) =>
+    setActiveFilter(prev => ({ ...prev, tipo: prev.tipo === tipo ? 'TAREA' : tipo, estado: null }));
+
+  const handleResetFilter = () =>
+    setActiveFilter({ tipo: 'TAREA', estado: null, clasificacion: null, area: null, linea: null, search: '' });
+
+  // ── Resumen centrado en Tareas tipo TAREA ──────────────────
+  const resumen = useMemo(() => {
+    const now = new Date();
+    let totalTareas = 0;
+    let pendientes = 0;
+    let enRevision = 0;
+    let cerradas = 0;
+    let atrasadas = 0;
+    let totalPoliticas = 0;
+    let totalRecordatorios = 0;
+
+    for (const t of allEntries) {
+      if (t.tipo === 'TAREA') {
+        totalTareas++;
+        if (t.estado === 'PENDIENTE') pendientes++;
+        else if (t.estado === 'EN_REVISION') enRevision++;
+        else if (t.estado === 'CERRADA') cerradas++;
+
+        if (
+          t.fechaVencimiento &&
+          new Date(t.fechaVencimiento) < now &&
+          t.estado !== 'CERRADA' &&
+          t.estado !== 'EN_REVISION'
+        ) {
+          atrasadas++;
+        }
+      } else if (t.tipo === 'POLITICA') {
+        totalPoliticas++;
+      } else if (t.tipo === 'RECORDATORIO') {
+        totalRecordatorios++;
+      }
+    }
+
+    const porcentaje = totalTareas > 0 ? Math.round(((cerradas + enRevision) / totalTareas) * 100) : 0;
+
+    return {
+      totalTareas,
+      pendientes,
+      enRevision,
+      cerradas,
+      atrasadas,
+      porcentaje,
+      totalPoliticas,
+      totalRecordatorios,
+      totalEntradas: allEntries.length,
+    };
+  }, [allEntries]);
+
+
+
+  const departamento = minuta?.departamento || 'DISENO';
 
   const handleCapture = (payload) => {
     payload.tareas.forEach(t => addDraftEntry(t));
-    setCapturing(true);
   };
 
-  const handleFinalSubmit = async () => {
+  const handleFinalSubmit = async (closeAfterSave = false) => {
     setIsSubmittingFinal(true);
     try {
       if (draftEntries.length > 0) {
@@ -164,8 +208,22 @@ export default function MinutaDetailPage() {
 
       await clearDrafts();
       setShowReviewModal(false);
-      setCapturing(false);
-      notify.success('Minuta guardada con éxito');
+      
+      if (closeAfterSave) {
+        try {
+          if (minuta?.estado === 'EN_CURSO') {
+            await finalizarMinuta(id);
+            notify.success('Minuta guardada y junta finalizada con éxito');
+          } else {
+            await cerrarMinuta(id);
+            notify.success('Minuta guardada y cerrada con éxito');
+          }
+        } catch {
+          notify.error('Minuta guardada pero ocurrió un error al actualizar estado');
+        }
+      } else {
+        notify.success('Minuta guardada con éxito');
+      }
       
       const res = await getMinutaById(id);
       setMinuta(res.data);
@@ -312,6 +370,65 @@ export default function MinutaDetailPage() {
     }
   };
 
+  const handleCerrar = async () => {
+    if (draftEntries.length > 0 || draftNotes.length > 0) {
+      setShowReviewModal(true);
+      notify.info("Tienes borradores pendientes. Por favor, revísalos y guárdalos para cerrar la junta.");
+      return;
+    }
+    if (!confirm("¿Estás seguro de que deseas cerrar esta junta? No podrás agregar más acuerdos o tareas.")) return;
+    setCerrando(true);
+    try {
+      const res = await cerrarMinuta(id);
+      const data = res.data;
+      if (data?.advertencia) {
+        notify.warning(data.advertencia);
+      } else {
+        notify.success("Junta cerrada con éxito");
+      }
+      const resMinuta = await getMinutaById(id);
+      setMinuta(resMinuta.data);
+    } catch {
+      notify.error("No se pudo cerrar la junta");
+    } finally {
+      setCerrando(false);
+    }
+  };
+
+  const handleReabrir = async () => {
+    if (!confirm("¿Estás seguro de que deseas reabrir esta junta? Podrás agregar más acuerdos o tareas nuevamente.")) return;
+    setReabriendo(true);
+    try {
+      await reabrirMinuta(id);
+      notify.success("Junta reabierta con éxito");
+      const resMinuta = await getMinutaById(id);
+      setMinuta(resMinuta.data);
+    } catch {
+      notify.error("No se pudo reabrir la junta");
+    } finally {
+      setReabriendo(false);
+    }
+  };
+
+  const handleFinalizar = async () => {
+    if (draftEntries.length > 0 || draftNotes.length > 0) {
+      setShowReviewModal(true);
+      notify.info("Tienes borradores pendientes. Por favor, revísalos y guárdalos para finalizar la junta.");
+      return;
+    }
+    if (!confirm("¿Deseas finalizar la junta? Pasará a organización post-junta.")) return;
+    setFinalizando(true);
+    try {
+      const res = await finalizarMinuta(id);
+      notify.success("Junta finalizada con éxito");
+      setMinuta(res.data.data);
+    } catch {
+      notify.error("No se pudo finalizar la junta");
+    } finally {
+      setFinalizando(false);
+    }
+  };
+
   if (loadingMinuta) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-50">
@@ -320,60 +437,20 @@ export default function MinutaDetailPage() {
     );
   }
 
-  // Si estamos en Zero State, mostramos el iniciador centrado (común para ambos)
-  if (showZeroState) {
-    return (
-      <div className="flex flex-1 flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in duration-700 bg-slate-50/50 min-h-screen">
-        <div className="mb-12 flex h-48 w-48 items-center justify-center rounded-[3.5rem] bg-white shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] border border-slate-100/50 group hover:scale-105 transition-transform cursor-pointer" onClick={() => setCapturing(true)}>
-          <Icon name="add" size="96px" className="text-marca-primario group-hover:rotate-90 transition-transform duration-500" />
-        </div>
-        <h2 className="fuente-titulos text-4xl font-black text-slate-900 mb-4 tracking-tight uppercase">Iniciar Minuta</h2>
-        <p className="max-w-xs text-slate-400 mb-12 text-lg font-medium italic">Presiona el botón para comenzar el registro de acuerdos y tareas.</p>
-        
-        <div className="flex flex-col gap-4 items-center w-full max-w-md">
-          <Button 
-            variant="marca" 
-            size="lg" 
-            icon="play_arrow"
-            className="h-20 w-full rounded-4xl shadow-2xl shadow-marca-primario/30 active:scale-95 transition-all text-xl font-black uppercase tracking-[0.2em]"
-            onClick={() => setCapturing(true)}
-          >
-            Comenzar Sesión
-          </Button>
 
-          <div className="flex gap-3 w-full justify-center mt-2">
-            <Button 
-              variant="secundario" 
-              icon="arrow_back"
-              onClick={() => navigate('/minutas')}
-            >
-              Regresar
-            </Button>
-            {minuta?.estado !== 'CANCELADA' && (
-              <Button 
-                variant="peligro" 
-                icon="cancel"
-                loading={cancelando}
-                onClick={handleCancelar}
-              >
-                Cancelar Minuta
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const commonProps = {
-    minuta, users, resumen, filteredEntries, politicasAcordadas, recordatoriosGenerales, loadingTareas, filterClasif, setFilterClasif,
+    minuta, users, resumen, allEntries, filteredEntries, loadingTareas, departamento,
+    activeFilter, setActiveFilter, handleFilterByStatus, handleFilterByTipo, handleResetFilter,
+    viewMode, setViewMode,
     handleCapture, draftEntries, draftNotes, addDraftNote, updateDraftNote,
     removeDraftNote, updateDraftEntry, removeDraftEntry, setOrganizeEntry,
     organizeEntry, handleOrganizeSave, updateTarea, changeTareaStatus: handleStatusChange, fetchTareas, refreshEntries, setShowReviewModal, showReviewModal,
     handleFinalSubmit, isSubmittingFinal, showNotes, setShowNotes,
     handleUpdateSavedEntry, handleCreateEntryNote, handleUpdateEntryNote,
     handleDeleteEntryNote, handleAddEntryImage, handleDeleteEntryImage,
-    handleIniciar, handleCancelar, iniciando, cancelando
+    handleIniciar, handleCancelar, handleCerrar, handleReabrir, handleFinalizar,
+    iniciando, cancelando, cerrando, reabriendo, finalizando
   };
 
   // Renderizado Condicional por Breakpoint
