@@ -1,5 +1,5 @@
-import { Icon } from '@/components/ui/z_index';
-import { cn } from '@/utils/cn';
+import { Table, Skeleton, Icon } from "@/components/ui/z_index";
+import { cn } from "@/utils/cn";
 import { AREA_MAP, CLASIFICACION_MAP, ESTADO_TAREA_MAP, PRIORIDAD_MAP, LINEA_MAP } from '../../constants';
 import { formatFecha, isPastDate } from '@/lib/date';
 import { Pencil, Settings2, Trash2, StickyNote, Plus, X } from 'lucide-react';
@@ -15,7 +15,7 @@ const ESTADO_STYLES = {
   CANCELADA: 'bg-red-50 text-red-700 border-red-200',
 };
 
-// Componente de Nota Editable (Reutilizado de EntryCard logic)
+// Componente de Nota Editable
 const EditableNote = ({ note, onUpdate, onDelete, readOnly }) => {
   const [content, setContent] = useState(note.contenido || '');
   const [prevContenido, setPrevContenido] = useState(note.contenido);
@@ -60,7 +60,7 @@ const EditableNote = ({ note, onUpdate, onDelete, readOnly }) => {
   );
 };
 
-// Modal de Notas (Reutilizado de EntryCard logic)
+// Modal de Notas
 const EntryNotesPostIt = ({ entry, notes, onClose, onAddNote, onUpdateNote, onDeleteNote }) => {
   const [content, setContent] = useState('');
   const [saving, setSaving] = useState(false);
@@ -69,7 +69,7 @@ const EntryNotesPostIt = ({ entry, notes, onClose, onAddNote, onUpdateNote, onDe
     if (!content.trim() || saving || !onAddNote || entry.readOnly) return;
     setSaving(true);
     try {
-      const created = await onAddNote(entry.id, content.trim());
+      const created = await onAddNote(entry.id || entry.tempId, content.trim());
       if (created !== false) setContent('');
     } finally {
       setSaving(false);
@@ -99,8 +99,14 @@ const EntryNotesPostIt = ({ entry, notes, onClose, onAddNote, onUpdateNote, onDe
             </div>
           ) : (
             <div className="space-y-4">
-              {notes.map((note) => (
-                <EditableNote key={note.id} note={note} onUpdate={onUpdateNote} onDelete={onDeleteNote} readOnly={entry.readOnly} />
+              {notes.map((note, idx) => (
+                <EditableNote 
+                  key={note.id || idx} 
+                  note={note} 
+                  onUpdate={(id, c) => onUpdateNote(entry.id || entry.tempId, id || idx, c)} 
+                  onDelete={(id) => onDeleteNote(entry.id || entry.tempId, id || idx)} 
+                  readOnly={entry.readOnly} 
+                />
               ))}
             </div>
           )}
@@ -122,25 +128,37 @@ const EntryNotesPostIt = ({ entry, notes, onClose, onAddNote, onUpdateNote, onDe
   );
 };
 
-// Componente para previsualización en hover en la tabla usando PORTAL para no quedar atrapado
+// Componente para previsualización en hover en la tabla usando PORTAL de alta visibilidad
 const TableImagePreview = ({ images, onClick }) => {
   const [showHover, setShowHover] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [coords, setCoords] = useState({ x: 0, y: 0 });
   const containerRef = useRef(null);
 
+  // Efecto de carrusel automático si hay más de una imagen
+  useEffect(() => {
+    if (!images || images.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % images.length);
+    }, 3000); // Cambia cada 3 segundos
+
+    return () => clearInterval(interval);
+  }, [images]);
+
   if (!images || images.length === 0) return <span className="text-[11px] text-slate-300">—</span>;
-  const mainImg = images[0].preview || images[0].url;
+  
+  const currentImg = images[currentIndex]?.preview || images[currentIndex]?.url;
 
   const handleMouseEnter = () => {
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
-      // Posicionamiento inteligente: Detectar si hay espacio a la derecha, si no, ponerlo a la izquierda
       const spaceRight = window.innerWidth - rect.right;
-      const xPos = spaceRight > 350 ? rect.right + 20 : rect.left - 340;
+      const xPos = spaceRight > 420 ? rect.right + 25 : rect.left - 410;
       
       setCoords({
         x: xPos,
-        y: rect.top + (rect.height / 2)
+        y: Math.max(200, Math.min(window.innerHeight - 200, rect.top + (rect.height / 2)))
       });
       setShowHover(true);
     }
@@ -148,37 +166,59 @@ const TableImagePreview = ({ images, onClick }) => {
   
   return (
     <div 
-      ref={containerRef}
-      className="relative flex items-center justify-center"
-      onMouseEnter={handleMouseEnter}
+      ref={containerRef} 
+      className="relative flex items-center justify-center p-1" 
+      onMouseEnter={handleMouseEnter} 
       onMouseLeave={() => setShowHover(false)}
     >
       <div 
-        className="h-24 w-24 min-w-[6rem] shrink-0 rounded-2xl border border-slate-200 overflow-hidden shadow-sm bg-slate-100/80 relative z-10 cursor-pointer flex items-center justify-center p-1.5 hover:shadow-md transition-shadow"
+        className="h-28 w-28 min-w-[7rem] shrink-0 rounded-2xl border-2 border-slate-100 bg-white relative z-10 cursor-pointer p-1 hover:border-marca-primario/30 transition-all group" 
         onClick={onClick}
       >
-        <img src={mainImg} alt="Preview" className="h-full w-full object-contain rounded-xl drop-shadow-sm" />
+        <div className="relative w-full h-full rounded-xl overflow-hidden shadow-sm">
+          {images.map((img, i) => (
+            <img 
+              key={i}
+              src={img.preview || img.url} 
+              alt={`Preview ${i}`} 
+              className={cn(
+                "absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ease-in-out group-hover:scale-110",
+                i === currentIndex ? "opacity-100 z-10" : "opacity-0 z-0"
+              )}
+            />
+          ))}
+        </div>
+        
+        {/* Overlay indicador de cantidad */}
         {images.length > 1 && (
-          <div className="absolute bottom-0 right-0 bg-slate-900/85 px-2 py-1 text-[8px] font-black text-white rounded-tl-xl z-20 shadow-md">
-            +{images.length - 1}
+          <div className="absolute top-1.5 right-1.5 bg-slate-900/80 backdrop-blur-md px-2 py-1 text-[9px] font-black text-white rounded-lg z-20 shadow-lg border border-white/20">
+            {currentIndex + 1}/{images.length} FOTOS
           </div>
         )}
+
+        {/* Lupa sutil central */}
+        <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+           <Icon name="zoom_in" size="24px" className="text-white drop-shadow-md" />
+        </div>
       </div>
-      
-      {/* Hover Card con PORTAL - Evita recortes por overflow */}
+
+      {/* SUPER PREVIEW (Portal) — Renderiza una versión mucho más grande en hover */}
       {showHover && createPortal(
         <div 
-          className="fixed z-[99999] pointer-events-none animate-in fade-in zoom-in-95 duration-200"
+          className="fixed z-99999 pointer-events-none animate-in fade-in zoom-in-95 duration-200" 
           style={{ 
             left: coords.x, 
             top: coords.y, 
             transform: 'translateY(-50%)' 
           }}
         >
-          <div className="bg-white p-2 rounded-[2.5rem] shadow-[0_30px_90px_rgba(0,0,0,0.45)] border border-slate-200 w-80 h-80 flex items-center justify-center relative overflow-hidden">
-            <img src={mainImg} alt="Preview Zoom" className="w-full h-full object-contain rounded-2xl" />
+          <div className="bg-white p-3 rounded-[2.5rem] shadow-[0_40px_100px_rgba(0,0,0,0.35)] border border-slate-200 w-[380px] h-[380px] flex flex-col items-center justify-center relative overflow-hidden ring-4 ring-slate-100/50">
+            <img src={currentImg} alt="Preview Zoom" className="w-full h-full object-contain rounded-3xl drop-shadow-xl animate-in fade-in duration-500" />
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900/90 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black text-white uppercase tracking-[0.2em] shadow-2xl">
+               Previsualización Rápida
+            </div>
           </div>
-        </div>,
+        </div>, 
         document.body
       )}
     </div>
@@ -186,8 +226,8 @@ const TableImagePreview = ({ images, onClick }) => {
 };
 
 export const EntryTable = ({ 
-  entries, departamento, onOrganize, onRemoveDraft, onUpdateDraft, 
-  onUpdateSaved, onCreateNote, onUpdateNote, onDeleteNote, onChangeStatus, users 
+  entries, departamento, onOrganize, onRemove, onEdit, 
+  onCreateNote, onUpdateNote, onDeleteNote, onChangeStatus, users 
 }) => {
   const [viewerIndex, setViewerIndex] = useState(null);
   const [activeEntryImages, setActiveEntryImages] = useState([]);
@@ -198,214 +238,136 @@ export const EntryTable = ({
     setViewerIndex(0);
   };
 
+  const columns = [
+    {
+      header: "#",
+      accessorKey: "index",
+      headerClassName: "w-[4%] min-w-[50px]",
+      cell: (row) => {
+        const isDraft = Boolean(row.tempId);
+        if (isDraft) return <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2 py-0.5 text-[8px] font-black uppercase tracking-widest text-emerald-700 whitespace-nowrap">Borrador</span>;
+        return <span className="text-slate-400 font-mono text-xs">#{entries.indexOf(row) + 1}</span>;
+      }
+    },
+    {
+      header: "Adjuntos",
+      accessorKey: "adjuntos",
+      align: "center",
+      headerClassName: "w-[10%] min-w-[150px]",
+      cell: (row) => {
+        const allImages = [...(row._localImages || []), ...(row.imagenes || row.images || [])];
+        return <TableImagePreview images={allImages} onClick={() => openViewer(allImages)} />;
+      }
+    },
+    {
+      header: "Descripción",
+      accessorKey: "descripcion",
+      headerClassName: "w-[30%] min-w-[250px]",
+      cell: (row) => (
+        <span className="block text-[13px] font-semibold text-slate-800 leading-relaxed line-clamp-3" title={row.descripcion}>
+          {row.descripcion || 'Sin descripción'}
+        </span>
+      )
+    },
+    {
+      header: "Línea",
+      accessorKey: "linea",
+      align: "center",
+      headerClassName: "w-[10%] min-w-[100px]",
+      cell: (row) => {
+        const isMarketing = departamento === 'MARKETING';
+        const lineInfo = isMarketing ? { label: 'Campaña', color: '#8b5cf6' } : (LINEA_MAP[row.linea] || { label: row.linea || '—', color: '#64748b' });
+        return (
+          <div className="flex flex-col items-center justify-center gap-0.5">
+            <div className="flex items-center justify-center">
+              {isMarketing ? <Icon name="campaign" size="28px" style={{ color: lineInfo.color }} /> : <LineIconSelector type={row.linea} size={60} style={{ color: lineInfo.color }} />}
+            </div>
+            <span className="text-[7px] font-black uppercase tracking-widest font-mono leading-none text-center" style={{ color: lineInfo.color }}>{lineInfo.label}</span>
+          </div>
+        );
+      }
+    },
+    {
+      header: "Clasificación",
+      accessorKey: "clasificacion",
+      align: "center",
+      headerClassName: "w-[10%] min-w-[120px]",
+      cell: (row) => {
+        const clasif = CLASIFICACION_MAP[row.clasificacion];
+        if (!clasif) return <span className="text-[11px] text-slate-300">—</span>;
+        return (
+          <span className="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-[9px] font-black uppercase tracking-widest whitespace-nowrap border" style={{ backgroundColor: `${clasif.color}08`, color: clasif.color, borderColor: `${clasif.color}20` }}>
+            <Icon name={clasif.icon} size="12px" />
+            {clasif.label}
+          </span>
+        );
+      }
+    },
+    {
+      header: "Estado",
+      accessorKey: "estado",
+      align: "center",
+      headerClassName: "w-[10%] min-w-[110px]",
+      cell: (row) => {
+        const estadoActual = row.estado || (row.tipo === 'TAREA' || row.tipo === 'RECORDATORIO' ? 'PENDIENTE' : null);
+        const estado = estadoActual ? ESTADO_TAREA_MAP[estadoActual] : null;
+        if (!estado) return <span className="text-[11px] text-slate-300">—</span>;
+        return (
+          <span className={cn('inline-flex items-center gap-1.5 rounded-xl border px-3 py-1 text-[9px] font-black uppercase tracking-widest whitespace-nowrap shadow-xs', ESTADO_STYLES[estadoActual] || 'bg-slate-50 text-slate-600 border-slate-200')}>
+            {estado.label}
+          </span>
+        );
+      }
+    },
+    {
+      header: "Vence",
+      accessorKey: "fechaVencimiento",
+      align: "center",
+      headerClassName: "w-[10%] min-w-[100px]",
+      cell: (row) => {
+        const isDraft = Boolean(row.tempId);
+        const overdue = !isDraft && row.fechaVencimiento && row.estado !== 'CERRADA' && row.estado !== 'EN_REVISION' && isPastDate(row.fechaVencimiento);
+        if (!row.fechaVencimiento) return <span className="text-[11px] text-slate-300">—</span>;
+        return <span className={cn('text-[11px] font-bold font-mono', overdue ? 'text-red-600 animate-pulse' : 'text-slate-500')}>{formatFecha(row.fechaVencimiento)}</span>;
+      }
+    },
+    {
+      header: "Acciones",
+      accessorKey: "acciones",
+      align: "center",
+      headerClassName: "w-[12%] min-w-[150px]",
+      cell: (row) => {
+        const isDraft = Boolean(row.tempId);
+        const entryNotes = row.notas || [];
+        return (
+          <div className="flex items-center gap-1.5 justify-center">
+            <button onClick={(e) => { e.stopPropagation(); setActiveNotesEntry(row); }} className={cn("h-8 flex items-center gap-1 px-2 rounded-xl border transition-all active:scale-95 shadow-xs bg-white", entryNotes.length > 0 ? "border-amber-300 text-amber-700 bg-amber-50" : "border-slate-200 text-slate-400 hover:text-amber-600")} title="Notas de la tarea"><StickyNote size={15} /><span className="text-[10px] font-black">{entryNotes.length}</span></button>
+            <button onClick={() => onEdit(row)} className="h-8 w-8 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-slate-900 bg-white shadow-xs active:scale-90 transition-all" title="Editar"><Pencil size={15} /></button>
+            {!isDraft && <button onClick={() => onOrganize(row)} className="h-8 w-8 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-slate-900 bg-white shadow-xs active:scale-90 transition-all" title="Organizar"><Settings2 size={15} /></button>}
+            <button onClick={() => onRemove(row.id || row.tempId)} className="h-8 w-8 flex items-center justify-center rounded-xl border border-rose-100 text-rose-400 hover:bg-rose-500 hover:text-white bg-white active:scale-90 transition-all shadow-xs" title="Descartar"><Trash2 size={15} /></button>
+          </div>
+        );
+      }
+    }
+  ];
+
   return (
     <>
-      <div className="overflow-auto rounded-2xl border border-slate-200 bg-white shadow-sm max-h-[70vh] scrollbar-thin relative">
-        <table className="w-full min-w-[85rem] border-collapse relative table-fixed">
-          <thead className="sticky top-0 z-40 shadow-sm">
-            <tr className="bg-slate-50 text-[9px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-200 text-center">
-              <th className="px-3 py-4 text-left w-14 bg-slate-50 border-b border-slate-200">#</th>
-              <th className="px-3 py-4 w-40 bg-slate-50 border-b border-slate-200 text-center">Adjuntos</th>
-              <th className="px-3 py-4 text-left w-auto bg-slate-50 border-b border-slate-200">Descripción</th>
-              <th className="px-3 py-4 w-28 bg-slate-50 border-b border-slate-200 text-center">Línea</th>
-              <th className="px-3 py-4 w-32 bg-slate-50 border-b border-slate-200 text-center">Clasif.</th>
-              <th className="px-3 py-4 w-28 bg-slate-50 border-b border-slate-200 text-center">Estado</th>
-              <th className="px-3 py-4 w-28 bg-slate-50 border-b border-slate-200 text-center">Prioridad</th>
-              <th className="px-3 py-4 w-32 bg-slate-50 border-b border-slate-200 text-center">Vence</th>
-              <th className="px-3 py-4 w-20 bg-slate-50 border-b border-slate-200 text-center">Resp.</th>
-              <th className="px-3 py-4 w-44 bg-slate-50 border-b border-slate-200 text-center">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {entries.map((entry, idx) => {
-              const isDraft = Boolean(entry.tempId);
-              const overdue = !isDraft && entry.fechaVencimiento && entry.estado !== 'CERRADA' && entry.estado !== 'EN_REVISION' && isPastDate(entry.fechaVencimiento);
-              const clasif = CLASIFICACION_MAP[entry.clasificacion];
-              const estadoActual = entry.estado || (entry.tipo === 'TAREA' || entry.tipo === 'RECORDATORIO' ? 'PENDIENTE' : null);
-              const estado = estadoActual ? ESTADO_TAREA_MAP[estadoActual] : null;
-              const prioridad = PRIORIDAD_MAP[entry.prioridad];
-              const assignee = entry.asignaciones?.[0]?.usuario;
-              const allImages = [...(entry._localImagenes || []), ...(entry.imagenes || [])];
-              const entryNotes = entry.notas || [];
-
-              const isMarketing = departamento === 'MARKETING';
-              const lineInfo = isMarketing
-                  ? { label: 'Campaña', color: '#8b5cf6' }
-                  : (LINEA_MAP[entry.linea] || {
-                      label: entry.linea || '—',
-                      color: '#64748b'
-                  });
-
-              const getRowStyles = () => {
-                if (isDraft) return 'bg-emerald-50/40 hover:bg-emerald-100/60 ring-1 ring-emerald-500/5';
-                if (overdue) return 'bg-red-50/40 hover:bg-red-100/60 ring-1 ring-red-500/10';
-                
-                switch (estadoActual) {
-                  case 'PENDIENTE': return 'bg-amber-50/30 hover:bg-amber-100/50';
-                  case 'EN_REVISION': return 'bg-blue-50/30 hover:bg-blue-100/50';
-                  case 'CERRADA': return 'bg-emerald-50/10 hover:bg-emerald-100/20 opacity-80';
-                  case 'CANCELADA': return 'bg-red-50/10 hover:bg-red-100/20 opacity-80';
-                  default: return 'bg-white hover:bg-slate-50/80';
-                }
-              };
-
-              return (
-                <tr
-                  key={entry.id || entry.tempId}
-                  className={cn(
-                    'transition-all duration-200 border-b border-slate-100 last:border-b-0',
-                    getRowStyles()
-                  )}
-                >
-                  {/* # */}
-                  <td className="px-4 py-4 text-[12px] font-medium text-slate-700 align-middle">
-                    {isDraft ? (
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-emerald-700 shadow-xs">
-                        Borrador
-                      </span>
-                    ) : (
-                      <span className="text-slate-400 font-bold text-xs">#{idx + 1}</span>
-                    )}
-                  </td>
-
-                  {/* Img Preview */}
-                  <td className="px-3 py-3 text-center relative align-middle">
-                    <TableImagePreview images={allImages} onClick={() => openViewer(allImages)} />
-                  </td>
-
-                  {/* Descripción */}
-                  <td className="px-4 py-4 align-middle text-left">
-                    <span className="block text-[13px] font-semibold text-slate-800 leading-relaxed line-clamp-3" title={entry.descripcion}>
-                      {entry.descripcion || 'Sin descripción'}
-                    </span>
-                  </td>
-
-                  {/* Línea (ICONOS GRANDES RECUPERADOS) */}
-                  <td className="px-3 py-3 align-middle text-center">
-                    <div className="flex flex-col items-center justify-center gap-1">
-                        <div className="flex items-center justify-center">
-                            {isMarketing ? (
-                                <Icon name="campaign" size="32px" style={{ color: lineInfo.color }} />
-                            ) : (
-                                <LineIconSelector type={entry.linea} size={70} style={{ color: lineInfo.color }} />
-                            )}
-                        </div>
-                        <span className="text-[7px] font-black uppercase tracking-[0.2em] font-mono text-center leading-none" style={{ color: lineInfo.color }}>
-                            {lineInfo.label}
-                        </span>
-                    </div>
-                  </td>
-
-                  {/* Clasificación */}
-                  <td className="px-3 py-3 align-middle text-center">
-                    {clasif ? (
-                      <span
-                        className="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[9px] font-black uppercase tracking-widest whitespace-nowrap shadow-xs"
-                        style={{ backgroundColor: `${clasif.color}10`, color: clasif.color, border: `1px solid ${clasif.color}20` }}
-                      >
-                        <Icon name={clasif.icon} size="12px" className="shrink-0" />
-                        {clasif.label}
-                      </span>
-                    ) : (
-                      <span className="text-[11px] text-slate-300">—</span>
-                    )}
-                  </td>
-
-                  {/* Estado */}
-                  <td className="px-3 py-3 text-center align-middle">
-                    {estado ? (
-                      <span className={cn('inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-[9px] font-black uppercase tracking-widest whitespace-nowrap shadow-xs', ESTADO_STYLES[estadoActual] || 'bg-slate-50 text-slate-600 border-slate-200')}>
-                        {estado.label}
-                      </span>
-                    ) : (
-                      <span className="text-[11px] text-slate-300">—</span>
-                    )}
-                  </td>
-
-                  {/* Prioridad */}
-                  <td className="px-3 py-3 align-middle text-center">
-                    {prioridad ? (
-                      <span className="inline-flex items-center gap-1.5 text-[10px] font-black tracking-wide whitespace-nowrap" style={{ color: prioridad.color }}>
-                        <Icon name={prioridad.icon} size="14px" />
-                        {prioridad.label}
-                      </span>
-                    ) : (
-                      <span className="text-[11px] text-slate-300">—</span>
-                    )}
-                  </td>
-
-                  {/* Vence */}
-                  <td className="px-3 py-3 whitespace-nowrap align-middle text-center">
-                    {entry.fechaVencimiento ? (
-                      <span className={cn('text-[11px] font-bold font-mono', overdue ? 'text-red-600' : 'text-slate-500')}>
-                        {formatFecha(entry.fechaVencimiento)}
-                      </span>
-                    ) : (
-                      <span className="text-[11px] text-slate-300">—</span>
-                    )}
-                  </td>
-
-                  {/* Encargado (Avatar Circular) */}
-                  <td className="px-3 py-3 text-center align-middle">
-                    {assignee ? (
-                      <div className="relative group/tooltip inline-block cursor-help">
-                        <div className="h-8 w-8 rounded-full border-2 border-white overflow-hidden bg-slate-100 flex items-center justify-center text-slate-600 font-black text-[10px] shadow-md mx-auto">
-                          {assignee.imagen ? (
-                            <img src={assignee.imagen} alt={assignee.nombre} className="h-full w-full object-cover" />
-                          ) : (
-                            assignee.nombre.charAt(0)
-                          )}
-                        </div>
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-xs bg-slate-900 text-white text-[10px] font-bold py-1.5 px-3 rounded-lg shadow-xl opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all pointer-events-none z-50">
-                          {assignee.nombre}
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900" />
-                        </div>
-                      </div>
-                    ) : (
-                      <span className="text-[11px] text-slate-300">—</span>
-                    )}
-                  </td>
-
-                  {/* Acciones */}
-                  <td className="px-3 py-3 align-middle">
-                    <div className="flex items-center gap-2 justify-center">
-                      {!isDraft && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setActiveNotesEntry(entry); }}
-                          className={cn(
-                            "h-8 flex items-center gap-1 px-2 rounded-xl border transition-all active:scale-95 shadow-xs bg-white",
-                            entryNotes.length > 0 ? "border-amber-300 text-amber-700 bg-amber-50" : "border-slate-200 text-slate-400 hover:text-amber-600"
-                          )}
-                          title="Notas de la tarea"
-                        >
-                          <StickyNote size={15} />
-                          <span className="text-[10px] font-black">{entryNotes.length}</span>
-                        </button>
-                      )}
-                      
-                      <button onClick={() => isDraft ? onUpdateDraft?.(entry) : onUpdateSaved?.(entry.id, entry)} className="h-8 w-8 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-slate-900 bg-white shadow-xs active:scale-90 transition-all" title="Editar">
-                        <Pencil size={15} />
-                      </button>
-                      <button onClick={() => onOrganize?.(entry)} className="h-8 w-8 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-slate-900 bg-white shadow-xs active:scale-90 transition-all" title="Organizar">
-                        <Settings2 size={15} />
-                      </button>
-                      {isDraft && (
-                        <button onClick={() => onRemoveDraft?.(entry.tempId)} className="h-8 w-8 flex items-center justify-center rounded-xl border border-rose-100 text-rose-400 hover:bg-rose-500 hover:text-white bg-white active:scale-90 transition-all shadow-xs" title="Eliminar borrador">
-                          <Trash2 size={15} />
-                        </button>
-                      )}
-                      {!isDraft && entry.tipo === 'TAREA' && onChangeStatus && (
-                        <button onClick={() => onChangeStatus(entry.id, entry)} className="h-8 w-8 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-slate-900 bg-white shadow-xs active:scale-90 transition-all" title="Cambiar estado">
-                          <Icon name="swap_horiz" size="18px" />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
+        <Table
+          columns={columns}
+          data={entries}
+          keyField={(row) => row.id || row.tempId}
+          loading={false}
+          emptyMessage="No hay entradas registradas aún."
+          rowClassName={(row) => {
+            const isDraft = Boolean(row.tempId);
+            const isClosed = row.estado === 'CERRADA';
+            if (isDraft) return 'bg-emerald-50/20 hover:bg-emerald-50/40 border-l-4 border-l-emerald-400';
+            if (isClosed) return 'opacity-70 grayscale bg-slate-50/50';
+            return 'hover:bg-slate-50 transition-colors';
+          }}
+        />
       </div>
 
       {activeNotesEntry && (

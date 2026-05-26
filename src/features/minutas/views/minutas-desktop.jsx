@@ -131,7 +131,7 @@ export const MinutasDesktop = ({
             <div className="flex justify-between items-end mb-1">
                 <div>
                     <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight fuente-titulos">
-                        Directorio
+                        Minutas
                     </h1>
                     <p className="text-sm text-slate-500 mt-1 font-medium">
                         {estadoFilter === 'ACTIVA' 
@@ -271,9 +271,9 @@ export const MinutasDesktop = ({
             {viewMode === 'cards' ? (
                 <div className="flex flex-col gap-6">
                     {loading ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {Array.from({ length: 6 }).map((_, i) => (
-                                <div key={i} className="bg-white border border-slate-200 rounded-2xl h-48 animate-pulse" />
+                                <div key={i} className="bg-white border border-slate-200 rounded-[1.5rem] h-44 animate-pulse" />
                             ))}
                         </div>
                     ) : !hasContent ? (
@@ -290,11 +290,12 @@ export const MinutasDesktop = ({
                         dateGroups.map((group) => (
                             <div key={group.key}>
                                 {/* ENCABEZADO DE FECHA — como en el mockup Stitch */}
-                                <h2 className="text-xl font-black text-slate-900 fuente-titulos tracking-tight mb-3 pl-1">
+                                <h2 className="text-xl font-black text-slate-900 fuente-titulos tracking-tight mb-4 pl-1 flex items-center gap-3">
+                                    <span className="w-1.5 h-6 bg-marca-primario rounded-full" />
                                     {formatDateHeader(group.date)}
                                 </h2>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {group.minutas.map(minuta => (
                                         <MinutaCard 
                                             key={minuta.id} 

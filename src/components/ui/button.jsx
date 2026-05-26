@@ -28,6 +28,7 @@ const variants = {
   silver: 'bg-slate-300 hover:bg-slate-400 text-slate-700', // Gris medio
   light: 'bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200', // Gris muy claro
   soft: 'bg-white hover:bg-slate-100 text-slate-400 border border-transparent hover:border-slate-200', // Casi blanco
+  neutro: 'bg-slate-200 hover:bg-slate-300 text-slate-600 border border-slate-300/50', // Gris neutro solicitado
 
   // --- VARIANTES DE INTERFAZ Y COLORES EXTRA ---
   secundario: 'bg-marca-secundario hover:brightness-110 text-white',

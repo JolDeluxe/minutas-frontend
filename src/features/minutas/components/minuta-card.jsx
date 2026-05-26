@@ -84,7 +84,7 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, badge = null, isAdmin
     return (
         <Card 
             className={cn(
-                "transition-all duration-200 overflow-hidden group border cursor-pointer relative rounded-2xl shadow-sm hover:shadow-lg",
+                "transition-all duration-300 overflow-hidden group border cursor-pointer relative rounded-[1.5rem] shadow-sm hover:shadow-xl flex flex-col h-full",
                 finalBadgeCfg ? finalBadgeCfg.border : "border-slate-200/80",
                 isAdmin 
                     ? (isMarketing 
@@ -97,112 +97,115 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, badge = null, isAdmin
             {/* Badge: Junta Actual / Junta Anterior / Pendiente */}
             {finalBadgeCfg && (
                 <div className={cn(
-                    "absolute top-0 left-0 text-white text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-br-xl z-10",
+                    "absolute top-0 left-0 text-white text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-br-xl z-10 shadow-sm",
                     finalBadgeCfg.bg
                 )}>
                     {finalBadgeCfg.label}
                 </div>
             )}
 
-            <div className="p-4">
-                {/* Fila 1: ID + Departamento (Admin) + Estado */}
-                <div className="flex justify-between items-center mb-2">
-                    <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-mono font-bold text-slate-400 tracking-wide">
-                            MN-{String(minuta.id).padStart(3, '0')}
-                        </span>
-                        {isAdmin && (
-                            <span className={cn(
-                                "px-1.5 py-0.5 text-[8.5px] font-black uppercase tracking-wider rounded border",
-                                isMarketing 
-                                    ? "bg-purple-50 text-purple-700 border-purple-200/60" 
-                                    : "bg-blue-50 text-blue-700 border-blue-200/60"
-                            )}>
-                                {isMarketing ? 'Marketing' : 'Diseño'}
-                            </span>
-                        )}
-                    </div>
-                    <div className={cn(
-                        "flex items-center gap-1.5 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-md border",
-                        estadoColor
-                    )}>
-                        {minuta.estado === 'ACTIVA' && (
-                            <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                            </span>
-                        )}
-                        {estadoLabel}
-                    </div>
-                </div>
-
-                {/* Fila 2: TÍTULO GRANDE */}
-                <h3 className="font-extrabold text-slate-900 text-lg leading-tight line-clamp-2 mb-3 fuente-titulos">
-                    {minuta.titulo}
-                </h3>
-
-                {/* Fila 3: Metadatos — Fecha + Línea */}
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-3 text-[11px] text-slate-500">
-                    <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200/60">
-                        <Icon name="event" size="14px" className="text-slate-400" />
-                        <span className="font-bold text-slate-600">{fechaReal}</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-1 px-2.5 py-1.5 rounded-xl" style={{ backgroundColor: `${lineInfo.color}0a`, border: `1.5px solid ${lineInfo.color}25` }}>
+            <div className="flex flex-row p-4 gap-4 h-full">
+                
+                {/* COLUMNA 1: IDENTIDAD VISUAL (Icono + Línea) */}
+                <div className="flex flex-col items-center justify-center shrink-0 w-[82px] sm:w-[96px] h-full border-r border-slate-100/50 pr-4">
+                    <div className="flex flex-col items-center justify-center w-full aspect-square rounded-[1.25rem] mb-2 transition-transform duration-500 group-hover:scale-105" style={{ backgroundColor: `${lineInfo.color}0f`, border: `1.5px solid ${lineInfo.color}25` }}>
                         {isMarketing ? (
                             <Icon name="campaign" size="35px" style={{ color: lineInfo.color }} />
                         ) : (
                             <LineIconSelector type={minuta.lineaDefault} size={60} style={{ color: lineInfo.color }} />
                         )}
-                        <span className="font-black tracking-[0.15em] text-[6px] uppercase font-mono text-center leading-none" style={{ color: lineInfo.color }}>
-                            {lineInfo.label}
-                        </span>
                     </div>
+                    <span className="font-black tracking-[0.1em] text-[7px] sm:text-[8px] uppercase font-mono text-center leading-none px-1" style={{ color: lineInfo.color }}>
+                        {lineInfo.label}
+                    </span>
                 </div>
 
-                {/* Fila 4: Barra de progreso + conteo de tareas */}
-                {totalTareas > 0 ? (
-                    <div>
-                        <div className="relative h-2 rounded-full bg-slate-100 overflow-hidden mb-1.5">
-                            <div 
-                                className={cn(
-                                    "absolute inset-y-0 left-0 rounded-full transition-all duration-700",
-                                    porcentaje < 100 
-                                        ? "bg-gradient-to-r from-amber-500 to-amber-400" 
-                                        : "bg-gradient-to-r from-emerald-500 to-emerald-400"
-                                )}
-                                style={{ width: `${porcentaje}%` }}
-                            />
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <div className="flex items-center gap-0.5" title="Completadas">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                    <span className="text-[10px] font-bold font-mono text-slate-500">{completadas}</span>
-                                </div>
-                                {enProgreso > 0 && (
-                                    <div className="flex items-center gap-0.5" title="En progreso">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                                        <span className="text-[10px] font-bold font-mono text-slate-500">{enProgreso}</span>
-                                    </div>
-                                )}
-                                {atrasadas > 0 && (
-                                    <div className="flex items-center gap-0.5 animate-pulse" title="Atrasadas">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                                        <span className="text-[10px] font-black font-mono text-red-600">{atrasadas}</span>
-                                    </div>
-                                )}
-                            </div>
-                            <span className="text-[10px] font-bold text-slate-400">
-                                <span className="font-black text-slate-600">{completadas}/{totalTareas}</span> tareas · {porcentaje}%
+                {/* COLUMNA 2: INFORMACIÓN DETALLADA */}
+                <div className="flex flex-col flex-1 min-w-0 h-full">
+                    
+                    {/* Header: MN-ID + Dept + Estado */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[10px] font-mono font-bold text-slate-400 tracking-wide">
+                                MN-{String(minuta.id).padStart(3, '0')}
                             </span>
+                            {isAdmin && (
+                                <span className={cn(
+                                    "px-1.5 py-0.5 text-[7px] sm:text-[8px] font-black uppercase tracking-wider rounded border",
+                                    isMarketing 
+                                        ? "bg-purple-100/50 text-purple-700 border-purple-200/40" 
+                                        : "bg-blue-100/50 text-blue-700 border-blue-200/40"
+                                )}>
+                                    {isMarketing ? 'Marketing' : 'Diseño'}
+                                </span>
+                            )}
+                        </div>
+                        <div className={cn(
+                            "flex items-center gap-1 px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider rounded-md border shrink-0",
+                            estadoColor
+                        )}>
+                            {minuta.estado === 'ACTIVA' && (
+                                <span className="relative flex h-1.5 w-1.5">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                                </span>
+                            )}
+                            {estadoLabel}
                         </div>
                     </div>
-                ) : (
-                    <div className="flex items-center gap-1.5 text-slate-400">
-                        <Icon name="format_list_bulleted" size="14px" />
-                        <span className="text-[11px] font-medium">Sin tareas</span>
+
+                    {/* Título: Con mejor tipografía */}
+                    <h3 className="font-extrabold text-slate-900 text-[14px] sm:text-base leading-tight line-clamp-2 mb-3 fuente-titulos group-hover:text-marca-primario transition-colors">
+                        {minuta.titulo}
+                    </h3>
+
+                    {/* Footer Row: Fecha y Progreso */}
+                    <div className="mt-auto flex flex-col gap-2.5">
+                        
+                        <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200/60 w-fit">
+                            <Icon name="event" size="12px" className="text-slate-400" />
+                            <span className="text-[10px] font-bold text-slate-600">{fechaReal}</span>
+                        </div>
+
+                        {totalTareas > 0 ? (
+                            <div className="space-y-1.5">
+                                <div className="relative h-1.5 rounded-full bg-slate-100 overflow-hidden shadow-inner">
+                                    <div 
+                                        className={cn(
+                                            "absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ease-out",
+                                            porcentaje < 100 
+                                                ? "bg-gradient-to-r from-amber-500 to-amber-400" 
+                                                : "bg-gradient-to-r from-emerald-500 to-emerald-400"
+                                        )}
+                                        style={{ width: `${porcentaje}%` }}
+                                    />
+                                </div>
+                                <div className="flex items-center justify-between px-0.5">
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-0.5" title="Completadas">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                            <span className="text-[9px] font-bold font-mono text-slate-500">{completadas}</span>
+                                        </div>
+                                        {atrasadas > 0 && (
+                                            <div className="flex items-center gap-0.5 animate-pulse" title="Atrasadas">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                                <span className="text-[9px] font-black font-mono text-red-600">{atrasadas}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <span className="text-[9px] font-black font-mono text-slate-400">
+                                        {porcentaje}%
+                                    </span>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-1.5 text-slate-400 opacity-60">
+                                <Icon name="format_list_bulleted" size="12px" />
+                                <span className="text-[9px] font-bold uppercase tracking-widest">Sin tareas</span>
+                            </div>
+                        )}
                     </div>
-                )}
+                </div>
             </div>
         </Card>
     );

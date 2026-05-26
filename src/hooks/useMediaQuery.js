@@ -14,8 +14,16 @@ export function useMediaQuery(query) {
 
 // Navaja suiza directa para usar en los componentes contenedores
 export function useIsDesktop() {
-  // Tailwind lg = 1024px.
-  // true = Escritorio (lg, xl, 2xl)
-  // false = Móvil/Tablet (xs, sm, md)
-  return useMediaQuery('(min-width: 1200px)');
+  // true = Escritorio (Pantallas > 768px, incluye laptops y desktops)
+  return useMediaQuery('(min-width: 769px)');
+}
+
+export function useIsTablet() {
+  // true = Tablets (entre 426px y 768px)
+  return useMediaQuery('(min-width: 426px) and (max-width: 768px)');
+}
+
+export function useIsMobile() {
+  // true = Celulares (hasta 425px)
+  return useMediaQuery('(max-width: 425px)');
 }

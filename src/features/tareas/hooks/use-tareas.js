@@ -57,6 +57,9 @@ export const useTareas = () => {
         try { 
             const res = await createTarea(data);
             return res.data;
+        } catch (err) {
+            console.error("💥 Fallo en handleCreate Tarea:", err.response?.data || err.message);
+            throw err; // Re-lanzar para que el componente que llama sepa del error
         } finally { 
             setSubmitting(false); 
         }
@@ -89,6 +92,9 @@ export const useTareas = () => {
         try { 
             const res = await deleteTarea(id);
             return res.data;
+        } catch (err) {
+            console.error("💥 Fallo en handleDelete Tarea:", err.response?.data || err.message);
+            throw err;
         } finally { 
             setSubmitting(false); 
         }

@@ -8,12 +8,13 @@ import { EntryFeed } from '../components/timeline/entry-feed';
 import { StickyNotesBoard } from '../components/notes/sticky-notes-board';
 import { MobileQuickComposer } from '../components/composer/mobile-quick-composer';
 import { ReviewDraftsModal } from '../components/review-drafts-modal';
+import { EntryFormModal } from '../components/timeline/entry-form-modal';
 import { OrganizeDrawer } from '../components/organization/organize-drawer';
+import { Link } from 'react-router-dom';
+import { canAccessModule } from '@/config/modules-config';
+import { useAuthStore } from '@/stores/auth-store';
+import { AREA_MAP } from '../constants';
 
-/**
- * MinutaDetailMobileView — Vista especializada para dispositivos móviles.
- * Ajustada para que las notas salgan de lado (Drawer) sin tapar el Header ni el BottomNav.
- */
 export const MinutaDetailMobileView = ({
   minuta,
   resumen,
@@ -34,16 +35,19 @@ export const MinutaDetailMobileView = ({
   removeDraftNote,
   updateDraftEntry,
   removeDraftEntry,
-  setOrganizeEntry,
   organizeEntry,
+  setOrganizeEntry,
   handleOrganizeSave,
+  editEntry,
+  setEditEntry,
+  handleEditEntrySave,
+  isSavingEntry,
   setShowReviewModal,
   showReviewModal,
   handleFinalSubmit,
   isSubmittingFinal,
   showNotes,
   setShowNotes,
-  handleUpdateSavedEntry,
   handleCreateEntryNote,
   handleUpdateEntryNote,
   handleDeleteEntryNote,
@@ -61,39 +65,29 @@ export const MinutaDetailMobileView = ({
   cerrando,
   reabriendo,
   finalizando,
-  minutaEstado
+  minutaEstado,
+  handleDeleteEntry,
+  clearDrafts
 }) => {
   const [showPoliticas, setShowPoliticas] = useState(false);
   const [showRecordatorios, setShowRecordatorios] = useState(false);
+  const [composerExpanded, setComposerExpanded] = useState(false);
+  const { user } = useAuthStore();
+  const userRole = user?.data?.rol || user?.rol;
 
   if (!minuta) return null;
 
   return (
     <div className="flex h-full w-full flex-col bg-slate-50/50 relative overflow-hidden">
       
-      {/* 1. Header de Contexto */}
       <div className="shrink-0">
         <MinutaContextPanel 
           minuta={minuta} 
           resumen={resumen} 
           entries={filteredEntries} 
-          onFilterByStatus={(status) => {
-            setActiveFilter(prev => ({
-              ...prev,
-              estado: prev.estado === status ? null : status,
-              tipo: 'TAREA'
-            }));
-          }}
-          onFilterByTipo={(tipo) => {
-            setActiveFilter(prev => ({
-              ...prev,
-              tipo: prev.tipo === tipo ? 'TAREA' : tipo,
-              estado: null
-            }));
-          }}
-          onResetFilter={() => {
-            setActiveFilter({ tipo: 'TAREA', estado: null, clasificacion: null, area: null, linea: null, search: '' });
-          }}
+          onFilterByStatus={(status) => setActiveFilter(prev => ({ ...prev, estado: prev.estado === status ? null : status, tipo: 'TAREA' }))}
+          onFilterByTipo={(tipo) => setActiveFilter(prev => ({ ...prev, tipo: prev.tipo === tipo ? 'TAREA' : tipo, estado: null }))}
+          onResetFilter={() => setActiveFilter({ tipo: 'TAREA', estado: null, clasificacion: null, area: null, linea: null, search: '' })}
           activeFilter={activeFilter}
           onIniciar={handleIniciar}
           onCancelar={handleCancelar}
@@ -108,40 +102,22 @@ export const MinutaDetailMobileView = ({
         />
       </div>
 
-      {/* 2. Área de Feed */}
-      <main className={`flex-1 relative custom-scrollbar px-4 pt-4 ${filteredEntries.length === 0 ? 'overflow-hidden pb-4' : 'overflow-y-auto pb-32'}`}>
+      <main className={`flex-1 relative custom-scrollbar px-4 pt-4 ${filteredEntries.length === 0 ? 'overflow-hidden pb-4' : 'overflow-y-auto pb-44'}`}>
         
-        {/* Resumen Ejecutivo y Comparación (en móviles se renderizan dentro del scroll) */}
         <div className="mb-5 space-y-2">
           <MinutaExecutiveSummary 
             resumen={resumen} 
-            onFilterByStatus={(status) => {
-              setActiveFilter(prev => ({
-                ...prev,
-                estado: prev.estado === status ? null : status,
-                tipo: 'TAREA'
-              }));
-            }}
-            onFilterByTipo={(tipo) => {
-              setActiveFilter(prev => ({
-                ...prev,
-                tipo: prev.tipo === tipo ? 'TAREA' : tipo,
-                estado: null
-              }));
-            }}
-            onResetFilter={() => {
-              setActiveFilter({ tipo: 'TAREA', estado: null, clasificacion: null, area: null, linea: null, search: '' });
-            }}
+            onFilterByStatus={(status) => setActiveFilter(prev => ({ ...prev, estado: prev.estado === status ? null : status, tipo: 'TAREA' }))}
+            onFilterByTipo={(tipo) => setActiveFilter(prev => ({ ...prev, tipo: prev.tipo === tipo ? 'TAREA' : tipo, estado: null }))}
+            onResetFilter={() => setActiveFilter({ tipo: 'TAREA', estado: null, clasificacion: null, area: null, linea: null, search: '' })}
             activeFilter={activeFilter}
           />
           <MinutaJuntaComparison minutaId={minuta.id} />
         </div>
 
-        {/* Sección de Acuerdos Compactos (Mobile) */}
         {(politicasAcordadas.length > 0 || recordatoriosGenerales.length > 0) && (
           <div className="flex flex-col gap-2 mb-6">
             
-            {/* Políticas */}
             {politicasAcordadas.length > 0 && (
               <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-lg transition-all duration-300">
                 <div className="w-full flex items-center justify-between active:bg-white/5 pr-2">
@@ -175,7 +151,6 @@ export const MinutaDetailMobileView = ({
               </div>
             )}
 
-            {/* Recordatorios */}
             {recordatoriosGenerales.length > 0 && (
               <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden transition-all duration-300">
                 <div className="w-full flex items-center justify-between active:bg-slate-50 pr-2">
@@ -202,8 +177,6 @@ export const MinutaDetailMobileView = ({
                       <div key={r.id || idx} className="bg-white border border-slate-100 rounded-lg p-2 flex items-center gap-2 relative overflow-hidden shadow-xs">
                         <div className="w-0.5 h-full bg-violet-500 absolute left-0 top-0" />
                         <p className="text-slate-700 text-[10px] leading-tight flex-1 pl-1">"{r.descripcion}"</p>
-                        
-                        {/* Avatares (Mobile) */}
                         {r.asignaciones && r.asignaciones.length > 0 && (
                           <div className="flex -space-x-1 shrink-0">
                             {r.asignaciones.map((asig) => (
@@ -217,6 +190,7 @@ export const MinutaDetailMobileView = ({
                             ))}
                           </div>
                         )}
+                        <span className="text-[7px] font-mono text-slate-300 uppercase shrink-0 ml-auto">{AREA_MAP[r.area] || r.area}</span>
                       </div>
                     ))}
                   </div>
@@ -245,9 +219,9 @@ export const MinutaDetailMobileView = ({
           viewMode={viewMode}
           departamento={departamento}
           onOrganize={setOrganizeEntry}
-          onRemoveDraft={removeDraftEntry}
+          onRemove={handleDeleteEntry}
           onUpdateDraft={updateDraftEntry}
-          onUpdateSaved={handleUpdateSavedEntry}
+          onEdit={setEditEntry}
           onCreateNote={handleCreateEntryNote}
           onUpdateNote={handleUpdateEntryNote}
           onDeleteNote={handleDeleteEntryNote}
@@ -257,8 +231,7 @@ export const MinutaDetailMobileView = ({
           users={users}
         />
       </main>
-
-      {/* 3. Panel Lateral de Notas (De Lado y sin tapar layout) */}
+      
       {showNotes && (
         <>
           <div className="fixed inset-0 bg-slate-900/20 z-80" onClick={() => setShowNotes(false)} />
@@ -272,39 +245,39 @@ export const MinutaDetailMobileView = ({
               onUpdateNota={updateDraftNote}
               onDeleteNota={removeDraftNote}
               onClose={() => setShowNotes(false)}
-              isDrawer={false} // IMPORTANTE: false para que NO se renderice como BottomSheet interno
+              isDrawer={false}
             />
           </div>
         </>
       )}
 
-      {/* 4. Botones Flotantes */}
-      <div className="fixed bottom-48 right-6 z-[60] flex flex-col gap-4">
-        {draftEntries.length > 0 && (
-          <button
-            onClick={() => setShowReviewModal(true)}
-            className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-2xl active:scale-90 transition-all relative"
-          >
-            <Icon name="cloud_upload" size="32px" />
-            <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-lg animate-in zoom-in">
-              {draftEntries.length}
-            </div>
-          </button>
-        )}
-
-        <button
-          onClick={() => setShowNotes(true)}
-          className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-2xl active:scale-90 transition-all relative group"
-        >
-          <Icon name="sticky_note_2" size="32px" />
-          {/* Contador de Notas Generales */}
-          {(draftNotes.length + (minuta.notasGenerales?.length || 0)) > 0 && (
-            <div className="absolute -top-2 -right-2 w-7 h-7 bg-amber-950 text-white text-[11px] font-black rounded-full flex items-center justify-center border-2 border-amber-500 shadow-lg">
-               {draftNotes.length + (minuta.notasGenerales?.length || 0)}
-            </div>
+      {!composerExpanded && (
+        <div className="fixed bottom-48 right-6 z-[60] flex flex-col gap-4">
+          {draftEntries.length > 0 && (
+            <button
+              onClick={() => setShowReviewModal(true)}
+              className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-2xl active:scale-90 transition-all relative"
+            >
+              <Icon name="cloud_upload" size="32px" />
+              <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-lg animate-in zoom-in">
+                {draftEntries.length}
+              </div>
+            </button>
           )}
-        </button>
-      </div>
+
+          <button
+            onClick={() => setShowNotes(true)}
+            className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-2xl active:scale-90 transition-all relative group"
+          >
+            <Icon name="sticky_note_2" size="32px" />
+            {(draftNotes.length + (minuta.notasGenerales?.length || 0)) > 0 && (
+              <div className="absolute -top-2 -right-2 w-7 h-7 bg-amber-950 text-white text-[11px] font-black rounded-full flex items-center justify-center border-2 border-amber-500 shadow-lg">
+                 {draftNotes.length + (minuta.notasGenerales?.length || 0)}
+              </div>
+            )}
+          </button>
+        </div>
+      )}
 
       {(minuta?.estado === 'EN_CURSO' || minuta?.estado === 'PROGRAMADA') && (
         <MobileQuickComposer
@@ -316,10 +289,10 @@ export const MinutaDetailMobileView = ({
           estado={minuta.estado}
           onIniciar={handleIniciar}
           iniciando={iniciando}
+          onExpandedChange={setComposerExpanded}
         />
       )}
 
-      {/* 6. Modales */}
       <ReviewDraftsModal
         isOpen={showReviewModal}
         onClose={() => setShowReviewModal(false)}
@@ -328,6 +301,8 @@ export const MinutaDetailMobileView = ({
         notesCount={draftNotes.length}
         submitting={isSubmittingFinal}
         minutaEstado={minutaEstado}
+        onRemoveEntry={removeDraftEntry}
+        onClearAll={clearDrafts}
       />
 
       {organizeEntry && (
@@ -337,6 +312,18 @@ export const MinutaDetailMobileView = ({
           onClose={() => setOrganizeEntry(null)}
           entry={organizeEntry}
           onSave={handleOrganizeSave}
+          departamento={departamento}
+        />
+      )}
+
+      {editEntry && (
+        <EntryFormModal
+          key={editEntry.tempId || editEntry.id}
+          isOpen={Boolean(editEntry)}
+          onClose={() => setEditEntry(null)}
+          entry={editEntry}
+          onSave={handleEditEntrySave}
+          submitting={isSavingEntry}
           departamento={departamento}
         />
       )}

@@ -251,11 +251,11 @@ export const MinutasMobile = ({
 
             {/* Listado de Contenido (Cards / Tabla) */}
             {viewMode === 'cards' ? (
-                <div className={cn('flex flex-col gap-5 pb-24 px-1', hasPaginator && 'pb-36')}>
+                <div className={cn('flex flex-col gap-6 pb-24 px-1', hasPaginator && 'pb-36')}>
                     {loading ? (
-                        <div className="grid grid-cols-1 min-[520px]:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 min-[520px]:grid-cols-2 gap-4">
                             {Array.from({ length: 4 }).map((_, i) => (
-                                <div key={i} className="bg-white border border-slate-200 rounded-2xl h-40 animate-pulse" />
+                                <div key={i} className="bg-white border border-slate-200 rounded-[1.5rem] h-44 animate-pulse" />
                             ))}
                         </div>
                     ) : !hasContent ? (
@@ -267,11 +267,12 @@ export const MinutasMobile = ({
                         </div>
                     ) : (
                         dateGroups.map((group) => (
-                            <div key={group.key}>
-                                <h2 className="text-lg font-black text-slate-900 fuente-titulos tracking-tight mb-2 pl-1">
+                            <div key={group.key} className="mb-4">
+                                <h2 className="text-lg font-black text-slate-900 fuente-titulos tracking-tight mb-3 pl-1 flex items-center gap-2.5">
+                                    <span className="w-1 h-5 bg-marca-primario rounded-full" />
                                     {formatDateHeader(group.date)}
                                 </h2>
-                                <div className="grid grid-cols-1 min-[520px]:grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 min-[520px]:grid-cols-2 gap-4">
                                     {group.minutas.map(minuta => (
                                         <MinutaCard 
                                             key={minuta.id} 

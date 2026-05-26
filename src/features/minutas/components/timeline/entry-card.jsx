@@ -7,7 +7,7 @@ import {
   formatTime,
   getCatalogos,
 } from '../../constants';
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { 
   ChevronLeft,
@@ -31,12 +31,10 @@ import { StatusTrafficLight } from '../status-traffic-light';
 
 /**
  * ImageViewer — Modal premium para ver imágenes con navegación y zoom.
- * SE USA PORTAL PARA RENDERIZAR FUERA DE LA JERARQUÍA DEL DOM (Encima de Sidebar).
  */
 export const ImageViewer = ({ images, initialIndex, onClose }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   
-  // Bloquear el scroll del body cuando el visor está abierto
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = 'unset'; };
@@ -45,11 +43,8 @@ export const ImageViewer = ({ images, initialIndex, onClose }) => {
   if (!images || images.length === 0) return null;
   const currentImg = images[currentIndex];
 
-  // El portal renderiza esto al final del <body> para que nada (sidebar, etc) quede por encima
   return createPortal(
     <div className="fixed inset-0 z-[99999] bg-black/98 backdrop-blur-2xl flex flex-col items-center justify-center animate-in fade-in duration-300">
-      
-      {/* Botón de Cerrar con z-index superior */}
       <button 
         onClick={onClose} 
         className="absolute top-6 right-6 w-14 h-14 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-rose-600 transition-all z-[100001] shadow-2xl"
@@ -68,11 +63,7 @@ export const ImageViewer = ({ images, initialIndex, onClose }) => {
         )}
 
         <div className="relative max-w-[95vw] max-h-[90vh] flex items-center justify-center group pointer-events-auto">
-           <img 
-            src={currentImg.preview || currentImg.url} 
-            className="max-w-full max-h-full object-contain rounded-2xl shadow-[0_0_80px_rgba(0,0,0,0.8)] animate-in zoom-in-95 duration-500 select-none" 
-            alt="Vista ampliada"
-          />
+           <img src={currentImg.preview || currentImg.url} className="max-w-full max-h-full object-contain rounded-2xl shadow-[0_0_80px_rgba(0,0,0,0.8)] animate-in zoom-in-95 duration-500 select-none" alt="Vista ampliada" />
         </div>
 
         {images.length > 1 && (
@@ -85,17 +76,9 @@ export const ImageViewer = ({ images, initialIndex, onClose }) => {
         )}
       </div>
 
-      {/* Indicadores de página */}
       <div className="absolute bottom-10 flex gap-3 z-[100001]">
         {images.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setCurrentIndex(i)}
-            className={cn(
-              "h-2.5 rounded-full transition-all duration-300", 
-              i === currentIndex ? "bg-white w-10 shadow-[0_0_10px_rgba(255,255,255,0.5)]" : "bg-white/20 w-2.5 hover:bg-white/40"
-            )}
-          />
+          <button key={i} onClick={() => setCurrentIndex(i)} className={cn("h-2.5 rounded-full transition-all duration-300", i === currentIndex ? "bg-white w-10 shadow-[0_0_10px_rgba(255,255,255,0.5)]" : "bg-white/20 w-2.5 hover:bg-white/40")} />
         ))}
       </div>
     </div>,
@@ -108,7 +91,6 @@ const EditableNote = ({ note, onUpdate, onDelete, readOnly }) => {
   const [prevContenido, setPrevContenido] = useState(note.contenido);
   const textareaRef = useRef(null);
 
-  // Sincronización directa durante el render (evita renders en cascada)
   if (note.contenido !== prevContenido) {
     setPrevContenido(note.contenido);
     setContent(note.contenido || '');
@@ -148,9 +130,7 @@ const EditableNote = ({ note, onUpdate, onDelete, readOnly }) => {
         <div className="mt-3 flex items-center justify-between opacity-30">
           <Icon name="push_pin" size="10px" className="text-amber-600 rotate-12" />
           <p className="text-[8px] font-black uppercase tracking-widest text-amber-700">
-            {new Date(note.createdAt).toLocaleString('es-MX', {
-              day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
-            })}
+            {new Date(note.createdAt).toLocaleString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
           </p>
         </div>
       )}
@@ -184,17 +164,10 @@ const EntryNotesPostIt = ({ entry, notes, onClose, onAddNote, onUpdateNote, onDe
             </div>
             <div>
               <p className="text-sm font-black text-amber-950">Notas de entrada</p>
-              <p className="text-[10px] font-black uppercase tracking-widest text-amber-700/60">
-                {notes.length} registradas
-              </p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-amber-700/60">{notes.length} registradas</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-amber-700 transition-colors hover:bg-amber-100 active:scale-95"
-          >
-            <X size={20} />
-          </button>
+          <button onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-xl text-amber-700 transition-colors hover:bg-amber-100 active:scale-95"><X size={20} /></button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
@@ -204,14 +177,8 @@ const EntryNotesPostIt = ({ entry, notes, onClose, onAddNote, onUpdateNote, onDe
             </div>
           ) : (
             <div className="space-y-4">
-              {notes.map((note) => (
-                <EditableNote 
-                  key={note.id} 
-                  note={note} 
-                  onUpdate={onUpdateNote} 
-                  onDelete={onDeleteNote}
-                  readOnly={entry.readOnly}
-                />
+              {notes.map((note, idx) => (
+                <EditableNote key={note.id || idx} note={note} onUpdate={(id, c) => onUpdateNote(entry.id || entry.tempId, id || idx, c)} onDelete={(id) => onDeleteNote(entry.id || entry.tempId, id || idx)} readOnly={entry.readOnly} />
               ))}
             </div>
           )}
@@ -219,24 +186,9 @@ const EntryNotesPostIt = ({ entry, notes, onClose, onAddNote, onUpdateNote, onDe
 
         {!entry.readOnly && (
           <div className="shrink-0 border-t border-amber-200/70 bg-amber-50/70 p-4">
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Agregar nota..."
-              rows={2}
-              className="w-full resize-none rounded-2xl border border-amber-200 bg-white px-4 py-3 text-sm font-medium text-amber-950 placeholder:text-amber-300 focus:border-amber-400 focus:outline-none focus:ring-4 focus:ring-amber-300/20"
-            />
+            <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Agregar nota..." rows={2} className="w-full resize-none rounded-2xl border border-amber-200 bg-white px-4 py-3 text-sm font-medium text-amber-950 placeholder:text-amber-300 focus:border-amber-400 focus:outline-none focus:ring-4 focus:ring-amber-300/20" />
             <div className="mt-3 flex justify-end">
-              <button
-                onClick={handleAdd}
-                disabled={!content.trim() || saving}
-                className={cn(
-                  "flex items-center gap-2 rounded-2xl px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95",
-                  content.trim()
-                    ? "bg-amber-500 text-white shadow-lg shadow-amber-500/20"
-                    : "bg-white text-amber-200"
-                )}
-              >
+              <button onClick={handleAdd} disabled={!content.trim() || saving} className={cn("flex items-center gap-2 rounded-2xl px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95", content.trim() ? "bg-amber-500 text-white shadow-lg shadow-amber-500/20" : "bg-white text-amber-200")}>
                 {saving ? <Icon name="progress_activity" size="16px" className="animate-spin" /> : <Plus size={16} />}
                 Agregar nota
               </button>
@@ -250,835 +202,371 @@ const EntryNotesPostIt = ({ entry, notes, onClose, onAddNote, onUpdateNote, onDe
 };
 
 /**
- * EntryCard — Tarjeta estable para timeline.
- * Mantiene la misma composición en mobile, tablet y desktop.
+ * CardImageCarousel — Componente interno para manejar la rotación automática de imágenes en la tarjeta.
+ * Implementa un Portal para la previsualización en hover para evitar clipping por overflow:hidden.
  */
-export const EntryCard = ({ 
-  entry, 
-  departamento = 'DISENO',
-  onOrganize, 
-  onRemove,
-  onUpdate,
-  onUpdateSaved,
-  onCreateNote,
-  onUpdateNote,
-  onDeleteNote,
-  onAddImage,
-  onDeleteImage,
-  onChangeStatus,
-  users = []
-}) => {
-  const catalogos = useMemo(() => getCatalogos(departamento), [departamento]);
-  const tieneLineas = catalogos.lineas.length > 0;
-  const isDraft = Boolean(entry.tempId);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isSavedEditing, setIsSavedEditing] = useState(false);
-  const [editValue, setEditValue] = useState(entry.descripcion);
-  const [editForm, setEditForm] = useState({
-    descripcion: entry.descripcion || '',
-    area: entry.area || 'DISENO',
-    linea: entry.linea || 'CALZADO',
-    clasificacion: entry.clasificacion || 'OTROS',
-    responsables: [],
-    fechaVencimiento: '',
-    fechaSeguimiento: '',
-  });
-  const [savingEdit, setSavingEdit] = useState(false);
-  const [showNotesPanel, setShowNotesPanel] = useState(false);
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+const CardImageCarousel = ({ images, onImageClick, lineInfo, isMarketing }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [showHover, setShowHover] = useState(false);
+  const [coords, setCoords] = useState({ x: 0, y: 0 });
+  const containerRef = useRef(null);
 
+  useEffect(() => {
+    if (!images || images.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % images.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [images]);
+
+  if (!images || images.length === 0) return null;
+  const currentImg = images[currentIndex];
+
+  const handleMouseEnter = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const previewWidth = window.innerWidth < 640 ? 260 : 380;
+    const previewHeight = window.innerWidth < 640 ? 260 : 380;
+    
+    // Calcular posición X: intentar derecha, si no, izquierda
+    let x = rect.right + 20;
+    if (x + previewWidth > window.innerWidth) {
+      x = rect.left - previewWidth - 20;
+    }
+    
+    // Asegurar que no se salga por la izquierda
+    x = Math.max(20, x);
+    
+    // Calcular posición Y: centrado relativo al mouse o rect
+    let y = rect.top + (rect.height / 2);
+    
+    setCoords({ x, y });
+    setShowHover(true);
+  };
+
+  return (
+    <div className="relative group/img flex flex-col items-center gap-2 w-full" ref={containerRef}>
+      <div
+        className="relative h-24 w-24 sm:h-28 sm:w-28 shrink-0 cursor-pointer overflow-hidden rounded-[1.25rem] border-2 border-slate-200 bg-white shadow-sm flex items-center justify-center p-0.5 group-hover/img:border-marca-primario/40 transition-all active:scale-95"
+        onClick={() => onImageClick(currentIndex)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={() => setShowHover(false)}
+      >
+        <div className="relative w-full h-full rounded-[1rem] overflow-hidden bg-slate-50">
+          {images.map((img, i) => (
+            <img
+              key={i}
+              src={img.preview || img.url}
+              className={cn(
+                "absolute inset-0 h-full w-full object-cover transition-all duration-1000 ease-in-out",
+                i === currentIndex ? "opacity-100 scale-100" : "opacity-0 scale-110"
+              )}
+              alt={`Adjunto ${i + 1}`}
+            />
+          ))}
+        </div>
+        
+        {/* Pills de paginación de imagen */}
+        {images.length > 1 && (
+          <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex gap-1 z-20">
+            {images.map((_, i) => (
+              <div key={i} className={cn("h-1 rounded-full transition-all duration-300", i === currentIndex ? "bg-white w-3 shadow-sm" : "bg-white/40 w-1")} />
+            ))}
+          </div>
+        )}
+
+        {/* Lupa central sutil */}
+        <div className="absolute inset-0 bg-black/10 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+          <Icon name="zoom_in" size="20px" className="text-white drop-shadow-md" />
+        </div>
+      </div>
+
+      {/* Badge de Identidad (SIEMPRE VISIBLE) */}
+      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-slate-200 shadow-xs animate-in fade-in duration-500 max-w-full">
+         {isMarketing ? (
+            <Icon name="campaign" size="14px" style={{ color: lineInfo.color }} />
+         ) : (
+            <LineIconSelector type={lineInfo.value} size={16} style={{ color: lineInfo.color }} />
+         )}
+         <span className="text-[7px] font-black uppercase tracking-wider truncate" style={{ color: lineInfo.color }}>{lineInfo.label}</span>
+      </div>
+
+      {/* Hover flotante Ultra-Priority vía Portal */}
+      {showHover && createPortal(
+        <div 
+          className="fixed z-[999999] pointer-events-none animate-in fade-in zoom-in-95 duration-200"
+          style={{ 
+            left: coords.x, 
+            top: coords.y, 
+            transform: 'translateY(-50%)' 
+          }}
+        >
+          <div className="w-64 h-64 sm:w-[380px] sm:h-[380px] flex items-center justify-center relative overflow-hidden rounded-[2.5rem] bg-white border border-slate-200 p-2 shadow-[0_50px_120px_rgba(0,0,0,0.5)] ring-[12px] ring-white/20">
+            <img 
+              src={currentImg.preview || currentImg.url} 
+              alt="Preview Zoom" 
+              className="w-full h-full object-contain rounded-3xl drop-shadow-lg animate-in fade-in duration-500 bg-slate-50" 
+            />
+            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 bg-slate-900/90 backdrop-blur-md px-5 py-2 rounded-full text-[10px] font-black text-white uppercase tracking-[0.3em] shadow-2xl border border-white/10">
+               Vista Rápida
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+};
+
+export const EntryCard = ({ 
+  entry, departamento = 'DISENO', onOrganize, onRemove, onUpdate, onEdit,
+  onCreateNote, onUpdateNote, onDeleteNote, onAddImage, onDeleteImage, onChangeStatus, users = []
+}) => {
   const { user } = useAuthStore();
   const currentUser = user?.data || user;
   const currentUserId = currentUser?.id;
   const userRole = currentUser?.rol || 'GERENCIA';
   const isJefe = userRole === 'JEFE' || userRole === 'GERENCIA';
 
-  const estadoActual = entry.estado || 'PENDIENTE';
-  const isAsignado = entry.asignaciones?.some(asig => asig.usuarioId === currentUserId);
-  const isFormalizada = entry.tipo === 'TAREA';
-
-  const handleUpdateStatus = async (newStatus) => {
-    if (isUpdatingStatus || !onUpdateSaved) return;
-    setIsUpdatingStatus(true);
-    try {
-      if (onChangeStatus) {
-        await onChangeStatus(entry.id, { estado: newStatus });
-      } else {
-        await onUpdateSaved(entry.id, { estado: newStatus });
-      }
-    } finally {
-      setIsUpdatingStatus(false);
-    }
-  };
   const [isExpanded, setIsExpanded] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(null);
-  const textareaRef = useRef(null);
+  const [showNotesPanel, setShowNotesPanel] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
-  const clasif = CLASIFICACION_MAP[entry.clasificacion] || null;
-  const clasifLabel = clasif?.label || entry.clasificacion || 'Tipo';
-  const clasifShortLabel =
-    clasifLabel.length > 10
-      ? `${clasifLabel.slice(0, 8)}.`
-      : clasifLabel;
-  const lineaLabel = LINEA_MAP[entry.linea]?.label || entry.linea || 'N/A';
-  
-  const allImages = [
-    ...(entry._localImagenes || []),
-    ...(entry.imagenes || [])
-  ];
-  const hasImages = allImages.length > 0;
-  const entryNotes = entry.notas || [];
+  const isDraft = Boolean(entry.tempId);
   const isClosed = entry.estado === 'CERRADA';
   const isCompletado = entry.estado === 'EN_REVISION';
-  const vencida = entry.fechaVencimiento && !isCompletado && !isClosed && isPastDate(entry.fechaVencimiento);
+  const isFormalizada = entry.tipo === 'TAREA';
+  const isAsignado = entry.asignaciones?.some(asig => asig.usuarioId === currentUserId);
+  const estadoActual = entry.estado || 'PENDIENTE';
   const isOrganized = entry.tipo !== 'SIN_ORGANIZAR';
+  
+  // Lógica de Entrada Externa
+  const isExternal = (departamento === 'DISENO' && entry.area !== 'DISENO') || 
+                     (departamento === 'MARKETING' && entry.area !== 'MARKETING');
 
-  useEffect(() => {
-    if (isEditing) {
-      textareaRef.current?.focus();
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
-    }
-  }, [isEditing]);
+  const allImages = [...(entry._localImages || []), ...(entry.images || entry.imagenes || [])];
+  const hasImages = allImages.length > 0;
+  const entryNotes = entry.notas || [];
+  const vencida = entry.fechaVencimiento && !isCompletado && !isClosed && isPastDate(entry.fechaVencimiento);
 
-  const handleBlur = () => {
-    setIsEditing(false);
-    if (isDraft && editValue.trim() !== entry.descripcion && onUpdate) {
-      onUpdate(entry.tempId, { descripcion: editValue.trim() });
-    }
-  };
+  // Determinar si hay algo que mostrar en el detalle
+  const hasExtraInfo = useMemo(() => {
+    return (entry.asignaciones?.length > 0) || 
+           (entry.fechaVencimiento) || 
+           (entry.organizadoPor);
+  }, [entry]);
 
-  const handleUpdateField = (field, value) => {
-    if (isDraft && onUpdate) {
-      onUpdate(entry.tempId, { [field]: value });
-    }
-  };
-
-  const handleStartDraftEdit = () => {
-    setEditValue(entry.descripcion || '');
-    setIsEditing(true);
-  };
-
-  const handleStartSavedEdit = () => {
-    setEditForm({
-      descripcion: entry.descripcion || '',
-      area: entry.area || 'DISENO',
-      linea: entry.linea || 'CALZADO',
-      clasificacion: entry.clasificacion || 'OTROS',
-      responsables: entry.asignaciones?.map(a => a.usuarioId) || [],
-      fechaVencimiento: entry.fechaVencimiento ? new Date(entry.fechaVencimiento).toISOString().split('T')[0] : '',
-      fechaSeguimiento: entry.fechaSeguimiento ? new Date(entry.fechaSeguimiento).toISOString().split('T')[0] : '',
-    });
-    setIsSavedEditing(true);
-  };
-
-  const handleSavedField = (field, value) => {
-    setEditForm((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleCancelSavedEdit = () => {
-    setEditForm({
-      descripcion: entry.descripcion || '',
-      area: entry.area || 'DISENO',
-      linea: entry.linea || 'CALZADO',
-      clasificacion: entry.clasificacion || 'OTROS',
-      responsables: entry.asignaciones?.map(a => a.usuarioId) || [],
-      fechaVencimiento: entry.fechaVencimiento ? new Date(entry.fechaVencimiento).toISOString().split('T')[0] : '',
-      fechaSeguimiento: entry.fechaSeguimiento ? new Date(entry.fechaSeguimiento).toISOString().split('T')[0] : '',
-    });
-    setIsSavedEditing(false);
-  };
-
-  const handleSaveSavedEdit = async () => {
-    if (!onUpdateSaved || !editForm.descripcion.trim() || savingEdit) return;
-    setSavingEdit(true);
+  const handleUpdateStatus = async (newStatus) => {
+    if (isUpdatingStatus || !onChangeStatus) return;
+    setIsUpdatingStatus(true);
     try {
-      const payload = {
-        descripcion: editForm.descripcion.trim(),
-        area: editForm.area,
-        linea: editForm.linea,
-        clasificacion: editForm.clasificacion,
-      };
+      await onChangeStatus(entry.id, { estado: newStatus });
+    } finally { setIsUpdatingStatus(false); }
+  };
 
-      // Solo mandamos fechas y responsables si la entrada ya fue organizada
-      if (isOrganized) {
-        payload.responsables = editForm.responsables;
-        payload.fechaVencimiento = editForm.fechaVencimiento || null;
-        payload.fechaSeguimiento = editForm.fechaSeguimiento || null;
-      }
-
-      const updated = await onUpdateSaved(entry.id, payload);
-      if (updated !== false) setIsSavedEditing(false);
-    } finally {
-      setSavingEdit(false);
-    }
+  const clasif = CLASIFICACION_MAP[entry.clasificacion] || null;
+  const isMarketing = departamento === 'MARKETING';
+  const lineInfo = {
+    label: isMarketing ? 'Campaña' : (LINEA_MAP[entry.linea]?.label || entry.linea || '—'),
+    color: isMarketing ? '#8b5cf6' : (LINEA_MAP[entry.linea]?.color || '#64748b'),
+    value: entry.linea
   };
 
   const getCardStyles = () => {
     if (isDraft) return 'bg-emerald-50/40 hover:bg-emerald-100/60 ring-1 ring-emerald-500/10';
     if (vencida) return 'bg-red-50/40 hover:bg-red-100/60 ring-1 ring-red-500/20';
-    if (isClosed) return 'opacity-75 grayscale bg-slate-50/50 hover:bg-slate-100/60';
-    if (isEditing) return 'bg-white ring-2 ring-marca-primario/10';
+    if (isClosed) return 'opacity-85 bg-slate-50/50 hover:bg-slate-100/60';
+    if (isExternal) return 'bg-purple-50/30 border-l-4 border-l-purple-400';
     
-    const estadoStyle = estadoActual || 'PENDIENTE';
-    switch (estadoStyle) {
-      case 'PENDIENTE': return 'bg-amber-50/30 hover:bg-amber-100/50';
+    switch (estadoActual) {
+      case 'PENDIENTE': return 'bg-white hover:bg-amber-50/30';
       case 'EN_REVISION': return 'bg-blue-50/30 hover:bg-blue-100/50';
       default: return 'bg-white hover:bg-slate-50/30';
     }
   };
 
-  const isMarketing = departamento === 'MARKETING';
-  const lineInfo = isMarketing
-      ? { label: 'Campaña', color: '#8b5cf6' }
-      : (LINEA_MAP[entry.linea] || {
-          label: entry.linea || '—',
-          color: '#64748b'
-      });
-
   return (
     <>
-      <div
-        className={cn(
-          'group relative flex flex-col transition-all duration-500 rounded-[1.35rem] border border-slate-100',
-          isExpanded ? 'shadow-xl ring-2 ring-slate-200' : 'shadow-sm hover:shadow-md',
-          getCardStyles()
-        )}
-      >
-        {/* Etiqueta superior de tipo (Tarea/Seguimiento) - FULL WIDTH HEADER */}
-        {!isDraft && entry.tipo !== 'SIN_ORGANIZAR' && entry.tipo !== 'DESCARTADA' && (
+      <div className={cn(
+        'group relative flex flex-col transition-all duration-300 rounded-[1.5rem] border border-slate-200/80 overflow-hidden',
+        isExpanded ? 'shadow-xl ring-2 ring-slate-200' : 'shadow-sm hover:shadow-md',
+        getCardStyles()
+      )}>
+        {/* Top Type Indicator */}
+        {!isDraft && isOrganized && entry.tipo !== 'DESCARTADA' && (
           <div className={cn(
-            "w-full py-0.5 text-center text-[6px] font-black uppercase tracking-[0.2em] text-white shadow-inner rounded-t-[1.35rem]",
-            entry.tipo === 'TAREA' ? "bg-rose-400" : entry.tipo === 'RECORDATORIO' ? "bg-indigo-400" : "bg-purple-400"
+            "w-full py-0.5 text-center text-[7px] font-black uppercase tracking-[0.2em] text-white shadow-inner",
+            entry.tipo === 'TAREA' ? (isExternal ? "bg-purple-500" : "bg-rose-500") : 
+            entry.tipo === 'RECORDATORIO' ? "bg-indigo-500" : "bg-purple-500"
           )}>
-            {entry.tipo}
+            {isExternal ? `EXTERNA: ${AREA_MAP[entry.area] || entry.area}` : 
+             entry.tipo === 'TAREA' ? 'TAREA OPERATIVA' : entry.tipo}
           </div>
         )}
 
-        <div className={cn(
-          "flex flex-col flex-1",
-          isExpanded ? "" : "min-h-[6.75rem] sm:min-h-[7.5rem]"
-        )}>
-
-        {/* CONTENIDO PRINCIPAL */}
-        <div className="flex min-w-0 flex-col p-3 sm:p-4">
+        <div className="flex flex-row h-full min-h-[140px]">
           
-          {/* Header Row: Linea Icon + Info + Badges */}
-          <div className="mb-2 flex flex-col gap-1.5 sm:mb-3 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+          {/* PANEL IZQUIERDO: IMAGEN / IDENTIDAD */}
+          <div className="flex flex-col items-center justify-center shrink-0 w-[105px] sm:w-[135px] bg-slate-50/50 border-r border-slate-100/50 p-2 sm:p-3 relative group/side">
             
-            {/* Seccion 1: Identificación y Clasificación Principal */}
-            <div className="flex items-center justify-between gap-2 sm:flex-1 sm:justify-start sm:gap-2.5">
-              <div className="flex min-w-0 items-center gap-2">
-                {/* Semáforo Visual */}
-                {!isDraft && (
-                  <StatusTrafficLight entry={entry} size="md" className="shrink-0" />
-                )}
-                <div className="flex flex-col items-center justify-center shrink-0 w-10 sm:w-12">
-                    {isMarketing ? (
-                        <Icon
-                            name="campaign"
-                            size="24px"
-                            style={{ color: lineInfo.color }}
-                        />
-                    ) : (
-                        <LineIconSelector
-                            type={entry.linea}
-                            size={32}
-                            style={{ color: lineInfo.color }}
-                        />
-                    )}
-                    <span
-                        className="text-[6px] sm:text-[7px] font-black uppercase tracking-widest font-mono leading-none text-center mt-0.5"
-                        style={{ color: lineInfo.color }}
-                    >
-                        {lineInfo.label}
-                    </span>
+            {hasImages ? (
+              <CardImageCarousel 
+                images={allImages} 
+                onImageClick={(idx) => setViewerIndex(idx)}
+                lineInfo={lineInfo}
+                isMarketing={isMarketing}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center w-full gap-2">
+                <div className="flex flex-col items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-[1.5rem] transition-all duration-500 group-hover:scale-110 shadow-sm" style={{ backgroundColor: `${lineInfo.color}0f`, border: `1.5px solid ${lineInfo.color}25` }}>
+                   {isMarketing ? (
+                      <Icon name="campaign" size="32px" style={{ color: lineInfo.color }} />
+                   ) : (
+                      <LineIconSelector type={entry.linea} size={48} style={{ color: lineInfo.color }} />
+                   )}
                 </div>
+                <span className="font-black tracking-[0.1em] text-[7px] sm:text-[8px] uppercase font-mono text-center leading-tight px-1" style={{ color: lineInfo.color }}>
+                    {lineInfo.label}
+                </span>
               </div>
+            )}
+          </div>
 
-              {/* Badges de Estado y Clasif (En móvil se alinean a la derecha de la identificación) */}
-              <div className="flex shrink-0 items-center gap-1 sm:hidden">
+          {/* PANEL DERECHO: CONTENIDO */}
+          <div className="flex flex-col flex-1 min-w-0 p-3 sm:p-4">
+            
+            {/* Header: Status + Badge + Fechas */}
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                {!isDraft && <StatusTrafficLight entry={entry} size="sm" className="shrink-0" />}
                 {!isDraft && (entry.tipo === 'TAREA' || entry.tipo === 'RECORDATORIO') && (
-                  <TareaStatusBadge 
-                    status={entry.estado || 'PENDIENTE'} 
-                    className="scale-[0.75] origin-right" 
-                  />
+                  <TareaStatusBadge status={estadoActual} className="scale-90 origin-left" />
                 )}
-                {clasif && !isDraft && (
-                  <span
-                    className="inline-flex max-w-[4rem] items-center gap-0.5 overflow-hidden rounded-lg px-1 py-1 text-[7px] font-black uppercase tracking-widest shadow-sm"
-                    style={{ backgroundColor: `${clasif.color}10`, color: clasif.color, border: `1px solid ${clasif.color}20` }}
-                  >
-                    <Icon name={clasif.icon} size="9px" className="shrink-0" />
-                    <span className="truncate">{clasif.label}</span>
+                {clasif && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border" style={{ backgroundColor: `${clasif.color}08`, color: clasif.color, borderColor: `${clasif.color}15` }}>
+                    <Icon name={clasif.icon} size="10px" />
+                    {clasif.label}
                   </span>
                 )}
               </div>
+              <div className="flex flex-col items-end shrink-0">
+                <span className="text-[7px] sm:text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
+                  {formatTime(entry.createdAt)} · {new Date(entry.createdAt).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}
+                </span>
+                {vencida && <span className="text-[7px] font-black text-rose-500 animate-pulse uppercase">¡Vencida!</span>}
+              </div>
             </div>
 
-            {/* Seccion 2: Tiempos y Alertas (En móvil en su propia fila para evitar colisión) */}
-            <div className="flex flex-wrap items-center justify-between gap-1.5 rounded-xl bg-slate-50/50 p-1.5 sm:flex-col sm:items-end sm:justify-start sm:gap-1 sm:bg-transparent sm:p-0">
-               <div className="flex flex-col gap-0.5 text-[7px] font-bold uppercase tracking-tighter text-slate-400 sm:flex-row sm:items-center sm:gap-2 sm:text-[8px]">
-                 <div className="flex items-center gap-1.5">
-                   <span className="whitespace-nowrap">{formatTime(entry.createdAt)}</span>
-                   <span className="opacity-30">·</span>
-                   <span className="whitespace-nowrap">{new Date(entry.createdAt).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}</span>
-                 </div>
-                 
-                 {!isDraft && (entry.fechaVencimiento || entry.fechaSeguimiento) && (
-                   <div className="flex items-center gap-1.5">
-                     <span className="hidden sm:inline opacity-30">·</span>
-                     {entry.fechaVencimiento && (
-                       <span className="font-black text-rose-600">VENCE: {formatFecha(entry.fechaVencimiento)}</span>
-                     )}
-                     {entry.fechaSeguimiento && (
-                       <span className="font-black text-indigo-600">REV: {formatFecha(entry.fechaSeguimiento)}</span>
-                     )}
+            {/* Cuerpo: Descripción */}
+            <div className="flex-1 min-h-0">
+               <div className="relative group/text cursor-pointer" onClick={() => (isDraft || !isOrganized) ? onOrganize(entry) : (hasExtraInfo && setIsExpanded(!isExpanded))}>
+                  <p className={cn(
+                    "whitespace-pre-wrap break-words text-[13px] font-semibold leading-relaxed text-slate-800 transition-all duration-300",
+                    isDraft ? "bg-slate-50/50 p-2 rounded-xl border border-dashed border-slate-200" : "px-0.5",
+                    isClosed && "line-through text-slate-400 opacity-60",
+                    !isExpanded && "line-clamp-3"
+                  )}>
+                    {entry.descripcion || "Sin descripción..."}
+                  </p>
+                </div>
+            </div>
+
+            {/* Extra Info: Oculto por defecto */}
+            {isExpanded && !isDraft && (
+              <div className="mt-4 pt-3 border-t border-slate-50 space-y-3 animate-in slide-in-from-top-1 duration-300">
+                 {/* Responsables */}
+                 {entry.asignaciones?.length > 0 && (
+                   <div className="flex flex-col gap-1.5">
+                     <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Responsables</span>
+                     <div className="flex flex-wrap gap-1.5">
+                        {entry.asignaciones.map((asig) => (
+                           <div key={asig.id} className="flex items-center gap-2 px-2 py-1 bg-white rounded-xl border border-slate-100 shadow-xs">
+                             <div className="h-5 w-5 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center text-[9px] font-bold text-slate-500 border border-slate-200">
+                               {asig.usuario?.imagen ? <img src={asig.usuario.imagen} className="h-full w-full object-cover" /> : asig.usuario?.nombre?.charAt(0)}
+                             </div>
+                             <span className="text-[10px] font-bold text-slate-700">{asig.usuario?.nombre}</span>
+                           </div>
+                        ))}
+                     </div>
                    </div>
                  )}
-               </div>
-
-               <div className="flex items-center gap-1.5">
-                 {vencida && (
-                   <span className="animate-pulse rounded-lg bg-red-500 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-widest text-white shadow-sm sm:px-2 sm:py-1 sm:text-[8px]">
-                     Atrasada
-                   </span>
+                 
+                 {/* Fechas importantes */}
+                 {entry.fechaVencimiento && (
+                   <div className="pt-2">
+                      <div className="bg-rose-50/50 p-2 rounded-xl border border-rose-100 w-full sm:w-1/2">
+                        <p className="text-[8px] font-black text-rose-400 uppercase tracking-widest mb-0.5">Vencimiento</p>
+                        <p className="text-[11px] font-black text-rose-700 font-mono">{formatFecha(entry.fechaVencimiento)}</p>
+                      </div>
+                   </div>
                  )}
-                 {/* En Desktop volvemos a mostrar los badges aquí para mantener el flujo horizontal */}
-                 <div className="hidden sm:flex sm:items-center sm:gap-1.5">
-                   {!isDraft && (entry.tipo === 'TAREA' || entry.tipo === 'RECORDATORIO') && (
-                     <TareaStatusBadge 
-                       status={entry.estado || 'PENDIENTE'} 
-                       className="scale-90 sm:scale-100" 
-                     />
-                   )}
-                   {clasif && !isDraft && (
-                     <span
-                       className="inline-flex max-w-[7.5rem] items-center gap-1 overflow-hidden rounded-lg px-2.5 py-1.5 text-[8px] font-black uppercase tracking-widest shadow-sm"
-                       style={{ backgroundColor: `${clasif.color}10`, color: clasif.color, border: `1px solid ${clasif.color}20` }}
-                     >
-                       <Icon name={clasif.icon} size="11px" className="shrink-0" />
-                       <span className="truncate">{clasif.label}</span>
-                     </span>
-                   )}
-                 </div>
-               </div>
-            </div>
-          </div>
-              {isDraft && (
-                <div className="flex flex-wrap items-center gap-2 mb-2">
-                  {/* Selector de Área */}
-                  <label className="relative inline-flex h-6 sm:h-7 max-w-[5.5rem] cursor-pointer items-center gap-1 rounded-lg border border-slate-100 bg-white px-1.5 pr-4 text-[6.5px] sm:text-[8px] font-black uppercase tracking-widest text-slate-500 shadow-sm transition-all active:scale-95">
-                    <span className="truncate text-[7px] sm:text-[8px]">{AREA_MAP[entry.area] || entry.area}</span>
-                    <ChevronDown size={10} className="absolute right-1 top-1/2 -translate-y-1/2 opacity-40" />
-                    <select
-                      value={entry.area}
-                      onChange={(e) => handleUpdateField('area', e.target.value)}
-                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                      aria-label="Cambiar área"
-                    >
-                      {catalogos.areas.map(({ value, label }) => (
-                        <option key={value} value={value}>{label}</option>
-                      ))}
-                    </select>
-                  </label>
-
-                  {/* Selector de Línea */}
-                  {tieneLineas && (
-                    <label className="relative inline-flex h-6 sm:h-7 max-w-[5.5rem] cursor-pointer items-center gap-1 rounded-lg border border-slate-100 bg-white px-1.5 pr-4 text-[6.5px] sm:text-[8px] font-black uppercase tracking-widest text-slate-500 shadow-sm transition-all active:scale-95">
-                      <span className="truncate text-[7px] sm:text-[8px]">{lineaLabel}</span>
-                      <ChevronDown size={10} className="absolute right-1 top-1/2 -translate-y-1/2 opacity-40" />
-                      <select
-                        value={entry.linea}
-                        onChange={(e) => handleUpdateField('linea', e.target.value)}
-                        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                        aria-label="Cambiar línea"
-                      >
-                        {catalogos.lineas.map(({ value, label }) => (
-                          <option key={value} value={value}>{label}</option>
-                        ))}
-                      </select>
-                    </label>
-                  )}
-
-                  <label
-                    className="relative inline-flex h-6 sm:h-7 max-w-[5.5rem] sm:max-w-[7.5rem] cursor-pointer items-center gap-1 rounded-lg border px-1.5 sm:px-2 pr-4 sm:pr-5 text-[6.5px] sm:text-[8px] font-black uppercase tracking-widest shadow-sm transition-all active:scale-95"
-                    style={{
-                      color: clasif?.color,
-                      backgroundColor: `${clasif?.color || '#64748b'}10`,
-                      borderColor: `${clasif?.color || '#64748b'}20`,
-                    }}
-                    title="Cambiar clasificación"
-                  >
-                    <Icon name={clasif?.icon || 'more_horiz'} size="11px" className="shrink-0" />
-                    <span className="min-w-0 truncate">{clasifShortLabel}</span>
-                    <ChevronDown size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 opacity-60" />
-                    <select
-                      value={entry.clasificacion}
-                      onChange={(e) => handleUpdateField('clasificacion', e.target.value)}
-                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                      aria-label="Cambiar clasificación"
-                    >
-                      {catalogos.clasificaciones.map(({ value, label }) => (
-                        <option key={value} value={value}>{label}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onRemove(entry.tempId); }}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-rose-500 transition-all hover:bg-rose-500 hover:text-white active:scale-90 ml-auto"
-                    title="Eliminar borrador"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              )}
-
-              {/* Body: Texto */}
-              <div className="flex-1 mt-1">
-            {isSavedEditing ? (
-              <div className="space-y-1.5 sm:space-y-2">
-                <textarea
-                  value={editForm.descripcion}
-                  onChange={(e) => handleSavedField('descripcion', e.target.value)}
-                  rows={2}
-                  className="w-full resize-none rounded-xl border border-slate-100 bg-slate-50 p-2 text-[11px] sm:p-2.5 sm:text-[13px] font-semibold leading-relaxed text-slate-900 placeholder:text-slate-200 focus:border-marca-primario/30 focus:outline-none focus:ring-4 focus:ring-marca-primario/10"
-                />
-                <div className={cn("grid gap-1.5", tieneLineas ? "grid-cols-3" : "grid-cols-2")}>
-                  <label className="relative flex h-6 sm:h-8 items-center justify-center rounded-lg border border-slate-100 bg-white px-1 pr-3 text-[6.5px] sm:text-[9px] font-black uppercase text-slate-600 shadow-sm transition-all active:scale-95">
-                    <span className="truncate">{AREA_MAP[editForm.area] || editForm.area}</span>
-                    <ChevronDown size={10} className="absolute right-0.5 top-1/2 -translate-y-1/2 opacity-40" />
-                    <select
-                      value={editForm.area}
-                      onChange={(e) => handleSavedField('area', e.target.value)}
-                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                    >
-                      {catalogos.areas.map(({ value, label }) => (
-                        <option key={value} value={value}>{label}</option>
-                      ))}
-                    </select>
-                  </label>
-
-                  {tieneLineas && (
-                    <label className="relative flex h-6 sm:h-8 items-center justify-center rounded-lg border border-slate-100 bg-white px-1 pr-3 text-[6.5px] sm:text-[9px] font-black uppercase text-slate-600 shadow-sm transition-all active:scale-95">
-                      <span className="truncate">{LINEA_MAP[editForm.linea]?.label || editForm.linea}</span>
-                      <ChevronDown size={10} className="absolute right-0.5 top-1/2 -translate-y-1/2 opacity-40" />
-                      <select
-                        value={editForm.linea}
-                        onChange={(e) => handleSavedField('linea', e.target.value)}
-                        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                      >
-                        {catalogos.lineas.map(({ value, label }) => (
-                          <option key={value} value={value}>{label}</option>
-                        ))}
-                      </select>
-                    </label>
-                  )}
-
-                  <label className="relative flex h-6 sm:h-8 items-center justify-center rounded-lg border border-slate-100 bg-white px-1 pr-3 text-[6.5px] sm:text-[9px] font-black uppercase text-slate-600 shadow-sm transition-all active:scale-95">
-                    <span className="truncate">{CLASIFICACION_MAP[editForm.clasificacion]?.label || editForm.clasificacion}</span>
-                    <ChevronDown size={10} className="absolute right-0.5 top-1/2 -translate-y-1/2 opacity-40" />
-                    <select
-                      value={editForm.clasificacion}
-                      onChange={(e) => handleSavedField('clasificacion', e.target.value)}
-                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                    >
-                      {catalogos.clasificaciones.map(({ value, label }) => (
-                        <option key={value} value={value}>{label}</option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-
-                {/* Edición de Fechas y Responsables (Solo si está organizada) */}
-                {isOrganized && (
-                  <div className="grid gap-2 sm:grid-cols-2 mt-2 border-t border-slate-100 pt-2">
-                    <div className="space-y-1">
-                      <label className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                        {entry.tipo === 'TAREA' ? 'Fecha de Vencimiento' : 'Fecha de Seguimiento'}
-                      </label>
-                      {entry.tipo === 'TAREA' ? (
-                        <input 
-                          type="date"
-                          value={editForm.fechaVencimiento}
-                          onChange={(e) => handleSavedField('fechaVencimiento', e.target.value)}
-                          className="w-full rounded-lg border border-slate-100 bg-white px-1.5 h-6 sm:h-8 sm:px-2 text-[9px] sm:text-[10px] font-bold text-slate-600 outline-none focus:border-marca-primario/30 transition-all"
-                        />
-                      ) : (
-                        <input 
-                          type="date"
-                          value={editForm.fechaSeguimiento}
-                          onChange={(e) => handleSavedField('fechaSeguimiento', e.target.value)}
-                          className="w-full rounded-lg border border-slate-100 bg-white px-1.5 h-6 sm:h-8 sm:px-2 text-[9px] sm:text-[10px] font-bold text-slate-600 outline-none focus:border-marca-primario/30 transition-all"
-                        />
-                      )}
-                    </div>
-                    
-                    <div className="space-y-1">
-                      <label className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                        Responsable
-                      </label>
-                      <label className="relative flex h-6 sm:h-8 items-center rounded-lg border border-slate-100 bg-white px-2 pr-6 text-[9px] sm:text-[10px] font-bold uppercase text-slate-600 shadow-sm transition-all active:scale-95">
-                        <span className="truncate">
-                          {users.find(u => u.id === Number(editForm.responsables[0]))?.nombre || 'Sin responsable'}
-                        </span>
-                        <ChevronDown size={12} className="absolute right-1.5 top-1/2 -translate-y-1/2 opacity-40" />
-                        <select
-                          value={editForm.responsables[0] || ''}
-                          onChange={(e) => handleSavedField('responsables', e.target.value ? [Number(e.target.value)] : [])}
-                          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                        >
-                          <option value="">Sin responsable</option>
-                          {users.filter(u => u.estado === 'ACTIVO').map(user => (
-                            <option key={user.id} value={user.id}>{user.nombre}</option>
-                          ))}
-                        </select>
-                      </label>
-                    </div>
-                  </div>
-                )}
-
-                {/* Gestión de Imágenes */}
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Imágenes ({allImages.length}/3)</label>
-                  <div className="flex gap-2 flex-wrap">
-                    {allImages.map((img, idx) => (
-                      <div key={img.id || idx} className="relative w-12 h-12 rounded-xl overflow-hidden border border-slate-100 shadow-sm group">
-                        <img src={img.preview || img.url} className="w-full h-full object-cover" alt="Task" />
-                        <button 
-                          onClick={() => onDeleteImage?.(entry.id, img.id)}
-                          className="absolute inset-0 bg-rose-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
-                        >
-                          <X size={16} strokeWidth={3} />
-                        </button>
-                      </div>
-                    ))}
-                    {allImages.length < 3 && (
-                      <button 
-                        onClick={() => {
-                          const input = document.createElement('input');
-                          input.type = 'file';
-                          input.accept = 'image/*';
-                          input.onchange = (e) => {
-                            const file = e.target.files[0];
-                            if (file) onAddImage?.(entry.id, file);
-                          };
-                          input.click();
-                        }}
-                        className="w-12 h-12 rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-300 hover:border-slate-400 hover:text-slate-400 transition-all hover:bg-slate-50"
-                      >
-                        <Plus size={18} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-2">
-                  <button
-                    onClick={handleCancelSavedEdit}
-                    className="rounded-xl border border-slate-100 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-slate-400 active:scale-95"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={handleSaveSavedEdit}
-                    disabled={!editForm.descripcion.trim() || savingEdit}
-                    className={cn(
-                      "flex items-center gap-1.5 rounded-xl px-3 py-2 text-[9px] font-black uppercase tracking-widest active:scale-95",
-                      editForm.descripcion.trim()
-                        ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20"
-                        : "bg-slate-50 text-slate-200"
-                    )}
-                  >
-                    {savingEdit ? <Icon name="progress_activity" size="14px" className="animate-spin" /> : <Save size={14} />}
-                    Guardar
-                  </button>
-                </div>
-              </div>
-            ) : isEditing ? (
-              <textarea
-                ref={textareaRef}
-                value={editValue}
-                onChange={(e) => {
-                  setEditValue(e.target.value);
-                  e.target.style.height = 'auto';
-                  e.target.style.height = e.target.scrollHeight + 'px';
-                }}
-                onBlur={handleBlur}
-                className="w-full resize-none overflow-hidden rounded-xl border border-slate-100 bg-slate-50 p-2.5 text-[13px] font-semibold leading-relaxed text-slate-900 placeholder:text-slate-200 focus:ring-0 sm:text-[15px]"
-                rows={1}
-              />
-            ) : (
-              <div className="relative group/text">
-                <p
-                  className={cn(
-                    "whitespace-pre-wrap break-words text-[13px] font-semibold leading-relaxed text-slate-800 transition-all duration-300 sm:text-[15px]",
-                    isDraft ? "cursor-text bg-slate-50/50 p-2 rounded-xl border border-dashed border-slate-200 hover:border-slate-300 sm:p-2.5" : "px-0.5 sm:px-1",
-                    isClosed && "line-through text-slate-400 opacity-70",
-                    !isExpanded && !isDraft && "max-h-[4.5rem] overflow-hidden sm:max-h-[5.5rem]"
-                  )}
-                  onClick={() => isDraft && handleStartDraftEdit()}
-                >
-                  {entry.descripcion || "Sin descripción..."}
-                </p>
-                
-                {/* Gradiente de "ver más" — Solo si no está expandido y no es borrador */}
-                {!isExpanded && !isDraft && (entry.descripcion?.length > 100) && (
-                  <div 
-                    className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none transition-opacity duration-300 group-hover/text:from-white/40" 
-                  />
-                )}
-              </div>
-            )}
-          </div>
-
-            {/* GALERÍA DE IMÁGENES (Modo Lectura) */}
-            {hasImages && !isSavedEditing && !isDraft && (
-              <div className="mt-3 flex flex-wrap gap-2 pt-2 border-t border-slate-50">
-                {allImages.map((img, idx) => (
-                  <div key={img.id || idx} className="relative group/img flex items-center justify-center">
-                    <div
-                      className="relative h-12 w-12 sm:h-14 sm:w-14 shrink-0 cursor-pointer overflow-hidden rounded-xl border border-slate-200 bg-slate-100/80 shadow-sm flex items-center justify-center p-1"
-                      onClick={() => setViewerIndex(idx)}
-                    >
-                      <img
-                        src={img.preview || img.url}
-                        className="h-full w-full object-contain rounded-lg drop-shadow-sm"
-                        alt={`Adjunto ${idx + 1}`}
-                      />
-                    </div>
-                    {/* Hover flotante */}
-                    <div className="absolute left-1/2 bottom-full -translate-x-1/2 mb-2 z-50 opacity-0 invisible group-hover/img:opacity-100 group-hover/img:visible transition-all duration-200 pointer-events-none drop-shadow-2xl">
-                      <div className="w-48 h-48 flex items-center justify-center relative overflow-hidden rounded-[1.5rem] bg-white border border-slate-200 p-2 shadow-2xl">
-                        <img src={img.preview || img.url} alt="Preview Zoom" className="w-full h-full object-contain drop-shadow-md rounded-xl" />
-                      </div>
-                    </div>
-                  </div>
-                ))}
               </div>
             )}
 
-            {/* Gestión de Imágenes para Borradores */}
-            {isDraft && (
-              <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-50 pt-3">
-                 <span className="text-[8px] font-black uppercase tracking-widest text-slate-300 mr-1">Imágenes</span>
-                 <div className="flex flex-wrap gap-2">
-                    {entry._localImagenes?.map((img, idx) => (
-                      <div key={img.id || idx} className="relative group/img flex items-center justify-center">
-                        <div className="relative w-12 h-12 rounded-xl border border-slate-200 bg-slate-100/80 flex items-center justify-center p-1 overflow-hidden shadow-sm">
-                          <img src={img.preview} className="w-full h-full object-contain rounded-lg" alt="Preview borrador" />
-                          <button 
-                            onClick={() => {
-                              const newImgs = entry._localImagenes.filter((_, i) => i !== idx);
-                              handleUpdateField('_localImagenes', newImgs);
-                            }}
-                            className="absolute inset-0 bg-rose-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-10"
-                          >
-                            <X size={14} strokeWidth={3} />
-                          </button>
-                        </div>
-                        {/* Hover flotante (borrador) */}
-                        <div className="absolute left-1/2 bottom-full -translate-x-1/2 mb-2 z-50 opacity-0 invisible group-hover/img:opacity-100 group-hover/img:visible transition-all duration-200 pointer-events-none drop-shadow-2xl">
-                          <div className="w-48 h-48 flex items-center justify-center relative overflow-hidden rounded-[1.5rem] bg-white border border-slate-200 p-2 shadow-2xl">
-                            <img src={img.preview} alt="Preview Zoom" className="w-full h-full object-contain drop-shadow-md rounded-xl" />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    {(entry._localImagenes?.length || 0) < 3 && (
-                      <button 
-                        onClick={() => {
-                          const input = document.createElement('input');
-                          input.type = 'file';
-                          input.accept = 'image/*';
-                          input.multiple = true;
-                          input.onchange = (e) => {
-                            const files = Array.from(e.target.files);
-                            const currentCount = entry._localImagenes?.length || 0;
-                            const remaining = 3 - currentCount;
-                            if (remaining <= 0) return;
-                            
-                            const newImgs = files.slice(0, remaining).map(f => ({
-                              file: f,
-                              preview: URL.createObjectURL(f),
-                              id: Math.random().toString(36).substr(2, 9)
-                            }));
-                            handleUpdateField('_localImagenes', [...(entry._localImagenes || []), ...newImgs]);
-                          };
-                          input.click();
-                        }}
-                        className="w-12 h-12 rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-300 hover:border-slate-400 hover:text-slate-400 transition-all hover:bg-slate-50 active:scale-95 shadow-sm bg-white"
-                        title="Agregar imágenes"
-                      >
-                        <Camera size={16} />
-                      </button>
-                    )}
-                 </div>
-              </div>
-            )}
-
-            {/* Información adicional cuando está expandido */}
-            {isExpanded && !isDraft && (
-              <div className="mt-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300 border-t border-slate-50 pt-3">
-                {entry.asignaciones && entry.asignaciones.length > 0 && (
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Responsable</span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {entry.asignaciones.map((asig) => (
-                        <div key={asig.id} className="relative group/tooltip inline-flex cursor-help">
-                          <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full border border-slate-200 overflow-hidden bg-slate-100 text-[10px] font-bold text-slate-600 shadow-sm">
-                            {asig.usuario?.imagen ? (
-                              <img src={asig.usuario.imagen} alt={asig.usuario.nombre} className="h-full w-full object-cover" />
-                            ) : (
-                              asig.usuario?.nombre?.charAt(0)
-                            )}
-                          </div>
-                          {/* Tooltip */}
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-xs bg-slate-900 text-white text-[10px] font-bold py-1.5 px-3 rounded-lg shadow-xl opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all pointer-events-none z-50">
-                            {asig.usuario?.nombre}
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-          </div>
-        )}
-      {/* Footer se queda adentro del contenedor con padding para que no se corte */}
-          {!isDraft && (
-             <div className="mt-1.5 flex items-center justify-between gap-2 border-t border-slate-50 pt-1.5 sm:mt-2 sm:pt-2 pb-1">
-                <div className="flex items-center gap-1.5">
-                  {!isClosed && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setShowNotesPanel(true); }}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-amber-200 bg-amber-50 text-amber-600 transition-all hover:bg-amber-400 hover:text-white active:scale-95"
-                      title="Agregar nota"
-                    >
-                      <Plus size={14} />
-                    </button>
-                  )}
-                  {entryNotes.length > 0 && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setShowNotesPanel(true); }}
-                      className="flex h-7 min-w-7 items-center justify-center gap-1 rounded-lg border border-amber-300 bg-amber-300 px-2 text-[9px] font-black text-amber-950 shadow-sm transition-all hover:bg-amber-400 active:scale-95"
-                      title="Ver notas"
-                    >
-                      <StickyNote size={13} />
-                      {entryNotes.length}
-                    </button>
-                  )}
-                </div>
-
-                {/* ACCIÓN PRIMARIA (Botón Azul en el centro del Footer) */}
-                {isFormalizada && !isDraft && (
-                  <div className="flex flex-1 justify-center px-2">
-                    {estadoActual === 'PENDIENTE' && isAsignado && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleUpdateStatus('EN_PROGRESO'); }}
-                        disabled={isUpdatingStatus}
-                        className="flex h-8 items-center gap-2 rounded-xl bg-blue-600 px-6 text-[9px] font-black uppercase tracking-[0.15em] text-white shadow-lg shadow-blue-600/30 transition-all hover:bg-blue-500 active:scale-95 disabled:opacity-50"
-                      >
-                        <Icon name="play_circle" size="16px" />
-                        Iniciar
-                      </button>
-                    )}
-                    {estadoActual === 'EN_PROGRESO' && isAsignado && (
-                      <button
-                        onClick={(e) => { 
-                          e.stopPropagation(); 
-                          handleUpdateStatus('EN_REVISION'); 
-                        }}
-                        disabled={isUpdatingStatus}
-                        className="flex h-8 items-center gap-2 rounded-xl bg-blue-600 px-6 text-[9px] font-black uppercase tracking-[0.15em] text-white shadow-lg shadow-blue-600/30 transition-all hover:bg-blue-500 active:scale-95 disabled:opacity-50"
-                      >
-                        <Icon name="check_circle" size="16px" />
-                        Terminar
-                      </button>
-                    )}
-                    {estadoActual === 'EN_REVISION' && isJefe && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleUpdateStatus('CERRADO'); }}
-                        disabled={isUpdatingStatus}
-                        className="flex h-8 items-center gap-2 rounded-xl bg-slate-900 px-6 text-[9px] font-black uppercase tracking-[0.15em] text-white shadow-lg shadow-slate-900/30 transition-all hover:bg-slate-800 active:scale-95 disabled:opacity-50"
-                      >
-                        <Icon name="verified" size="16px" className="text-emerald-400" />
-                        Aprobar
-                      </button>
-                    )}
-                    {estadoActual === 'CERRADA' && (
-                       <div className="flex items-center gap-1.5 text-emerald-600">
-                         <Icon name="check_circle" size="14px" />
-                         <span className="text-[9px] font-black uppercase tracking-widest">Cerrada</span>
-                       </div>
-                    )}
-                  </div>
-                )}
-
-                <div className="flex items-center gap-1.5">
-                <button
-                  onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
-                  className={cn(
-                    "flex h-7 w-7 items-center justify-center rounded-lg transition-all active:scale-95 border shadow-sm",
-                    isExpanded ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-400 border-slate-100 hover:text-slate-900 hover:border-slate-900"
-                  )}
-                  title={isExpanded ? "Ver menos" : "Ver detalles"}
-                >
-                  <Icon name={isExpanded ? "visibility_off" : "visibility"} size="14px" />
+            {/* Footer Actions: Compactos */}
+            <div className="mt-3 pt-2.5 border-t border-slate-50 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <button onClick={(e) => { e.stopPropagation(); setShowNotesPanel(true); }} className={cn(
+                  "flex h-7 px-2 items-center justify-center gap-1.5 rounded-lg border transition-all active:scale-95 shadow-xs",
+                  entryNotes.length > 0 ? "border-amber-300 bg-amber-400 text-white font-black" : "border-amber-200 bg-amber-50 text-amber-600"
+                )}>
+                  <StickyNote size={14} />
+                  <span className="text-[10px]">{entryNotes.length || '+'}</span>
                 </button>
+              </div>
 
+              {/* Botones de acción inteligentes */}
+              <div className="flex items-center gap-1.5">
+                {isFormalizada && !isDraft && !isClosed && (
+                   <div className="mr-1">
+                      {estadoActual === 'PENDIENTE' && isAsignado && (
+                        <button onClick={(e) => { e.stopPropagation(); handleUpdateStatus('EN_REVISION'); }} disabled={isUpdatingStatus} className="h-7 px-3 bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-blue-600/20 active:scale-95 disabled:opacity-50">Iniciar</button>
+                      )}
+                      {estadoActual === 'EN_REVISION' && isJefe && (
+                        <button onClick={(e) => { e.stopPropagation(); handleUpdateStatus('CERRADA'); }} disabled={isUpdatingStatus} className="h-7 px-3 bg-slate-900 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg active:scale-95 disabled:opacity-50 flex items-center gap-1"><Icon name="verified" size="12px" className="text-emerald-400" /> Aprobar</button>
+                      )}
+                   </div>
+                )}
+                
+                {hasExtraInfo && (
+                  <button onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }} className={cn("h-7 w-7 rounded-lg border transition-all active:scale-90 flex items-center justify-center shadow-xs", isExpanded ? "bg-slate-800 border-slate-800 text-white" : "bg-white border-slate-100 text-slate-400 hover:text-slate-800")}>
+                    <Icon name={isExpanded ? "visibility_off" : "visibility"} size="14px" />
+                  </button>
+                )}
+                
                 {!isClosed && (
                   <>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleStartSavedEdit(); }}
-                      className="flex items-center gap-1 rounded-lg border border-slate-100 px-2.5 py-1.5 text-[7px] font-black uppercase tracking-widest text-slate-400 transition-all hover:border-slate-900 hover:text-slate-900 active:scale-95 sm:px-3 sm:text-[8px] shadow-sm"
-                    >
-                      <Pencil size={12} />
-                      <span className="hidden sm:inline">Editar</span>
-                    </button>
-
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onOrganize(entry); }}
-                      className={cn(
-                        "flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[7px] font-black uppercase tracking-widest transition-all active:scale-95 sm:px-3 sm:text-[8px] border shadow-sm",
-                        isOrganized
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100" 
-                          : "bg-slate-50 text-slate-400 border-slate-100 hover:border-slate-900 hover:text-slate-900"
-                      )}
-                    >
-                     <Settings2 size={12} /> 
-                      <span className="hidden sm:inline">{isOrganized ? "ORGANIZADO" : "ORGANIZAR"}</span>
+                    {(isDraft || !isOrganized) ? (
+                      <button onClick={(e) => { e.stopPropagation(); onOrganize(entry); }} className="h-7 w-7 rounded-lg border border-marca-primario/20 bg-marca-primario/5 text-marca-primario flex items-center justify-center transition-all active:scale-90 shadow-xs" title="Organizar Entrada">
+                        <Settings2 size={13} />
+                      </button>
+                    ) : (
+                      <button onClick={(e) => { e.stopPropagation(); onEdit(entry); }} className="h-7 w-7 rounded-lg border border-slate-100 bg-white text-slate-400 hover:text-slate-900 flex items-center justify-center transition-all active:scale-90 shadow-xs" title="Editar Entrada">
+                        <Pencil size={12} />
+                      </button>
+                    )}
+                    <button onClick={(e) => { e.stopPropagation(); if (window.confirm("¿Deseas descartar esta entrada?")) onRemove(entry.id || entry.tempId); }} className="h-7 w-7 rounded-lg border border-rose-100 bg-rose-50 text-rose-400 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all active:scale-90 shadow-xs" title="Descartar / Eliminar">
+                      <Trash2 size={12} />
                     </button>
                   </>
                 )}
-                </div>
               </div>
-            )}
-            
-          </div> {/* CIERRA: Columna Principal (Textos y Footer) */}
-        </div>   {/* CIERRA: Grid de la Tarjeta */}
-      </div>     {/* CIERRA: Tarjeta Blanca (Fondo general) */}
-
-      {/* Modal de Notas */}
-      {showNotesPanel && !isDraft && (
-        <EntryNotesPostIt
-          entry={{ ...entry, readOnly: isClosed }}
-          notes={entryNotes}
-          onClose={() => setShowNotesPanel(false)}
-          onAddNote={onCreateNote}
-          onUpdateNote={onUpdateNote}
-          onDeleteNote={onDeleteNote}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {showNotesPanel && (
+        <EntryNotesPostIt 
+          entry={{ ...entry, readOnly: isClosed }} 
+          notes={entryNotes} 
+          onClose={() => setShowNotesPanel(false)} 
+          onAddNote={onCreateNote} 
+          onUpdateNote={onUpdateNote} 
+          onDeleteNote={onDeleteNote} 
         />
       )}
-
-      {/* Modal de Visor */}
-      {viewerIndex !== null && (
-        <ImageViewer 
-          images={allImages} 
-          initialIndex={viewerIndex} 
-          onClose={() => setViewerIndex(null)} 
-        />
-      )}
+      {viewerIndex !== null && <ImageViewer images={allImages} initialIndex={viewerIndex} onClose={() => setViewerIndex(null)} />}
     </>
   );
 };

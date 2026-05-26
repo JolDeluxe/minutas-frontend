@@ -7,14 +7,12 @@ import { EntryFiltersBar } from '../components/timeline/entry-filters-bar';
 import { EntryFeed } from '../components/timeline/entry-feed';
 import { StickyNotesBoard } from '../components/notes/sticky-notes-board';
 import { ReviewDraftsModal } from '../components/review-drafts-modal';
+import { EntryFormModal } from '../components/timeline/entry-form-modal';
 import { OrganizeDrawer } from '../components/organization/organize-drawer';
 import { useAuthStore } from '@/stores/auth-store';
 import { canAccessModule } from '@/config/modules-config';
+import { AREA_MAP } from '../constants';
   
-/**
- * MinutaDetailDesktopView — Vista especializada para estaciones de trabajo.
- * Muestra el panel de notas persistente y el composer como barra superior.
- */
 export const MinutaDetailDesktopView = ({
   minuta,
   resumen,
@@ -35,16 +33,19 @@ export const MinutaDetailDesktopView = ({
   removeDraftNote,
   updateDraftEntry,
   removeDraftEntry,
-  setOrganizeEntry,
   organizeEntry,
+  setOrganizeEntry,
   handleOrganizeSave,
+  editEntry,
+  setEditEntry,
+  handleEditEntrySave,
+  isSavingEntry,
   setShowReviewModal,
   showReviewModal,
   handleFinalSubmit,
   isSubmittingFinal,
   showNotes,
   setShowNotes,
-  handleUpdateSavedEntry,
   handleCreateEntryNote,
   handleUpdateEntryNote,
   handleDeleteEntryNote,
@@ -62,10 +63,13 @@ export const MinutaDetailDesktopView = ({
   cerrando,
   reabriendo,
   finalizando,
-  minutaEstado
+  minutaEstado,
+  handleDeleteEntry,
+  clearDrafts
 }) => {
   const [showPoliticas, setShowPoliticas] = useState(false);
   const [showRecordatorios, setShowRecordatorios] = useState(false);
+  const [composerCollapsed, setComposerCollapsed] = useState(true);
   const { user } = useAuthStore();
   const userRole = user?.data?.rol || user?.rol;
 
@@ -77,23 +81,9 @@ export const MinutaDetailDesktopView = ({
         minuta={minuta} 
         resumen={resumen} 
         entries={filteredEntries}
-        onFilterByStatus={(status) => {
-          setActiveFilter(prev => ({
-            ...prev,
-            estado: prev.estado === status ? null : status,
-            tipo: 'TAREA'
-          }));
-        }}
-        onFilterByTipo={(tipo) => {
-          setActiveFilter(prev => ({
-            ...prev,
-            tipo: prev.tipo === tipo ? 'TAREA' : tipo,
-            estado: null
-          }));
-        }}
-        onResetFilter={() => {
-          setActiveFilter({ tipo: 'TAREA', estado: null, clasificacion: null, area: null, linea: null, search: '' });
-        }}
+        onFilterByStatus={(status) => setActiveFilter(prev => ({ ...prev, estado: prev.estado === status ? null : status, tipo: 'TAREA' }))}
+        onFilterByTipo={(tipo) => setActiveFilter(prev => ({ ...prev, tipo: prev.tipo === tipo ? 'TAREA' : tipo, estado: null }))}
+        onResetFilter={() => setActiveFilter({ tipo: 'TAREA', estado: null, clasificacion: null, area: null, linea: null, search: '' })}
         activeFilter={activeFilter}
         onIniciar={handleIniciar}
         onCancelar={handleCancelar}
@@ -108,7 +98,6 @@ export const MinutaDetailDesktopView = ({
       />
 
       <div className="flex flex-1 overflow-hidden relative">
-        {/* Workspace Principal */}
         <main className="relative flex flex-1 flex-col min-w-0 bg-transparent">
           {(minuta?.estado === 'EN_CURSO' || minuta?.estado === 'PROGRAMADA') && (
             <QuickComposer
@@ -121,17 +110,15 @@ export const MinutaDetailDesktopView = ({
               estado={minuta.estado}
               onIniciar={handleIniciar}
               iniciando={iniciando}
+              onCollapseChange={setComposerCollapsed}
             />
           )}
 
           <div className={`flex-1 px-10 py-1 scrollbar-thin ${filteredEntries.length === 0 ? 'overflow-hidden' : 'overflow-y-auto'}`}>
-            <div className={`mx-auto max-w-[1500px] flex flex-col gap-6 ${filteredEntries.length === 0 ? 'pb-4' : 'pb-32'}`}>
+            <div className={`mx-auto max-w-full flex flex-col gap-6 ${filteredEntries.length === 0 ? 'pb-4' : 'pb-10'}`}>
               
-              {/* Sección de Acuerdos Compactos */}
               {(politicasAcordadas.length > 0 || recordatoriosGenerales.length > 0) && (
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                  
-                  {/* Políticas y Lineamientos */}
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-4">
                   {politicasAcordadas.length > 0 && (
                     <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg h-fit">
                       <div className="w-full flex items-center justify-between hover:bg-white/5 transition-colors pr-2">
@@ -172,7 +159,6 @@ export const MinutaDetailDesktopView = ({
                     </div>
                   )}
 
-                  {/* Acuerdos y Recordatorios */}
                   {recordatoriosGenerales.length > 0 && (
                     <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm h-fit">
                       <div className="w-full flex items-center justify-between hover:bg-slate-50 transition-colors pr-2">
@@ -204,8 +190,6 @@ export const MinutaDetailDesktopView = ({
                               <div key={r.id || idx} className="bg-white border border-slate-200 rounded-xl p-2.5 flex items-center gap-3 relative overflow-hidden shadow-xs">
                                 <div className="w-0.5 h-full bg-violet-400 absolute left-0 top-0" />
                                 <p className="text-slate-700 text-[11px] font-medium leading-snug flex-1 pl-1">"{r.descripcion}"</p>
-                                
-                                {/* Avatares de Responsables */}
                                 {r.asignaciones && r.asignaciones.length > 0 && (
                                   <div className="flex -space-x-1.5 shrink-0">
                                     {r.asignaciones.map((asig) => (
@@ -225,7 +209,7 @@ export const MinutaDetailDesktopView = ({
                                     ))}
                                   </div>
                                 )}
-                                <span className="text-[8px] font-mono text-slate-300 uppercase shrink-0">{r.area}</span>
+                                <span className="text-[8px] font-mono text-slate-300 uppercase shrink-0">{AREA_MAP[r.area] || r.area}</span>
                               </div>
                             ))}
                           </div>
@@ -256,9 +240,9 @@ export const MinutaDetailDesktopView = ({
                 viewMode={viewMode}
                 departamento={departamento}
                 onOrganize={setOrganizeEntry}
-                onRemoveDraft={removeDraftEntry}
+                onRemove={handleDeleteEntry}
                 onUpdateDraft={updateDraftEntry}
-                onUpdateSaved={handleUpdateSavedEntry}
+                onEdit={setEditEntry}
                 onCreateNote={handleCreateEntryNote}
                 onUpdateNote={handleUpdateEntryNote}
                 onDeleteNote={handleDeleteEntryNote}
@@ -270,8 +254,7 @@ export const MinutaDetailDesktopView = ({
             </div>
           </div>
         </main>
-
-        {/* Notas Post-it como overlay para no cambiar el layout del workspace */}
+        
         {showNotes && (
           <>
             <div
@@ -292,36 +275,36 @@ export const MinutaDetailDesktopView = ({
           </>
         )}
 
-        {/* Botones Flotantes */}
-        <div className="fixed bottom-10 right-10 z-[60] flex gap-4">
-          {draftEntries.length > 0 && (
-            <button
-              onClick={() => setShowReviewModal(true)}
-              className="flex h-16 px-6 items-center gap-3 rounded-2xl bg-emerald-600 text-white shadow-2xl shadow-emerald-600/40 hover:bg-emerald-500 hover:scale-105 active:scale-95 transition-all group relative"
-            >
-              <Icon name="cloud_upload" size="28px" className="group-hover:animate-bounce" />
-              <span className="text-xs font-black uppercase tracking-widest pr-2">Guardar</span>
-              <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-lg animate-in zoom-in">
-                {draftEntries.length}
-              </div>
-            </button>
-          )}
-
-          {!showNotes && (
-            <button
-              onClick={() => setShowNotes(true)}
-              className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-2xl shadow-amber-500/40 hover:bg-amber-400 hover:scale-110 active:scale-95 transition-all relative group"
-            >
-              <Icon name="sticky_note_2" size="32px" />
-              {/* Contador de Notas Generales */}
-              {(draftNotes.length + (minuta.notasGenerales?.length || 0)) > 0 && (
-                <div className="absolute -top-2 -right-2 w-7 h-7 bg-amber-950 text-white text-[11px] font-black rounded-full flex items-center justify-center border-2 border-amber-500 shadow-lg group-hover:scale-110 transition-transform">
-                   {draftNotes.length + (minuta.notasGenerales?.length || 0)}
+        {composerCollapsed && (
+          <div className="fixed bottom-10 right-10 z-[60] flex gap-4">
+            {draftEntries.length > 0 && (
+              <button
+                onClick={() => setShowReviewModal(true)}
+                className="flex h-16 px-6 items-center gap-3 rounded-2xl bg-emerald-600 text-white shadow-2xl shadow-emerald-600/40 hover:bg-emerald-500 hover:scale-105 active:scale-95 transition-all group relative"
+              >
+                <Icon name="cloud_upload" size="28px" className="group-hover:animate-bounce" />
+                <span className="text-xs font-black uppercase tracking-widest pr-2">Guardar</span>
+                <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-lg animate-in zoom-in">
+                  {draftEntries.length}
                 </div>
-              )}
-            </button>
-          )}
-        </div>
+              </button>
+            )}
+
+            {!showNotes && (
+              <button
+                onClick={() => setShowNotes(true)}
+                className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-2xl shadow-amber-500/40 hover:bg-amber-400 hover:scale-110 active:scale-95 transition-all relative group"
+              >
+                <Icon name="sticky_note_2" size="32px" />
+                {(draftEntries.length + (minuta.notasGenerales?.length || 0)) > 0 && (
+                  <div className="absolute -top-2 -right-2 w-7 h-7 bg-amber-950 text-white text-[11px] font-black rounded-full flex items-center justify-center border-2 border-amber-500 shadow-lg group-hover:scale-110 transition-transform">
+                     {draftNotes.length + (minuta.notasGenerales?.length || 0)}
+                  </div>
+                )}
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       <ReviewDraftsModal
@@ -332,6 +315,8 @@ export const MinutaDetailDesktopView = ({
         notesCount={draftNotes.length}
         submitting={isSubmittingFinal}
         minutaEstado={minutaEstado}
+        onRemoveEntry={removeDraftEntry}
+        onClearAll={clearDrafts}
       />
 
       {organizeEntry && (
@@ -341,6 +326,18 @@ export const MinutaDetailDesktopView = ({
           onClose={() => setOrganizeEntry(null)}
           entry={organizeEntry}
           onSave={handleOrganizeSave}
+          departamento={departamento}
+        />
+      )}
+
+      {editEntry && (
+        <EntryFormModal
+          key={editEntry.tempId || editEntry.id}
+          isOpen={Boolean(editEntry)}
+          onClose={() => setEditEntry(null)}
+          entry={editEntry}
+          onSave={handleEditEntrySave}
+          submitting={isSavingEntry}
           departamento={departamento}
         />
       )}

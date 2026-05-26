@@ -1,13 +1,54 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Icon } from '@/components/ui/z_index';
+import { Icon, Modal, ModalHeader, ModalBody, ModalFooter, Button as UIButton } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
-import { getCatalogos, AREA_MAP } from '../../constants';
+import { getCatalogos } from '../../constants';
 import { LineIconSelector } from '../icons/line-icons';
-import { Camera, X, Plus, AlertCircle } from 'lucide-react';
+import { Camera, X, Plus, AlertCircle, Save, StickyNote, Trash2 } from 'lucide-react';
+
+/**
+ * AllNotesModal — Modal para gestionar todas las notas rápidas cuando exceden el límite visual.
+ */
+const AllNotesModal = ({ isOpen, onClose, notas, onUpdate, onRemove, onAdd }) => {
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} size="md">
+      <ModalHeader title="Todas las Notas Rápidas" onClose={onClose} />
+      <ModalBody>
+        <div className="grid grid-cols-2 gap-4">
+          {notas.map((nota, idx) => (
+            <div key={idx} className="relative group animate-in zoom-in-95 duration-200">
+              <textarea
+                value={nota}
+                onChange={(e) => onUpdate(idx, e.target.value)}
+                placeholder="Escribe una nota..."
+                className="w-full h-32 p-3 text-xs font-medium bg-[#fffbeb] border border-amber-200 rounded-xl resize-none shadow-sm focus:ring-2 focus:ring-amber-400/20 focus:border-amber-300 outline-none text-amber-900"
+              />
+              <button
+                onClick={() => onRemove(idx)}
+                className="absolute -top-2 -right-2 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-600"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          ))}
+          <button
+            onClick={onAdd}
+            disabled={notas.some(n => !n.trim())}
+            className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-amber-200 rounded-xl bg-amber-50/30 text-amber-400 hover:bg-amber-50 hover:text-amber-500 transition-all disabled:opacity-40"
+          >
+            <Plus size={24} />
+            <span className="text-[10px] font-black uppercase tracking-widest mt-1">Añadir</span>
+          </button>
+        </div>
+      </ModalBody>
+      <ModalFooter>
+        <UIButton variant="dark" onClick={onClose}>Listo</UIButton>
+      </ModalFooter>
+    </Modal>
+  );
+};
 
 /**
  * QuickComposer — Estación de Captura Ejecutiva para Escritorio.
- * Versión optimizada con mejor gestión de imágenes y validaciones.
  */
 export const QuickComposer = ({
   minutaId,
@@ -19,25 +60,44 @@ export const QuickComposer = ({
   estado,
   onIniciar,
   iniciando = false,
+  onCollapseChange,
 }) => {
   const catalogos = useMemo(() => getCatalogos(departamento), [departamento]);
   const tieneLineas = catalogos.lineas.length > 0;
 
   const [descripcion, setDescripcion] = useState('');
+  const [notasRapidas, setNotasRapidas] = useState([]);
   const [clasificacion, setClasificacion] = useState('');
   const [area, setArea] = useState(catalogos.areas[0]?.value || 'DISENO');
   const [linea, setLinea] = useState(tieneLineas ? (lineaDefault || catalogos.lineas[0]?.value) : null);
   const [imagenes, setImagenes] = useState([]);
   const [showLimitError, setShowLimitError] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [composerMode, setComposerMode] = useState(() => localStorage.getItem('composer_mode') || 'compact');
+  const [showAllNotes, setShowAllNotes] = useState(false);
 
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  useEffect(() => localStorage.setItem('composer_mode', composerMode), [composerMode]);
+  // Validación personalizada solicitada por el usuario
+  const isValid = useMemo(() => {
+    if (!descripcion.trim()) return false;
+    
+    // Si el área es Diseño o Marketing, requerir línea (si aplica) y clasificación
+    const isOperationalArea = area === 'DISENO' || area === 'MARKETING';
+    if (isOperationalArea) {
+      const hasLinea = tieneLineas ? !!linea : true;
+      const hasClasif = !!clasificacion;
+      return hasLinea && hasClasif;
+    }
+    
+    // Para otras áreas, solo se requiere la descripción
+    return true;
+  }, [descripcion, area, linea, clasificacion, tieneLineas]);
 
-  // Autofocus when expanded
+  useEffect(() => {
+    onCollapseChange?.(isCollapsed);
+  }, [isCollapsed, onCollapseChange]);
+
   useEffect(() => {
     if (!isCollapsed && isDesktop) {
       const timer = setTimeout(() => {
@@ -51,11 +111,11 @@ export const QuickComposer = ({
     const ta = textareaRef.current;
     if (ta) {
       ta.style.height = 'auto';
-      ta.style.height = Math.min(ta.scrollHeight, 108) + 'px';
+      // Ajuste dinámico de altura para evitar scroll excesivo del componente
+      ta.style.height = Math.min(200, Math.max(100, ta.scrollHeight)) + 'px';
     }
   }, [descripcion]);
 
-  // Limpiar error de límite tras unos segundos
   useEffect(() => {
     if (showLimitError) {
       const timer = setTimeout(() => setShowLimitError(false), 3000);
@@ -63,29 +123,34 @@ export const QuickComposer = ({
     }
   }, [showLimitError]);
 
+  const handleAddNota = () => {
+    if (notasRapidas.some(n => !n.trim())) return;
+    setNotasRapidas([...notasRapidas, '']);
+  };
+
+  const handleUpdateNota = (index, value) => {
+    const newNotas = [...notasRapidas];
+    newNotas[index] = value;
+    setNotasRapidas(newNotas);
+  };
+
+  const handleRemoveNota = (index) => {
+    setNotasRapidas(notasRapidas.filter((_, i) => i !== index));
+  };
+
   const processFiles = (files) => {
     const validFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
-    
-    if (imagenes.length + validFiles.length > 3) {
+    const remainingSlots = 3 - imagenes.length;
+    if (remainingSlots <= 0) {
       setShowLimitError(true);
-      // Solo tomamos los que quepan hasta llegar a 3
-      const remainingSlots = 3 - imagenes.length;
-      if (remainingSlots <= 0) return;
-      
-      const newImages = validFiles.slice(0, remainingSlots).map(f => ({
-        file: f,
-        preview: URL.createObjectURL(f),
-        id: Math.random().toString(36).substr(2, 9)
-      }));
-      setImagenes(prev => [...prev, ...newImages]);
-    } else {
-      const newImages = validFiles.map(f => ({
-        file: f,
-        preview: URL.createObjectURL(f),
-        id: Math.random().toString(36).substr(2, 9)
-      }));
-      setImagenes(prev => [...prev, ...newImages]);
+      return;
     }
+    const newImages = validFiles.slice(0, remainingSlots).map(f => ({
+      file: f,
+      preview: URL.createObjectURL(f),
+      id: Math.random().toString(36).substr(2, 9)
+    }));
+    setImagenes(prev => [...prev, ...newImages]);
   };
 
   const handleFileChange = (e) => {
@@ -102,28 +167,26 @@ export const QuickComposer = ({
   };
 
   const handleSubmit = useCallback(() => {
-    if (!descripcion.trim() || submitting) return;
-
-    // Regla de Negocio: Si la clasificación es POLITICAS, se auto-asigna el tipo POLITICA
+    if (!isValid || submitting) return;
     const esPolitica = clasificacion === 'POLITICAS';
-
     const payload = {
       tareas: [{
         descripcion: descripcion.trim(),
         area,
         linea: tieneLineas ? linea : null,
         clasificacion: clasificacion || 'OTROS',
-        tipo: esPolitica ? 'POLITICA' : undefined, // undefined para que el backend asigne SIN_ORGANIZAR
+        tipo: esPolitica ? 'POLITICA' : undefined,
         minutaId: Number(minutaId),
-        _localImagenes: imagenes,
+        _localImages: imagenes,
+        notas: notasRapidas.filter(n => n.trim()).map(n => ({ contenido: n.trim() })),
       }],
     };
-
     onSubmit(payload);
     setDescripcion('');
+    setNotasRapidas([]);
     setImagenes([]);
     if (isDesktop) textareaRef.current?.focus();
-  }, [descripcion, area, linea, clasificacion, minutaId, imagenes, onSubmit, submitting, isDesktop, tieneLineas]);
+  }, [isValid, descripcion, notasRapidas, area, linea, clasificacion, minutaId, imagenes, onSubmit, submitting, isDesktop, tieneLineas]);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -132,19 +195,19 @@ export const QuickComposer = ({
     }
   };
 
+  const visibleNotesCount = 2;
+
   return (
     <div className={cn(
-      "transition-all duration-300 relative overflow-hidden",
+      "transition-all duration-300 relative overflow-visible",
       (isCollapsed && estado !== 'PROGRAMADA')
-        ? "w-full sticky top-0 h-12 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.04)] z-30" 
-        : "absolute inset-0 bg-slate-50/98 backdrop-blur-md flex flex-col p-4 md:p-6 lg:p-8 z-30"
+        ? "w-full sticky top-0 h-12 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-sm z-30" 
+        : "absolute inset-0 bg-slate-50/98 backdrop-blur-md flex flex-col p-2 md:p-3 lg:p-4 z-[60]"
     )}>
-      {/* Botón de Toggle Flotante (Pestaña) - Solo visible en modo colapsado */}
       {isCollapsed && (
         <button 
           onClick={() => setIsCollapsed(false)}
           className="absolute -bottom-3 left-1/2 -translate-x-1/2 z-40 bg-white border border-slate-200 rounded-full w-7 h-7 flex items-center justify-center text-slate-400 hover:text-slate-900 shadow-sm transition-all active:scale-90 outline-none"
-          title="Mostrar Estación de Captura"
         >
           <Icon name="expand_more" size="18px" />
         </button>
@@ -153,204 +216,180 @@ export const QuickComposer = ({
       {isCollapsed ? (
         <div className="h-full flex items-center justify-center gap-4 animate-in fade-in slide-in-from-top-1 duration-300">
            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-           <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Estación de Captura Minimizada</span>
-           {descripcion.trim() && (
-             <span className="text-[11px] font-bold text-slate-900 truncate max-w-md italic opacity-60">
-               "{descripcion.substring(0, 60)}..."
-             </span>
-           )}
-           <button 
-             onClick={() => setIsCollapsed(false)}
-             className="ml-2 flex items-center gap-1.5 px-3 py-1 bg-slate-900 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-lg"
-           >
-             <Plus size={12} />
-             Nueva Entrada
-           </button>
+           <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Captura</span>
+           {descripcion.trim() && <span className="text-[11px] font-bold text-slate-900 truncate max-w-md italic opacity-60">"{descripcion.substring(0, 60)}..."</span>}
+           <button onClick={() => setIsCollapsed(false)} className="ml-2 flex items-center gap-1.5 px-3 py-1 bg-slate-900 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg"><Plus size={12} /> Nueva Entrada</button>
         </div>
       ) : (
-        <div className="flex flex-col h-full w-full gap-4 animate-in fade-in zoom-in-95 duration-300 min-h-0 flex-1">
-          
-          {/* Header del Workspace */}
+        <div className="flex flex-col h-full w-full gap-2 animate-in fade-in zoom-in-95 duration-300 min-h-0 max-w-5xl mx-auto">
           <div className="flex items-center justify-between px-2 shrink-0">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Estación de Captura Ejecutiva</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Captura</span>
             </div>
-            
-            <button 
-              onClick={() => setIsCollapsed(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-200/60 hover:bg-slate-250 text-slate-700 hover:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 cursor-pointer shadow-sm border border-slate-300/20"
-              title="Minimizar y volver a la minuta"
-            >
-              <X size={14} />
-              Volver a la Minuta
-            </button>
+            <button onClick={() => setIsCollapsed(true)} className="flex items-center gap-1 px-3 py-1 bg-slate-200/60 hover:bg-slate-250 text-slate-700 hover:text-slate-900 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm border border-slate-300/20"><X size={12} /> Volver</button>
           </div>
 
-          {/* Tarjeta del Formulario Principal */}
-          <div className="flex-1 bg-white border border-slate-200/60 rounded-[2.5rem] p-6 lg:p-8 shadow-xl flex flex-col gap-6 min-h-0">
-            
-            {/* Textarea de gran tamaño */}
-            <div className="relative flex-1 min-h-0 flex flex-col group">
+          <div className="flex-1 bg-white border border-slate-200/60 rounded-[1.5rem] p-4 lg:p-6 shadow-2xl flex flex-col gap-4 min-h-0 overflow-hidden">
+            {/* 1. INPUT DESCRIPCION (GRANDE) */}
+            <div className="relative flex-1 min-h-0 group">
               <textarea
                 ref={textareaRef}
                 value={descripcion}
                 onChange={(e) => setDescripcion(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Escribe la idea, acuerdo o tarea aquí..."
-                className="w-full flex-1 bg-slate-50/50 border border-slate-100 rounded-2xl px-5 py-4 text-base lg:text-lg font-bold text-slate-800 focus:outline-none focus:ring-4 focus:ring-marca-primario/5 transition-all resize-none placeholder:text-slate-300 shadow-inner"
+                className="w-full h-full bg-slate-50/50 border border-slate-100 rounded-2xl px-4 py-3 text-sm lg:text-xl font-bold text-slate-800 focus:outline-none focus:ring-4 focus:ring-marca-primario/5 transition-all resize-none placeholder:text-slate-300 shadow-inner custom-scrollbar"
               />
-              
-              {/* Cámara flotante dentro del Textarea */}
-              <div className="absolute right-4 bottom-4 flex items-center gap-3">
-                {showLimitError && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-50 text-rose-600 rounded-xl text-[10px] font-bold animate-in fade-in slide-in-from-right-2 duration-300">
-                    <AlertCircle size={14} />
-                    Máximo 3 imágenes
-                  </div>
-                )}
-                
-                <button 
-                  type="button"
-                  title="Subir Imágenes"
-                  onClick={() => fileInputRef.current?.click()}
-                  className={cn(
-                    "p-2.5 text-slate-400 hover:text-marca-primario transition-all rounded-xl hover:bg-white active:scale-90 border border-slate-100/50 shadow-sm",
-                    imagenes.length >= 3 && "opacity-50 cursor-not-allowed grayscale"
-                  )}
-                  disabled={imagenes.length >= 3}
-                >
-                  <Camera size={21} />
-                </button>
-                <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" multiple className="hidden" />
+              <div className="absolute right-3 bottom-3 flex items-center gap-2">
+                {showLimitError && <div className="flex items-center gap-1 px-2 py-1 bg-rose-50 text-rose-600 rounded-lg text-[8px] font-black uppercase animate-in fade-in slide-in-from-right-2 duration-300 border border-rose-100"><AlertCircle size={10} /> Máximo 3 fotos</div>}
               </div>
             </div>
 
-            {/* Previsualización de Imágenes */}
-            {imagenes.length > 0 && (
-              <div className="flex items-center gap-3 shrink-0 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
-                <div className="flex flex-col mr-2">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Imágenes</span>
-                  <span className="text-[10px] font-bold text-slate-500">{imagenes.length}/3</span>
+            {/* 2. NOTAS | IMAGENES (SIDE BY SIDE) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0 bg-slate-50/40 p-3 rounded-[1.5rem] border border-slate-100/60 shadow-inner">
+              {/* Notas */}
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Notas (Opcional)</span>
+                  </div>
+                  {notasRapidas.length > visibleNotesCount && (
+                     <button onClick={() => setShowAllNotes(true)} className="text-[8px] font-black text-amber-600 uppercase hover:underline">Ver {notasRapidas.length}</button>
+                  )}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1">
+                  <button
+                    onClick={handleAddNota}
+                    disabled={notasRapidas.some(n => !n.trim())}
+                    className="w-12 h-12 shrink-0 border-2 border-dashed border-amber-300 rounded-xl flex flex-col items-center justify-center text-amber-500 bg-white hover:bg-amber-50 transition-all active:scale-95 disabled:opacity-40"
+                  >
+                    <Plus size={16} />
+                    <span className="text-[6px] font-black uppercase">Nota</span>
+                  </button>
+
+                  {notasRapidas.slice(0, visibleNotesCount).map((nota, idx) => (
+                    <div key={idx} className="relative w-12 h-12 shrink-0 group animate-in zoom-in-95 duration-300">
+                      <textarea
+                        value={nota}
+                        onChange={(e) => handleUpdateNota(idx, e.target.value)}
+                        placeholder="..."
+                        className="w-full h-full p-1.5 text-[8px] font-bold bg-[#fffbeb] border border-amber-200 rounded-xl resize-none shadow-sm focus:ring-2 focus:ring-amber-400/20 focus:border-amber-300 outline-none text-amber-900 placeholder:text-amber-300"
+                      />
+                      <button onClick={() => handleRemoveNota(idx)} className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-white text-rose-500 border border-rose-100 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-md hover:bg-rose-500 hover:text-white"><X size={8} /></button>
+                    </div>
+                  ))}
+                  
+                  {notasRapidas.length > visibleNotesCount && !showAllNotes && (
+                    <button onClick={() => setShowAllNotes(true)} className="w-12 h-12 shrink-0 bg-amber-200/50 rounded-xl flex items-center justify-center text-amber-700 active:scale-95 transition-all">
+                      <span className="text-xs font-black">+{notasRapidas.length - visibleNotesCount}</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Imágenes */}
+              <div className="flex flex-col gap-1.5 border-l border-slate-200 pl-4">
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Imágenes (Opcional)</span>
+                  </div>
+                  <span className="text-[8px] font-bold text-slate-400 uppercase">{imagenes.length} / 3</span>
+                </div>
+                <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1">
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={imagenes.length >= 3}
+                    className="w-12 h-12 shrink-0 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center text-slate-400 bg-white hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-40"
+                  >
+                    <Camera size={16} />
+                    <span className="text-[6px] font-black uppercase">Foto</span>
+                  </button>
+                  <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" multiple className="hidden" />
+
                   {imagenes.map((img) => (
-                    <div key={img.id} className="relative w-16 h-16 rounded-2xl overflow-hidden border-2 border-white shadow-md group transition-all hover:scale-105">
-                      <img src={img.preview} className="w-full h-full object-cover" alt="Preview" />
-                      <button 
-                        type="button" 
-                        onClick={() => removeImagen(img.id)} 
-                        className="absolute inset-0 bg-slate-900/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X size={20} strokeWidth={3} />
-                      </button>
+                    <div key={img.id} className="relative w-12 h-12 shrink-0 rounded-xl overflow-hidden border border-white shadow-sm group transition-all hover:scale-105">
+                      <img src={img.preview} className="w-full h-full object-cover" />
+                      <button type="button" onClick={() => removeImagen(img.id)} className="absolute inset-0 bg-slate-900/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X size={14} strokeWidth={3} /></button>
                     </div>
                   ))}
                 </div>
               </div>
-            )}
-
-            {/* Configuración y Selectores en Grid Espacioso */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0 bg-slate-50/30 p-4 rounded-2xl border border-slate-100">
-              
-              {/* Área Select */}
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Área de Responsabilidad:</span>
-                <select
-                  value={area}
-                  onChange={(e) => setArea(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-marca-primario/20 transition-all shadow-sm"
-                >
-                  {catalogos.areas.map(({ value, label }) => (
-                    <option key={value} value={value}>{label}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Línea Select (si aplica) */}
-              {tieneLineas ? (
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Línea de Producto:</span>
-                  <select
-                    value={linea || ''}
-                    onChange={(e) => setLinea(e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-marca-primario/20 transition-all shadow-sm"
-                  >
-                    {catalogos.lineas.map(({ value, label }) => (
-                      <option key={value} value={value}>{label}</option>
-                    ))}
-                  </select>
-                </div>
-              ) : (
-                <div className="hidden md:block" />
-              )}
-
-              {/* Clasificación Select */}
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Clasificación / Tipo:</span>
-                <select
-                  value={clasificacion}
-                  onChange={(e) => setClasificacion(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-marca-primario/20 transition-all shadow-sm"
-                >
-                  <option value="">— Seleccionar —</option>
-                  {catalogos.clasificaciones.map(({ value, label }) => (
-                    <option key={value} value={value}>{label}</option>
-                  ))}
-                </select>
-              </div>
             </div>
 
-            {/* Botón de Envío Grande al final */}
-            <div className="flex justify-end gap-3 shrink-0 pt-2 border-t border-slate-100">
-              <button
+            {/* 3. AREA | LINEA | CLASIFICACION (ROW) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 shrink-0">
+               <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Área</label>
+                  <select value={area} onChange={(e) => setArea(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-marca-primario/10 transition-all shadow-sm">
+                    {catalogos.areas.map(({ value, label }) => (<option key={value} value={value}>{label}</option>))}
+                  </select>
+               </div>
+
+               {tieneLineas && (
+                 <div className="flex flex-col gap-1">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Línea</label>
+                    <select value={linea || ''} onChange={(e) => setLinea(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-marca-primario/10 transition-all shadow-sm">
+                      <option value="">— Seleccionar Línea —</option>
+                      {catalogos.lineas.map(({ value, label }) => (<option key={value} value={value}>{label}</option>))}
+                    </select>
+                 </div>
+               )}
+
+               <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Clasificación</label>
+                  <select value={clasificacion} onChange={(e) => setClasificacion(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-marca-primario/10 transition-all shadow-sm">
+                    <option value="">— Seleccionar Tipo —</option>
+                    {catalogos.clasificaciones.map(({ value, label }) => (<option key={value} value={value}>{label}</option>))}
+                  </select>
+               </div>
+            </div>
+
+            {/* 4. BOTÓN GUARDAR (PROMINENTE) */}
+            <div className="flex flex-col gap-2 mt-2 shrink-0">
+               <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={!descripcion.trim() || submitting}
+                disabled={!isValid || submitting}
                 className={cn(
-                  "flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 shadow-lg cursor-pointer",
-                  descripcion.trim() 
-                    ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20" 
-                    : "bg-slate-100 text-slate-300 cursor-not-allowed border border-slate-200 shadow-none"
+                  "w-full flex items-center justify-center gap-3 py-3 lg:py-4 rounded-2xl font-black text-xs lg:text-sm uppercase tracking-[0.2em] transition-all active:scale-95 shadow-xl",
+                  isValid ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30" : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
                 )}
               >
-                {submitting ? (
-                  <Icon name="progress_activity" size="16px" className="animate-spin" />
-                ) : (
-                  <Plus size={16} />
-                )}
-                Registrar Entrada
+                {submitting ? <Icon name="progress_activity" size="20px" className="animate-spin" /> : <Save size={20} />}
+                {submitting ? 'Guardando...' : 'Registrar Entrada'}
               </button>
+              
+              <div className="flex justify-center items-center gap-2">
+                 <p className="text-[8px] lg:text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
+                    <Icon name="keyboard_return" size="14px" className="opacity-50" />
+                    Presiona <span className="text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">Enter</span> para guardar rápido
+                 </p>
+              </div>
             </div>
-
           </div>
         </div>
       )}
 
-      {/* Overlay de bloqueo para juntas Programadas */}
       {estado === 'PROGRAMADA' && (
         <div className="absolute inset-0 bg-slate-50/80 backdrop-blur-md z-[60] flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300">
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-indigo-50 text-indigo-600 shadow-md border border-indigo-100">
-            <Icon name="event" size="32px" />
-          </div>
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-indigo-50 text-indigo-600 border border-indigo-100"><Icon name="event" size="32px" /></div>
           <h3 className="fuente-titulos text-xl font-black text-slate-800 uppercase tracking-wider">Minuta Programada</h3>
-          <p className="max-w-md text-sm text-slate-400 mt-2 font-medium">
-            Esta junta aún no ha comenzado. Debes iniciar la junta para poder capturar acuerdos, tareas y subir imágenes.
-          </p>
-          <button
-            onClick={onIniciar}
-            disabled={iniciando}
-            className="mt-6 flex items-center gap-2 px-6 py-3 bg-marca-primario hover:bg-marca-primario/90 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg shadow-marca-primario/25 transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
-          >
-            {iniciando ? (
-              <Icon name="progress_activity" size="16px" className="animate-spin" />
-            ) : (
-              <Icon name="play_arrow" size="16px" />
-            )}
-            {iniciando ? 'Iniciando...' : 'Iniciar Junta Ahora'}
-          </button>
+          <p className="max-w-md text-sm text-slate-400 mt-2 font-medium">Inicia la junta para poder capturar acuerdos, tareas y subir imágenes.</p>
+          <button onClick={onIniciar} disabled={iniciando} className="mt-6 flex items-center gap-2 px-6 py-3 bg-marca-primario hover:bg-marca-primario/90 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg shadow-marca-primario/25 transition-all active:scale-95 disabled:opacity-50">{iniciando ? <Icon name="progress_activity" size="16px" className="animate-spin" /> : <Icon name="play_arrow" size="16px" />} {iniciando ? 'Iniciando...' : 'Iniciar Junta Ahora'}</button>
         </div>
       )}
+
+      <AllNotesModal
+        isOpen={showAllNotes}
+        onClose={() => setShowAllNotes(false)}
+        notas={notasRapidas}
+        onUpdate={handleUpdateNota}
+        onRemove={handleRemoveNota}
+        onAdd={handleAddNota}
+      />
     </div>
   );
 };

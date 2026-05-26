@@ -1,4 +1,5 @@
 import api from '@/lib/axios';
+import { compressImage } from '@/utils/image-compression';
 
 // ── Listado y detalle ──────────────────────────────────────────────────────
 
@@ -13,14 +14,12 @@ export const getTareaById = async (id) => {
 // ── Mutaciones ─────────────────────────────────────────────────────────────
 
 export const createTarea = async (data) => {
-    const hasImages = data.tareas?.some(t => t._localImagenes?.length > 0);
+    const hasImages = data.tareas?.some(t => (t._localImages?.length > 0));
 
     // Sin imágenes → JSON normal
     if (!hasImages) {
-        // Limpiamos _localImagenes antes de enviar (aunque estén vacías)
         const clean = {
-            // eslint-disable-next-line no-unused-vars
-            tareas: data.tareas.map(({ _localImagenes, ...rest }) => rest)
+            tareas: data.tareas.map(({ _localImages, ...rest }) => rest)
         };
         return await api.post('/api/tareas', clean);
     }
@@ -30,57 +29,62 @@ export const createTarea = async (data) => {
     const tareasClean = [];
 
     data.tareas.forEach((t) => {
-        const { _localImagenes, ...rest } = t;
+        // eslint-disable-next-line no-unused-vars
+        const { _localImages, ...rest } = t;
         tareasClean.push(rest);
     });
 
     formData.append('tareas', JSON.stringify(tareasClean));
 
-    let archivosAgregados = 0;
+    let totalArchivos = 0;
 
-    data.tareas.forEach((t, index) => {
-        if (!t._localImagenes?.length) return;
+    // Procesar imágenes con compresión asíncrona
+    await Promise.all(data.tareas.map(async (tarea, tIdx) => {
+        if (!tarea._localImages || tarea._localImages.length === 0) return;
 
-        t._localImagenes.forEach((img, i) => {
-            const fileToUpload = img.file;
+        await Promise.all(tarea._localImages.map(async (img, iIdx) => {
+            const file = img.file;
 
-            if (!fileToUpload) {
-                console.warn(`[createTarea] img ${index}_${i}: sin File object`);
-                return;
+            if (file instanceof File || file instanceof Blob) {
+                try {
+                    const compressedBlob = await compressImage(file);
+                    // Nomenclatura simplificada y robusta
+                    const fieldName = `files_${tIdx}_${iIdx}`;
+                    const fileName = file.name ? file.name.replace(/\.[^/.]+$/, ".jpg") : `image_${tIdx}_${iIdx}.jpg`;
+                    
+                    formData.append(fieldName, compressedBlob, fileName);
+                    totalArchivos++;
+                } catch (err) {
+                    console.error(`[createTarea] Error comprimiendo imagen ${tIdx}_${iIdx}:`, err);
+                    // Fallback: si la compresión falla, enviar el original
+                    const fieldName = `files_${tIdx}_${iIdx}`;
+                    formData.append(fieldName, file, file.name);
+                    totalArchivos++;
+                }
+            } else {
+                console.warn(`[createTarea] Tarea ${tIdx}, img ${iIdx}: No es un objeto File/Blob válido`, img);
             }
-            if (fileToUpload.size === 0) {
-                console.warn(`[createTarea] img ${index}_${i}: archivo vacío`);
-                return;
-            }
+        }));
+    }));
 
-            const fieldName = `imagen_tarea_${index}_${i}`;
-            const fileName = fileToUpload.name || `imagen_${index}_${i}.jpg`;
-            formData.append(fieldName, fileToUpload, fileName);
-            archivosAgregados++;
-            console.log(`[createTarea] adjuntado: ${fieldName} (${fileToUpload.size}b, ${fileToUpload.type})`);
-        });
-    });
+    console.log(`[createTarea] Enviando batch de ${data.tareas.length} tareas con ${totalArchivos} imágenes.`);
 
-    console.log(`[createTarea] total archivos en FormData: ${archivosAgregados}`);
-
-    // FIX: Content-Type = undefined para que el browser/axios
-    // asigne multipart/form-data con el boundary correcto.
-    // Si dejamos el default 'application/json', multer no parsea los archivos.
+    // IMPORTANTE: Al enviar FormData, NO debemos poner Content-Type manualmente
+    // o Axios pondrá uno sin el boundary necesario. 
+    // Usar 'multipart/form-data' o simplemente dejar que Axios lo detecte.
     return await api.post('/api/tareas', formData, {
         headers: {
             'Content-Type': undefined,
         },
-        timeout: 120_000, // 2 min — uploads pueden tardar con imágenes grandes
+        timeout: 180000 // 3 min para subidas pesadas
     });
 };
-
 
 export const updateTarea = async (id, data) => {
     return await api.put(`/api/tareas/${id}`, data);
 };
 
 export const changeTareaStatus = async (id, data) => {
-    // data debe ser { estado: 'NUEVO_ESTADO' }
     return await api.patch(`/api/tareas/${id}/estado`, data);
 };
 
@@ -88,20 +92,15 @@ export const deleteTarea = async (id) => {
     return await api.delete(`/api/tareas/${id}`);
 };
 
-// ── Notas ─────────────────────────────────────────────────────────────
-
 export const createNotaGeneral = async (data) => {
-    // data: { contenido, minutaId }
     return await api.post('/api/tareas/notas/general', data);
 };
 
 export const createTareaNota = async (data) => {
-    // data: { contenido, tareaId }
     return await api.post('/api/tareas/notas/tarea', data);
 };
 
 export const updateTareaNota = async (id, data) => {
-    // data: { contenido }
     return await api.put(`/api/tareas/notas/tarea/${id}`, data);
 };
 
@@ -113,7 +112,12 @@ export const deleteTareaNota = async (id) => {
 
 export const addTareaImagen = async (tareaId, file) => {
     const formData = new FormData();
-    formData.append('imagen', file);
+    try {
+        const compressed = await compressImage(file);
+        formData.append('imagen', compressed, file.name ? file.name.replace(/\.[^/.]+$/, "") + ".jpg" : "image.jpg");
+    } catch (e) {
+        formData.append('imagen', file);
+    }
     return await api.post(`/api/tareas/${tareaId}/imagenes`, formData, {
         headers: { 'Content-Type': undefined }
     });

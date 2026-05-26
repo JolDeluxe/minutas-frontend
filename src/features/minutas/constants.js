@@ -21,7 +21,7 @@ export const CLASIFICACION_MAP = {
 };
 
 export const TIPO_ENTRADA_MAP = {
-  TAREA:          { label: 'Tarea / Seguimiento',     icon: 'task',           color: '#10b981' },
+  TAREA:          { label: 'Tarea',                   icon: 'task',           color: '#10b981' },
   RECORDATORIO:   { label: 'Recordatorio',            icon: 'notifications',  color: '#3b82f6' },
   POLITICA:       { label: 'Política / Lineamiento',  icon: 'policy',         color: '#8b5cf6' },
   DESCARTADA:     { label: 'Descartada',              icon: 'cancel',         color: '#ef4444' },

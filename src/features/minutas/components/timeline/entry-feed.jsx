@@ -1,12 +1,9 @@
 import { useMemo } from 'react';
 import { Icon } from '@/components/ui/z_index';
+import { cn } from '@/utils/cn';
 import { EntryCard } from './entry-card';
 import { EntryTable } from './entry-table';
 
-/**
- * EntryFeed — Feed de entradas separadas por estado de guardado.
- * Prioriza borradores pendientes para evitar confundirlos con entradas persistidas.
- */
 export const EntryFeed = ({
   entries = [],
   loading = false,
@@ -15,9 +12,10 @@ export const EntryFeed = ({
   viewMode = 'cards',
   departamento = 'DISENO',
   onOrganize,
-  onRemoveDraft,
+  onRemove,
   onUpdateDraft,
   onUpdateSaved,
+  onEdit,
   onCreateNote,
   onUpdateNote,
   onDeleteNote,
@@ -28,38 +26,35 @@ export const EntryFeed = ({
 }) => {
   const sections = useMemo(() => {
     const drafts = [];
-    const saved = [];
+    const internal = [];
+    const external = [];
 
     for (const entry of entries) {
-      // Regla Crítica: POLITICAS y RECORDATORIOS no van en el feed principal (van en sus propios paneles superiores)
-      // Nota: Los borradores (tempId) se asume que aún no son formales, o si lo son por auto-tipado (POLITICA), los excluimos aquí.
-      if (entry.tipo === 'POLITICA' || entry.tipo === 'RECORDATORIO') continue;
-
-      if (entry.tempId) drafts.push(entry);
-      else saved.push(entry);
+      if (entry.tipo === 'POLITICA' || entry.tipo === 'RECORDATORIO' || entry.tipo === 'DESCARTADA' || entry.estado === 'DESCARTADA') continue;
+      
+      if (entry.tempId) {
+        drafts.push(entry);
+      } else {
+        const isExternal = (departamento === 'DISENO' && entry.area !== 'DISENO') || 
+                          (departamento === 'MARKETING' && entry.area !== 'MARKETING');
+        
+        if (isExternal) external.push(entry);
+        else internal.push(entry);
+      }
     }
 
     return [
-      {
-        key: 'drafts',
-        label: 'Pendientes por guardar',
-        tone: 'draft',
-        entries: drafts,
-      },
-      {
-        key: 'saved',
-        label: 'Guardadas',
-        tone: 'saved',
-        entries: saved,
-      },
+      { key: 'drafts', label: 'Borradores por guardar', tone: 'draft', entries: drafts, icon: 'edit_note' },
+      { key: 'internal', label: 'Seguimiento Interno', tone: 'saved', entries: internal, icon: 'assignment' },
+      { key: 'external', label: 'Entradas Externas (Otras Áreas)', tone: 'external', entries: external, icon: 'output' },
     ].filter((section) => section.entries.length > 0);
-  }, [entries]);
+  }, [entries, departamento]);
 
   if (loading && entries.length === 0) {
     return (
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-40 w-full bg-slate-100 rounded-3xl animate-pulse border border-slate-200" />
+          <div key={i} className="h-44 w-full bg-slate-100 rounded-3xl animate-pulse border border-slate-200" />
         ))}
       </div>
     );
@@ -82,48 +77,55 @@ export const EntryFeed = ({
   }
 
   return (
-    <div className="flex flex-col gap-8 pb-40 px-1">
+    <div className="flex flex-col gap-10 px-1">
       {sections.map((section) => (
-        <section key={section.key} className="flex flex-col gap-4">
-          <div className="flex items-center gap-4">
-            <div className="h-px flex-1 bg-slate-200" />
-            <div
-              className={
-                section.tone === 'draft'
-                  ? 'rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-emerald-700 shadow-sm'
-                  : 'rounded-full border border-slate-200 bg-white px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-slate-400 shadow-sm'
-              }
-            >
-              {section.label} ({section.entries.length})
+        <section key={section.key} className="flex flex-col gap-5">
+          <div className="flex items-center gap-4 px-2">
+            <div className={cn(
+              "flex h-8 w-8 items-center justify-center rounded-lg shadow-sm border",
+              section.tone === 'draft' ? "bg-emerald-500 border-emerald-400 text-white" : 
+              section.tone === 'external' ? "bg-purple-500 border-purple-400 text-white" : 
+              "bg-slate-800 border-slate-700 text-white"
+            )}>
+              <Icon name={section.icon} size="18px" />
             </div>
-            <div className="h-px flex-1 bg-slate-200" />
+            <h3 className={cn(
+              "text-[10px] font-black uppercase tracking-[0.25em]",
+              section.tone === 'draft' ? "text-emerald-700" : 
+              section.tone === 'external' ? "text-purple-700" : 
+              "text-slate-500"
+            )}>
+              {section.label} ({section.entries.length})
+            </h3>
+            <div className="h-px flex-1 bg-slate-200/60" />
           </div>
 
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,34rem),1fr))] gap-4 md:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             {viewMode === 'table' ? (
               <div className="col-span-full animate-in fade-in slide-in-from-bottom-6 duration-500 ease-out">
                 <EntryTable
                   entries={section.entries}
                   departamento={departamento}
                   onOrganize={onOrganize}
-                  onRemoveDraft={onRemoveDraft}
+                  onRemove={onRemove}
                   onUpdateDraft={onUpdateDraft}
                   onUpdateSaved={onUpdateSaved}
+                  onEdit={onEdit}
                   onChangeStatus={onChangeStatus}
                   users={users}
                 />
               </div>
             ) : (
               section.entries.map((entry) => (
-                <div key={`ent-${entry.id || entry.tempId}`} className="animate-in fade-in slide-in-from-bottom-6 duration-500 ease-out">
+                <div key={`ent-${entry.id || entry.tempId}`} className="animate-in fade-in slide-in-from-bottom-6 duration-500 ease-out h-full">
                   <EntryCard
                     entry={entry}
                     departamento={departamento}
                     onOrganize={onOrganize}
                     meetingMode={meetingMode}
-                    onRemove={onRemoveDraft}
+                    onRemove={onRemove}
                     onUpdate={onUpdateDraft}
-                    onUpdateSaved={onUpdateSaved}
+                    onEdit={onEdit}
                     onCreateNote={onCreateNote}
                     onUpdateNote={onUpdateNote}
                     onDeleteNote={onDeleteNote}
