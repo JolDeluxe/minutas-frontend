@@ -108,6 +108,10 @@ export const deleteTareaNota = async (id) => {
     return await api.delete(`/api/tareas/notas/tarea/${id}`);
 };
 
+export const generarPdfTarea = async (id) => {
+    return await api.get(`/api/tareas/${id}/pdf`);
+};
+
 // ── Imágenes ─────────────────────────────────────────────────────────────
 
 export const addTareaImagen = async (tareaId, file) => {

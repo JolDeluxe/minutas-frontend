@@ -67,7 +67,9 @@ export const MinutaDetailMobileView = ({
   finalizando,
   minutaEstado,
   handleDeleteEntry,
-  clearDrafts
+  clearDrafts,
+  handleDownloadPdf,
+  isGeneratingPdf
 }) => {
   const [showPoliticas, setShowPoliticas] = useState(false);
   const [showRecordatorios, setShowRecordatorios] = useState(false);
@@ -231,6 +233,8 @@ export const MinutaDetailMobileView = ({
           onDeleteImage={handleDeleteEntryImage}
           onChangeStatus={changeTareaStatus}
           users={users}
+          onDownloadPdf={handleDownloadPdf}
+          isGeneratingPdf={isGeneratingPdf}
         />
       </main>
       

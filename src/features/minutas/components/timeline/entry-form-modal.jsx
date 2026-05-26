@@ -156,7 +156,10 @@ export const EntryFormModal = ({
     </div>
   );
 
+  const isExternal = entry ? ((departamento === 'DISENO' && entry.area !== 'DISENO') || (departamento === 'MARKETING' && entry.area !== 'MARKETING')) : false;
+
   const renderOperativePanel = () => {
+    if (isExternal) return null; // No operative panel for external tasks
     const showOperative = form.tipo === 'TAREA' || (form.tipo === 'RECORDATORIO' && form.alcanceRecordatorio === 'PERSONAL');
     if (!showOperative) return null;
 
@@ -222,32 +225,34 @@ export const EntryFormModal = ({
           <textarea value={form.descripcion} onChange={(e) => handleFieldChange('descripcion', e.target.value)} className="w-full h-32 sm:h-40 p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base font-semibold text-slate-800 focus:outline-none focus:ring-4 focus:ring-marca-primario/5 resize-none shadow-inner" placeholder="Escribe el detalle aquí..." />
         </div>
 
-        <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 shadow-sm space-y-4">
-           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Info size={14} className="text-marca-primario" /> Naturaleza de la Entrada</label>
-           <div className="flex flex-col gap-2">
-              {['TAREA', 'RECORDATORIO', 'POLITICA'].map(key => {
-                const val = TIPO_ENTRADA_MAP[key];
-                const active = form.tipo === key;
-                return (
-                  <button key={key} onClick={() => handleFieldChange('tipo', key)} className={cn("flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all active:scale-95 text-left", active ? "bg-slate-900 border-slate-800 text-white shadow-lg" : "bg-white border-slate-100 text-slate-600 hover:border-slate-200")}>
-                    <div className="flex items-center gap-3">
-                       <Icon name={val.icon} size="18px" className={active ? "text-marca-primario" : "text-slate-400"} />
-                       <span className="text-xs font-bold uppercase tracking-wide">{val.label}</span>
-                    </div>
-                    {active && <Check size={16} strokeWidth={4} className="text-marca-primario" />}
-                  </button>
-                )
-              })}
-           </div>
-           {form.tipo === 'RECORDATORIO' && (
-              <div className="pt-2 animate-in slide-in-from-top-1 duration-200">
-                 <div className="flex bg-slate-100 p-1 rounded-xl">
-                    <button onClick={() => handleFieldChange('alcanceRecordatorio', 'DEPARTAMENTO')} className={cn("flex-1 py-1.5 text-[9px] font-black uppercase rounded-lg transition-all", form.alcanceRecordatorio === 'DEPARTAMENTO' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}>General</button>
-                    <button onClick={() => handleFieldChange('alcanceRecordatorio', 'PERSONAL')} className={cn("flex-1 py-1.5 text-[9px] font-black uppercase rounded-lg transition-all", form.alcanceRecordatorio === 'PERSONAL' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}>Personal</button>
-                 </div>
-              </div>
-           )}
-        </div>
+        {!isExternal && (
+          <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 shadow-sm space-y-4">
+             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Info size={14} className="text-marca-primario" /> Naturaleza de la Entrada</label>
+             <div className="flex flex-col gap-2">
+                {['TAREA', 'RECORDATORIO', 'POLITICA'].map(key => {
+                  const val = TIPO_ENTRADA_MAP[key];
+                  const active = form.tipo === key;
+                  return (
+                    <button key={key} onClick={() => handleFieldChange('tipo', key)} className={cn("flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all active:scale-95 text-left", active ? "bg-slate-900 border-slate-800 text-white shadow-lg" : "bg-white border-slate-100 text-slate-600 hover:border-slate-200")}>
+                      <div className="flex items-center gap-3">
+                         <Icon name={val.icon} size="18px" className={active ? "text-marca-primario" : "text-slate-400"} />
+                         <span className="text-xs font-bold uppercase tracking-wide">{val.label}</span>
+                      </div>
+                      {active && <Check size={16} strokeWidth={4} className="text-marca-primario" />}
+                    </button>
+                  )
+                })}
+             </div>
+             {form.tipo === 'RECORDATORIO' && (
+                <div className="pt-2 animate-in slide-in-from-top-1 duration-200">
+                   <div className="flex bg-slate-100 p-1 rounded-xl">
+                      <button onClick={() => handleFieldChange('alcanceRecordatorio', 'DEPARTAMENTO')} className={cn("flex-1 py-1.5 text-[9px] font-black uppercase rounded-lg transition-all", form.alcanceRecordatorio === 'DEPARTAMENTO' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}>General</button>
+                      <button onClick={() => handleFieldChange('alcanceRecordatorio', 'PERSONAL')} className={cn("flex-1 py-1.5 text-[9px] font-black uppercase rounded-lg transition-all", form.alcanceRecordatorio === 'PERSONAL' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}>Personal</button>
+                   </div>
+                </div>
+             )}
+          </div>
+        )}
 
         {/* Panel Operativo (Aparece inmediatamente después de la naturaleza) */}
         {renderOperativePanel()}
@@ -272,7 +277,7 @@ export const EntryFormModal = ({
            </div>
         </div>
 
-        {form.tipo === 'TAREA' && (
+        {form.tipo === 'TAREA' && !isExternal && (
           <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 shadow-sm space-y-4">
              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Prioridad</label>
              <div className="grid grid-cols-2 gap-2">

@@ -65,7 +65,9 @@ export const MinutaDetailDesktopView = ({
   finalizando,
   minutaEstado,
   handleDeleteEntry,
-  clearDrafts
+  clearDrafts,
+  handleDownloadPdf,
+  isGeneratingPdf
 }) => {
   const [showPoliticas, setShowPoliticas] = useState(false);
   const [showRecordatorios, setShowRecordatorios] = useState(false);
@@ -246,8 +248,9 @@ export const MinutaDetailDesktopView = ({
                 onDeleteImage={handleDeleteEntryImage}
                 onChangeStatus={changeTareaStatus}
                 users={users}
-              />
-            </div>
+                onDownloadPdf={handleDownloadPdf}
+                isGeneratingPdf={isGeneratingPdf}
+              />            </div>
           </div>
         </main>
         

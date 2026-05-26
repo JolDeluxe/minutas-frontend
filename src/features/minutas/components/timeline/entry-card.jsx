@@ -319,7 +319,8 @@ const CardImageCarousel = ({ images, onImageClick, lineInfo, isMarketing }) => {
 
 export const EntryCard = ({ 
   entry, departamento = 'DISENO', onOrganize, onRemove, onUpdate, onEdit,
-  onCreateNote, onUpdateNote, onDeleteNote, onAddImage, onDeleteImage, onChangeStatus, users = []
+  onCreateNote, onUpdateNote, onDeleteNote, onAddImage, onDeleteImage, onChangeStatus, users = [],
+  onDownloadPdf, isGeneratingPdf
 }) => {
   const { user } = useAuthStore();
   const currentUser = user?.data || user;
@@ -400,7 +401,7 @@ export const EntryCard = ({
             entry.tipo === 'RECORDATORIO' ? "bg-indigo-500" : "bg-purple-500"
           )}>
             {isExternal ? `EXTERNA: ${AREA_MAP[entry.area] || entry.area}` : 
-             entry.tipo === 'TAREA' ? 'TAREA OPERATIVA' : entry.tipo}
+             entry.tipo === 'TAREA' ? 'TAREA' : entry.tipo}
           </div>
         )}
 
@@ -438,9 +439,15 @@ export const EntryCard = ({
             {/* Header: Status + Badge + Fechas */}
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
               <div className="flex items-center gap-2 flex-wrap">
-                {!isDraft && <StatusTrafficLight entry={entry} size="sm" className="shrink-0" />}
-                {!isDraft && (entry.tipo === 'TAREA' || entry.tipo === 'RECORDATORIO') && (
+                {!isDraft && !isExternal && <StatusTrafficLight entry={entry} size="sm" className="shrink-0" />}
+                {!isDraft && (entry.tipo === 'TAREA' || entry.tipo === 'RECORDATORIO') && !isExternal && (
                   <TareaStatusBadge status={estadoActual} className="scale-90 origin-left" />
+                )}
+                {isExternal && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border bg-purple-100/50 text-purple-700 border-purple-200/50">
+                    <Icon name="output" size="10px" />
+                    Área: {AREA_MAP[entry.area] || entry.area}
+                  </span>
                 )}
                 {clasif && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border" style={{ backgroundColor: `${clasif.color}08`, color: clasif.color, borderColor: `${clasif.color}15` }}>
@@ -472,7 +479,7 @@ export const EntryCard = ({
             </div>
 
             {/* Extra Info: Oculto por defecto */}
-            {isExpanded && !isDraft && (
+            {isExpanded && !isDraft && !isExternal && (
               <div className="mt-4 pt-3 border-t border-slate-50 space-y-3 animate-in slide-in-from-top-1 duration-300">
                  {/* Responsables */}
                  {entry.asignaciones?.length > 0 && (
@@ -517,7 +524,7 @@ export const EntryCard = ({
 
               {/* Botones de acción inteligentes */}
               <div className="flex items-center gap-1.5">
-                {isFormalizada && !isDraft && !isClosed && (
+                {isFormalizada && !isDraft && !isClosed && !isExternal && (
                    <div className="mr-1">
                       {estadoActual === 'PENDIENTE' && isAsignado && (
                         <button onClick={(e) => { e.stopPropagation(); handleUpdateStatus('EN_REVISION'); }} disabled={isUpdatingStatus} className="h-7 px-3 bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-blue-600/20 active:scale-95 disabled:opacity-50">Iniciar</button>
@@ -528,23 +535,36 @@ export const EntryCard = ({
                    </div>
                 )}
                 
-                {hasExtraInfo && (
+                {hasExtraInfo && !isExternal && (
                   <button onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }} className={cn("h-7 w-7 rounded-lg border transition-all active:scale-90 flex items-center justify-center shadow-xs", isExpanded ? "bg-slate-800 border-slate-800 text-white" : "bg-white border-slate-100 text-slate-400 hover:text-slate-800")}>
                     <Icon name={isExpanded ? "visibility_off" : "visibility"} size="14px" />
+                  </button>
+                )}
+
+                {/* PDF Button for External */}
+                {isExternal && !isDraft && onDownloadPdf && (
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); onDownloadPdf(entry.area); }} 
+                    disabled={isGeneratingPdf === entry.area}
+                    className="h-7 px-2.5 rounded-lg border border-purple-200 bg-purple-50 text-purple-600 hover:bg-purple-600 hover:text-white flex items-center gap-1.5 transition-all active:scale-90 shadow-xs font-black uppercase text-[9px] tracking-widest" 
+                    title="Generar y Compartir PDF"
+                  >
+                    <Icon name={isGeneratingPdf === entry.area ? "hourglass_empty" : "picture_as_pdf"} size="14px" className={isGeneratingPdf === entry.area ? "animate-spin" : ""} />
+                    PDF
                   </button>
                 )}
                 
                 {!isClosed && (
                   <>
-                    {/* Organizar: Solo si NO está organizada (es SIN_ORGANIZAR) */}
-                    {!isOrganized && (
+                    {/* Organizar: Solo si NO está organizada (es SIN_ORGANIZAR) y NO es externa */}
+                    {!isOrganized && !isExternal && (
                       <button onClick={(e) => { e.stopPropagation(); onOrganize(entry); }} className="h-7 w-7 rounded-lg border border-marca-primario/20 bg-marca-primario/5 text-marca-primario flex items-center justify-center transition-all active:scale-90 shadow-xs" title="Organizar Entrada">
                         <Settings2 size={13} />
                       </button>
                     )}
                     
-                    {/* Editar: Solo si ya está organizada (no es SIN_ORGANIZAR) */}
-                    {isOrganized && (
+                    {/* Editar: Solo si ya está organizada (o es externa) */}
+                    {(isOrganized || isExternal) && (
                       <button onClick={(e) => { e.stopPropagation(); onEdit(entry); }} className="h-7 w-7 rounded-lg border border-slate-100 bg-white text-slate-400 hover:text-slate-900 flex items-center justify-center transition-all active:scale-90 shadow-xs" title="Editar Entrada">
                         <Pencil size={12} />
                       </button>

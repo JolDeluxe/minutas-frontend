@@ -40,3 +40,7 @@ export const finalizarMinuta = async (id) => {
   return await api.post(`/api/minutas/${id}/finalizar`);
 };
 
+export const generarPdfPorArea = async (id, area) => {
+  return await api.get(`/api/minutas/${id}/pdf-area/${area}`);
+};
+

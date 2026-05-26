@@ -22,7 +22,9 @@ export const EntryFeed = ({
   onAddImage,
   onDeleteImage,
   onChangeStatus,
-  users
+  users,
+  onDownloadPdf,
+  isGeneratingPdf
 }) => {
   const sections = useMemo(() => {
     const drafts = [];
@@ -46,7 +48,7 @@ export const EntryFeed = ({
     return [
       { key: 'drafts', label: 'Borradores por guardar', tone: 'draft', entries: drafts, icon: 'edit_note' },
       { key: 'internal', label: 'Seguimiento Interno', tone: 'saved', entries: internal, icon: 'assignment' },
-      { key: 'external', label: 'Entradas Externas (Otras Áreas)', tone: 'external', entries: external, icon: 'output' },
+      { key: 'external', label: 'Tareas Externas (Otras Áreas)', tone: 'external', entries: external, icon: 'output' },
     ].filter((section) => section.entries.length > 0);
   }, [entries, departamento]);
 
@@ -116,6 +118,8 @@ export const EntryFeed = ({
                   onDeleteNote={onDeleteNote}
                   onChangeStatus={onChangeStatus}
                   users={users}
+                  onDownloadPdf={onDownloadPdf}
+                  isGeneratingPdf={isGeneratingPdf}
                 />
               </div>
             ) : (
@@ -136,6 +140,8 @@ export const EntryFeed = ({
                     onDeleteImage={onDeleteImage}
                     onChangeStatus={onChangeStatus}
                     users={users}
+                    onDownloadPdf={onDownloadPdf}
+                    isGeneratingPdf={isGeneratingPdf}
                   />
                 </div>
               ))

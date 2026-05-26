@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getMinutaById, iniciarMinuta, cancelarMinuta, cerrarMinuta, reabrirMinuta, finalizarMinuta } from '../api/minutas-api';
+import { getMinutaById, iniciarMinuta, cancelarMinuta, cerrarMinuta, reabrirMinuta, finalizarMinuta, generarPdfPorArea } from '../api/minutas-api';
 import { useTareas } from '@/features/tareas/hooks/use-tareas';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useUsers } from '@/features/usuarios/hooks/use-users';
@@ -30,7 +30,7 @@ export default function MinutaDetailPage() {
     tareas, fetchTareas, loadingTareas, deleteTarea,
     createTarea: createTareaApi, updateTarea, changeStatus: changeTareaStatus, createNotaGeneral, 
     createTareaNota, updateTareaNota, deleteTareaNota,
-    addTareaImagen, deleteTareaImagen
+    addTareaImagen, deleteTareaImagen, generarPdfTarea
   } = useTareas();
 
   const { users, fetchUsers } = useUsers();
@@ -167,7 +167,7 @@ export default function MinutaDetailPage() {
     let totalPoliticas = 0, totalRecordatorios = 0;
 
     for (const t of allEntries) {
-      const isExterna = (departamento === 'DISENO' && t.area !== 'DISENO') || (departamento === 'MARKETING' && t.area !== 'MARKETING');
+      const isExterna = t.area && t.area !== departamento;
       if (t.tipo === 'POLITICA') totalPoliticas++;
       else if (t.tipo === 'RECORDATORIO') totalRecordatorios++;
       else if (t.tipo === 'TAREA' && !isExterna) {
@@ -451,6 +451,47 @@ export default function MinutaDetailPage() {
     } finally { setFinalizando(false); }
   };
 
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(null);
+
+  const handleDownloadPdf = async (area) => {
+    setIsGeneratingPdf(area);
+    try {
+      const res = await generarPdfPorArea(id, area);
+      const url = res?.data?.pdfUrl || res?.pdfUrl;
+      
+      if (!url) throw new Error("No se pudo obtener la URL del PDF");
+
+      // 1. Descargar el archivo a la memoria del navegador como BLOB
+      const response = await fetch(url);
+      const blob = await response.blob();
+      
+      // 2. Crear un nombre de archivo confiable con extensión .pdf
+      const fechaObj = new Date(minuta.fechaRealizada || minuta.fechaProgramada || minuta.createdAt);
+      const fechaFormateada = `${String(fechaObj.getDate()).padStart(2, '0')}-${String(fechaObj.getMonth() + 1).padStart(2, '0')}-${fechaObj.getFullYear()}`;
+      const fileName = `Tareas_${area}_${fechaFormateada}.pdf`;
+
+      // 3. Crear link de descarga invisible para forzar al celular/PC a guardarlo como PDF
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName;
+      
+      // Necesario para que funcione en algunos navegadores móviles
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Limpiar memoria
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
+      
+    } catch (err) {
+      console.error("Error al descargar PDF:", err);
+      notify.error('Error al descargar el PDF');
+    } finally {
+      setIsGeneratingPdf(null);
+    }
+  };
+
   if (loadingMinuta) return <div className="flex h-screen items-center justify-center bg-slate-50"><Icon name="progress_activity" className="animate-spin text-marca-primario" size="40px" /></div>;
 
   const politicasAcordadas = allEntries.filter(e => e.tipo === 'POLITICA');
@@ -467,7 +508,7 @@ export default function MinutaDetailPage() {
     handleFinalSubmit, isSubmittingFinal, showNotes, setShowNotes, handleCreateEntryNote, handleUpdateEntryNote,
     handleDeleteEntryNote, handleAddEntryImage, handleDeleteEntryImage, handleIniciar, handleCancelar, handleCerrar, handleReabrir, handleFinalizar,
     iniciando, cancelando, cerrando, reabriendo, finalizando, minutaEstado: minuta?.estado,
-    clearDrafts
+    clearDrafts, handleDownloadPdf, isGeneratingPdf
   };
 
   return isDesktop ? <MinutaDetailDesktopView {...commonProps} /> : <MinutaDetailMobileView {...commonProps} />;

@@ -227,7 +227,8 @@ const TableImagePreview = ({ images, onClick }) => {
 
 export const EntryTable = ({ 
   entries, departamento, onOrganize, onRemove, onEdit, 
-  onCreateNote, onUpdateNote, onDeleteNote, onChangeStatus, users 
+  onCreateNote, onUpdateNote, onDeleteNote, onChangeStatus, users,
+  onDownloadPdf, isGeneratingPdf
 }) => {
   const [viewerIndex, setViewerIndex] = useState(null);
   const [activeEntryImages, setActiveEntryImages] = useState([]);
@@ -243,6 +244,14 @@ export const EntryTable = ({
     return entries.find(e => (e.id || e.tempId) === activeNotesEntryId);
   }, [activeNotesEntryId, entries]);
 
+  // Verificar si todas las entradas de la tabla actual son externas
+  const isAllExternal = useMemo(() => {
+    if (!entries || entries.length === 0) return false;
+    return entries.every(row => {
+      return (departamento === 'DISENO' && row.area !== 'DISENO') || (departamento === 'MARKETING' && row.area !== 'MARKETING');
+    });
+  }, [entries, departamento]);
+
   const columns = [
     {
       header: "#",
@@ -250,7 +259,9 @@ export const EntryTable = ({
       headerClassName: "w-[4%] min-w-[50px]",
       cell: (row) => {
         const isDraft = Boolean(row.tempId);
+        const isExternal = (departamento === 'DISENO' && row.area !== 'DISENO') || (departamento === 'MARKETING' && row.area !== 'MARKETING');
         if (isDraft) return <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2 py-0.5 text-[8px] font-black uppercase tracking-widest text-emerald-700 whitespace-nowrap">Borrador</span>;
+        if (isExternal) return <span className="inline-flex items-center gap-1 rounded-lg bg-purple-100 px-2 py-0.5 text-[8px] font-black uppercase tracking-widest text-purple-700 whitespace-nowrap">EXT</span>;
         return <span className="text-slate-400 font-mono text-xs">#{entries.indexOf(row) + 1}</span>;
       }
     },
@@ -280,6 +291,8 @@ export const EntryTable = ({
       align: "center",
       headerClassName: "w-[10%] min-w-[120px]",
       cell: (row) => {
+        const isExternal = (departamento === 'DISENO' && row.area !== 'DISENO') || (departamento === 'MARKETING' && row.area !== 'MARKETING');
+        if (isExternal) return <span className="text-[10px] font-black text-purple-600 uppercase bg-purple-50 px-2 py-1 rounded-md">{AREA_MAP[row.area] || row.area}</span>;
         if (!row.asignaciones || row.asignaciones.length === 0) return <span className="text-[11px] text-slate-300">—</span>;
         
         const tooltipText = row.asignaciones.map(a => a.usuario?.nombre).join('\n');
@@ -337,43 +350,47 @@ export const EntryTable = ({
         );
       }
     },
-    {
-      header: "Estado",
-      accessorKey: "estado",
-      align: "center",
-      headerClassName: "w-[10%] min-w-[110px]",
-      cell: (row) => {
-        const estadoActual = row.estado || (row.tipo === 'TAREA' || row.tipo === 'RECORDATORIO' ? 'PENDIENTE' : null);
-        const estado = estadoActual ? ESTADO_TAREA_MAP[estadoActual] : null;
-        if (!estado) return <span className="text-[11px] text-slate-300">—</span>;
-        return (
-          <span className={cn('inline-flex items-center gap-1.5 rounded-xl border px-3 py-1 text-[9px] font-black uppercase tracking-widest whitespace-nowrap shadow-xs', ESTADO_STYLES[estadoActual] || 'bg-slate-50 text-slate-600 border-slate-200')}>
-            {estado.label}
-          </span>
-        );
+    ...(isAllExternal ? [] : [
+      {
+        header: "Estado",
+        accessorKey: "estado",
+        align: "center",
+        headerClassName: "w-[10%] min-w-[110px]",
+        cell: (row) => {
+          const estadoActual = row.estado || (row.tipo === 'TAREA' || row.tipo === 'RECORDATORIO' ? 'PENDIENTE' : null);
+          const estado = estadoActual ? ESTADO_TAREA_MAP[estadoActual] : null;
+          if (!estado) return <span className="text-[11px] text-slate-300">—</span>;
+          return (
+            <span className={cn('inline-flex items-center gap-1.5 rounded-xl border px-3 py-1 text-[9px] font-black uppercase tracking-widest whitespace-nowrap shadow-xs', ESTADO_STYLES[estadoActual] || 'bg-slate-50 text-slate-600 border-slate-200')}>
+              {estado.label}
+            </span>
+          );
+        }
+      },
+      {
+        header: "Vence",
+        accessorKey: "fechaVencimiento",
+        align: "center",
+        headerClassName: "w-[10%] min-w-[100px]",
+        cell: (row) => {
+          const isDraft = Boolean(row.tempId);
+          const overdue = !isDraft && row.fechaVencimiento && row.estado !== 'CERRADA' && row.estado !== 'EN_REVISION' && isPastDate(row.fechaVencimiento);
+          if (!row.fechaVencimiento) return <span className="text-[11px] text-slate-300">—</span>;
+          return <span className={cn('text-[11px] font-bold font-mono', overdue ? 'text-red-600 animate-pulse' : 'text-slate-500')}>{formatFecha(row.fechaVencimiento)}</span>;
+        }
       }
-    },
-    {
-      header: "Vence",
-      accessorKey: "fechaVencimiento",
-      align: "center",
-      headerClassName: "w-[10%] min-w-[100px]",
-      cell: (row) => {
-        const isDraft = Boolean(row.tempId);
-        const overdue = !isDraft && row.fechaVencimiento && row.estado !== 'CERRADA' && row.estado !== 'EN_REVISION' && isPastDate(row.fechaVencimiento);
-        if (!row.fechaVencimiento) return <span className="text-[11px] text-slate-300">—</span>;
-        return <span className={cn('text-[11px] font-bold font-mono', overdue ? 'text-red-600 animate-pulse' : 'text-slate-500')}>{formatFecha(row.fechaVencimiento)}</span>;
-      }
-    },
+    ]),
     {
       header: "Acciones",
       accessorKey: "acciones",
       align: "center",
-      headerClassName: "w-[12%] min-w-[160px]",
+      headerClassName: "w-[15%] min-w-[180px]",
       cell: (row) => {
         const isClosed = row.estado === 'CERRADA';
         const isOrganized = row.tipo !== 'SIN_ORGANIZAR';
         const entryNotes = row.notas || [];
+        const isDraft = Boolean(row.tempId);
+        const isExternal = (departamento === 'DISENO' && row.area !== 'DISENO') || (departamento === 'MARKETING' && row.area !== 'MARKETING');
         
         return (
           <div className="flex items-center gap-2 justify-center">
@@ -385,15 +402,28 @@ export const EntryTable = ({
             
             {!isClosed && (
               <>
-                {/* Editar: Solo si ya está organizada */}
-                {isOrganized && (
+                {/* PDF Button for External */}
+                {isExternal && !isDraft && onDownloadPdf && (
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); onDownloadPdf(row.area); }} 
+                    disabled={isGeneratingPdf === row.area}
+                    className="h-9 px-2.5 rounded-xl border border-purple-200 bg-purple-50 text-purple-600 hover:bg-purple-600 hover:text-white flex items-center gap-1.5 transition-all active:scale-90 shadow-sm font-black uppercase text-[10px] tracking-widest" 
+                    title="Generar PDF"
+                  >
+                    <Icon name={isGeneratingPdf === row.area ? "hourglass_empty" : "picture_as_pdf"} size="16px" className={isGeneratingPdf === row.area ? "animate-spin" : ""} />
+                    PDF
+                  </button>
+                )}
+
+                {/* Editar: Solo si ya está organizada o es externa */}
+                {(isOrganized || isExternal) && (
                   <button onClick={() => onEdit(row)} className="h-9 w-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-slate-900 bg-white shadow-sm active:scale-90 transition-all" title="Editar">
                     <Pencil size={18} />
                   </button>
                 )}
                 
-                {/* Organizar: Solo si NO está organizada (es SIN_ORGANIZAR) */}
-                {!isOrganized && (
+                {/* Organizar: Solo si NO está organizada (es SIN_ORGANIZAR) y NO es externa */}
+                {!isOrganized && !isExternal && (
                   <button onClick={() => onOrganize(row)} className="h-9 w-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-slate-900 bg-white shadow-sm active:scale-90 transition-all" title="Organizar">
                     <Settings2 size={18} />
                   </button>

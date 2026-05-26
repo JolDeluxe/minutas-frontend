@@ -10,7 +10,8 @@ import {
     updateTareaNota,
     deleteTareaNota,
     addTareaImagen,
-    deleteTareaImagen
+    deleteTareaImagen,
+    generarPdfTarea
 } from '../api/tareas-api';
 
 export const useTareas = () => {
@@ -160,6 +161,16 @@ export const useTareas = () => {
         }
     }, []);
 
+    const handleGenerarPdfTarea = useCallback(async (id) => {
+        try {
+            const res = await generarPdfTarea(id);
+            return res.data;
+        } catch (err) {
+            console.error("Error al generar PDF:", err);
+            throw err;
+        }
+    }, []);
+
     useEffect(() => {
         const handleSyncComplete = () => {
             if (Object.keys(lastFetchParams.current).length > 0 || tareas.length > 0) {
@@ -185,6 +196,7 @@ export const useTareas = () => {
         updateTareaNota: handleUpdateTareaNota,
         deleteTareaNota: handleDeleteTareaNota,
         addTareaImagen: handleAddTareaImagen,
-        deleteTareaImagen: handleDeleteTareaImagen
+        deleteTareaImagen: handleDeleteTareaImagen,
+        generarPdfTarea: handleGenerarPdfTarea
     };
 };
