@@ -37,7 +37,7 @@ const CardSkeleton = () => (
     </div>
 );
 
-export const MisTareasDesktop = ({
+export const ActivasDesktop = ({
     tareas,
     loading,
     currentUser,
@@ -62,6 +62,7 @@ export const MisTareasDesktop = ({
     filtroClasificacion,
     onClasificacionChange,
     statusActual,
+    filtroDepartamento,
 }) => {
     const [viewMode, setViewMode] = useState(() => localStorage.getItem('mis-entradas-view') || 'cards');
     const [editTarget, setEditTarget] = useState(null);
@@ -75,7 +76,7 @@ export const MisTareasDesktop = ({
         <div className="flex flex-col gap-3 relative animate-in fade-in slide-in-from-bottom-2 duration-500">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white/40 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/60 shadow-sm">
                 <div>
-                    <h2 className="fuente-titulos text-2xl text-marca-primario uppercase tracking-tighter">Mis Tareas</h2>
+                    <h2 className="fuente-titulos text-2xl text-marca-primario uppercase tracking-tighter">Tareas Activas</h2>
                     <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">
                         {loading ? 'Sincronizando…' : (
                             <>
@@ -87,6 +88,32 @@ export const MisTareasDesktop = ({
                         )}
                     </p>
                 </div>
+                
+                {/* SELECTOR DE DEPARTAMENTO SI ES ADMIN/JEFE/GERENTE */}
+                {['ADMIN', 'GERENCIA', 'JEFE'].includes(currentUser?.rol) && (
+                    <div className="flex items-center bg-slate-100/85 p-1 rounded-xl border border-slate-200/50 shadow-inner">
+                        {['DISEÑO', 'MARKETING'].map(opt => {
+                            const val = opt === 'DISEÑO' ? 'DISENO' : 'MARKETING';
+                            const activeVal = filtroDepartamento;
+                            const isActive = activeVal === val;
+                            return (
+                                <button
+                                    key={opt}
+                                    onClick={() => onFilterChange({ departamento: val })}
+                                    className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                                        isActive 
+                                            ? 'bg-white text-marca-primario shadow-sm ring-1 ring-slate-200/50 font-black' 
+                                            : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50/50'
+                                    }`}
+                                >
+                                    {opt === 'DISEÑO' && <Icon name="draw" size="14px" />}
+                                    {opt === 'MARKETING' && <Icon name="campaign" size="14px" />}
+                                    {opt}
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
                 
                 <div className="flex items-center gap-3">
                     <div className="hidden sm:block text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">Vista:</div>
@@ -179,7 +206,6 @@ export const MisTareasDesktop = ({
                                     onViewDetail={onViewDetail}
                                     onEdit={setEditTarget}
                                     hidePagination={true}
-                                    hideResponsables={true}
                                 />
                             </div>
                         )

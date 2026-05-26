@@ -50,6 +50,7 @@ export default function HistoricoPage() {
 
         if (filters.search) params.q = filters.search;
         if (filters.status !== 'TODOS') params.estado = filters.status;
+        else params.estado = 'PENDIENTE,EN_REVISION,CERRADA,CANCELADA';
         if (filters.prioridad) params.prioridad = filters.prioridad;
         if (filters.area) params.area = filters.area;
         if (filters.linea) params.linea = filters.linea;

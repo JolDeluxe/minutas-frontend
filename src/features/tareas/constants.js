@@ -2,7 +2,7 @@
 
 export const TAREA_STATUS_MAP = {
     PENDIENTE:   { label: 'Pendiente',   icon: 'schedule',    color: '#f59e0b', border: '#fbbf24', bg: '#fffbeb', text: '#b45309' },
-    EN_REVISION: { label: 'En Revisión', icon: 'visibility', color: '#10b981', border: '#34d399', bg: '#f0fdf4', text: '#047857' },
+    EN_REVISION: { label: 'En Revisión', icon: 'visibility', color: '#3b82f6', border: '#60a5fa', bg: '#eff6ff', text: '#1d4ed8' },
     CERRADA:     { label: 'Cerrada',     icon: 'verified',    color: '#000000', border: '#000000', bg: '#f8fafc', text: '#000000' },
     CANCELADA:   { label: 'Cancelada',   icon: 'cancel',      color: '#ef4444', border: '#f87171', bg: '#fef2f2', text: '#b91c1c' },
 };
@@ -54,4 +54,4 @@ export const TAREA_CLASIFICACION_OPTS = [
     { value: 'OTROS', label: 'Otros' },
 ];
 
-export const ROLES_ADMIN = new Set(['GERENCIA', 'JEFE']);
+export const ROLES_ADMIN = new Set(['ADMIN', 'GERENCIA', 'JEFE']);

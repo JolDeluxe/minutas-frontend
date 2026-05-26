@@ -3,20 +3,17 @@ import { Icon } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
 
 const STEPS = [
-    { id: 'PENDIENTE',   label: 'Pendiente', icon: 'assignment',      color: 'bg-blue-500' },
-    { id: 'EN_PROGRESO', label: 'Proceso',   icon: 'sync',            color: 'bg-amber-500' },
-    { id: 'COMPLETADO',  label: 'Revisión',  icon: 'done_all',        color: 'bg-emerald-500' },
-    { id: 'CERRADO',     label: 'Cerrado',   icon: 'lock',            color: 'bg-slate-700' },
+    { id: 'PENDIENTE',    label: 'Pendiente',  icon: 'assignment',  color: 'bg-amber-500' },
+    { id: 'EN_REVISION',  label: 'En Revisión', icon: 'visibility',  color: 'bg-blue-500' },
+    { id: 'CERRADA',      label: 'Cerrada',     icon: 'lock',        color: 'bg-slate-700' },
 ];
-
 
 const STATE_MAP = {
     PENDIENTE: 0,
-    EN_PROGRESO: 1,
-    COMPLETADO: 2,
-    CERRADO: 3,
-    DESCARTADO: 3,
-    CANCELADA: 3,
+    EN_REVISION: 1,
+    CERRADA: 2,
+    CANCELADA: 2,
+    DESCARTADA: 2,
 };
 
 export const TareaLifecycleStepper = ({ estado }) => {
@@ -53,7 +50,7 @@ export const TareaLifecycleStepper = ({ estado }) => {
                                 isActive ? step.color + " text-white shadow-md scale-110" : "bg-slate-100 text-slate-300",
                                 isCurrent && "ring-4 ring-white"
                             )}>
-                                <Icon name={step.icon} size="16px" className={cn(isCurrent && step.id === 'EN_PROGRESO' && "animate-spin")} />
+                                <Icon name={step.icon} size="16px" />
                             </div>
                             <span className={cn(
                                 "text-[9px] font-black uppercase tracking-tighter transition-colors duration-500",

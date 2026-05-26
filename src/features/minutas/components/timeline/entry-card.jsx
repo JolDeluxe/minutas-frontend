@@ -26,6 +26,7 @@ import { LineIconSelector } from '../icons/line-icons';
 import { TareaStatusBadge } from '../../../tareas/components/common/tarea-status-badge';
 import { formatFecha, isPastDate } from '@/lib/date';
 import { useAuthStore } from '@/stores/auth-store';
+import { TareaEntregaModal } from '../../../tareas/components/common/tarea-entrega-modal';
 import { StatusTrafficLight } from '../status-traffic-light';
 
 
@@ -332,6 +333,7 @@ export const EntryCard = ({
   const [viewerIndex, setViewerIndex] = useState(null);
   const [showNotesPanel, setShowNotesPanel] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [isEntregaModalOpen, setIsEntregaModalOpen] = useState(false);
 
   const isDraft = Boolean(entry.tempId);
   const isClosed = entry.estado === 'CERRADA';
@@ -527,7 +529,7 @@ export const EntryCard = ({
                 {isFormalizada && !isDraft && !isClosed && !isExternal && (
                    <div className="mr-1">
                       {estadoActual === 'PENDIENTE' && isAsignado && (
-                        <button onClick={(e) => { e.stopPropagation(); handleUpdateStatus('EN_REVISION'); }} disabled={isUpdatingStatus} className="h-7 px-3 bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-blue-600/20 active:scale-95 disabled:opacity-50">Iniciar</button>
+                        <button onClick={(e) => { e.stopPropagation(); setIsEntregaModalOpen(true); }} disabled={isUpdatingStatus} className="h-7 px-3 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20 active:scale-95 disabled:opacity-50 flex items-center gap-1"><Icon name="check" size="12px" /> Entregar</button>
                       )}
                       {estadoActual === 'EN_REVISION' && isJefe && (
                         <button onClick={(e) => { e.stopPropagation(); handleUpdateStatus('CERRADA'); }} disabled={isUpdatingStatus} className="h-7 px-3 bg-slate-900 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg active:scale-95 disabled:opacity-50 flex items-center gap-1"><Icon name="verified" size="12px" className="text-emerald-400" /> Aprobar</button>
@@ -593,6 +595,16 @@ export const EntryCard = ({
         />
       )}
       {viewerIndex !== null && <ImageViewer images={allImages} initialIndex={viewerIndex} onClose={() => setViewerIndex(null)} />}
+      {isEntregaModalOpen && (
+        <TareaEntregaModal
+          isOpen={isEntregaModalOpen}
+          onClose={() => setIsEntregaModalOpen(false)}
+          tareaId={entry.id}
+          onConfirm={async () => {
+            await handleUpdateStatus('EN_REVISION');
+          }}
+        />
+      )}
     </>
   );
 };

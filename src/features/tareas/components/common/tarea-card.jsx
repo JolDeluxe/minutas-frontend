@@ -4,19 +4,17 @@ import { formatFecha } from '@/lib/date';
 
 
 const ESTADO_TAREA_LABEL = {
-    NUEVO: 'Nueva',
     PENDIENTE: 'Pendiente',
-    EN_PROGRESO: 'En Progreso',
-    COMPLETADO: 'Completada',
-    CANCELADO: 'Cancelada',
+    EN_REVISION: 'En Revisión',
+    CERRADA: 'Cerrada',
+    CANCELADA: 'Cancelada',
 };
 
 const ESTADO_TAREA_COLOR = {
-    NUEVO: 'bg-blue-50 text-blue-700 border-blue-200',
     PENDIENTE: 'bg-amber-50 text-amber-700 border-amber-200',
-    EN_PROGRESO: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-    COMPLETADO: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    CANCELADO: 'bg-rose-50 text-rose-700 border-rose-200',
+    EN_REVISION: 'bg-blue-50 text-blue-700 border-blue-200',
+    CERRADA: 'bg-slate-50 text-slate-700 border-slate-200',
+    CANCELADA: 'bg-rose-50 text-rose-700 border-rose-200',
 };
 
 const PRIORIDAD_LABEL = {

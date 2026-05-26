@@ -1,10 +1,12 @@
-// src/features/tareas/views/seguimientos-mobile.jsx
+// src/features/tareas/views/mis-tareas-mobile.jsx
 import { useState } from 'react';
 import { Skeleton, Button, RefreshFab, Icon } from '@/components/ui/z_index';
 import { HoyTareaCard } from '../components/hoy/hoy-tarea-card';
-import { TareasSummaryBar } from '../components/historico/tareas-summary-bar';
-import { TareasFilterBar } from '../components/historico/tareas-filter-bar';
+import { HoySummaryBar } from '../components/hoy/hoy-summary-bar';
+import { HoyFilterBar } from '../components/hoy/hoy-filter-bar';
 import { TareaFormModal } from '../components/common/tarea-form-modal';
+import { BossApprovalBanner } from '../components/common/boss-approval-banner';
+
 
 const CardSkeleton = () => (
     <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col gap-3">
@@ -21,7 +23,7 @@ const CardSkeleton = () => (
     </div>
 );
 
-export const SeguimientosMobile = ({
+export const ActivasMobile = ({
     tareas,
     loading,
     currentUser,
@@ -40,31 +42,64 @@ export const SeguimientosMobile = ({
     onFilterChange,
     onRefresh,
     onChangeStatus,
+    onViewDetail,
     page,
     totalPages,
-    totalParaPaginador,
+    filtroLinea,
+    onLineaChange,
+    filtroClasificacion,
+    onClasificacionChange,
+    statusActual,
+    filtroDepartamento,
 }) => {
     const [editTarget, setEditTarget] = useState(null);
 
     return (
         <div className="flex flex-col gap-4 pb-28 px-4 animate-in fade-in duration-500">
-            <div className="flex flex-col gap-1">
-                <h2 className="fuente-titulos text-xl text-marca-primario uppercase tracking-tight">Seguimiento de Tareas</h2>
-                <div className="text-xs text-slate-500 font-bold uppercase">
-                    {loading ? 'Cargando seguimiento…' : `${totalParaPaginador} tareas activas`}
-                </div>
+            <div className="flex flex-col gap-2">
+                <h2 className="fuente-titulos text-xl text-marca-primario uppercase tracking-tight">Tareas Activas</h2>
+                {totalAtrasadasGlobal > 0 && (
+                    <div className="flex items-center gap-1.5 text-estado-rechazado font-bold text-xs animate-pulse">
+                        <Icon name="warning" size="xs" />
+                        <span>{totalAtrasadasGlobal} tareas atrasadas</span>
+                    </div>
+                )}
+
+                {/* Selector de Departamento en Móvil */}
+                {['ADMIN', 'GERENCIA', 'JEFE'].includes(currentUser?.rol) && (
+                    <div className="flex items-center bg-slate-100/80 p-0.5 rounded-xl border border-slate-200/50 shadow-inner w-full justify-between mt-1">
+                        {['DISEÑO', 'MARKETING'].map(opt => {
+                            const val = opt === 'DISEÑO' ? 'DISENO' : 'MARKETING';
+                            const activeVal = filtroDepartamento;
+                            const isActive = activeVal === val;
+                            return (
+                                <button
+                                    key={opt}
+                                    onClick={() => onFilterChange({ departamento: val })}
+                                    className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-[10px] font-black uppercase rounded-lg transition-all ${
+                                        isActive 
+                                            ? 'bg-white text-marca-primario shadow-sm ring-1 ring-slate-200/50' 
+                                            : 'text-slate-500 hover:text-slate-700'
+                                    }`}
+                                >
+                                    {opt}
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
 
-            <TareasSummaryBar 
+            <HoySummaryBar 
                 totalParaSummary={totalParaSummary} 
                 conteos={conteos} 
-                filtroActual={onFilterChange?.status} 
+                filtroActual={statusActual} 
                 onFilterChange={(status) => onFilterChange({ status })} 
                 loading={loading} 
             />
 
             <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
-                <TareasFilterBar 
+                <HoyFilterBar 
                     query={query}
                     onSearchChange={onSearchChange}
                     filtroPrioridad={filtroPrioridad}
@@ -76,8 +111,21 @@ export const SeguimientosMobile = ({
                     onToggleAtrasadas={onToggleAtrasadas}
                     totalAtrasadasGlobal={totalAtrasadasGlobal}
                     currentUser={currentUser}
+                    filtroLinea={filtroLinea}
+                    onLineaChange={onLineaChange}
+                    filtroClasificacion={filtroClasificacion}
+                    onClasificacionChange={onClasificacionChange}
                 />
             </div>
+
+            {['ADMIN', 'JEFE', 'GERENCIA'].includes(currentUser?.rol) && (
+                <BossApprovalBanner 
+                    count={conteos?.EN_REVISION || 0}
+                    isActive={statusActual === 'EN_REVISION'}
+                    onClick={() => onFilterChange({ status: statusActual === 'EN_REVISION' ? 'TODOS' : 'EN_REVISION' })}
+                />
+            )}
+
 
             <div className="flex flex-col gap-3">
                 {loading && tareas.length === 0
@@ -85,8 +133,8 @@ export const SeguimientosMobile = ({
                     : tareas.length === 0
                         ? (
                             <div className="flex flex-col items-center justify-center py-12 text-slate-400">
-                                <Icon name="visibility" size="48px" className="mb-3 opacity-20" />
-                                <p className="text-sm font-medium italic">No hay tareas para seguimiento</p>
+                                <Icon name="task_alt" size="48px" className="mb-3 opacity-20" />
+                                <p className="text-sm font-medium italic">Sin tareas pendientes</p>
                             </div>
                         )
                         : tareas.map((tarea) => (
@@ -94,7 +142,7 @@ export const SeguimientosMobile = ({
                                 key={tarea.id} 
                                 tarea={tarea} 
                                 currentUser={currentUser} 
-                                onViewDetail={onChangeStatus} 
+                                onViewDetail={onViewDetail} 
                                 onEdit={setEditTarget}
                                 onChangeStatus={onChangeStatus}
                             />

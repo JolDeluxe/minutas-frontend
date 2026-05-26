@@ -39,19 +39,19 @@ export const HoySummaryBar = ({
     loading,
 }) => {
     if (loading && totalParaSummary === 0 && Object.keys(conteos).length === 0) {
-        return <SummaryBarSkeleton count={5} />;
+        return <SummaryBarSkeleton count={4} />;
     }
 
-    // Calculamos el total de activas (Pendiente + En Progreso)
-    const totalActivas = (conteos['PENDIENTE'] || 0) + (conteos['EN_PROGRESO'] || 0);
+    // Calculamos el total de activas (Pendiente + En Revisión)
+    const totalActivas = (conteos['PENDIENTE'] || 0) + (conteos['EN_REVISION'] || 0);
 
     const items = [
         { 
             id: 'TODOS', 
             label: 'Total Activas', 
-            color: 'gris', // Volvemos al gris limpio
+            color: 'gris', 
             value: totalActivas,
-            description: 'Pendientes + En Proceso' 
+            description: 'Pendientes + En Revisión' 
         },
         { 
             id: 'PENDIENTE', 
@@ -60,22 +60,16 @@ export const HoySummaryBar = ({
             value: conteos['PENDIENTE'] || 0 
         },
         { 
-            id: 'EN_PROGRESO', 
-            label: 'En Progreso', 
+            id: 'EN_REVISION', 
+            label: 'En Revisión', 
             color: 'en_progreso', 
-            value: conteos['EN_PROGRESO'] || 0 
+            value: conteos['EN_REVISION'] || 0 
         },
         { 
-            id: 'COMPLETADO', 
-            label: 'Completadas', 
-            color: 'resuelto', 
-            value: conteos['COMPLETADO'] || 0 
-        },
-        { 
-            id: 'CERRADO', 
+            id: 'CERRADA', 
             label: 'Cerradas', 
             color: 'cerrado', 
-            value: conteos['CERRADO'] || 0,
+            value: conteos['CERRADA'] || 0,
             className: 'opacity-70 scale-90 lg:scale-95 origin-right'
         },
     ];

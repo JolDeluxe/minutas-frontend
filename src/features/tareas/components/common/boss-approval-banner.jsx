@@ -35,7 +35,7 @@ export const BossApprovalBanner = ({ count, isActive, onClick }) => {
                             "text-sm sm:text-base font-black leading-none tracking-tight transition-colors",
                             isActive ? "text-white" : "text-slate-800"
                         )}>
-                            Control de Calidad
+                            Validación de Entregas
                         </h3>
                         <p className={cn(
                             "text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.15em] mt-1.5 transition-colors",

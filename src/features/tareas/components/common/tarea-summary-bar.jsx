@@ -4,9 +4,10 @@ import { TAREA_STATUS_MAP } from '../../constants';
 
 const STATUS_ITEMS = [
     { id: 'TODOS', label: 'Total', color: 'gris' },
-    { id: 'PENDIENTE', label: 'Pendientes', color: 'asignada' }, // Reutilizando colores de SummaryBar
-    { id: 'EN_PROGRESO', label: 'En Progreso', color: 'en_progreso' },
-    { id: 'COMPLETADO', label: 'Completadas', color: 'resuelto' },
+    { id: 'PENDIENTE', label: 'Pendientes', color: 'asignada' },
+    { id: 'EN_REVISION', label: 'En Revisión', color: 'en_progreso' },
+    { id: 'CERRADA', label: 'Cerradas', color: 'resuelto' },
+    { id: 'CANCELADA', label: 'Canceladas', color: 'rechazado' },
 ];
 
 const SummarySkeleton = ({ count = 4 }) => (

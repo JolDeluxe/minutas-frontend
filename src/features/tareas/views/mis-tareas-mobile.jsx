@@ -5,7 +5,6 @@ import { HoyTareaCard } from '../components/hoy/hoy-tarea-card';
 import { HoySummaryBar } from '../components/hoy/hoy-summary-bar';
 import { HoyFilterBar } from '../components/hoy/hoy-filter-bar';
 import { TareaFormModal } from '../components/common/tarea-form-modal';
-import { MisEntradasDateSelector } from '../components/hoy/mis-entradas-date-selector';
 import { BossApprovalBanner } from '../components/common/boss-approval-banner';
 
 
@@ -46,8 +45,6 @@ export const MisTareasMobile = ({
     onViewDetail,
     page,
     totalPages,
-    periodo,
-    onPeriodoChange,
     filtroLinea,
     onLineaChange,
     filtroClasificacion,
@@ -59,20 +56,14 @@ export const MisTareasMobile = ({
     return (
         <div className="flex flex-col gap-4 pb-28 px-4 animate-in fade-in duration-500">
             <div className="flex flex-col gap-1">
-                <h2 className="fuente-titulos text-xl text-marca-primario uppercase tracking-tight">Mis Entradas</h2>
+                <h2 className="fuente-titulos text-xl text-marca-primario uppercase tracking-tight">Mis Tareas</h2>
                 {totalAtrasadasGlobal > 0 && (
                     <div className="flex items-center gap-1.5 text-estado-rechazado font-bold text-xs animate-pulse">
                         <Icon name="warning" size="xs" />
-                        <span>{totalAtrasadasGlobal} entradas atrasadas</span>
+                        <span>{totalAtrasadasGlobal} tareas atrasadas</span>
                     </div>
                 )}
             </div>
-
-            <MisEntradasDateSelector 
-                value={periodo}
-                onChange={onPeriodoChange}
-                loading={loading}
-            />
 
             <HoySummaryBar 
                 totalParaSummary={totalParaSummary} 
@@ -104,9 +95,9 @@ export const MisTareasMobile = ({
 
             {['ADMIN', 'JEFE', 'GERENCIA'].includes(currentUser?.rol) && (
                 <BossApprovalBanner 
-                    count={conteos?.COMPLETADO || 0}
-                    isActive={statusActual === 'COMPLETADO'}
-                    onClick={() => onFilterChange({ status: statusActual === 'COMPLETADO' ? 'TODOS' : 'COMPLETADO' })}
+                    count={conteos?.EN_REVISION || 0}
+                    isActive={statusActual === 'EN_REVISION'}
+                    onClick={() => onFilterChange({ status: statusActual === 'EN_REVISION' ? 'TODOS' : 'EN_REVISION' })}
                 />
             )}
 

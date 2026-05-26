@@ -1,11 +1,11 @@
-// src/features/tareas/pages/mis-tareas-page.jsx
+// src/features/tareas/pages/activas-page.jsx
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { notify } from '@/components/notification/adaptive-notify';
 import { useAuthStore } from '@/stores/auth-store';
 import { useTareas } from '../hooks/use-tareas';
-import { MisTareasDesktop } from '../views/mis-tareas-desktop';
-import { MisTareasMobile } from '../views/mis-tareas-mobile';
+import { ActivasDesktop } from '../views/activas-desktop';
+import { ActivasMobile } from '../views/activas-mobile';
 import { TareaDetailDrawer } from '../components/common/tarea-detail-drawer';
 
 const LIMIT = 20;
@@ -13,7 +13,7 @@ const LIMIT = 20;
 // Ordenar: atrasadas primero, luego por prioridad (URGENTE→ALTA→MEDIA→BAJA)
 const PRIORIDAD_PESO = { URGENTE: 0, CRITICA: 0, ALTA: 1, MEDIA: 2, BAJA: 3 };
 
-export default function MisTareasPage() {
+export default function ActivasPage() {
     const isDesktop = useIsDesktop();
     const { user } = useAuthStore();
     const currentUser = user?.data || user;
@@ -27,14 +27,15 @@ export default function MisTareasPage() {
         changeStatus,
     } = useTareas();
 
-    const [filters, setFilters] = useState({
+    const [filters, setFilters] = useState(() => ({
         search: '',
         status: 'TODOS',
         prioridad: '',
         linea: '',
         clasificacion: '',
+        departamento: currentUser?.departamento || 'DISENO',
         mostrarAtrasadas: false,
-    });
+    }));
     
     const [page, setPage] = useState(1);
     const [selectedTarea, setSelectedTarea] = useState(null);
@@ -46,14 +47,16 @@ export default function MisTareasPage() {
             limit: LIMIT,
             sort: JSON.stringify([{ createdAt: 'desc' }]),
             tipo: 'TAREA',
-            responsableId: currentUser?.id
         };
 
         if (filters.search) params.q = filters.search;
         if (filters.status !== 'TODOS') params.estado = filters.status;
+        else params.estado = 'PENDIENTE,EN_REVISION';
+        
         if (filters.prioridad) params.prioridad = filters.prioridad;
         if (filters.linea) params.linea = filters.linea;
         if (filters.clasificacion) params.clasificacion = filters.clasificacion;
+        if (filters.departamento) params.departamento = filters.departamento;
         if (filters.mostrarAtrasadas) params.atrasadas = true;
 
         fetchTareas(params).catch(() => notify.error('Error al cargar tus tareas.'));
@@ -149,13 +152,15 @@ export default function MisTareasPage() {
         filtroClasificacion: filters.clasificacion,
         onClasificacionChange: (c) => handleFilterChange({ clasificacion: c }),
         statusActual: filters.status,
+        filtroDepartamento: filters.departamento,
+        onDepartamentoChange: (d) => handleFilterChange({ departamento: d }),
     };
 
     return (
         <div className="w-full">
             {isDesktop
-                ? <MisTareasDesktop {...sharedProps} />
-                : <MisTareasMobile  {...sharedProps} />
+                ? <ActivasDesktop {...sharedProps} />
+                : <ActivasMobile  {...sharedProps} />
             }
 
             <TareaDetailDrawer 

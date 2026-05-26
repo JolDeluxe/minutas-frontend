@@ -1,57 +1,137 @@
-// src/features/tareas/components/historico/tareas-table.jsx
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Table, Skeleton, Icon } from '@/components/ui/z_index';
 import { TareaStatusBadge } from '../common/tarea-status-badge';
 import { TareaPriorityBadge } from '../common/tarea-priority-badge';
 import { TareaActions } from './tarea-actions';
 import { formatFecha, formatFechaRelativa } from '@/lib/date';
 import { cn } from '@/utils/cn';
-import { LineIconSelector } from '../../../minutas/components/icons/line-icons';
+import { LineIconSelector, MarketingIcon } from '../../../minutas/components/icons/line-icons';
 import { LINEA_MAP, AREA_MAP } from '../../../minutas/constants';
+import { Tooltip } from '@/components/ui/z_index';
+import { ImageViewer } from '../../../minutas/components/timeline/entry-card';
+
+const TableImagePreview = ({ images, onClick }) => {
+  const [showHover, setShowHover] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [coords, setCoords] = useState({ x: 0, y: 0 });
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (!images || images.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % images.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [images]);
+
+  if (!images || images.length === 0) return <span className="text-[11px] text-slate-300">-</span>;
+  
+  const currentImg = images[currentIndex]?.preview || images[currentIndex]?.url;
+
+  const handleMouseEnter = () => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const spaceRight = window.innerWidth - rect.right;
+      const xPos = spaceRight > 420 ? rect.right + 25 : rect.left - 410;
+      
+      setCoords({
+        x: xPos,
+        y: Math.max(200, Math.min(window.innerHeight - 200, rect.top + (rect.height / 2)))
+      });
+      setShowHover(true);
+    }
+  };
+  
+  return (
+    <div 
+      ref={containerRef} 
+      className="relative flex items-center justify-center p-1" 
+      onMouseEnter={handleMouseEnter} 
+      onMouseLeave={() => setShowHover(false)}
+    >
+      <div 
+        className="h-28 w-28 min-w-[7rem] shrink-0 rounded-2xl border-2 border-slate-100 bg-white relative z-10 cursor-pointer p-1 hover:border-marca-primario/30 transition-all group" 
+        onClick={onClick}
+      >
+        <div className="relative w-full h-full rounded-xl overflow-hidden shadow-sm">
+          {images.map((img, i) => (
+            <img 
+              key={i}
+              src={img.preview || img.url} 
+              alt={`Preview ${i}`} 
+              className={cn(
+                "absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ease-in-out group-hover:scale-110",
+                i === currentIndex ? "opacity-100 z-10" : "opacity-0 z-0"
+              )}
+            />
+          ))}
+        </div>
+        
+        {images.length > 1 && (
+          <div className="absolute top-1.5 right-1.5 bg-slate-900/80 backdrop-blur-md px-2 py-1 text-[9px] font-black text-white rounded-lg z-20 shadow-lg border border-white/20">
+            {currentIndex + 1}/{images.length} FOTOS
+          </div>
+        )}
+
+        <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+           <Icon name="zoom_in" size="24px" className="text-white drop-shadow-md" />
+        </div>
+      </div>
+
+      {showHover && createPortal(
+        <div 
+          className="fixed z-99999 pointer-events-none animate-in fade-in zoom-in-95 duration-200" 
+          style={{ 
+            left: coords.x, 
+            top: coords.y, 
+            transform: 'translateY(-50%)' 
+          }}
+        >
+          <div className="bg-white p-3 rounded-[2.5rem] shadow-[0_40px_100px_rgba(0,0,0,0.35)] border border-slate-200 w-[380px] h-[380px] flex flex-col items-center justify-center relative overflow-hidden ring-4 ring-slate-100/50">
+            <img src={currentImg} alt="Preview Zoom" className="w-full h-full object-contain rounded-3xl drop-shadow-xl" />
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900/90 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black text-white uppercase tracking-[0.2em] shadow-2xl">
+               Previsualización Rápida
+            </div>
+          </div>
+        </div>, 
+        document.body
+      )}
+    </div>
+  );
+};
 
 const ResponsablesCell = ({ lista }) => {
-    const [expanded, setExpanded] = useState(false);
-
     if (!lista || lista.length === 0) {
         return (
-            <span className="inline-flex items-center gap-1 text-xs text-slate-400 italic">
-                <Icon name="person_off" size="xs" />
-                Sin asignar
+            <span className="inline-flex items-center gap-1 text-xs text-slate-300 italic">
+                —
             </span>
         );
     }
 
-    const mostrar = expanded ? lista : lista.slice(0, 3);
-    const extra = lista.length - 3;
+    const tooltipText = lista.map(r => r.nombre).join('\n');
 
     return (
-        <div className="flex flex-col gap-2 items-start justify-center">
-            {mostrar.map((r) => (
-                <div key={r.id} className="flex items-center gap-2" title={r.nombre}>
-                    {r.imagen ? (
-                        <img
-                            src={r.imagen}
-                            alt={r.nombre}
-                            className="w-7 h-7 rounded-full object-cover border border-slate-200 shrink-0 bg-slate-50"
-                        />
-                    ) : (
-                        <div className="w-7 h-7 rounded-full bg-marca-primario/10 flex items-center justify-center text-marca-primario text-xs font-bold border border-marca-primario/20 shrink-0 shadow-sm">
-                            {r.nombre?.charAt(0).toUpperCase() ?? "?"}
+        <div className="flex justify-center">
+            <Tooltip text={tooltipText} position="top" className="whitespace-pre-line text-left">
+                <div className="flex -space-x-3 cursor-help py-1">
+                    {lista.map((r) => (
+                        <div 
+                            key={r.id} 
+                            className="h-10 w-10 rounded-full border-2 border-white overflow-hidden bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 shadow-md shrink-0 ring-1 ring-slate-200 transition-all hover:scale-110 hover:z-30"
+                        >
+                            {r.imagen ? (
+                                <img src={r.imagen} alt={r.nombre} className="h-full w-full object-cover" />
+                            ) : (
+                                r.nombre?.charAt(0)
+                            )}
                         </div>
-                    )}
-                    <span className="text-sm text-slate-700 font-medium truncate max-w-[120px]">
-                        {r.nombre}
-                    </span>
+                    ))}
                 </div>
-            ))}
-            {extra > 0 && (
-                <button
-                    onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-                    className="text-[10px] font-bold text-marca-primario hover:underline ml-9"
-                >
-                    {expanded ? 'Ver menos' : `+ ${extra} ver más`}
-                </button>
-            )}
+            </Tooltip>
         </div>
     );
 };
@@ -75,6 +155,13 @@ export const TareasTable = ({
     hidePagination = false,
     hideResponsables = false,
 }) => {
+    const [viewerIndex, setViewerIndex] = useState(null);
+    const [activeEntryImages, setActiveEntryImages] = useState([]);
+
+    const openViewer = (images) => {
+        setActiveEntryImages(images);
+        setViewerIndex(0);
+    };
     const columns = [
         {
             header: 'ID',
@@ -91,22 +178,18 @@ export const TareasTable = ({
             },
         },
         {
-            header: '',
+            header: 'Adjuntos',
             accessorKey: 'imagenes',
             sortable: false,
-            headerClassName: 'w-[4%] min-w-[44px]',
+            headerClassName: 'w-[10%] min-w-[150px]',
             cell: (row) => {
-                if (row.isSkeleton) return <Skeleton className="h-9 w-9 rounded-lg" />;
-                if (!row.imagenes || row.imagenes.length === 0) return null;
+                if (row.isSkeleton) return <Skeleton className="h-28 w-28 rounded-2xl mx-auto" />;
+                const allImages = row.imagenes || [];
                 return (
-                    <div className="relative w-9 h-9 shrink-0 rounded-lg overflow-hidden bg-slate-100 border border-slate-200">
-                        <img src={row.imagenes[0].url} className="w-full h-full object-cover" alt="" />
-                        {row.imagenes.length > 1 && (
-                            <div className="absolute bottom-0 right-0 px-1 bg-slate-900/80 text-white text-[7px] font-black rounded-tl-md">
-                                +{row.imagenes.length - 1}
-                            </div>
-                        )}
-                    </div>
+                    <TableImagePreview 
+                        images={allImages} 
+                        onClick={() => openViewer(allImages)} 
+                    />
                 );
             },
         },
@@ -123,9 +206,21 @@ export const TareasTable = ({
                     </div>
                 );
 
+                const isMarketing = row.departamento === 'MARKETING';
+
                 return (
                     <div className="flex flex-col">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                            {['ADMIN', 'GERENCIA', 'JEFE'].includes(currentUser?.rol) && (
+                                <span className={cn(
+                                    "inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border whitespace-nowrap",
+                                    isMarketing 
+                                        ? "bg-purple-50 text-purple-700 border-purple-200/60" 
+                                        : "bg-blue-50 text-blue-700 border-blue-200/60"
+                                )}>
+                                    {isMarketing ? 'Marketing' : 'Diseño'}
+                                </span>
+                            )}
                             <span className="font-semibold text-slate-900 text-sm leading-snug line-clamp-2">
                                 {row.descripcion}
                             </span>
@@ -161,15 +256,30 @@ export const TareasTable = ({
             header: 'Línea',
             accessorKey: 'linea',
             sortable: true,
+            align: 'center',
             headerClassName: 'w-[10%] min-w-[100px]',
             cell: (row) => {
-                if (row.isSkeleton) return <Skeleton className="h-4 w-20 rounded-md" />;
-                if (!row.linea) return <span className="text-xs text-slate-300 italic">N/A</span>;
+                if (row.isSkeleton) return <Skeleton className="h-10 w-10 rounded-full mx-auto" />;
+                
+                const isMarketing = row.departamento === 'MARKETING';
+                const lineInfo = isMarketing 
+                    ? { label: 'Marketing', color: '#8b5cf6' } 
+                    : (LINEA_MAP[row.linea] || { label: row.linea || '—', color: '#64748b' });
+
                 return (
-                    <div className="flex items-center gap-2">
-                        <LineIconSelector type={row.linea} size={16} className="text-slate-600" />
-                        <span className="text-xs font-bold text-slate-600">
-                            {LINEA_MAP[row.linea]?.label || row.linea}
+                    <div className="flex flex-col items-center justify-center gap-0.5">
+                        <div className="flex items-center justify-center">
+                            {isMarketing ? (
+                                <MarketingIcon size={50} style={{ color: lineInfo.color }} />
+                            ) : (
+                                <LineIconSelector type={row.linea} size={50} style={{ color: lineInfo.color }} />
+                            )}
+                        </div>
+                        <span 
+                            className="text-[7px] font-black uppercase tracking-widest font-mono leading-none text-center" 
+                            style={{ color: lineInfo.color }}
+                        >
+                            {lineInfo.label}
                         </span>
                     </div>
                 );
@@ -302,19 +412,32 @@ export const TareasTable = ({
                 onRowClick={onViewDetail}
                 sortConfig={sortConfig}
                 hidePagination={hidePagination}
-                rowClassName={(row) =>
-                    row.isSkeleton
-                        ? 'bg-white'
-                        : row.isOverdue
+                rowClassName={(row) => {
+                    if (row.isSkeleton) return 'bg-white';
+                    const isAdmin = ['ADMIN', 'GERENCIA', 'JEFE'].includes(currentUser?.rol);
+                    if (!isAdmin) {
+                        return row.isOverdue
                             ? 'bg-red-50/40 hover:bg-red-50/70'
-                            : 'bg-white hover:bg-slate-50'
-                }
+                            : 'bg-white hover:bg-slate-50';
+                    }
+                    const isMarketing = row.departamento === 'MARKETING';
+                    return isMarketing 
+                        ? 'bg-purple-50/40 hover:bg-purple-100/60 border-b border-purple-200/50 text-slate-800' 
+                        : 'bg-blue-50/40 hover:bg-blue-100/60 border-b border-blue-200/50 text-slate-800';
+                }}
                 onSortChange={(key) => {
                     const direction =
                         sortConfig?.key === key && sortConfig?.direction === 'asc' ? 'desc' : 'asc';
                     onSortChange(key, direction);
                 }}
             />
+            {viewerIndex !== null && (
+                <ImageViewer 
+                    images={activeEntryImages} 
+                    initialIndex={viewerIndex} 
+                    onClose={() => setViewerIndex(null)} 
+                />
+            )}
         </div>
     );
 };

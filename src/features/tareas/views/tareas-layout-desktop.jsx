@@ -18,15 +18,16 @@ export const TareasLayoutDesktop = () => {
     const [pendingApprovalCount, setPendingApprovalCount] = useState(0);
 
     useEffect(() => {
+        if (!currentUser?.id) return;
         let isMounted = true;
         const fetchCounts = async () => {
             try {
-                // Pendientes normales
-                const resPend = await getTareas({ tipo: 'TAREA', estado: 'PENDIENTE', limit: 1 });
+                // Mis tareas pendientes
+                const resPend = await getTareas({ tipo: 'TAREA', estado: 'PENDIENTE', responsableId: currentUser.id, limit: 1 });
                 // Pendientes de aprobación (solo para Jefes/Gerentes)
                 let resApprov = null;
                 if (['JEFE', 'GERENCIA'].includes(currentUser?.rol)) {
-                    resApprov = await getTareas({ estado: 'COMPLETADO', limit: 1 });
+                    resApprov = await getTareas({ estado: 'EN_REVISION', limit: 1 });
                 }
 
                 if (isMounted) {
@@ -40,13 +41,13 @@ export const TareasLayoutDesktop = () => {
         fetchCounts();
         const interval = setInterval(fetchCounts, 60000);
         return () => { isMounted = false; clearInterval(interval); };
-    }, [currentUser?.rol]);
+    }, [currentUser?.rol, currentUser?.id]);
 
     const menu = useMemo(() => {
         const tareasModule = MODULES_CONFIG.find(m => m.id === 'tareas');
         const baseMenu = [
-            { id: 'mis-tareas', label: 'Mis Entradas', path: '/tareas/mis-tareas', icon: 'today' },
-            { id: 'mis-seguimientos', label: 'Seguimientos', path: '/tareas/mis-seguimientos', icon: 'update' },
+            { id: 'mis-tareas', label: 'Mis Tareas', path: '/tareas/mis-tareas', icon: 'person_check' },
+            { id: 'activas', label: 'Activas', path: '/tareas/activas', icon: 'monitoring' },
             { id: 'por-aprobar', label: 'Por Aprobar', path: '/tareas/por-aprobar', icon: 'fact_check' },
             { id: 'historico-tareas', label: 'Historial', path: '/tareas/historico', icon: 'history' },
         ];
@@ -91,6 +92,7 @@ export const TareasLayoutDesktop = () => {
                     </div>
                 );
             })}
+
         </div>
     );
 };

@@ -17,7 +17,7 @@ import MinutaDetailPage from '@/features/minutas/pages/minuta-detail-page';
 
 import TareasPage from '@/features/tareas/pages/tareas-page';
 import MisTareasPage from '@/features/tareas/pages/mis-tareas-page';
-import SeguimientosPage from '@/features/tareas/pages/seguimientos-page';
+import ActivasPage from '@/features/tareas/pages/activas-page';
 import HistoricoPage from '@/features/tareas/pages/historico-page';
 import PorAprobarPage from '@/features/tareas/pages/por-aprobar-page';
 
@@ -32,7 +32,7 @@ const ROLES = {
   recordatorios: MODULES_CONFIG.find(m => m.id === 'recordatorios')?.allowedRoles || [],
   tareas: MODULES_CONFIG.find(m => m.id === 'tareas')?.allowedRoles || [],
   misTareas: MODULES_CONFIG.find(m => m.id === 'tareas')?.children?.find(c => c.id === 'mis-tareas')?.allowedRoles || [],
-  misSeguimientos: MODULES_CONFIG.find(m => m.id === 'tareas')?.children?.find(c => c.id === 'mis-seguimientos')?.allowedRoles || [],
+  activas: MODULES_CONFIG.find(m => m.id === 'tareas')?.children?.find(c => c.id === 'activas')?.allowedRoles || [],
   historicoTareas: MODULES_CONFIG.find(m => m.id === 'tareas')?.children?.find(c => c.id === 'historico-tareas')?.allowedRoles || [],
   porAprobar: MODULES_CONFIG.find(m => m.id === 'tareas')?.children?.find(c => c.id === 'por-aprobar')?.allowedRoles || [],
 };
@@ -82,8 +82,8 @@ export const AppRoutes = () => {
                 <Route path="mis-tareas" element={<MisTareasPage />} />
               </Route>
 
-              <Route element={<RoleGuard allowedRoles={ROLES.misSeguimientos} />}>
-                <Route path="mis-seguimientos" element={<SeguimientosPage />} />
+              <Route element={<RoleGuard allowedRoles={ROLES.activas} />}>
+                <Route path="activas" element={<ActivasPage />} />
               </Route>
 
               <Route element={<RoleGuard allowedRoles={ROLES.historicoTareas} />}>

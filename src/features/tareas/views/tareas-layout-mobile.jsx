@@ -29,16 +29,16 @@ export const TareasLayoutMobile = () => {
     const [hasCritical, setHasCritical] = useState(false);
 
     useEffect(() => {
+        if (!currentUser?.id) return;
         let isMounted = true;
         const fetchCounts = async () => {
             try {
                 // Mis Tareas
-                const response = await getTareas({ tipo: 'TAREA', estado: 'PENDIENTE' });
+                const response = await getTareas({ tipo: 'TAREA', estado: 'PENDIENTE', responsableId: currentUser.id });
                 
-                // Por Aprobar
                 let resApprov = null;
                 if (['JEFE', 'GERENCIA'].includes(userRole)) {
-                    resApprov = await getTareas({ estado: 'COMPLETADO', limit: 1 });
+                    resApprov = await getTareas({ estado: 'EN_REVISION', limit: 1 });
                 }
 
                 if (isMounted) {
@@ -57,13 +57,13 @@ export const TareasLayoutMobile = () => {
         fetchCounts();
         const interval = setInterval(fetchCounts, 60000);
         return () => { isMounted = false; clearInterval(interval); };
-    }, [userRole]);
+    }, [userRole, currentUser?.id]);
 
     const { moduleInfo, menuOptions } = useMemo(() => {
         const config = MODULES_CONFIG.find(m => m.id === 'tareas');
         const baseMenuOptions = [
-            { configId: 'mis-tareas', id: '/tareas/mis-tareas', label: 'Mis Entradas', icon: 'today' },
-            { configId: 'mis-seguimientos', id: '/tareas/mis-seguimientos', label: 'Seguimientos', icon: 'update' },
+            { configId: 'mis-tareas', id: '/tareas/mis-tareas', label: 'Mis Tareas', icon: 'person_check' },
+            { configId: 'activas', id: '/tareas/activas', label: 'Activas', icon: 'monitoring' },
             { configId: 'por-aprobar', id: '/tareas/por-aprobar', label: 'Por Aprobar', icon: 'fact_check' },
             { configId: 'historico-tareas', id: '/tareas/historico', label: 'Historial', icon: 'history' }
         ];
