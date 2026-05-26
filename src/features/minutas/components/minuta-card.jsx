@@ -1,21 +1,16 @@
 import { useMemo } from 'react';
 import { Badge, Icon, Card } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
-import { LINEA_MAP } from '../constants';
-import { LineIconSelector } from './icons/line-icons';
-
-const ESTADO_LABEL = {
-    PROGRAMADA: 'Programada',
-    ACTIVA: 'Activa',
-    CERRADA: 'Cerrada',
-    CANCELADA: 'Cancelada',
-};
+import { LINEA_MAP, ESTADO_MINUTA_MAP } from '../constants';
+import { LineIconSelector, MarketingIcon } from './icons/line-icons';
 
 const ESTADO_COLORS = {
-    PROGRAMADA: 'bg-blue-50 text-blue-700 border-blue-200',
-    ACTIVA: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    CERRADA: 'bg-slate-100 text-slate-500 border-slate-200',
-    CANCELADA: 'bg-red-50 text-red-700 border-red-200',
+    PROGRAMADA:      'bg-indigo-50 text-indigo-700 border-indigo-200',
+    EN_CURSO:        'bg-blue-50 text-blue-700 border-blue-200',
+    EN_ORGANIZACION: 'bg-orange-50 text-orange-700 border-orange-200',
+    ACTIVA:          'bg-emerald-50 text-emerald-700 border-emerald-200',
+    CERRADA:         'bg-slate-100 text-slate-500 border-slate-200',
+    CANCELADA:       'bg-red-50 text-red-700 border-red-200',
 };
 
 /**
@@ -30,7 +25,7 @@ const formatFechaReal = (dateStr) => {
 };
 
 export const MinutaCard = ({ minuta, onViewDetail, onEdit, badge = null, isAdmin = false }) => {
-    const estadoLabel = ESTADO_LABEL[minuta.estado] || minuta.estado;
+    const estadoLabel = ESTADO_MINUTA_MAP[minuta.estado]?.label || minuta.estado.replace(/_/g, ' ');
     const estadoColor = ESTADO_COLORS[minuta.estado] || 'bg-slate-50 text-slate-600 border-slate-200';
     
     // Resumen operativo del backend
@@ -49,7 +44,7 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, badge = null, isAdmin
     const isMarketing = dept === 'MARKETING';
     const isDiseno = dept === 'DISENO';
     const lineInfo = isMarketing 
-        ? { label: 'Campaña', color: '#8b5cf6' } 
+        ? { label: 'Marketing', color: '#8b5cf6' } 
         : (LINEA_MAP[minuta.lineaDefault] || { label: minuta.lineaDefault, color: '#64748b' });
 
     const BADGE_CONFIG = {
@@ -110,7 +105,7 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, badge = null, isAdmin
                 <div className="flex flex-col items-center justify-center shrink-0 w-[82px] sm:w-[96px] h-full border-r border-slate-100/50 pr-4">
                     <div className="flex flex-col items-center justify-center w-full aspect-square rounded-[1.25rem] mb-2 transition-transform duration-500 group-hover:scale-105" style={{ backgroundColor: `${lineInfo.color}0f`, border: `1.5px solid ${lineInfo.color}25` }}>
                         {isMarketing ? (
-                            <Icon name="campaign" size="35px" style={{ color: lineInfo.color }} />
+                            <MarketingIcon size={35} style={{ color: lineInfo.color }} />
                         ) : (
                             <LineIconSelector type={minuta.lineaDefault} size={60} style={{ color: lineInfo.color }} />
                         )}

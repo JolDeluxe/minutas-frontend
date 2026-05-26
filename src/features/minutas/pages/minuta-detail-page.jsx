@@ -100,34 +100,60 @@ export default function MinutaDetailPage() {
   const departamento = minuta?.departamento || 'DISENO';
 
   const filteredEntries = useMemo(() => {
-    return allEntries.filter(entry => {
-      if (entry.estado === 'CANCELADA') return false;
-      if (activeFilter.tipo && activeFilter.tipo !== 'TODAS' && entry.tipo !== activeFilter.tipo) {
-        if (entry.tempId && (activeFilter.tipo === 'TAREA' || activeFilter.tipo === 'SIN_ORGANIZAR')) {} 
-        else { return false; }
-      }
-      if (activeFilter.estado) {
-        if (activeFilter.estado === 'ATRASADA') {
-          const ahora = new Date();
-          const vence = entry.fechaVencimiento ? new Date(entry.fechaVencimiento) : null;
-          if (!vence || vence >= ahora || entry.estado === 'CERRADA' || entry.estado === 'EN_REVISION') return false;
-        } else if (entry.estado !== activeFilter.estado) {
-          return false;
+    const priorityWeight = { 'CRITICA': 0, 'ALTA': 1, 'MEDIA': 2, 'BAJA': 3 };
+
+    return allEntries
+      .filter(entry => {
+        if (entry.estado === 'CANCELADA') return false;
+        if (activeFilter.tipo && activeFilter.tipo !== 'TODAS' && entry.tipo !== activeFilter.tipo) {
+          if (entry.tempId && (activeFilter.tipo === 'TAREA' || activeFilter.tipo === 'SIN_ORGANIZAR')) {} 
+          else { return false; }
         }
-      }
-      if (activeFilter.clasificacion && entry.clasificacion !== activeFilter.clasificacion) return false;
-      if (activeFilter.area && entry.area !== activeFilter.area) return false;
-      if (activeFilter.linea && entry.linea !== activeFilter.linea) return false;
-      if (activeFilter.search) {
-        const s = activeFilter.search.toLowerCase();
-        if (!entry.descripcion?.toLowerCase().includes(s)) return false;
-      }
-      return true;
-    });
+        if (activeFilter.estado) {
+          if (activeFilter.estado === 'ATRASADA') {
+            const ahora = new Date();
+            const vence = entry.fechaVencimiento ? new Date(entry.fechaVencimiento) : null;
+            if (!vence || vence >= ahora || entry.estado === 'CERRADA' || entry.estado === 'EN_REVISION') return false;
+          } else if (entry.estado !== activeFilter.estado) {
+            return false;
+          }
+        }
+        if (activeFilter.clasificacion && entry.clasificacion !== activeFilter.clasificacion) return false;
+        if (activeFilter.area && entry.area !== activeFilter.area) return false;
+        if (activeFilter.linea && entry.linea !== activeFilter.linea) return false;
+        if (activeFilter.search) {
+          const s = activeFilter.search.toLowerCase();
+          if (!entry.descripcion?.toLowerCase().includes(s)) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        const getRank = (e) => {
+          if (e.tipo === 'SIN_ORGANIZAR' || e.tempId) return 0;
+          if (e.estado === 'EN_REVISION') return 1;
+          if (e.estado === 'CERRADA') return 3;
+          return 2; // Organizadas PENDIENTES o Recordatorios/Politicas
+        };
+
+        const rankA = getRank(a);
+        const rankB = getRank(b);
+
+        if (rankA !== rankB) return rankA - rankB;
+
+        // Si ambos son de Rank 2 (Organizados), ordenar por prioridad
+        if (rankA === 2) {
+          const pA = priorityWeight[a.prioridad] ?? 4;
+          const pB = priorityWeight[b.prioridad] ?? 4;
+          if (pA !== pB) return pA - pB;
+        }
+
+        // Orden secundario: fecha de creación (más reciente arriba)
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
   }, [allEntries, activeFilter]);
 
   const handleFilterByStatus = (estado) =>
-    setActiveFilter(prev => ({ ...prev, estado: prev.estado === estado ? null : estado, tipo: 'TAREA' }));
+    setActiveFilter(prev => ({ ...prev, estado: prev.estado === status ? null : status, tipo: 'TAREA' }));
 
   const handleFilterByTipo = (tipo) =>
     setActiveFilter(prev => ({ ...prev, tipo: prev.tipo === tipo ? 'TAREA' : tipo, estado: null }));

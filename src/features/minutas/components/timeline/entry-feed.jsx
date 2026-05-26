@@ -111,6 +111,9 @@ export const EntryFeed = ({
                   onUpdateDraft={onUpdateDraft}
                   onUpdateSaved={onUpdateSaved}
                   onEdit={onEdit}
+                  onCreateNote={onCreateNote}
+                  onUpdateNote={onUpdateNote}
+                  onDeleteNote={onDeleteNote}
                   onChangeStatus={onChangeStatus}
                   users={users}
                 />

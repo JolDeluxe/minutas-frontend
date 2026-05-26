@@ -1,20 +1,15 @@
 import { Table, Skeleton, Icon } from "@/components/ui/z_index";
 import { cn } from "@/utils/cn";
-import { LINEA_MAP } from '../constants';
-import { LineIconSelector } from './icons/line-icons';
-
-const ESTADO_LABEL = {
-    PROGRAMADA: 'Programada',
-    ACTIVA: 'Activa',
-    CERRADA: 'Cerrada',
-    CANCELADA: 'Cancelada',
-};
+import { LINEA_MAP, ESTADO_MINUTA_MAP } from '../constants';
+import { LineIconSelector, MarketingIcon } from './icons/line-icons';
 
 const ESTADO_COLORS = {
-    PROGRAMADA: 'bg-blue-50 text-blue-700 border-blue-200',
-    ACTIVA: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    CERRADA: 'bg-slate-100 text-slate-500 border-slate-200',
-    CANCELADA: 'bg-red-50 text-red-700 border-red-200',
+    PROGRAMADA:      'bg-indigo-50 text-indigo-700 border-indigo-200',
+    EN_CURSO:        'bg-blue-50 text-blue-700 border-blue-200',
+    EN_ORGANIZACION: 'bg-orange-50 text-orange-700 border-orange-200',
+    ACTIVA:          'bg-emerald-50 text-emerald-700 border-emerald-200',
+    CERRADA:         'bg-slate-100 text-slate-500 border-slate-200',
+    CANCELADA:       'bg-red-50 text-red-700 border-red-200',
 };
 
 export const MinutasTable = ({
@@ -101,7 +96,7 @@ export const MinutasTable = ({
                 const isMarketing = row.creadoPor?.departamento === 'MARKETING';
 
                 const lineInfo = isMarketing
-                    ? { label: 'Campaña', color: '#8b5cf6' }
+                    ? { label: 'Marketing', color: '#8b5cf6' }
                     : (LINEA_MAP[row.lineaDefault] || {
                         label: row.lineaDefault,
                         color: '#64748b'
@@ -111,9 +106,8 @@ export const MinutasTable = ({
                     <div className="flex flex-col items-center justify-center gap-1">
                         <div className="flex items-center justify-center">
                             {isMarketing ? (
-                                <Icon
-                                    name="campaign"
-                                    size="32px"
+                                <MarketingIcon
+                                    size={50}
                                     style={{ color: lineInfo.color }}
                                 />
                             ) : (
@@ -232,7 +226,7 @@ export const MinutasTable = ({
             headerClassName: "w-[12%] min-w-[100px]",
             cell: (row) => {
                 if (row.isSkeleton) return <Skeleton className="h-6 w-20 mx-auto rounded-full" />;
-                const estadoLabel = ESTADO_LABEL[row.estado] || row.estado;
+                const estadoLabel = ESTADO_MINUTA_MAP[row.estado]?.label || row.estado;
                 const estadoColor = ESTADO_COLORS[row.estado] || 'bg-slate-50 text-slate-600 border-slate-200';
                 return (
                     <span className={cn("flex items-center justify-center gap-1.5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide rounded-md border whitespace-nowrap mx-auto w-fit", estadoColor)}>

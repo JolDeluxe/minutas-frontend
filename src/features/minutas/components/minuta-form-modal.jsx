@@ -120,7 +120,7 @@ export const MinutaFormModal = ({
                                     const val = e.target.value;
                                     setDepartamento(val);
                                     if (val === 'MARKETING') {
-                                        setLineaDefault('CAMPANA');
+                                        setLineaDefault('MARKETING');
                                     } else {
                                         setLineaDefault('CALZADO');
                                     }
@@ -140,7 +140,7 @@ export const MinutaFormModal = ({
                                 error={!!fe.lineaDefault}
                             >
                                 {departamento === 'MARKETING' ? (
-                                    <option value="CAMPANA">Campaña</option>
+                                    <option value="MARKETING">Marketing</option>
                                 ) : (
                                     Object.entries(LINEA_MAP).map(([value, config]) => (
                                         <option key={value} value={value}>{config.label}</option>

@@ -58,8 +58,7 @@ export const LINEA_MAP = {
   BOTA:       { label: 'Bota',       icon: 'boot',         color: '#475569' }, 
   ROPA:       { label: 'Ropa',       icon: 'checkroom',    color: '#0f172a' },
   ACCESORIOS: { label: 'Accesorios', icon: 'shopping_bag', color: '#94a3b8' },
-  CAMPANA:    { label: 'Campaña',    icon: 'campaign',     color: '#8b5cf6' },
-  'CAMPAÑA':  { label: 'Campaña',    icon: 'campaign',     color: '#8b5cf6' }, // alias legacy
+  MARKETING:  { label: 'Marketing',  icon: 'record_voice_over',     color: '#8b5cf6' },
 };
 
 export const PRIORIDAD_MAP = {

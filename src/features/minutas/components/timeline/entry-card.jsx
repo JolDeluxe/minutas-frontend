@@ -283,7 +283,7 @@ const CardImageCarousel = ({ images, onImageClick, lineInfo, isMarketing }) => {
       {/* Badge de Identidad (SIEMPRE VISIBLE) */}
       <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-slate-200 shadow-xs animate-in fade-in duration-500 max-w-full">
          {isMarketing ? (
-            <Icon name="campaign" size="14px" style={{ color: lineInfo.color }} />
+            <MarketingIcon size={14} style={{ color: lineInfo.color }} />
          ) : (
             <LineIconSelector type={lineInfo.value} size={16} style={{ color: lineInfo.color }} />
          )}
@@ -367,7 +367,7 @@ export const EntryCard = ({
   const clasif = CLASIFICACION_MAP[entry.clasificacion] || null;
   const isMarketing = departamento === 'MARKETING';
   const lineInfo = {
-    label: isMarketing ? 'Campaña' : (LINEA_MAP[entry.linea]?.label || entry.linea || '—'),
+    label: isMarketing ? 'Marketing' : (LINEA_MAP[entry.linea]?.label || entry.linea || '—'),
     color: isMarketing ? '#8b5cf6' : (LINEA_MAP[entry.linea]?.color || '#64748b'),
     value: entry.linea
   };
@@ -420,7 +420,7 @@ export const EntryCard = ({
               <div className="flex flex-col items-center justify-center w-full gap-2">
                 <div className="flex flex-col items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-[1.5rem] transition-all duration-500 group-hover:scale-110 shadow-sm" style={{ backgroundColor: `${lineInfo.color}0f`, border: `1.5px solid ${lineInfo.color}25` }}>
                    {isMarketing ? (
-                      <Icon name="campaign" size="32px" style={{ color: lineInfo.color }} />
+                      <MarketingIcon size={32} style={{ color: lineInfo.color }} />
                    ) : (
                       <LineIconSelector type={entry.linea} size={48} style={{ color: lineInfo.color }} />
                    )}
@@ -536,15 +536,21 @@ export const EntryCard = ({
                 
                 {!isClosed && (
                   <>
-                    {(isDraft || !isOrganized) ? (
+                    {/* Organizar: Solo si NO está organizada (es SIN_ORGANIZAR) */}
+                    {!isOrganized && (
                       <button onClick={(e) => { e.stopPropagation(); onOrganize(entry); }} className="h-7 w-7 rounded-lg border border-marca-primario/20 bg-marca-primario/5 text-marca-primario flex items-center justify-center transition-all active:scale-90 shadow-xs" title="Organizar Entrada">
                         <Settings2 size={13} />
                       </button>
-                    ) : (
+                    )}
+                    
+                    {/* Editar: Solo si ya está organizada (no es SIN_ORGANIZAR) */}
+                    {isOrganized && (
                       <button onClick={(e) => { e.stopPropagation(); onEdit(entry); }} className="h-7 w-7 rounded-lg border border-slate-100 bg-white text-slate-400 hover:text-slate-900 flex items-center justify-center transition-all active:scale-90 shadow-xs" title="Editar Entrada">
                         <Pencil size={12} />
                       </button>
                     )}
+                    
+                    {/* Borrar: Siempre que no esté cerrada */}
                     <button onClick={(e) => { e.stopPropagation(); if (window.confirm("¿Deseas descartar esta entrada?")) onRemove(entry.id || entry.tempId); }} className="h-7 w-7 rounded-lg border border-rose-100 bg-rose-50 text-rose-400 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all active:scale-90 shadow-xs" title="Descartar / Eliminar">
                       <Trash2 size={12} />
                     </button>

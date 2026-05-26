@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Icon } from '@/components/ui/z_index';
+import { Icon, Tooltip } from '@/components/ui/z_index';
 import { MinutaContextPanel } from '../components/context/minuta-context-panel';
 import { QuickComposer } from '../components/composer/quick-composer';
 import { EntryFiltersBar } from '../components/timeline/entry-filters-bar';
@@ -193,19 +193,15 @@ export const MinutaDetailDesktopView = ({
                                 {r.asignaciones && r.asignaciones.length > 0 && (
                                   <div className="flex -space-x-1.5 shrink-0">
                                     {r.asignaciones.map((asig) => (
-                                      <div key={asig.id} className="relative group/tooltip inline-block">
-                                        <div className="h-6 w-6 rounded-full border-2 border-white overflow-hidden bg-slate-100 flex items-center justify-center text-[8px] font-bold text-slate-500 shadow-sm">
+                                      <Tooltip key={asig.id} text={asig.usuario?.nombre} position="top">
+                                        <div className="h-6 w-6 rounded-full border-2 border-white overflow-hidden bg-slate-100 flex items-center justify-center text-[8px] font-bold text-slate-500 shadow-sm shrink-0 transition-transform hover:scale-110 hover:z-10">
                                           {asig.usuario?.imagen ? (
                                             <img src={asig.usuario.imagen} alt={asig.usuario.nombre} className="h-full w-full object-cover" />
                                           ) : (
                                             asig.usuario?.nombre?.charAt(0)
                                           )}
                                         </div>
-                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 w-max bg-slate-900 text-white text-[8px] font-bold py-1 px-2 rounded-md shadow-xl opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all pointer-events-none z-50">
-                                          {asig.usuario?.nombre}
-                                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900" />
-                                        </div>
-                                      </div>
+                                      </Tooltip>
                                     ))}
                                   </div>
                                 )}

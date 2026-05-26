@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Icon, Button } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
-import { LINEA_MAP } from '../../constants';
+import { LINEA_MAP, ESTADO_MINUTA_MAP } from '../../constants';
 import { LineIconSelector } from '../icons/line-icons';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { MinutaExecutiveSummary } from '../minuta-executive-summary';
@@ -24,6 +24,20 @@ export const MinutaContextPanel = ({
   const fecha = new Date(minuta.fechaRealizada || minuta.fechaProgramada || minuta.createdAt).toLocaleDateString('es-MX', {
     weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
   });
+
+  const getEstadoClasses = (estado) => {
+    switch (estado) {
+      case 'ACTIVA': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      case 'EN_CURSO': return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'EN_ORGANIZACION': return 'bg-orange-50 text-orange-700 border-orange-200';
+      case 'CERRADA': return 'bg-slate-100 text-slate-500 border-slate-200';
+      case 'CANCELADA': return 'bg-red-50 text-red-700 border-red-200';
+      case 'PROGRAMADA': return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+      default: return 'bg-slate-50 text-slate-600 border-slate-200';
+    }
+  };
+
+  const estadoLabel = ESTADO_MINUTA_MAP[minuta.estado]?.label || minuta.estado;
 
   return (
     <div className="w-full bg-white border-b border-slate-200/60 shrink-0 relative shadow-sm">
@@ -52,15 +66,23 @@ export const MinutaContextPanel = ({
           </button>
 
           <div className="min-w-0 flex-1">
-            <h2 className="text-[11px] xs:text-[13px] md:text-lg font-black text-slate-900 fuente-titulos tracking-tight leading-none truncate">
-              {minuta.titulo}
-            </h2>
-            <div className="flex items-center gap-1.5 mt-0.5">
+            <div className="flex items-center gap-2 mb-0.5">
+              <h2 className="text-[11px] xs:text-[13px] md:text-lg font-black text-slate-900 fuente-titulos tracking-tight leading-none truncate">
+                {minuta.titulo}
+              </h2>
+              <span className={cn(
+                "px-1.5 py-0.5 rounded-md text-[7px] md:text-[9px] font-black uppercase tracking-wider border shrink-0",
+                getEstadoClasses(minuta.estado)
+              )}>
+                {estadoLabel}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
                <span className="text-[7px] md:text-[10px] font-bold text-slate-400 font-mono whitespace-nowrap">#{minuta.id} · {fecha.split(',')[1] || fecha}</span>
-               <div className="hidden sm:flex items-center gap-1 text-[8px] text-slate-500 font-black uppercase">
-                  <span className="w-0.5 h-0.5 rounded-full bg-slate-300" />
-                  <LineIconSelector type={minuta.lineaDefault} size={8} className="text-slate-400" />
-                  <span>{LINEA_MAP[minuta.lineaDefault]?.label}</span>
+               <div className="flex items-center gap-1 text-[8px] md:text-[10px] text-slate-500 font-black uppercase">
+                  <span className="w-0.5 h-0.5 rounded-full bg-slate-300 mx-0.5" />
+                  <LineIconSelector type={minuta.lineaDefault} size={isDesktop ? 26 : 18} className="text-slate-400 shrink-0" />
+                  <span className="hidden xs:inline">{LINEA_MAP[minuta.lineaDefault]?.label}</span>
                </div>
             </div>
           </div>
@@ -109,4 +131,3 @@ export const MinutaContextPanel = ({
     </div>
   );
 };
-

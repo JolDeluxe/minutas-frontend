@@ -10,6 +10,7 @@ import { DirectoryKpiBar } from '../components/directory-kpi-bar';
 import { glassBase, GlassSheen } from '@/components/ui/liquid-glass-mobile';
 import { cn } from '@/utils/cn';
 import { useAuthStore } from '@/stores/auth-store';
+import { DisenoIcon, MarketingIcon } from '../components/icons/line-icons';
 
 const groupByDate = (minutas) => {
     const groups = new Map();
@@ -127,18 +128,20 @@ export const MinutasMobile = ({
                         <button
                             key={opt}
                             onClick={() => setDepartamentoGlobal(opt)}
-                            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                                departamentoGlobal === opt 
-                                    ? 'bg-white text-marca-primario shadow-sm ring-1 ring-slate-200/50' 
+                            className={`flex flex-1 items-center justify-center gap-1 py-1.5 text-[10px] font-black tracking-wider uppercase rounded-lg transition-all ${
+                                departamentoGlobal === opt
+                                    ? 'bg-white text-marca-primario shadow-sm ring-1 ring-slate-200/50'
                                     : 'text-slate-500 hover:text-slate-700'
                             }`}
                         >
+                            {opt === 'TODAS' && <Icon name="layers" size="14px" />}
+                            {opt === 'DISEÑO' && <DisenoIcon size={14} />}
+                            {opt === 'MARKETING' && <MarketingIcon size={14} />}
                             {opt}
                         </button>
                     ))}
                 </div>
             )}
-
             <div className="px-1 mb-1">
                 <DirectoryKpiBar 
                     minutas={displayMinutas} 

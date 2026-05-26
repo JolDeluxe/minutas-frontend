@@ -6,6 +6,7 @@ import { DirectoryKpiBar } from '../components/directory-kpi-bar';
 import { QuickNavigateCalendar } from '../components/quick-navigate-calendar';
 import { Button, Icon, GlassViewToggle } from '@/components/ui/z_index';
 import { useAuthStore } from '@/stores/auth-store';
+import { DisenoIcon, MarketingIcon } from '../components/icons/line-icons';
 
 /**
  * Agrupa las minutas por fecha (campo `fecha`) para mostrar encabezados tipo
@@ -149,12 +150,15 @@ export const MinutasDesktop = ({
                             <button
                                 key={opt}
                                 onClick={() => setDepartamentoGlobal(opt)}
-                                className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                                className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${
                                     departamentoGlobal === opt 
                                         ? 'bg-white text-marca-primario shadow-sm ring-1 ring-slate-200/50' 
                                         : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50/50'
                                 }`}
                             >
+                                {opt === 'TODAS' && <Icon name="layers" size="14px" />}
+                                {opt === 'DISEÑO' && <DisenoIcon size={14} />}
+                                {opt === 'MARKETING' && <MarketingIcon size={14} />}
                                 {opt}
                             </button>
                         ))}

@@ -1,11 +1,11 @@
-import { Table, Skeleton, Icon } from "@/components/ui/z_index";
+import { Table, Skeleton, Icon, Tooltip } from "@/components/ui/z_index";
 import { cn } from "@/utils/cn";
 import { AREA_MAP, CLASIFICACION_MAP, ESTADO_TAREA_MAP, PRIORIDAD_MAP, LINEA_MAP } from '../../constants';
 import { formatFecha, isPastDate } from '@/lib/date';
 import { Pencil, Settings2, Trash2, StickyNote, Plus, X } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { LineIconSelector } from '../icons/line-icons';
+import { LineIconSelector, MarketingIcon } from '../icons/line-icons';
 import { ImageViewer } from './entry-card';
 
 const ESTADO_STYLES = {
@@ -231,12 +231,17 @@ export const EntryTable = ({
 }) => {
   const [viewerIndex, setViewerIndex] = useState(null);
   const [activeEntryImages, setActiveEntryImages] = useState([]);
-  const [activeNotesEntry, setActiveNotesEntry] = useState(null);
+  const [activeNotesEntryId, setActiveNotesEntryId] = useState(null);
 
   const openViewer = (images) => {
     setActiveEntryImages(images);
     setViewerIndex(0);
   };
+
+  const activeEntryForNotes = useMemo(() => {
+    if (!activeNotesEntryId) return null;
+    return entries.find(e => (e.id || e.tempId) === activeNotesEntryId);
+  }, [activeNotesEntryId, entries]);
 
   const columns = [
     {
@@ -262,12 +267,41 @@ export const EntryTable = ({
     {
       header: "Descripción",
       accessorKey: "descripcion",
-      headerClassName: "w-[30%] min-w-[250px]",
+      headerClassName: "w-[25%] min-w-[200px]",
       cell: (row) => (
         <span className="block text-[13px] font-semibold text-slate-800 leading-relaxed line-clamp-3" title={row.descripcion}>
           {row.descripcion || 'Sin descripción'}
         </span>
       )
+    },
+    {
+      header: "Responsables",
+      accessorKey: "asignaciones",
+      align: "center",
+      headerClassName: "w-[10%] min-w-[120px]",
+      cell: (row) => {
+        if (!row.asignaciones || row.asignaciones.length === 0) return <span className="text-[11px] text-slate-300">—</span>;
+        
+        const tooltipText = row.asignaciones.map(a => a.usuario?.nombre).join('\n');
+
+        return (
+          <div className="flex justify-center">
+            <Tooltip text={tooltipText} position="top" className="whitespace-pre-line text-left">
+              <div className="flex -space-x-3 cursor-help py-1">
+                {row.asignaciones.map((asig) => (
+                  <div key={asig.id} className="h-10 w-10 rounded-full border-2 border-white overflow-hidden bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 shadow-md shrink-0 ring-1 ring-slate-200 transition-all hover:scale-110 hover:z-30">
+                    {asig.usuario?.imagen ? (
+                      <img src={asig.usuario.imagen} alt={asig.usuario.nombre} className="h-full w-full object-cover" />
+                    ) : (
+                      asig.usuario?.nombre?.charAt(0)
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Tooltip>
+          </div>
+        );
+      }
     },
     {
       header: "Línea",
@@ -276,11 +310,11 @@ export const EntryTable = ({
       headerClassName: "w-[10%] min-w-[100px]",
       cell: (row) => {
         const isMarketing = departamento === 'MARKETING';
-        const lineInfo = isMarketing ? { label: 'Campaña', color: '#8b5cf6' } : (LINEA_MAP[row.linea] || { label: row.linea || '—', color: '#64748b' });
+        const lineInfo = isMarketing ? { label: 'Marketing', color: '#8b5cf6' } : (LINEA_MAP[row.linea] || { label: row.linea || '—', color: '#64748b' });
         return (
           <div className="flex flex-col items-center justify-center gap-0.5">
             <div className="flex items-center justify-center">
-              {isMarketing ? <Icon name="campaign" size="28px" style={{ color: lineInfo.color }} /> : <LineIconSelector type={row.linea} size={60} style={{ color: lineInfo.color }} />}
+              {isMarketing ? <MarketingIcon size={60} style={{ color: lineInfo.color }} /> : <LineIconSelector type={row.linea} size={60} style={{ color: lineInfo.color }} />}
             </div>
             <span className="text-[7px] font-black uppercase tracking-widest font-mono leading-none text-center" style={{ color: lineInfo.color }}>{lineInfo.label}</span>
           </div>
@@ -335,16 +369,42 @@ export const EntryTable = ({
       header: "Acciones",
       accessorKey: "acciones",
       align: "center",
-      headerClassName: "w-[12%] min-w-[150px]",
+      headerClassName: "w-[12%] min-w-[160px]",
       cell: (row) => {
-        const isDraft = Boolean(row.tempId);
+        const isClosed = row.estado === 'CERRADA';
+        const isOrganized = row.tipo !== 'SIN_ORGANIZAR';
         const entryNotes = row.notas || [];
+        
         return (
-          <div className="flex items-center gap-1.5 justify-center">
-            <button onClick={(e) => { e.stopPropagation(); setActiveNotesEntry(row); }} className={cn("h-8 flex items-center gap-1 px-2 rounded-xl border transition-all active:scale-95 shadow-xs bg-white", entryNotes.length > 0 ? "border-amber-300 text-amber-700 bg-amber-50" : "border-slate-200 text-slate-400 hover:text-amber-600")} title="Notas de la tarea"><StickyNote size={15} /><span className="text-[10px] font-black">{entryNotes.length}</span></button>
-            <button onClick={() => onEdit(row)} className="h-8 w-8 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-slate-900 bg-white shadow-xs active:scale-90 transition-all" title="Editar"><Pencil size={15} /></button>
-            {!isDraft && <button onClick={() => onOrganize(row)} className="h-8 w-8 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-slate-900 bg-white shadow-xs active:scale-90 transition-all" title="Organizar"><Settings2 size={15} /></button>}
-            <button onClick={() => onRemove(row.id || row.tempId)} className="h-8 w-8 flex items-center justify-center rounded-xl border border-rose-100 text-rose-400 hover:bg-rose-500 hover:text-white bg-white active:scale-90 transition-all shadow-xs" title="Descartar"><Trash2 size={15} /></button>
+          <div className="flex items-center gap-2 justify-center">
+            {/* Notas: Siempre visible */}
+            <button onClick={(e) => { e.stopPropagation(); setActiveNotesEntryId(row.id || row.tempId); }} className={cn("h-9 flex items-center gap-1.5 px-2.5 rounded-xl border transition-all active:scale-95 shadow-sm bg-white", entryNotes.length > 0 ? "border-amber-300 text-amber-700 bg-amber-50" : "border-slate-200 text-slate-400 hover:text-amber-600")} title="Notas de la tarea">
+              <StickyNote size={16} />
+              <span className="text-[11px] font-black">{entryNotes.length}</span>
+            </button>
+            
+            {!isClosed && (
+              <>
+                {/* Editar: Solo si ya está organizada */}
+                {isOrganized && (
+                  <button onClick={() => onEdit(row)} className="h-9 w-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-slate-900 bg-white shadow-sm active:scale-90 transition-all" title="Editar">
+                    <Pencil size={18} />
+                  </button>
+                )}
+                
+                {/* Organizar: Solo si NO está organizada (es SIN_ORGANIZAR) */}
+                {!isOrganized && (
+                  <button onClick={() => onOrganize(row)} className="h-9 w-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-slate-900 bg-white shadow-sm active:scale-90 transition-all" title="Organizar">
+                    <Settings2 size={18} />
+                  </button>
+                )}
+                
+                {/* Borrar: Siempre que no esté cerrada */}
+                <button onClick={() => onRemove(row.id || row.tempId)} className="h-9 w-9 flex items-center justify-center rounded-xl border border-rose-100 text-rose-400 hover:bg-rose-500 hover:text-white bg-white active:scale-90 transition-all shadow-sm" title="Descartar">
+                  <Trash2 size={18} />
+                </button>
+              </>
+            )}
           </div>
         );
       }
@@ -370,11 +430,11 @@ export const EntryTable = ({
         />
       </div>
 
-      {activeNotesEntry && (
+      {activeEntryForNotes && (
         <EntryNotesPostIt
-          entry={{ ...activeNotesEntry, readOnly: activeNotesEntry.estado === 'CERRADA' }}
-          notes={activeNotesEntry.notas || []}
-          onClose={() => setActiveNotesEntry(null)}
+          entry={{ ...activeEntryForNotes, readOnly: activeEntryForNotes.estado === 'CERRADA' }}
+          notes={activeEntryForNotes.notas || []}
+          onClose={() => setActiveNotesEntryId(null)}
           onAddNote={onCreateNote}
           onUpdateNote={onUpdateNote}
           onDeleteNote={onDeleteNote}

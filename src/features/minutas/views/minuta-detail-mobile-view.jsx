@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Icon } from '@/components/ui/z_index';
+import { Icon, Tooltip } from '@/components/ui/z_index';
 import { MinutaContextPanel } from '../components/context/minuta-context-panel';
 import { MinutaExecutiveSummary } from '../components/minuta-executive-summary';
 import { MinutaJuntaComparison } from '../components/minuta-junta-comparison';
@@ -180,13 +180,15 @@ export const MinutaDetailMobileView = ({
                         {r.asignaciones && r.asignaciones.length > 0 && (
                           <div className="flex -space-x-1 shrink-0">
                             {r.asignaciones.map((asig) => (
-                              <div key={asig.id} className="h-5 w-5 rounded-full border border-white overflow-hidden bg-slate-100 flex items-center justify-center text-[7px] font-bold text-slate-500 shadow-xs">
-                                {asig.usuario?.imagen ? (
-                                  <img src={asig.usuario.imagen} alt={asig.usuario.nombre} className="h-full w-full object-cover" />
-                                ) : (
-                                  asig.usuario?.nombre?.charAt(0)
-                                )}
-                              </div>
+                              <Tooltip key={asig.id} text={asig.usuario?.nombre} position="top">
+                                <div className="h-5 w-5 rounded-full border border-white overflow-hidden bg-slate-100 flex items-center justify-center text-[7px] font-bold text-slate-500 shadow-xs shrink-0 transition-transform hover:scale-110 hover:z-10">
+                                  {asig.usuario?.imagen ? (
+                                    <img src={asig.usuario.imagen} alt={asig.usuario.nombre} className="h-full w-full object-cover" />
+                                  ) : (
+                                    asig.usuario?.nombre?.charAt(0)
+                                  )}
+                                </div>
+                              </Tooltip>
                             ))}
                           </div>
                         )}
