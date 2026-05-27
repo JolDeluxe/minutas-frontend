@@ -14,6 +14,7 @@ import { Link } from 'react-router-dom';
 import { canAccessModule } from '@/config/modules-config';
 import { useAuthStore } from '@/stores/auth-store';
 import { AREA_MAP } from '../constants';
+import { TareaDetailDrawer } from '../../tareas/components/common/tarea-detail-drawer';
 
 export const MinutaDetailMobileView = ({
   minuta,
@@ -74,6 +75,8 @@ export const MinutaDetailMobileView = ({
   const [showPoliticas, setShowPoliticas] = useState(false);
   const [showRecordatorios, setShowRecordatorios] = useState(false);
   const [composerExpanded, setComposerExpanded] = useState(false);
+  const [selectedTareaForDetail, setSelectedTareaForDetail] = useState(null);
+  const [isTareaDrawerOpen, setIsTareaDrawerOpen] = useState(false);
   const { user } = useAuthStore();
   const userRole = user?.data?.rol || user?.rol;
 
@@ -235,6 +238,10 @@ export const MinutaDetailMobileView = ({
           users={users}
           onDownloadPdf={handleDownloadPdf}
           isGeneratingPdf={isGeneratingPdf}
+          onViewDetail={(t) => {
+            setSelectedTareaForDetail(t);
+            setIsTareaDrawerOpen(true);
+          }}
         />
       </main>
       
@@ -331,6 +338,28 @@ export const MinutaDetailMobileView = ({
           onSave={handleEditEntrySave}
           submitting={isSavingEntry}
           departamento={departamento}
+        />
+      )}
+
+      {isTareaDrawerOpen && selectedTareaForDetail && (
+        <TareaDetailDrawer
+          isOpen={isTareaDrawerOpen}
+          onClose={() => {
+            setIsTareaDrawerOpen(false);
+            setSelectedTareaForDetail(null);
+          }}
+          tarea={selectedTareaForDetail}
+          onChangeStatus={async (id, payload) => {
+            const statusPayload = typeof payload === 'string' ? { estado: payload } : payload;
+            await changeTareaStatus(id, statusPayload);
+            setSelectedTareaForDetail(prev => prev && prev.id === id ? { ...prev, estado: statusPayload.estado } : prev);
+          }}
+          onDelete={async (id) => {
+            if (handleDeleteEntry) await handleDeleteEntry(id);
+            setIsTareaDrawerOpen(false);
+            setSelectedTareaForDetail(null);
+          }}
+          currentUser={user?.data || user}
         />
       )}
     </div>

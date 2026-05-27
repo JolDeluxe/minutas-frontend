@@ -1,5 +1,5 @@
-// src/features/tareas/views/mis-tareas-desktop.jsx
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Skeleton, RefreshFab, Icon, GlassViewToggle } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
 import { HoyTareaCard } from '../components/hoy/hoy-tarea-card';
@@ -64,7 +64,9 @@ export const ActivasDesktop = ({
     statusActual,
     filtroDepartamento,
     onReview,
+    onDelete,
 }) => {
+    const navigate = useNavigate();
     const [viewMode, setViewMode] = useState(() => localStorage.getItem('mis-entradas-view') || 'cards');
     const [editTarget, setEditTarget] = useState(null);
 
@@ -81,7 +83,7 @@ export const ActivasDesktop = ({
                     <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">
                         {loading ? 'Sincronizando…' : (
                             <>
-                                <span className="text-marca-primario">{tareas.length}</span> entrada{tareas.length !== 1 ? 's' : ''} gestionada{tareas.length !== 1 ? 's' : ''}
+                                <span className="text-marca-primario">{tareas.length}</span> tarea{tareas.length !== 1 ? 's' : ''} activa{tareas.length !== 1 ? 's' : ''}
                                 {totalAtrasadasGlobal > 0 && (
                                     <span className="ml-2 text-estado-rechazado">· {totalAtrasadasGlobal} fuera de tiempo</span>
                                 )}
@@ -107,8 +109,8 @@ export const ActivasDesktop = ({
             {['ADMIN', 'JEFE', 'GERENCIA'].includes(currentUser?.rol) && (
                 <BossApprovalBanner 
                     count={conteos?.EN_REVISION || 0}
-                    isActive={statusActual === 'EN_REVISION'}
-                    onClick={() => onFilterChange({ status: statusActual === 'EN_REVISION' ? 'TODOS' : 'EN_REVISION' })}
+                    isActive={false}
+                    onClick={() => navigate('/tareas/por-aprobar')}
                 />
             )}
 
@@ -155,7 +157,7 @@ export const ActivasDesktop = ({
                         ? (
                             <div className="flex flex-col items-center justify-center py-20 text-slate-400 bg-white rounded-3xl border border-slate-200 shadow-sm">
                                 <Icon name="task" size="64px" className="mb-4 opacity-20" />
-                                <p className="text-lg font-medium italic">No se encontraron entradas</p>
+                                <p className="text-lg font-medium italic">No se encontraron tareas</p>
                                 <button onClick={onRefresh} className="mt-4 text-marca-primario hover:underline font-bold">Refrescar</button>
                             </div>
                         )
@@ -183,6 +185,7 @@ export const ActivasDesktop = ({
                                     onViewDetail={onViewDetail}
                                     onEdit={setEditTarget}
                                     onReview={onReview}
+                                    onDelete={onDelete}
                                     hidePagination={true}
                                 />
                             </div>

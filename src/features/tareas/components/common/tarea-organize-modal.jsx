@@ -77,7 +77,7 @@ export const TareaOrganizeModal = ({
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="md">
-            <ModalHeader title="Organizar Entrada" onClose={onClose} />
+            <ModalHeader title="Organizar Tarea" onClose={onClose} />
 
             <ModalBody>
                 <div className="space-y-6">

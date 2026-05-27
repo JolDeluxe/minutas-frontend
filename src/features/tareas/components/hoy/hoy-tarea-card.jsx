@@ -1,5 +1,5 @@
 // src/features/tareas/components/hoy/hoy-tarea-card.jsx
-import { Icon } from '@/components/ui/z_index';
+import { Icon, ConfirmModal } from '@/components/ui/z_index';
 import { TareaStatusBadge } from '../common/tarea-status-badge';
 import { TareaPriorityBadge } from '../common/tarea-priority-badge';
 import { TareaEntregaModal } from '../common/tarea-entrega-modal';
@@ -122,6 +122,7 @@ export const HoyTareaCard = ({
 }) => {
 
     const [isEntregaModalOpen, setIsEntregaModalOpen] = useState(false);
+    const [isConfirmAprobarOpen, setIsConfirmAprobarOpen] = useState(false);
     const isExpanded = false;
 
     const { rol } = currentUser || {};
@@ -277,7 +278,7 @@ export const HoyTareaCard = ({
                                             if (onReview) {
                                                 onReview(tarea);
                                             } else {
-                                                onChangeStatus?.(tarea.id, 'CERRADA');
+                                                setIsConfirmAprobarOpen(true);
                                             }
                                         }}
                                         className="h-7 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20 active:scale-95 transition-all flex items-center gap-1 cursor-pointer"
@@ -303,8 +304,25 @@ export const HoyTareaCard = ({
                     onClose={() => setIsEntregaModalOpen(false)}
                     tareaId={tarea.id}
                     onConfirm={async () => {
-                        if (onChangeStatus) await onChangeStatus(tarea.id, 'EN_REVISION');
+                        const nextStatus = (rol === 'ADMIN' || rol === 'GERENCIA' || rol === 'JEFE') ? 'CERRADA' : 'EN_REVISION';
+                        if (onChangeStatus) await onChangeStatus(tarea.id, nextStatus);
                     }}
+                />
+            )}
+
+            {isConfirmAprobarOpen && (
+                <ConfirmModal
+                    isOpen={isConfirmAprobarOpen}
+                    onClose={() => setIsConfirmAprobarOpen(false)}
+                    onConfirm={async () => {
+                        if (onChangeStatus) await onChangeStatus(tarea.id, 'CERRADA');
+                        setIsConfirmAprobarOpen(false);
+                    }}
+                    title="Aprobar Tarea"
+                    message="¿Estás seguro de que deseas aprobar y cerrar esta tarea de forma definitiva?"
+                    confirmText="Aprobar"
+                    cancelText="Cancelar"
+                    variant="success"
                 />
             )}
         </>

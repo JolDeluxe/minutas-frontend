@@ -1,4 +1,4 @@
-import { Table, Skeleton, Icon, Tooltip, TableActions } from "@/components/ui/z_index";
+import { Table, Skeleton, Icon, Tooltip, TableActions, ConfirmModal } from "@/components/ui/z_index";
 import { cn } from "@/utils/cn";
 import { AREA_MAP, CLASIFICACION_MAP, ESTADO_TAREA_MAP, PRIORIDAD_MAP, LINEA_MAP } from '../../constants';
 import { formatFecha, isPastDate } from '@/lib/date';
@@ -7,6 +7,8 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { LineIconSelector, MarketingIcon } from '../icons/line-icons';
 import { ImageViewer } from './entry-card';
+import { useAuthStore } from '@/stores/auth-store';
+import { TareaEntregaModal } from '../../../tareas/components/common/tarea-entrega-modal';
 
 const ESTADO_STYLES = {
   PENDIENTE: 'bg-amber-50 text-amber-700 border-amber-200',
@@ -228,11 +230,21 @@ const TableImagePreview = ({ images, onClick }) => {
 export const EntryTable = ({ 
   entries, departamento, onOrganize, onRemove, onEdit, 
   onCreateNote, onUpdateNote, onDeleteNote, onChangeStatus, users,
-  onDownloadPdf, isGeneratingPdf
+  onDownloadPdf, isGeneratingPdf, onViewDetail
 }) => {
+  const { user } = useAuthStore();
+  const currentUser = user?.data || user;
+  const currentUserId = currentUser?.id;
+  const userRole = currentUser?.rol || 'GERENCIA';
+  const isJefe = userRole === 'JEFE' || userRole === 'GERENCIA' || userRole === 'ADMIN';
+
   const [viewerIndex, setViewerIndex] = useState(null);
   const [activeEntryImages, setActiveEntryImages] = useState([]);
   const [activeNotesEntryId, setActiveNotesEntryId] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [approveTarget, setApproveTarget] = useState(null);
+  const [isEntregaModalOpen, setIsEntregaModalOpen] = useState(false);
+  const [selectedTareaForEntrega, setSelectedTareaForEntrega] = useState(null);
 
   const openViewer = (images) => {
     setActiveEntryImages(images);
@@ -279,11 +291,38 @@ export const EntryTable = ({
       header: "Descripción",
       accessorKey: "descripcion",
       headerClassName: "w-[25%] min-w-[200px]",
-      cell: (row) => (
-        <span className="block text-[13px] font-semibold text-slate-800 leading-relaxed line-clamp-3" title={row.descripcion}>
-          {row.descripcion || 'Sin descripción'}
-        </span>
-      )
+      cell: (row) => {
+        const isDraft = Boolean(row.tempId);
+        const isOrganized = row.tipo !== 'SIN_ORGANIZAR';
+        const isTarea = row.tipo === 'TAREA';
+        
+        const handleClick = () => {
+          if (isDraft || !isOrganized) {
+            onOrganize?.(row);
+          } else if (isTarea) {
+            onViewDetail?.(row);
+          }
+        };
+
+        const isClickable = isDraft || !isOrganized || isTarea;
+
+        return (
+          <span 
+            onClick={handleClick}
+            className={cn(
+              "block text-[13px] font-semibold leading-relaxed line-clamp-3 transition-colors",
+              isClickable ? "cursor-pointer text-slate-800 hover:text-marca-primario" : "text-slate-600"
+            )}
+            title={
+              isDraft || !isOrganized ? "Hacer clic para organizar esta entrada" :
+              isTarea ? "Hacer clic para ver detalles de la tarea" :
+              row.descripcion
+            }
+          >
+            {row.descripcion || 'Sin descripción'}
+          </span>
+        );
+      }
     },
     {
       header: "Responsables",
@@ -391,6 +430,9 @@ export const EntryTable = ({
         const entryNotes = row.notas || [];
         const isDraft = Boolean(row.tempId);
         const isExternal = (departamento === 'DISENO' && row.area !== 'DISENO') || (departamento === 'MARKETING' && row.area !== 'MARKETING');
+        const isFormalizada = row.tipo === 'TAREA';
+        const isAsignado = row.asignaciones?.some(asig => asig.usuarioId === currentUserId);
+        const estadoActual = row.estado || 'PENDIENTE';
         
         return (
           <div className="flex items-center gap-2 justify-center">
@@ -400,36 +442,35 @@ export const EntryTable = ({
               <span className="text-[11px] font-black">{entryNotes.length}</span>
             </button>
             
-            {!isClosed && (
-              <>
-                {/* PDF Button for External */}
-                {isExternal && !isDraft && onDownloadPdf && (
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); onDownloadPdf(row.area); }} 
-                    disabled={isGeneratingPdf === row.area}
-                    className="h-9 px-2.5 rounded-xl border border-purple-200 bg-purple-50 text-purple-600 hover:bg-purple-600 hover:text-white flex items-center gap-1.5 transition-all active:scale-90 shadow-sm font-black uppercase text-[10px] tracking-widest" 
-                    title="Generar PDF"
-                  >
-                    <Icon name={isGeneratingPdf === row.area ? "hourglass_empty" : "picture_as_pdf"} size="16px" className={isGeneratingPdf === row.area ? "animate-spin" : ""} />
-                    PDF
-                  </button>
-                )}
+            {/* PDF Button for External */}
+            {!isClosed && isExternal && !isDraft && onDownloadPdf && (
+              <button 
+                onClick={(e) => { e.stopPropagation(); onDownloadPdf(row.area); }} 
+                disabled={isGeneratingPdf === row.area}
+                className="h-9 px-2.5 rounded-xl border border-purple-200 bg-purple-50 text-purple-600 hover:bg-purple-600 hover:text-white flex items-center gap-1.5 transition-all active:scale-90 shadow-sm font-black uppercase text-[10px] tracking-widest" 
+                title="Generar PDF"
+              >
+                <Icon name={isGeneratingPdf === row.area ? "hourglass_empty" : "picture_as_pdf"} size="16px" className={isGeneratingPdf === row.area ? "animate-spin" : ""} />
+                PDF
+              </button>
+            )}
 
-                <TableActions 
-                    row={row} 
-                    actions={[
-                        { key: 'editar', enabled: isOrganized || isExternal, onClick: (r) => { onEdit(r); } },
-                        { key: 'borrar', enabled: true, onClick: (r) => { onRemove(r.id || r.tempId); } }
-                    ]} 
-                />
+            <TableActions 
+                row={row} 
+                actions={[
+                    { key: 'entregar', enabled: isFormalizada && !isDraft && !isClosed && !isExternal && estadoActual === 'PENDIENTE' && isAsignado, onClick: (r) => { setSelectedTareaForEntrega(r); setIsEntregaModalOpen(true); } },
+                    { key: 'aprobar', enabled: isFormalizada && !isDraft && !isClosed && !isExternal && estadoActual === 'EN_REVISION' && isJefe, onClick: (r) => { setApproveTarget(r); } },
+                    { key: 'ver_detalle', enabled: row.tipo === 'TAREA', onClick: (r) => { onViewDetail?.(r); } },
+                    { key: 'editar', enabled: !isClosed && (isOrganized || isExternal), onClick: (r) => { onEdit(r); } },
+                    { key: 'borrar', enabled: !isClosed, onClick: (r) => { setDeleteTarget(r); } }
+                ]} 
+            />
 
-                {/* Organizar: Solo si NO está organizada (es SIN_ORGANIZAR) y NO es externa */}
-                {!isOrganized && !isExternal && (
-                  <button onClick={() => onOrganize(row)} className="h-9 w-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-slate-900 bg-white shadow-sm active:scale-90 transition-all" title="Organizar">
-                    <Settings2 size={18} />
-                  </button>
-                )}
-              </>
+            {/* Organizar: Solo si NO está cerrada, NO está organizada (es SIN_ORGANIZAR) y NO es externa */}
+            {!isClosed && !isOrganized && !isExternal && (
+              <button onClick={() => onOrganize(row)} className="h-9 w-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-slate-900 bg-white shadow-sm active:scale-90 transition-all" title="Organizar">
+                <Settings2 size={18} />
+              </button>
             )}
           </div>
         );
@@ -472,6 +513,55 @@ export const EntryTable = ({
           images={activeEntryImages} 
           initialIndex={viewerIndex} 
           onClose={() => setViewerIndex(null)} 
+        />
+      )}
+
+      {isEntregaModalOpen && selectedTareaForEntrega && (
+        <TareaEntregaModal
+          isOpen={isEntregaModalOpen}
+          onClose={() => {
+            setIsEntregaModalOpen(false);
+            setSelectedTareaForEntrega(null);
+          }}
+          tareaId={selectedTareaForEntrega.id}
+          onConfirm={async () => {
+            const nextStatus = (userRole === 'ADMIN' || userRole === 'GERENCIA' || userRole === 'JEFE') ? 'CERRADA' : 'EN_REVISION';
+            if (onChangeStatus) await onChangeStatus(selectedTareaForEntrega.id, { estado: nextStatus });
+            setIsEntregaModalOpen(false);
+            setSelectedTareaForEntrega(null);
+          }}
+        />
+      )}
+
+      {deleteTarget && (
+        <ConfirmModal
+          isOpen={Boolean(deleteTarget)}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={async () => {
+            if (onRemove) await onRemove(deleteTarget.id || deleteTarget.tempId);
+            setDeleteTarget(null);
+          }}
+          title="Descartar Entrada"
+          message="¿Estás seguro de que deseas descartar esta entrada? Esta acción eliminará permanentemente los datos."
+          confirmText="Descartar"
+          cancelText="Cancelar"
+          variant="danger"
+        />
+      )}
+
+      {approveTarget && (
+        <ConfirmModal
+          isOpen={Boolean(approveTarget)}
+          onClose={() => setApproveTarget(null)}
+          onConfirm={async () => {
+            if (onChangeStatus) await onChangeStatus(approveTarget.id, { estado: 'CERRADA' });
+            setApproveTarget(null);
+          }}
+          title="Aprobar Tarea"
+          message="¿Estás seguro de que deseas aprobar y cerrar esta tarea de forma definitiva?"
+          confirmText="Aprobar"
+          cancelText="Cancelar"
+          variant="success"
         />
       )}
     </>

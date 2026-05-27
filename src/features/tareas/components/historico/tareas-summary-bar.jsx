@@ -4,10 +4,10 @@ import { SummaryBar, Skeleton } from '@/components/ui/z_index';
 const ESTADOS_HISTORICO = [
     { id: 'TODOS', label: 'Total Historial', color: 'gris' },
     { id: 'PENDIENTE', label: 'Pendientes', color: 'pendiente' },
-    { id: 'EN_REVISION', label: 'En Revisión', color: 'en_progreso' },
-    { id: 'CERRADA', label: 'Cerradas', color: 'resuelto' },
-    { id: 'CANCELADA', label: 'Canceladas', color: 'rechazado' },
-    { id: 'DESCARTADA', label: 'Descartadas', color: 'rechazado' },
+    { id: 'EN_REVISION', label: 'En Revisión', color: 'azul' },
+    { id: 'CERRADA', label: 'Cerradas', color: 'gris' },
+    { id: 'CANCELADA', label: 'Canceladas', color: 'rojo' },
+    { id: 'DESCARTADA', label: 'Descartadas', color: 'rojo' },
 ];
 
 export const TareasSummaryBar = ({

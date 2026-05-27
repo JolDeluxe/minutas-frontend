@@ -10,7 +10,7 @@ export const TareaTableView = ({ tareas = [], onDetail }) => {
             <table className="w-full border-collapse text-left">
                 <thead>
                     <tr className="bg-slate-50/50 border-b border-slate-100">
-                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Entrada</th>
+                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tarea</th>
                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Descripción</th>
                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Responsables</th>
                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Estado</th>
@@ -115,7 +115,7 @@ export const TareaTableView = ({ tareas = [], onDetail }) => {
                     <div className="w-20 h-20 rounded-[2rem] bg-slate-100 flex items-center justify-center text-slate-300 mb-4">
                         <Icon name="search_off" size="40px" />
                     </div>
-                    <p className="text-slate-400 font-bold">No se encontraron entradas</p>
+                    <p className="text-slate-400 font-bold">No se encontraron tareas</p>
                     <p className="text-[11px] text-slate-300 mt-1 uppercase tracking-widest font-black">Prueba ajustando los filtros</p>
                 </div>
             )}

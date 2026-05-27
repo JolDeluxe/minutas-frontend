@@ -39,7 +39,7 @@ export const HoySummaryBar = ({
     loading,
 }) => {
     if (loading && totalParaSummary === 0 && Object.keys(conteos).length === 0) {
-        return <SummaryBarSkeleton count={4} />;
+        return <SummaryBarSkeleton count={3} />;
     }
 
     // Calculamos el total de activas (Pendiente + En Revisión)
@@ -56,21 +56,14 @@ export const HoySummaryBar = ({
         { 
             id: 'PENDIENTE', 
             label: 'Pendientes', 
-            color: 'asignada', 
+            color: 'pendiente', 
             value: conteos['PENDIENTE'] || 0 
         },
         { 
             id: 'EN_REVISION', 
             label: 'En Revisión', 
-            color: 'en_progreso', 
+            color: 'azul', 
             value: conteos['EN_REVISION'] || 0 
-        },
-        { 
-            id: 'CERRADA', 
-            label: 'Cerradas', 
-            color: 'cerrado', 
-            value: conteos['CERRADA'] || 0,
-            className: 'opacity-70 scale-90 lg:scale-95 origin-right'
         },
     ];
 

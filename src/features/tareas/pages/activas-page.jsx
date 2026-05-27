@@ -31,6 +31,7 @@ export default function ActivasPage() {
         submitting,
         fetchTareas,
         changeStatus,
+        deleteTarea,
     } = useTareas();
 
     const [filters, setFilters] = useState(() => ({
@@ -93,6 +94,20 @@ export default function ActivasPage() {
             loadTareas();
         } catch {
             notify.error('Error al actualizar estado.');
+        }
+    };
+
+    const handleDeleteTarea = async (tareaId) => {
+        if (!tareaId) return;
+        try {
+            await deleteTarea(tareaId);
+            notify.success('Tarea eliminada correctamente.');
+            if (isDrawerOpen && selectedTarea?.id === tareaId) {
+                setIsDrawerOpen(false);
+            }
+            loadTareas();
+        } catch {
+            notify.error('Error al eliminar la tarea.');
         }
     };
 
@@ -166,6 +181,7 @@ export default function ActivasPage() {
         filtroDepartamento: activeDept,
         onDepartamentoChange: () => {},
         onReview: setRevisionTarget,
+        onDelete: handleDeleteTarea,
     };
 
     return (
@@ -181,6 +197,7 @@ export default function ActivasPage() {
                 tarea={selectedTarea}
                 onChangeStatus={handleDirectStatusChange}
                 onUpdate={handleUpdateGeneric}
+                onDelete={handleDeleteTarea}
                 submitting={submitting}
                 currentUser={currentUser}
             />

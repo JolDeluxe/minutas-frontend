@@ -21,6 +21,7 @@ export default function PorAprobarPage() {
         submitting,
         fetchTareas,
         changeStatus,
+        deleteTarea,
     } = useTareas();
 
     const [page, setPage] = useState(1);
@@ -59,15 +60,28 @@ export default function PorAprobarPage() {
         setIsDrawerOpen(true);
     };
 
-    const handleApprove = async (id, status = 'CERRADA') => {
+    const handleApprove = async (id, status) => {
         try {
             await changeStatus(id, { estado: status });
-            notify.success(status === 'CERRADA' ? 'Tarea aprobada y cerrada.' : 'Estado actualizado.');
-            if (status === 'CERRADA') setIsDrawerOpen(false);
+            notify.success(`Tarea ${status === 'CERRADA' ? 'aprobada' : 'rechazada'} con éxito.`);
+            setIsDrawerOpen(false);
             loadTareas();
-        } catch (err) {
-            console.error(err);
-            notify.error('Error al actualizar la tarea.');
+        } catch {
+            notify.error('Error al actualizar estado.');
+        }
+    };
+
+    const handleDeleteTarea = async (tareaId) => {
+        if (!tareaId) return;
+        try {
+            await deleteTarea(tareaId);
+            notify.success('Tarea eliminada correctamente.');
+            if (isDrawerOpen && selectedTarea?.id === tareaId) {
+                setIsDrawerOpen(false);
+            }
+            loadTareas();
+        } catch {
+            notify.error('Error al eliminar la tarea.');
         }
     };
 
@@ -140,6 +154,7 @@ export default function PorAprobarPage() {
                         hideResponsables={false}
                         onChangeStatus={handleApprove}
                         onReview={setRevisionTarget}
+                        onDelete={handleDeleteTarea}
                     />
                 </div>
             )}
@@ -153,6 +168,7 @@ export default function PorAprobarPage() {
                     loadTareas();
                 }}
                 onChangeStatus={handleApprove}
+                onDelete={handleDeleteTarea}
                 submitting={submitting}
                 currentUser={currentUser}
             />

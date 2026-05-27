@@ -31,6 +31,9 @@ export const HistoricoDesktop = ({
     onPageChange,
     onRefresh,
     onChangeStatus,
+    onViewDetail,
+    onDelete,
+    onReview,
     showDates,
     year,
     month,
@@ -43,11 +46,11 @@ export const HistoricoDesktop = ({
     return (
         <div className="flex flex-col gap-5 relative animate-in fade-in slide-in-from-bottom-2 duration-500">
             <div className="w-full">
-                <h2 className="fuente-titulos text-2xl text-marca-primario uppercase tracking-wide">Histórico de Entradas</h2>
+                <h2 className="fuente-titulos text-2xl text-marca-primario uppercase tracking-wide">Histórico de Tareas</h2>
                 <div className="text-sm text-slate-500 mt-0.5">
                     {loading ? 'Cargando…' : (
                         <>
-                            Mostrando <span className="font-extrabold text-marca-primario">{totalParaPaginador}</span> entradas en el historial
+                            Mostrando <span className="font-extrabold text-marca-primario">{totalParaPaginador}</span> tareas en el historial
                         </>
                     )}
                 </div>
@@ -93,9 +96,11 @@ export const HistoricoDesktop = ({
                     totalPages={totalPages}
                     totalItems={totalParaPaginador}
                     onPageChange={onPageChange}
-                    onViewDetail={onChangeStatus}
+                    onViewDetail={onViewDetail}
                     onEdit={(t) => setEditTarget(t)}
                     onChangeStatus={onChangeStatus}
+                    onDelete={onDelete}
+                    onReview={onReview}
                 />
             </div>
 

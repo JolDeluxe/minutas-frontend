@@ -24,10 +24,10 @@ export const TareaEditModal = ({ isOpen, onClose, tarea, onSuccess, currentUser 
                 }
             }
 
-            notify.success('Entrada actualizada correctamente.');
+            notify.success('Tarea actualizada correctamente.');
             if (onSuccess) onSuccess();
         } catch (error) {
-            console.error('Error al actualizar entrada:', error);
+            console.error('Error al actualizar tarea:', error);
             notify.error('Ocurrió un error al guardar los cambios.');
         }
     };

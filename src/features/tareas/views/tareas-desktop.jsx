@@ -28,10 +28,10 @@ export const TareasDesktop = ({
             <div className="flex justify-between items-end mb-2">
                 <div>
                     <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight fuente-titulos">
-                        Todas las Entradas
+                        Todas las Tareas
                     </h1>
                     <p className="text-sm text-slate-500 mt-1 font-medium">
-                        Vista global de todas las entradas y acuerdos del sistema.
+                        Vista global de todas las tareas y acuerdos del sistema.
                     </p>
                 </div>
                 
@@ -46,7 +46,7 @@ export const TareasDesktop = ({
                             type="text"
                             value={query}
                             onChange={(e) => onSearchChange(e.target.value)}
-                            placeholder="Buscar entrada..."
+                            placeholder="Buscar tarea..."
                             className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-marca-secundario/20 focus:border-marca-secundario transition-all placeholder:text-slate-400"
                         />
                     </div>
@@ -62,7 +62,7 @@ export const TareasDesktop = ({
                     ) : !hasContent ? (
                         <div className="col-span-full bg-white rounded-2xl p-10 text-center border border-slate-200 mt-4 shadow-sm">
                             <Icon name="assignment" className="text-slate-200 text-5xl mb-3" />
-                            <p className="text-slate-500 text-sm font-medium">No se encontraron entradas.</p>
+                            <p className="text-slate-500 text-sm font-medium">No se encontraron tareas.</p>
                         </div>
                     ) : (
                         tareas.map(tarea => (

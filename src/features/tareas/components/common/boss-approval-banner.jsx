@@ -41,7 +41,7 @@ export const BossApprovalBanner = ({ count, isActive, onClick }) => {
                             "text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.15em] mt-1.5 transition-colors",
                             isActive ? "text-emerald-100" : "text-emerald-600"
                         )}>
-                            {count} {count === 1 ? 'entrada espera' : 'entradas esperan'} tu aprobación
+                            {count} {count === 1 ? 'tarea espera' : 'tareas esperan'} tu aprobación
                         </p>
                     </div>
                 </div>

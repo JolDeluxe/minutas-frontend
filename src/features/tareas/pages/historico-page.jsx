@@ -2,18 +2,19 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { notify } from '@/components/notification/adaptive-notify';
-import { useAuth } from '@/features/auth/hooks/use-auth';
+import { useAuthStore } from '@/stores/auth-store';
 import { useTareas } from '../hooks/use-tareas';
 import { HistoricoDesktop } from '../views/historico-desktop';
 import { HistoricoMobile } from '../views/historico-mobile';
 import { TareaDetailDrawer } from '../components/common/tarea-detail-drawer';
+import { TareaRevisionModal } from '../components/common/tarea-revision-modal';
 import { useTareasStore } from '../store/tareas-store';
 
 const LIMIT = 20;
 
 export default function HistoricoPage() {
     const isDesktop = useIsDesktop();
-    const { user } = useAuth();
+    const { user } = useAuthStore();
     
     const {
         tareas,
@@ -22,6 +23,8 @@ export default function HistoricoPage() {
         submitting,
         fetchTareas,
         updateTarea,
+        changeStatus,
+        deleteTarea,
     } = useTareas();
 
     const currentUser = user?.data || user;
@@ -41,6 +44,7 @@ export default function HistoricoPage() {
     const [page, setPage] = useState(1);
     const [selectedTarea, setSelectedTarea] = useState(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [revisionTarget, setRevisionTarget] = useState(null);
 
     const [year, setYear] = useState(new Date().getFullYear());
     const [month, setMonth] = useState(0); // 0 = Todos
@@ -86,6 +90,39 @@ export default function HistoricoPage() {
         }
     };
 
+    const handleViewDetail = (tarea) => {
+        setSelectedTarea(tarea);
+        setIsDrawerOpen(true);
+    };
+
+    const handleDirectStatusChange = async (tareaId, nuevoEstado) => {
+        if (!tareaId) return;
+        try {
+            await changeStatus(tareaId, { estado: nuevoEstado });
+            notify.success('Estado actualizado.');
+            if (isDrawerOpen && selectedTarea?.id === tareaId) {
+                setIsDrawerOpen(false);
+            }
+            loadTareas();
+        } catch {
+            notify.error('Error al actualizar estado.');
+        }
+    };
+
+    const handleDeleteTarea = async (tareaId) => {
+        if (!tareaId) return;
+        try {
+            await deleteTarea(tareaId);
+            notify.success('Tarea eliminada correctamente.');
+            if (isDrawerOpen && selectedTarea?.id === tareaId) {
+                setIsDrawerOpen(false);
+            }
+            loadTareas();
+        } catch {
+            notify.error('Error al eliminar la tarea.');
+        }
+    };
+
     const handleRefresh = useCallback(() => {
         loadTareas();
     }, [loadTareas]);
@@ -110,7 +147,7 @@ export default function HistoricoPage() {
     const sharedProps = {
         tareas: tareasSorted,
         loading,
-        currentUser: user,
+        currentUser: currentUser,
         totalParaPaginador: meta.totalParaPaginador,
         totalParaSummary: meta.totalFiltrado,
         conteos: meta.counts,
@@ -126,10 +163,8 @@ export default function HistoricoPage() {
         onFilterChange: handleFilterChange,
         onPageChange: (p) => setPage(p),
         onRefresh: handleRefresh,
-        onChangeStatus: (tarea) => {
-            setSelectedTarea(tarea);
-            setIsDrawerOpen(true);
-        },
+        onChangeStatus: handleDirectStatusChange,
+        onViewDetail: handleViewDetail,
         page,
         totalPages: meta.totalPages,
         // Fechas
@@ -139,6 +174,8 @@ export default function HistoricoPage() {
         onYearChange: setYear,
         onMonthChange: setMonth,
         existenciaGlobal: meta.existenciaGlobal || {},
+        onDelete: handleDeleteTarea,
+        onReview: setRevisionTarget,
     };
 
     return (
@@ -152,7 +189,23 @@ export default function HistoricoPage() {
                 isOpen={isDrawerOpen}
                 onClose={() => setIsDrawerOpen(false)}
                 tarea={selectedTarea}
+                onChangeStatus={handleDirectStatusChange}
                 onUpdate={handleUpdateTarea}
+                onDelete={handleDeleteTarea}
+                submitting={submitting}
+                currentUser={currentUser}
+            />
+
+            <TareaRevisionModal
+                isOpen={Boolean(revisionTarget)}
+                onClose={() => setRevisionTarget(null)}
+                tarea={revisionTarget}
+                onConfirm={async () => {
+                    if (revisionTarget) {
+                        await handleDirectStatusChange(revisionTarget.id, 'CERRADA');
+                        setRevisionTarget(null);
+                    }
+                }}
                 submitting={submitting}
             />
         </div>

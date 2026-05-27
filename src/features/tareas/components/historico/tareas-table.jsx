@@ -154,6 +154,7 @@ export const TareasTable = ({
     onCancel,
     hidePagination = false,
     hideResponsables = false,
+    onDelete,
 }) => {
     const [viewerIndex, setViewerIndex] = useState(null);
     const [activeEntryImages, setActiveEntryImages] = useState([]);
@@ -194,7 +195,7 @@ export const TareasTable = ({
             },
         },
         {
-            header: 'Descripción de la Entrada',
+            header: 'Descripción de la Tarea',
             accessorKey: 'titulo',
             sortable: true,
             headerClassName: 'w-[30%] min-w-[200px]',
@@ -387,6 +388,7 @@ export const TareasTable = ({
                         onChangeStatus={onChangeStatus}
                         onReview={onReview}
                         onCancel={onCancel}
+                        onDelete={onDelete}
                     />
                 );
             },
@@ -404,7 +406,7 @@ export const TareasTable = ({
                 data={tableData}
                 keyField="id"
                 loading={false}
-                emptyMessage="No hay entradas registradas."
+                emptyMessage="No hay tareas registradas."
                 page={page}
                 totalPages={totalPages}
                 totalItems={totalItems}

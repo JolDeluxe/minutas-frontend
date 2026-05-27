@@ -1,6 +1,6 @@
 // src/features/tareas/components/common/tarea-detail-drawer.jsx
 import { useState, useEffect } from 'react';
-import { Icon, Button } from '@/components/ui/z_index';
+import { Icon, Button, ConfirmModal } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
 import { TAREA_STATUS_MAP, TAREA_STATUS_OPTS, TAREA_PRIORIDAD_OPTS } from '../../constants';
 import { CLASIFICACION_MAP, AREA_MAP, LINEA_MAP } from '../../../minutas/constants';
@@ -127,11 +127,14 @@ export const TareaDetailDrawer = ({
     tarea,
     onChangeStatus,
     onUpdate,
+    onDelete,
     submitting = false,
     currentUser,
 }) => {
     const isDesktop = useIsDesktop();
     const [isEntregaModalOpen, setIsEntregaModalOpen] = useState(false);
+    const [isConfirmAprobarOpen, setIsConfirmAprobarOpen] = useState(false);
+    const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
     const [viewerState, setViewerState] = useState(null);
 
     if (!isOpen || !tarea) return null;
@@ -437,34 +440,39 @@ export const TareaDetailDrawer = ({
             )}>
                 {/* 1. Responsable: entregar */}
                 {isPendiente && esResponsable && (
-                    <Button
-                        onClick={() => setIsEntregaModalOpen(true)}
-                        className="w-full py-3.5 rounded-xl font-black uppercase text-[11px] tracking-widest bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/25 active:scale-[0.98] transition-all"
-                        isLoading={submitting}
-                        icon="check_circle"
-                    >
-                        Entregar para Revisión
-                    </Button>
+                    <div className="flex items-center gap-3 w-full">
+                        {!isCerrado && (esJefe || (userId && tarea.creadoPorId === userId)) && onDelete && (
+                            <Button
+                                onClick={() => setIsConfirmDeleteOpen(true)}
+                                variant="outline"
+                                className="px-4 py-3.5 rounded-xl border border-red-200 text-red-500 hover:bg-red-50 transition-colors shrink-0 h-[48px]"
+                                icon="delete"
+                                title="Eliminar Tarea"
+                            />
+                        )}
+                        <Button
+                            onClick={() => setIsEntregaModalOpen(true)}
+                            className="flex-1 py-3.5 rounded-xl font-black uppercase text-[11px] tracking-widest bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/25 active:scale-[0.98] transition-all h-[48px]"
+                            isLoading={submitting}
+                            icon="check_circle"
+                        >
+                            Entregar para Revisión
+                        </Button>
+                    </div>
                 )}
 
                 {/* 2. Jefatura: aprobar */}
                 {isEnRevision && esJefe && (
-                    <div className="flex items-center gap-3">
-                        {/* Pill de estado */}
-                        <div className="flex items-center gap-1.5 px-3.5 py-2.5 bg-blue-50 border border-blue-100 text-blue-600 rounded-xl shrink-0">
+                    <div className="flex items-center gap-3 w-full">
+                        <div className="hidden sm:flex items-center gap-1.5 px-3.5 py-2.5 bg-blue-50 border border-blue-100 text-blue-600 rounded-xl shrink-0 h-[48px]">
                             <Icon name="fact_check" size="15px" />
                             <span className="text-[9px] font-black uppercase tracking-wider whitespace-nowrap">
-                                Pendiente de validación
+                                Pendiente
                             </span>
                         </div>
-                        {/* Botón aprobar */}
                         <Button
-                            onClick={() => {
-                                if (window.confirm('¿Deseas aprobar y cerrar esta tarea?')) {
-                                    onChangeStatus?.(tarea.id, 'CERRADA');
-                                }
-                            }}
-                            className="flex-1 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/25 font-black uppercase text-[11px] tracking-widest active:scale-[0.98] transition-all cursor-pointer"
+                            onClick={() => setIsConfirmAprobarOpen(true)}
+                            className="flex-1 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/25 font-black uppercase text-[11px] tracking-widest active:scale-[0.98] transition-all cursor-pointer h-[48px]"
                             isLoading={submitting}
                             icon="verified"
                         >
@@ -475,11 +483,13 @@ export const TareaDetailDrawer = ({
 
                 {/* 3. Solo lectura: en revisión no-jefe */}
                 {isEnRevision && !esJefe && (
-                    <div className="flex items-center justify-center gap-2 py-3 px-4 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl">
-                        <Icon name="lock" size="15px" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">
-                            Entregada · En espera de validación de jefatura
-                        </span>
+                    <div className="flex flex-col gap-3">
+                        <div className="flex items-center justify-center gap-2 py-3 px-4 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl">
+                            <Icon name="lock" size="15px" />
+                            <span className="text-[10px] font-black uppercase tracking-widest">
+                                Entregada · En espera de validación de jefatura
+                            </span>
+                        </div>
                     </div>
                 )}
 
@@ -491,6 +501,17 @@ export const TareaDetailDrawer = ({
                             Tarea {tarea.estado?.toLowerCase()}
                         </span>
                     </div>
+                )}
+
+                {/* 5. Caso alternativo: No es Pendiente ni En Revisión, pero se puede eliminar */}
+                {!isCerrado && !isEnRevision && !((isPendiente && esResponsable) || (isEnRevision && esJefe)) && (esJefe || (userId && tarea.creadoPorId === userId)) && onDelete && (
+                    <Button
+                        onClick={() => setIsConfirmDeleteOpen(true)}
+                        className="w-full py-3.5 rounded-xl border border-red-200 bg-white text-red-500 hover:bg-red-50 hover:text-red-600 shadow-md font-black uppercase text-[11px] tracking-widest transition-all h-[48px]"
+                        icon="delete"
+                    >
+                        Eliminar Tarea
+                    </Button>
                 )}
             </div>
         </div>
@@ -550,8 +571,42 @@ export const TareaDetailDrawer = ({
                     tareaId={tarea.id}
                     submitting={submitting}
                     onConfirm={async () => {
-                        if (onChangeStatus) await onChangeStatus(tarea.id, 'EN_REVISION');
+                        const nextStatus = (rol === 'ADMIN' || rol === 'GERENCIA' || rol === 'JEFE') ? 'CERRADA' : 'EN_REVISION';
+                        if (onChangeStatus) await onChangeStatus(tarea.id, nextStatus);
                     }}
+                />
+            )}
+
+            {isConfirmAprobarOpen && (
+                <ConfirmModal
+                    isOpen={isConfirmAprobarOpen}
+                    onClose={() => setIsConfirmAprobarOpen(false)}
+                    onConfirm={async () => {
+                        if (onChangeStatus) await onChangeStatus(tarea.id, 'CERRADA');
+                        setIsConfirmAprobarOpen(false);
+                    }}
+                    title="Aprobar y Cerrar Tarea"
+                    message="¿Estás seguro de que deseas aprobar y cerrar esta tarea de forma definitiva?"
+                    confirmText="Aprobar y Cerrar"
+                    cancelText="Cancelar"
+                    variant="success"
+                />
+            )}
+
+            {isConfirmDeleteOpen && (
+                <ConfirmModal
+                    isOpen={isConfirmDeleteOpen}
+                    onClose={() => setIsConfirmDeleteOpen(false)}
+                    onConfirm={async () => {
+                        if (onDelete) await onDelete(tarea.id);
+                        setIsConfirmDeleteOpen(false);
+                        onClose(); // Cerrar el drawer principal
+                    }}
+                    title="Eliminar Tarea"
+                    message="¿Estás seguro de que deseas eliminar esta tarea? Esta acción la descartará del listado."
+                    confirmText="Eliminar"
+                    cancelText="Cancelar"
+                    variant="danger"
                 />
             )}
 

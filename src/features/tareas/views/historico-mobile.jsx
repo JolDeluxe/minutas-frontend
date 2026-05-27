@@ -40,6 +40,8 @@ export const HistoricoMobile = ({
     onFilterChange,
     onRefresh,
     onChangeStatus,
+    onViewDetail,
+    onReview,
     page,
     totalPages,
     totalParaPaginador,
@@ -56,9 +58,9 @@ export const HistoricoMobile = ({
     return (
         <div className="flex flex-col gap-4 pb-28 px-4 animate-in fade-in duration-500">
             <div className="flex flex-col gap-1">
-                <h2 className="fuente-titulos text-xl text-marca-primario uppercase tracking-tight">Histórico de Entradas</h2>
+                <h2 className="fuente-titulos text-xl text-marca-primario uppercase tracking-tight">Histórico de Tareas</h2>
                 <div className="text-xs text-slate-500 font-bold uppercase">
-                    {loading ? 'Cargando historial…' : `${totalParaPaginador} entradas registradas`}
+                    {loading ? 'Cargando historial…' : `${totalParaPaginador} tareas registradas`}
                 </div>
             </div>
 
@@ -72,6 +74,7 @@ export const HistoricoMobile = ({
 
             <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
                 <TareasFilterBar 
+                    isMobile={true}
                     query={query}
                     onSearchChange={onSearchChange}
                     filtroPrioridad={filtroPrioridad}
@@ -100,7 +103,7 @@ export const HistoricoMobile = ({
                         ? (
                             <div className="flex flex-col items-center justify-center py-12 text-slate-400">
                                 <Icon name="history" size="48px" className="mb-3 opacity-20" />
-                                <p className="text-sm font-medium italic">No se encontraron entradas en el historial</p>
+                                <p className="text-sm font-medium italic">No se encontraron tareas en el historial</p>
                             </div>
                         )
                         : tareas.map((tarea) => (
@@ -108,9 +111,10 @@ export const HistoricoMobile = ({
                                 key={tarea.id} 
                                 tarea={tarea} 
                                 currentUser={currentUser} 
-                                onViewDetail={onChangeStatus} 
+                                onViewDetail={onViewDetail} 
                                 onEdit={setEditTarget}
                                 onChangeStatus={onChangeStatus}
+                                onReview={onReview}
                             />
                         ))
                 }

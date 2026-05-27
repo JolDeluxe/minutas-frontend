@@ -69,7 +69,7 @@ export const TareasMobileView = ({
                         onClick={() => onFilterChange({ page: page + 1 })}
                         isLoading={loading}
                     >
-                        Cargar más entradas
+                        Cargar más tareas
                     </Button>
                 </div>
             )}

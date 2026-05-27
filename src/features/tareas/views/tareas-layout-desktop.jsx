@@ -69,9 +69,9 @@ export const TareasLayoutDesktop = () => {
         const tareasModule = MODULES_CONFIG.find(m => m.id === 'tareas');
         const baseMenu = [
             { id: 'mis-tareas', label: 'Mis Tareas', path: '/tareas/mis-tareas', icon: 'person_check' },
-            { id: 'activas', label: 'Activas', path: '/tareas/activas', icon: 'monitoring' },
+            { id: 'activas', label: 'Activas', path: '/tareas/activas', icon: 'radio_button_checked' },
             { id: 'por-aprobar', label: 'Por Aprobar', path: '/tareas/por-aprobar', icon: 'fact_check' },
-            { id: 'historico-tareas', label: 'Historial', path: '/tareas/historico', icon: 'history' },
+            { id: 'historico-tareas', label: 'Historial', path: '/tareas/historico', icon: 'assignment' },
         ];
         return baseMenu.filter(item => {
             const childConfig = tareasModule?.children?.find(c => c.id === item.id);

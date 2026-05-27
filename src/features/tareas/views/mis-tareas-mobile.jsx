@@ -1,5 +1,5 @@
-// src/features/tareas/views/mis-tareas-mobile.jsx
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Skeleton, Button, RefreshFab, Icon } from '@/components/ui/z_index';
 import { HoyTareaCard } from '../components/hoy/hoy-tarea-card';
 import { HoySummaryBar } from '../components/hoy/hoy-summary-bar';
@@ -51,6 +51,7 @@ export const MisTareasMobile = ({
     onClasificacionChange,
     statusActual,
 }) => {
+    const navigate = useNavigate();
     const [editTarget, setEditTarget] = useState(null);
 
     return (
@@ -75,6 +76,7 @@ export const MisTareasMobile = ({
 
             <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
                 <HoyFilterBar 
+                    isMobile={true}
                     query={query}
                     onSearchChange={onSearchChange}
                     filtroPrioridad={filtroPrioridad}
@@ -96,8 +98,8 @@ export const MisTareasMobile = ({
             {['ADMIN', 'JEFE', 'GERENCIA'].includes(currentUser?.rol) && (
                 <BossApprovalBanner 
                     count={conteos?.EN_REVISION || 0}
-                    isActive={statusActual === 'EN_REVISION'}
-                    onClick={() => onFilterChange({ status: statusActual === 'EN_REVISION' ? 'TODOS' : 'EN_REVISION' })}
+                    isActive={false}
+                    onClick={() => navigate('/tareas/por-aprobar')}
                 />
             )}
 
@@ -136,11 +138,12 @@ export const MisTareasMobile = ({
                 </Button>
             )}
 
-            <TareaFormModal 
+            <TareaEditModal 
                 isOpen={Boolean(editTarget)} 
                 onClose={() => setEditTarget(null)} 
-                tareaAEditar={editTarget}
+                tarea={editTarget}
                 onSuccess={() => { onRefresh(); setEditTarget(null); }}
+                currentUser={currentUser}
             />
 
             <RefreshFab onClick={onRefresh} loading={loading} />

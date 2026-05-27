@@ -1,4 +1,4 @@
-import { Icon, TableActions } from '@/components/ui/z_index';
+import { Icon, TableActions, ConfirmModal } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
 import {
   CLASIFICACION_MAP,
@@ -321,7 +321,7 @@ const CardImageCarousel = ({ images, onImageClick, lineInfo, isMarketing }) => {
 export const EntryCard = ({ 
   entry, departamento = 'DISENO', onOrganize, onRemove, onUpdate, onEdit,
   onCreateNote, onUpdateNote, onDeleteNote, onAddImage, onDeleteImage, onChangeStatus, users = [],
-  onDownloadPdf, isGeneratingPdf
+  onDownloadPdf, isGeneratingPdf, onViewDetail
 }) => {
   const { user } = useAuthStore();
   const currentUser = user?.data || user;
@@ -334,6 +334,8 @@ export const EntryCard = ({
   const [showNotesPanel, setShowNotesPanel] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isEntregaModalOpen, setIsEntregaModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [approveTarget, setApproveTarget] = useState(null);
 
   const isDraft = Boolean(entry.tempId);
   const isClosed = entry.estado === 'CERRADA';
@@ -391,11 +393,22 @@ export const EntryCard = ({
 
   return (
     <>
-      <div className={cn(
-        'group relative flex flex-col transition-all duration-300 rounded-[1.5rem] border border-slate-200/80 overflow-hidden',
-        isExpanded ? 'shadow-xl ring-2 ring-slate-200' : 'shadow-sm hover:shadow-md',
-        getCardStyles()
-      )}>
+      <div 
+        onClick={() => {
+          if (isDraft || !isOrganized) {
+            onOrganize?.(entry);
+          } else if (entry.tipo === 'TAREA') {
+            onViewDetail?.(entry);
+          } else if (hasExtraInfo) {
+            setIsExpanded(!isExpanded);
+          }
+        }}
+        className={cn(
+          'group relative flex flex-col transition-all duration-300 rounded-[1.5rem] border border-slate-200/80 overflow-hidden cursor-pointer',
+          isExpanded ? 'shadow-xl ring-2 ring-slate-200' : 'shadow-sm hover:shadow-md',
+          getCardStyles()
+        )}
+      >
         {/* Top Type Indicator */}
         {!isDraft && isOrganized && entry.tipo !== 'DESCARTADA' && (
           <div className={cn(
@@ -469,7 +482,7 @@ export const EntryCard = ({
 
             {/* Cuerpo: Descripción */}
             <div className="flex-1 min-h-0">
-               <div className="relative group/text cursor-pointer" onClick={() => (isDraft || !isOrganized) ? onOrganize(entry) : (hasExtraInfo && setIsExpanded(!isExpanded))}>
+               <div className="relative group/text">
                   <p className={cn(
                     "whitespace-pre-wrap break-words text-[13px] font-semibold leading-relaxed text-slate-800 transition-all duration-300",
                     isDraft ? "bg-slate-50/50 p-2 rounded-xl border border-dashed border-slate-200" : "px-0.5",
@@ -527,17 +540,6 @@ export const EntryCard = ({
 
               {/* Botones de acción inteligentes */}
               <div className="flex items-center gap-1.5">
-                {isFormalizada && !isDraft && !isClosed && !isExternal && (
-                   <div className="mr-1">
-                      {estadoActual === 'PENDIENTE' && isAsignado && (
-                        <button onClick={(e) => { e.stopPropagation(); setIsEntregaModalOpen(true); }} disabled={isUpdatingStatus} className="h-7 px-3 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20 active:scale-95 disabled:opacity-50 flex items-center gap-1"><Icon name="check" size="12px" /> Entregar</button>
-                      )}
-                      {estadoActual === 'EN_REVISION' && isJefe && (
-                        <button onClick={(e) => { e.stopPropagation(); handleUpdateStatus('CERRADA'); }} disabled={isUpdatingStatus} className="h-7 px-3 bg-slate-900 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg active:scale-95 disabled:opacity-50 flex items-center gap-1"><Icon name="verified" size="12px" className="text-emerald-400" /> Aprobar</button>
-                      )}
-                   </div>
-                )}
-                
                 {hasExtraInfo && !isExternal && (
                   <button onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }} className={cn("h-7 w-7 rounded-lg border transition-all active:scale-90 flex items-center justify-center shadow-xs", isExpanded ? "bg-slate-800 border-slate-800 text-white" : "bg-white border-slate-100 text-slate-400 hover:text-slate-800")}>
                     <Icon name={isExpanded ? "visibility_off" : "visibility"} size="14px" />
@@ -557,22 +559,22 @@ export const EntryCard = ({
                   </button>
                 )}
                 
-                {!isClosed && (
-                  <>
-                    {!isOrganized && !isExternal && (
-                      <button onClick={(e) => { e.stopPropagation(); onOrganize(entry); }} className="h-7 w-7 rounded-lg border border-marca-primario/20 bg-marca-primario/5 text-marca-primario flex items-center justify-center transition-all active:scale-90 shadow-xs" title="Organizar Entrada">
-                        <Settings2 size={13} />
-                      </button>
-                    )}
-                    <TableActions 
-                        row={entry} 
-                        actions={[
-                            { key: 'editar', enabled: isOrganized || isExternal, onClick: (r) => { onEdit(r); } },
-                            { key: 'borrar', enabled: true, onClick: (r) => { if (window.confirm("¿Deseas descartar esta entrada?")) onRemove(r.id || r.tempId); } }
-                        ]} 
-                    />
-                  </>
+                {!isClosed && !isOrganized && !isExternal && (
+                  <button onClick={(e) => { e.stopPropagation(); onOrganize(entry); }} className="h-7 w-7 rounded-lg border border-marca-primario/20 bg-marca-primario/5 text-marca-primario flex items-center justify-center transition-all active:scale-90 shadow-xs" title="Organizar Entrada">
+                    <Settings2 size={13} />
+                  </button>
                 )}
+                
+                <TableActions 
+                    row={entry} 
+                    actions={[
+                        { key: 'entregar', enabled: isFormalizada && !isDraft && !isClosed && !isExternal && estadoActual === 'PENDIENTE' && isAsignado, onClick: (r) => { setIsEntregaModalOpen(true); } },
+                        { key: 'aprobar', enabled: isFormalizada && !isDraft && !isClosed && !isExternal && estadoActual === 'EN_REVISION' && isJefe, onClick: (r) => { setApproveTarget(r); } },
+                        { key: 'ver_detalle', enabled: entry.tipo === 'TAREA', onClick: (r) => { onViewDetail?.(r); } },
+                        { key: 'editar', enabled: !isClosed && (isOrganized || isExternal), onClick: (r) => { onEdit(r); } },
+                        { key: 'borrar', enabled: !isClosed, onClick: (r) => { setDeleteTarget(r); } }
+                    ]} 
+                />
               </div>
             </div>
           </div>
@@ -596,8 +598,41 @@ export const EntryCard = ({
           onClose={() => setIsEntregaModalOpen(false)}
           tareaId={entry.id}
           onConfirm={async () => {
-            await handleUpdateStatus('EN_REVISION');
+            const nextStatus = (userRole === 'ADMIN' || userRole === 'GERENCIA' || userRole === 'JEFE') ? 'CERRADA' : 'EN_REVISION';
+            await handleUpdateStatus(nextStatus);
           }}
+        />
+      )}
+
+      {deleteTarget && (
+        <ConfirmModal
+          isOpen={Boolean(deleteTarget)}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={async () => {
+            if (onRemove) await onRemove(deleteTarget.id || deleteTarget.tempId);
+            setDeleteTarget(null);
+          }}
+          title="Descartar Entrada"
+          message="¿Estás seguro de que deseas descartar esta entrada? Esta acción eliminará permanentemente los datos."
+          confirmText="Descartar"
+          cancelText="Cancelar"
+          variant="danger"
+        />
+      )}
+
+      {approveTarget && (
+        <ConfirmModal
+          isOpen={Boolean(approveTarget)}
+          onClose={() => setApproveTarget(null)}
+          onConfirm={async () => {
+            await handleUpdateStatus('CERRADA');
+            setApproveTarget(null);
+          }}
+          title="Aprobar Tarea"
+          message="¿Estás seguro de que deseas aprobar y cerrar esta tarea de forma definitiva?"
+          confirmText="Aprobar"
+          cancelText="Cancelar"
+          variant="success"
         />
       )}
     </>

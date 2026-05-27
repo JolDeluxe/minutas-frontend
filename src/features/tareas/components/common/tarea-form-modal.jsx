@@ -74,7 +74,7 @@ export const TareaFormModal = ({
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="md">
-            <ModalHeader title="Nueva Entrada (Tarea)" onClose={onClose} />
+            <ModalHeader title="Nueva Tarea" onClose={onClose} />
 
             <ModalBody>
                 <div className="space-y-6">
@@ -140,7 +140,7 @@ export const TareaFormModal = ({
                     onClick={handleSubmit}
                     isLoading={submitting}
                 >
-                    Registrar Entrada
+                    Registrar Tarea
                 </Button>
             </ModalFooter>
         </Modal>

@@ -24,7 +24,8 @@ export const EntryFeed = ({
   onChangeStatus,
   users,
   onDownloadPdf,
-  isGeneratingPdf
+  isGeneratingPdf,
+  onViewDetail
 }) => {
   const sections = useMemo(() => {
     const drafts = [];
@@ -120,6 +121,7 @@ export const EntryFeed = ({
                   users={users}
                   onDownloadPdf={onDownloadPdf}
                   isGeneratingPdf={isGeneratingPdf}
+                  onViewDetail={onViewDetail}
                 />
               </div>
             ) : (
@@ -142,6 +144,7 @@ export const EntryFeed = ({
                     users={users}
                     onDownloadPdf={onDownloadPdf}
                     isGeneratingPdf={isGeneratingPdf}
+                    onViewDetail={onViewDetail}
                   />
                 </div>
               ))

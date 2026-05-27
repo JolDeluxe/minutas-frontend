@@ -84,9 +84,9 @@ export const TareasLayoutMobile = () => {
         const config = MODULES_CONFIG.find(m => m.id === 'tareas');
         const baseMenuOptions = [
             { configId: 'mis-tareas', id: '/tareas/mis-tareas', label: 'Mis Tareas', icon: 'person_check' },
-            { configId: 'activas', id: '/tareas/activas', label: 'Activas', icon: 'monitoring' },
+            { configId: 'activas', id: '/tareas/activas', label: 'Activas', icon: 'radio_button_checked' },
             { configId: 'por-aprobar', id: '/tareas/por-aprobar', label: 'Por Aprobar', icon: 'fact_check' },
-            { configId: 'historico-tareas', id: '/tareas/historico', label: 'Historial', icon: 'history' }
+            { configId: 'historico-tareas', id: '/tareas/historico', label: 'Historial', icon: 'assignment' }
         ];
 
         const filteredOptions = baseMenuOptions
@@ -114,13 +114,13 @@ export const TareasLayoutMobile = () => {
                             {showRedAlert && (
                                 <style>{`button:has(.alert-icon-trigger) .material-symbols-rounded { color: #ef4444 !important; transition: color 0.2s; }`}</style>
                             )}
-                            <span>{label}</span>
+                            <span className={isActive ? "" : "hidden sm:inline"}>{label}</span>
                             <span className={`relative z-10 text-[11px] font-black px-1.5 py-0.5 rounded-md flex items-center leading-none border ${badgeColor}`}>
                                 {currentCount > 99 ? '99+' : currentCount}
                             </span>
                         </div>
                     ) : (
-                        <span className={showRedAlert ? '!text-red-500 font-bold alert-icon-trigger' : ''}>
+                        <span className={`${showRedAlert ? '!text-red-500 font-bold alert-icon-trigger' : ''} ${isActive ? '' : 'hidden sm:inline'}`}>
                             {showRedAlert && (
                                 <style>{`button:has(.alert-icon-trigger) .material-symbols-rounded { color: #ef4444 !important; transition: color 0.2s; }`}</style>
                             )}
@@ -133,7 +133,7 @@ export const TareasLayoutMobile = () => {
         return {
             moduleInfo: {
                 title: config?.name || 'Tareas Operativas',
-                description: 'Administra, supervisa y resuelve las actividades y acuerdos de las entradas.'
+                description: 'Administra, supervisa y resuelve las actividades y acuerdos de las tareas.'
             },
             menuOptions: filteredOptions
         };
@@ -166,31 +166,33 @@ export const TareasLayoutMobile = () => {
                             activeVariant="primary"
                         />
                     </div>
+                </div>
+            )}
 
-                    {/* Selector de Departamento Centrado para ADMIN en Mobile */}
-                    {userRole === 'ADMIN' && (
-                        <div className="flex items-center bg-slate-100/90 p-0.5 rounded-xl border border-slate-200/50 shadow-inner max-w-xs backdrop-blur-md animate-in fade-in duration-300">
-                            {['DISEÑO', 'MARKETING'].map(opt => {
-                                const val = opt === 'DISEÑO' ? 'DISENO' : 'MARKETING';
-                                const isActive = departamento === val;
-                                return (
-                                    <button
-                                        key={opt}
-                                        onClick={() => setDepartamento(val)}
-                                        className={`flex items-center gap-1 px-3 py-1 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
-                                            isActive 
-                                                ? 'bg-white text-marca-primario shadow-sm ring-1 ring-slate-200/50 font-black' 
-                                                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50/50'
-                                        }`}
-                                    >
-                                        {opt === 'DISEÑO' && <Icon name="draw" size="12px" />}
-                                        {opt === 'MARKETING' && <Icon name="campaign" size="12px" />}
-                                        {opt}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    )}
+            {/* Selector de Departamento Centrado para ADMIN en Mobile (No Sticky) */}
+            {userRole === 'ADMIN' && (
+                <div className="flex justify-center mb-3">
+                    <div className="flex items-center bg-slate-100/90 p-0.5 rounded-xl border border-slate-200/50 shadow-inner max-w-xs backdrop-blur-md animate-in fade-in duration-300">
+                        {['DISEÑO', 'MARKETING'].map(opt => {
+                            const val = opt === 'DISEÑO' ? 'DISENO' : 'MARKETING';
+                            const isActive = departamento === val;
+                            return (
+                                <button
+                                    key={opt}
+                                    onClick={() => setDepartamento(val)}
+                                    className={`flex items-center gap-1 px-3 py-1 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
+                                        isActive 
+                                            ? 'bg-white text-marca-primario shadow-sm ring-1 ring-slate-200/50 font-black' 
+                                            : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50/50'
+                                    }`}
+                                >
+                                    {opt === 'DISEÑO' && <Icon name="draw" size="12px" />}
+                                    {opt === 'MARKETING' && <Icon name="campaign" size="12px" />}
+                                    {opt}
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
             )}
         </>

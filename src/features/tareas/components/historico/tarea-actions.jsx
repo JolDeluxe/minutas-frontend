@@ -1,6 +1,6 @@
 // src/features/tareas/components/historico/tarea-actions.jsx
 import { useState } from 'react';
-import { Icon, TableActions } from '@/components/ui/z_index';
+import { Icon, TableActions, ConfirmModal } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
 import { TareaEntregaModal } from '../common/tarea-entrega-modal';
 
@@ -13,8 +13,11 @@ export const TareaActions = ({
     onEdit,
     onChangeStatus,
     onReview,
+    onDelete,
 }) => {
     const [isEntregaModalOpen, setIsEntregaModalOpen] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState(null);
+    const [approveTarget, setApproveTarget] = useState(null);
 
     if (!tarea) return null;
 
@@ -42,9 +45,10 @@ export const TareaActions = ({
                 row={tarea} 
                 actions={[
                     { key: 'entregar', enabled: isPendiente && esAsignado && esResponsable && !isCerrada, onClick: (r) => { setIsEntregaModalOpen(true); } },
-                    { key: 'aprobar', enabled: isEnRevision && esJefe && esResponsable && !isCerrada, onClick: (r) => { onReview ? onReview(r) : onChangeStatus?.(r.id, 'CERRADA'); } },
+                    { key: 'aprobar', enabled: isEnRevision && esJefe && esResponsable && !isCerrada, onClick: (r) => { if (onReview) onReview(r); else setApproveTarget(r); } },
                     { key: 'ver_detalle', enabled: true, onClick: (r) => { onViewDetail?.(r); } },
-                    { key: 'editar', enabled: (isPendiente && (esJefe || (userId && tarea.creadoPorId === userId))), onClick: (r) => { onEdit?.(r); } }
+                    { key: 'editar', enabled: (isPendiente && (esJefe || (userId && tarea.creadoPorId === userId))), onClick: (r) => { onEdit?.(r); } },
+                    { key: 'borrar', enabled: isPendiente && (esJefe || (userId && tarea.creadoPorId === userId)), onClick: (r) => { setDeleteTarget(r); } }
                 ]} 
             />
 
@@ -54,8 +58,41 @@ export const TareaActions = ({
                     onClose={() => setIsEntregaModalOpen(false)}
                     tareaId={tarea.id}
                     onConfirm={async () => {
-                        if (onChangeStatus) await onChangeStatus(tarea.id, 'EN_REVISION');
+                        const nextStatus = (rol === 'ADMIN' || rol === 'GERENCIA' || rol === 'JEFE') ? 'CERRADA' : 'EN_REVISION';
+                        if (onChangeStatus) await onChangeStatus(tarea.id, nextStatus);
                     }}
+                />
+            )}
+
+            {deleteTarget && (
+                <ConfirmModal
+                    isOpen={Boolean(deleteTarget)}
+                    onClose={() => setDeleteTarget(null)}
+                    onConfirm={async () => {
+                        if (onDelete) await onDelete(deleteTarget.id);
+                        setDeleteTarget(null);
+                    }}
+                    title="Eliminar Tarea"
+                    message="¿Estás seguro de que deseas eliminar esta tarea? Esta acción la descartará del listado."
+                    confirmText="Eliminar"
+                    cancelText="Cancelar"
+                    variant="danger"
+                />
+            )}
+
+            {approveTarget && (
+                <ConfirmModal
+                    isOpen={Boolean(approveTarget)}
+                    onClose={() => setApproveTarget(null)}
+                    onConfirm={async () => {
+                        if (onChangeStatus) await onChangeStatus(approveTarget.id, 'CERRADA');
+                        setApproveTarget(null);
+                    }}
+                    title="Aprobar Tarea"
+                    message="¿Deseas aprobar y cerrar esta tarea de forma definitiva?"
+                    confirmText="Aprobar"
+                    cancelText="Cancelar"
+                    variant="success"
                 />
             )}
         </div>
