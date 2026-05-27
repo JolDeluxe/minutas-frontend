@@ -1,4 +1,4 @@
-import { Badge, Icon } from '@/components/ui/z_index';
+import { Badge, Icon, TableActions } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
 import { formatFecha } from '@/lib/date';
 
@@ -21,14 +21,14 @@ const PRIORIDAD_LABEL = {
     BAJA: 'Baja',
     MEDIA: 'Media',
     ALTA: 'Alta',
-    URGENTE: 'Urgente',
+    CRITICA: 'Crítica',
 };
 
 const PRIORIDAD_COLOR = {
     BAJA: 'text-slate-500',
     MEDIA: 'text-amber-600',
     ALTA: 'text-orange-600',
-    URGENTE: 'text-rose-600',
+    CRITICA: 'text-rose-600',
 };
 
 export const TareaCard = ({ tarea, onViewDetail, onEdit, onOrganize }) => {
@@ -76,14 +76,6 @@ export const TareaCard = ({ tarea, onViewDetail, onEdit, onOrganize }) => {
             </div>
 
             <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
-                <button
-                    onClick={() => onViewDetail?.(tarea)}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 active:scale-95 transition-all"
-                >
-                    <Icon name="visibility" size="xs" />
-                    Detalle
-                </button>
-
                 {onOrganize && (
                     <button
                         onClick={() => onOrganize?.(tarea)}
@@ -93,15 +85,16 @@ export const TareaCard = ({ tarea, onViewDetail, onEdit, onOrganize }) => {
                         Organizar
                     </button>
                 )}
+                
+                <div className="flex-1" />
 
-                {onEdit && (
-                    <button
-                        onClick={() => onEdit?.(tarea)}
-                        className="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:text-amber-600 bg-slate-50 hover:bg-amber-50 active:scale-95 transition-all"
-                    >
-                        <Icon name="edit" size="xs" />
-                    </button>
-                )}
+                <TableActions 
+                    row={tarea} 
+                    actions={[
+                        { key: 'ver_detalle', enabled: true, onClick: (r) => { onViewDetail?.(r); } },
+                        { key: 'editar', enabled: !!onEdit, onClick: (r) => { onEdit?.(r); } }
+                    ]} 
+                />
             </div>
         </div>
     );

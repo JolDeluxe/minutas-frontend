@@ -141,10 +141,10 @@ export const useTareas = () => {
         }
     }, []);
 
-    const handleAddTareaImagen = useCallback(async (tareaId, file) => {
+    const handleAddTareaImagen = useCallback(async (tareaId, file, tipo = 'CAPTURA') => {
         setSubmitting(true);
         try {
-            const res = await addTareaImagen(tareaId, file);
+            const res = await addTareaImagen(tareaId, file, tipo);
             return res.data;
         } finally {
             setSubmitting(false);

@@ -5,7 +5,6 @@ const PRIORIDAD_CONFIG = {
     BAJA: { label: 'Baja', cls: 'text-prioridad-baja   bg-prioridad-baja/10   border-prioridad-baja/30' },
     MEDIA: { label: 'Media', cls: 'text-prioridad-media  bg-prioridad-media/10  border-prioridad-media/30' },
     ALTA: { label: 'Alta', cls: 'text-prioridad-alta   bg-prioridad-alta/10   border-prioridad-alta/30' },
-    URGENTE: { label: 'Urgente', cls: 'text-prioridad-critica bg-prioridad-critica/10 border-prioridad-critica/30' },
     CRITICA: { label: 'Crítica', cls: 'text-prioridad-critica bg-prioridad-critica/10 border-prioridad-critica/30' },
 };
 

@@ -24,7 +24,7 @@ const formatFechaReal = (dateStr) => {
     });
 };
 
-export const MinutaCard = ({ minuta, onViewDetail, onEdit, badge = null, isAdmin = false }) => {
+export const MinutaCard = ({ minuta, onViewDetail, badge = null, isAdmin = false }) => {
     const estadoLabel = ESTADO_MINUTA_MAP[minuta.estado]?.label || minuta.estado.replace(/_/g, ' ');
     const estadoColor = ESTADO_COLORS[minuta.estado] || 'bg-slate-50 text-slate-600 border-slate-200';
     
@@ -34,15 +34,12 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, badge = null, isAdmin
     const porcentaje = resumen.porcentajeCompletado || 0;
     const atrasadas = resumen.atrasadas || 0;
     const completadas = (resumen.completadas || 0) + (resumen.cerradas || 0);
-    const enProgreso = resumen.enProgreso || 0;
-    const pendientes = resumen.pendientes || 0;
     
     // Fecha REAL — lo que el jefe necesita para "la minuta del 28 de marzo"
     const fechaReal = formatFechaReal(minuta.fechaRealizada || minuta.fechaProgramada || minuta.createdAt);
     
     const dept = minuta.departamento || minuta.creadoPor?.departamento;
     const isMarketing = dept === 'MARKETING';
-    const isDiseno = dept === 'DISENO';
     const lineInfo = isMarketing 
         ? { label: 'Marketing', color: '#8b5cf6' } 
         : (LINEA_MAP[minuta.lineaDefault] || { label: minuta.lineaDefault, color: '#64748b' });

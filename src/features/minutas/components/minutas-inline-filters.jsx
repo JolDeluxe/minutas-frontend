@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Button, Icon } from '@/components/ui/z_index';
 import { Input, Label, Select } from '@/components/form/z_index';
-import { glassBase } from '@/components/ui/liquid-glass-mobile';
-import { cn } from '@/utils/cn';
 
 const ESTADO_OPTIONS = [
     { value: 'PROGRAMADA', label: 'Programada' },

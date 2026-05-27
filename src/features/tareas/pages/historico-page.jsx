@@ -1,5 +1,5 @@
 // src/features/tareas/pages/historico-page.jsx
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { notify } from '@/components/notification/adaptive-notify';
 import { useAuth } from '@/features/auth/hooks/use-auth';
@@ -84,8 +84,25 @@ export default function HistoricoPage() {
         loadTareas();
     }, [loadTareas]);
 
+    const tareasSorted = useMemo(() => {
+        return [...tareas].sort((a, b) => {
+            // 1. PENDIENTE va antes que EN_REVISION (o cualquier otro estado)
+            const estadoA = a.estado === 'PENDIENTE' ? 0 : a.estado === 'EN_REVISION' ? 1 : a.estado === 'CERRADA' ? 2 : 3;
+            const estadoB = b.estado === 'PENDIENTE' ? 0 : b.estado === 'EN_REVISION' ? 1 : b.estado === 'CERRADA' ? 2 : 3;
+            if (estadoA !== estadoB) return estadoA - estadoB;
+
+            // 2. Atrasadas siempre primero (dentro del mismo estado)
+            const aOverdue = a.isOverdue ? 0 : 1;
+            const bOverdue = b.isOverdue ? 0 : 1;
+            if (aOverdue !== bOverdue) return aOverdue - bOverdue;
+
+            // 3. Por fecha de creación (más reciente primero)
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        });
+    }, [tareas]);
+
     const sharedProps = {
-        tareas,
+        tareas: tareasSorted,
         loading,
         currentUser: user,
         totalParaPaginador: meta.totalParaPaginador,

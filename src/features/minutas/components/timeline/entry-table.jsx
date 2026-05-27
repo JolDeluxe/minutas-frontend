@@ -1,8 +1,8 @@
-import { Table, Skeleton, Icon, Tooltip } from "@/components/ui/z_index";
+import { Table, Skeleton, Icon, Tooltip, TableActions } from "@/components/ui/z_index";
 import { cn } from "@/utils/cn";
 import { AREA_MAP, CLASIFICACION_MAP, ESTADO_TAREA_MAP, PRIORIDAD_MAP, LINEA_MAP } from '../../constants';
 import { formatFecha, isPastDate } from '@/lib/date';
-import { Pencil, Settings2, Trash2, StickyNote, Plus, X } from 'lucide-react';
+import { Settings2, StickyNote, Plus, X } from 'lucide-react';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { LineIconSelector, MarketingIcon } from '../icons/line-icons';
@@ -415,24 +415,20 @@ export const EntryTable = ({
                   </button>
                 )}
 
-                {/* Editar: Solo si ya está organizada o es externa */}
-                {(isOrganized || isExternal) && (
-                  <button onClick={() => onEdit(row)} className="h-9 w-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-slate-900 bg-white shadow-sm active:scale-90 transition-all" title="Editar">
-                    <Pencil size={18} />
-                  </button>
-                )}
-                
+                <TableActions 
+                    row={row} 
+                    actions={[
+                        { key: 'editar', enabled: isOrganized || isExternal, onClick: (r) => { onEdit(r); } },
+                        { key: 'borrar', enabled: true, onClick: (r) => { onRemove(r.id || r.tempId); } }
+                    ]} 
+                />
+
                 {/* Organizar: Solo si NO está organizada (es SIN_ORGANIZAR) y NO es externa */}
                 {!isOrganized && !isExternal && (
                   <button onClick={() => onOrganize(row)} className="h-9 w-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-slate-900 bg-white shadow-sm active:scale-90 transition-all" title="Organizar">
                     <Settings2 size={18} />
                   </button>
                 )}
-                
-                {/* Borrar: Siempre que no esté cerrada */}
-                <button onClick={() => onRemove(row.id || row.tempId)} className="h-9 w-9 flex items-center justify-center rounded-xl border border-rose-100 text-rose-400 hover:bg-rose-500 hover:text-white bg-white active:scale-90 transition-all shadow-sm" title="Descartar">
-                  <Trash2 size={18} />
-                </button>
               </>
             )}
           </div>

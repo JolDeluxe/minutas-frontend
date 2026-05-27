@@ -114,7 +114,7 @@ export const generarPdfTarea = async (id) => {
 
 // ── Imágenes ─────────────────────────────────────────────────────────────
 
-export const addTareaImagen = async (tareaId, file) => {
+export const addTareaImagen = async (tareaId, file, tipo = 'CAPTURA') => {
     const formData = new FormData();
     try {
         const compressed = await compressImage(file);
@@ -122,6 +122,7 @@ export const addTareaImagen = async (tareaId, file) => {
     } catch (e) {
         formData.append('imagen', file);
     }
+    formData.append('tipo', tipo);
     return await api.post(`/api/tareas/${tareaId}/imagenes`, formData, {
         headers: { 'Content-Type': undefined }
     });

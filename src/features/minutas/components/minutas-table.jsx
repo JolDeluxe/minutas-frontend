@@ -1,4 +1,4 @@
-import { Table, Skeleton, Icon } from "@/components/ui/z_index";
+import { Table, Skeleton, Icon, TableActions } from "@/components/ui/z_index";
 import { cn } from "@/utils/cn";
 import { LINEA_MAP, ESTADO_MINUTA_MAP } from '../constants';
 import { LineIconSelector, MarketingIcon } from './icons/line-icons';
@@ -54,7 +54,7 @@ export const MinutasTable = ({
                     ? row.id === (isMarketing ? ultimaJuntaId.MARKETING : ultimaJuntaId.DISENO)
                     : row.id === ultimaJuntaId);
                 const isPrevious = juntaAnteriorId && (typeof juntaAnteriorId === 'object' 
-                    ? row.id === (isMarketing ? juntaAnteriorId.MARKETING : ultimaJuntaId.DISENO)
+                    ? row.id === (isMarketing ? juntaAnteriorId.MARKETING : juntaAnteriorId.DISENO)
                     : row.id === juntaAnteriorId);
 
                 return (
@@ -93,7 +93,7 @@ export const MinutasTable = ({
             cell: (row) => {
                 if (row.isSkeleton) return <Skeleton className="h-4 w-20 mx-auto" />;
 
-                const isMarketing = row.creadoPor?.departamento === 'MARKETING';
+                const isMarketing = (row.departamento || row.creadoPor?.departamento) === 'MARKETING';
 
                 const lineInfo = isMarketing
                     ? { label: 'Marketing', color: '#8b5cf6' }
@@ -250,24 +250,13 @@ export const MinutasTable = ({
             cell: (row) => {
                 if (row.isSkeleton) return <Skeleton className="h-8 w-16 mx-auto rounded-md" />;
                 return (
-                    <div className="flex gap-2 justify-center">
-                        <button
-                            onClick={(e) => { e.stopPropagation(); onViewDetail?.(row); }}
-                            className="p-1.5 text-slate-400 hover:text-marca-primario transition-colors rounded-md hover:bg-slate-100"
-                            title="Ver Detalle"
-                        >
-                            <Icon name="visibility" size="sm" />
-                        </button>
-                        {onEdit && (
-                            <button
-                                onClick={(e) => { e.stopPropagation(); onEdit?.(row); }}
-                                className="p-1.5 text-slate-400 hover:text-amber-600 transition-colors rounded-md hover:bg-slate-100"
-                                title="Editar"
-                            >
-                                <Icon name="edit" size="sm" />
-                            </button>
-                        )}
-                    </div>
+                    <TableActions 
+                        row={row} 
+                        actions={[
+                            { key: 'ver_detalle', enabled: true, onClick: (r) => { onViewDetail?.(r); } },
+                            { key: 'editar', enabled: !!onEdit, onClick: (r) => { onEdit?.(r); } }
+                        ]} 
+                    />
                 );
             },
         },
@@ -297,7 +286,7 @@ export const MinutasTable = ({
             rowClassName={(row) => {
                 if (row.isSkeleton) return 'bg-white';
                 if (!isAdmin) return 'bg-white hover:bg-slate-50';
-                const isMarketing = row.creadoPor?.departamento === 'MARKETING' || row.departamento === 'MARKETING';
+                const isMarketing = (row.departamento || row.creadoPor?.departamento) === 'MARKETING';
                 return isMarketing 
                     ? 'bg-purple-50 hover:bg-purple-100 border-b border-purple-200 text-slate-800' 
                     : 'bg-blue-50 hover:bg-blue-100 border-b border-blue-200 text-slate-800';

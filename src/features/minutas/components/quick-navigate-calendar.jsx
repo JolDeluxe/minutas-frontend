@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from 'react';
 import { Icon } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
 import { LINEA_MAP } from '../constants';
-import { LineIconSelector } from './icons/line-icons';
+import { LineIconSelector, MarketingIcon } from './icons/line-icons';
 
 const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 

@@ -146,7 +146,7 @@ export const MinutasDesktop = ({
                 
                 {isAdmin && (
                     <div className="flex items-center self-center mx-4 bg-slate-100/80 p-1 rounded-xl border border-slate-200/50 shadow-inner">
-                        {['TODAS', 'DISEÑO', 'MARKETING'].map(opt => (
+                        {['DISEÑO', 'MARKETING'].map(opt => (
                             <button
                                 key={opt}
                                 onClick={() => setDepartamentoGlobal(opt)}
@@ -156,7 +156,6 @@ export const MinutasDesktop = ({
                                         : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50/50'
                                 }`}
                             >
-                                {opt === 'TODAS' && <Icon name="layers" size="14px" />}
                                 {opt === 'DISEÑO' && <DisenoIcon size={14} />}
                                 {opt === 'MARKETING' && <MarketingIcon size={14} />}
                                 {opt}

@@ -5,7 +5,7 @@ import { cn } from '@/utils/cn';
 import { HoyTareaCard } from '../components/hoy/hoy-tarea-card';
 import { HoySummaryBar } from '../components/hoy/hoy-summary-bar';
 import { HoyFilterBar } from '../components/hoy/hoy-filter-bar';
-import { TareaFormModal } from '../components/common/tarea-form-modal';
+import { TareaEditModal } from '../components/common/tarea-edit-modal';
 import { TareaDetailDrawer } from '../components/common/tarea-detail-drawer';
 import { TareasTable } from '../components/historico/tareas-table';
 import { BossApprovalBanner } from '../components/common/boss-approval-banner';
@@ -212,11 +212,12 @@ export const ActivasDesktop = ({
                 }
             </div>
 
-            <TareaFormModal 
+            <TareaEditModal 
                 isOpen={Boolean(editTarget)} 
                 onClose={() => setEditTarget(null)} 
-                tareaAEditar={editTarget}
+                tarea={editTarget}
                 onSuccess={() => { onRefresh(); setEditTarget(null); }}
+                currentUser={currentUser}
             />
 
             <RefreshFab onClick={onRefresh} loading={loading} />

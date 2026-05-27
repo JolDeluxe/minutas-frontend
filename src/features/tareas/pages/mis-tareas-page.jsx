@@ -10,8 +10,8 @@ import { TareaDetailDrawer } from '../components/common/tarea-detail-drawer';
 
 const LIMIT = 20;
 
-// Ordenar: atrasadas primero, luego por prioridad (URGENTE→ALTA→MEDIA→BAJA)
-const PRIORIDAD_PESO = { URGENTE: 0, CRITICA: 0, ALTA: 1, MEDIA: 2, BAJA: 3 };
+// Ordenar: atrasadas primero, luego por prioridad (CRITICA→ALTA→MEDIA→BAJA)
+const PRIORIDAD_PESO = { CRITICA: 0, ALTA: 1, MEDIA: 2, BAJA: 3 };
 
 export default function MisTareasPage() {
     const isDesktop = useIsDesktop();
@@ -57,7 +57,7 @@ export default function MisTareasPage() {
         if (filters.mostrarAtrasadas) params.atrasadas = true;
 
         fetchTareas(params).catch(() => notify.error('Error al cargar tus tareas.'));
-    }, [page, filters, fetchTareas]);
+    }, [page, filters, currentUser?.id, fetchTareas]);
 
     useEffect(() => { loadTareas(); }, [loadTareas]);
 
@@ -107,17 +107,22 @@ export default function MisTareasPage() {
 
     const tareasSorted = useMemo(() => {
         return [...tareas].sort((a, b) => {
-            // 1. Atrasadas siempre primero
+            // 1. PENDIENTE va antes que EN_REVISION (o cualquier otro estado)
+            const estadoA = a.estado === 'PENDIENTE' ? 0 : a.estado === 'EN_REVISION' ? 1 : 2;
+            const estadoB = b.estado === 'PENDIENTE' ? 0 : b.estado === 'EN_REVISION' ? 1 : 2;
+            if (estadoA !== estadoB) return estadoA - estadoB;
+
+            // 2. Atrasadas siempre primero (dentro del mismo estado)
             const aOverdue = a.isOverdue ? 0 : 1;
             const bOverdue = b.isOverdue ? 0 : 1;
             if (aOverdue !== bOverdue) return aOverdue - bOverdue;
 
-            // 2. Por prioridad (URGENTE > ALTA > MEDIA > BAJA > sin prioridad)
+            // 3. Por prioridad (CRITICA > ALTA > MEDIA > BAJA > sin prioridad)
             const aPrio = PRIORIDAD_PESO[a.prioridad] ?? 4;
             const bPrio = PRIORIDAD_PESO[b.prioridad] ?? 4;
             if (aPrio !== bPrio) return aPrio - bPrio;
 
-            // 3. Por fecha de creación (más reciente primero)
+            // 4. Por fecha de creación (más reciente primero)
             return new Date(b.createdAt) - new Date(a.createdAt);
         });
     }, [tareas]);

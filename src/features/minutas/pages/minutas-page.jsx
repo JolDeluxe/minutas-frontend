@@ -37,7 +37,7 @@ const MinutasPage = () => {
     const [estadoFilter, setEstadoFilter] = useState('TODAS');
     
     // Filtro Global de Departamento (ADMIN)
-    const [departamentoGlobal, setDepartamentoGlobal] = useState('TODAS');
+    const [departamentoGlobal, setDepartamentoGlobal] = useState('DISEÑO');
     
     // Quick Navigate — fecha seleccionada en el calendario
     const [selectedDate, setSelectedDate] = useState(null);

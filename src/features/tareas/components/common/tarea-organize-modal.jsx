@@ -7,15 +7,15 @@ const PRIORIDAD_MAP = {
     BAJA: 'Baja',
     MEDIA: 'Media',
     ALTA: 'Alta',
-    URGENTE: 'Urgente',
+    CRITICA: 'Crítica',
 };
 
 const ESTADO_MAP = {
     PENDIENTE: 'Pendiente',
-    EN_PROGRESO: 'En Progreso',
     EN_REVISION: 'En Revisión',
     CERRADA: 'Cerrada',
     CANCELADA: 'Cancelada',
+    DESCARTADA: 'Descartada',
 };
 
 export const TareaOrganizeModal = ({

@@ -45,8 +45,8 @@ export const MinutaFormModal = ({
             setLineaDefault(minutaAEditar.lineaDefault || 'CALZADO');
             setFechaProgramada(minutaAEditar.fechaProgramada ? new Date(minutaAEditar.fechaProgramada).toISOString().slice(0, 10) : '');
             setIniciarInmediatamente(false);
-            if (minutaAEditar.creadoPor?.departamento) {
-                setDepartamento(minutaAEditar.creadoPor.departamento);
+            if (minutaAEditar.departamento || minutaAEditar.creadoPor?.departamento) {
+                setDepartamento(minutaAEditar.departamento || minutaAEditar.creadoPor.departamento);
             }
         } else {
             setTituloManual('');

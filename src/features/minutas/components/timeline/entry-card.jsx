@@ -1,4 +1,4 @@
-import { Icon } from '@/components/ui/z_index';
+import { Icon, TableActions } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
 import {
   CLASIFICACION_MAP,
@@ -22,7 +22,7 @@ import {
   Save,
   Camera
 } from 'lucide-react';
-import { LineIconSelector } from '../icons/line-icons';
+import { LineIconSelector, MarketingIcon } from '../icons/line-icons';
 import { TareaStatusBadge } from '../../../tareas/components/common/tarea-status-badge';
 import { formatFecha, isPastDate } from '@/lib/date';
 import { useAuthStore } from '@/stores/auth-store';
@@ -347,7 +347,8 @@ export const EntryCard = ({
   const isExternal = (departamento === 'DISENO' && entry.area !== 'DISENO') || 
                      (departamento === 'MARKETING' && entry.area !== 'MARKETING');
 
-  const allImages = [...(entry._localImages || []), ...(entry.images || entry.imagenes || [])];
+  const allImagesRaw = [...(entry._localImages || []), ...(entry.images || entry.imagenes || [])];
+  const allImages = allImagesRaw.filter(img => img.tipo !== 'EVIDENCIA'); // Thumbnail preferente CAPTURA
   const hasImages = allImages.length > 0;
   const entryNotes = entry.notas || [];
   const vencida = entry.fechaVencimiento && !isCompletado && !isClosed && isPastDate(entry.fechaVencimiento);
@@ -558,24 +559,18 @@ export const EntryCard = ({
                 
                 {!isClosed && (
                   <>
-                    {/* Organizar: Solo si NO está organizada (es SIN_ORGANIZAR) y NO es externa */}
                     {!isOrganized && !isExternal && (
                       <button onClick={(e) => { e.stopPropagation(); onOrganize(entry); }} className="h-7 w-7 rounded-lg border border-marca-primario/20 bg-marca-primario/5 text-marca-primario flex items-center justify-center transition-all active:scale-90 shadow-xs" title="Organizar Entrada">
                         <Settings2 size={13} />
                       </button>
                     )}
-                    
-                    {/* Editar: Solo si ya está organizada (o es externa) */}
-                    {(isOrganized || isExternal) && (
-                      <button onClick={(e) => { e.stopPropagation(); onEdit(entry); }} className="h-7 w-7 rounded-lg border border-slate-100 bg-white text-slate-400 hover:text-slate-900 flex items-center justify-center transition-all active:scale-90 shadow-xs" title="Editar Entrada">
-                        <Pencil size={12} />
-                      </button>
-                    )}
-                    
-                    {/* Borrar: Siempre que no esté cerrada */}
-                    <button onClick={(e) => { e.stopPropagation(); if (window.confirm("¿Deseas descartar esta entrada?")) onRemove(entry.id || entry.tempId); }} className="h-7 w-7 rounded-lg border border-rose-100 bg-rose-50 text-rose-400 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all active:scale-90 shadow-xs" title="Descartar / Eliminar">
-                      <Trash2 size={12} />
-                    </button>
+                    <TableActions 
+                        row={entry} 
+                        actions={[
+                            { key: 'editar', enabled: isOrganized || isExternal, onClick: (r) => { onEdit(r); } },
+                            { key: 'borrar', enabled: true, onClick: (r) => { if (window.confirm("¿Deseas descartar esta entrada?")) onRemove(r.id || r.tempId); } }
+                        ]} 
+                    />
                   </>
                 )}
               </div>

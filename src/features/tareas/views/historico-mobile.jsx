@@ -4,7 +4,7 @@ import { Skeleton, Button, RefreshFab, Icon } from '@/components/ui/z_index';
 import { HoyTareaCard } from '../components/hoy/hoy-tarea-card';
 import { TareasSummaryBar } from '../components/historico/tareas-summary-bar';
 import { TareasFilterBar } from '../components/historico/tareas-filter-bar';
-import { TareaFormModal } from '../components/common/tarea-form-modal';
+import { TareaEditModal } from '../components/common/tarea-edit-modal';
 
 const CardSkeleton = () => (
     <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col gap-3">
@@ -127,11 +127,12 @@ export const HistoricoMobile = ({
                 </Button>
             )}
 
-            <TareaFormModal 
+            <TareaEditModal 
                 isOpen={Boolean(editTarget)} 
                 onClose={() => setEditTarget(null)} 
-                tareaAEditar={editTarget}
+                tarea={editTarget}
                 onSuccess={() => { onRefresh(); setEditTarget(null); }}
+                currentUser={currentUser}
             />
 
             <RefreshFab onClick={onRefresh} loading={loading} />

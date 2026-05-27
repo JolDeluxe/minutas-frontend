@@ -329,7 +329,7 @@ export const TareasTable = ({
                 const isResolvedOrClosed = row.estado === 'EN_REVISION' || row.estado === 'CERRADA';
 
                 if (isResolvedOrClosed) {
-                    const fechaFin = row.finalizadoAt || row.updatedAt;
+                    const fechaFin = row.completadoAt || row.cerradoAt || row.updatedAt;
                     return (
                         <div className="flex flex-col gap-0.5 text-[10px] w-full">
                             {row.fechaVencimiento ? (

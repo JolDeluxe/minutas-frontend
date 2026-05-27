@@ -4,7 +4,7 @@ import { isPastDate } from '@/lib/date';
 
 /**
  * StatusTrafficLight — Semáforo visual de estado para entradas.
- * 🟢 Completada/Cerrada  🟡 En progreso  🔴 Atrasada  ⚪ Pendiente
+ * Verde = en revision/cerrada, rojo = atrasada, gris = pendiente.
  * Diseñado para usuario ejecutivo: un vistazo = entender el estado.
  */
 const STATUS_CONFIG = {
@@ -29,13 +29,6 @@ const STATUS_CONFIG = {
     icon: 'warning',
     tooltip: 'Atrasada',
   },
-  inProgress: {
-    color: 'bg-amber-400',
-    ring: 'ring-amber-400/30',
-    pulse: false,
-    icon: 'autorenew',
-    tooltip: 'En progreso',
-  },
   pending: {
     color: 'bg-slate-300',
     ring: 'ring-slate-300/30',
@@ -58,9 +51,6 @@ const getStatus = (entry) => {
     isPastDate(entry.fechaVencimiento);
   
   if (isOverdue) return 'overdue';
-  
-  const isInProgress = estado === 'EN_PROGRESO';
-  if (isInProgress) return 'inProgress';
   
   return 'pending';
 };

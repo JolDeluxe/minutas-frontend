@@ -98,7 +98,7 @@ export const TareaDetailDrawer = ({
 }) => {
     const isDesktop = useIsDesktop();
     const [isEntregaModalOpen, setIsEntregaModalOpen] = useState(false);
-    const [activeImageIndex, setActiveImageIndex] = useState(null);
+    const [viewerState, setViewerState] = useState(null); // { images: [], index: number }
     
     if (!isOpen || !tarea) return null;
 
@@ -111,6 +111,9 @@ export const TareaDetailDrawer = ({
     const isPendiente = estado === 'PENDIENTE';
     const isEnRevision = estado === 'EN_REVISION';
     const isCerrado = estado === 'CERRADA' || estado === 'DESCARTADA' || estado === 'CANCELADA';
+
+    const imagenesCaptura = tarea.imagenes?.filter(img => img.tipo !== 'EVIDENCIA') || [];
+    const imagenesEvidencia = tarea.imagenes?.filter(img => img.tipo === 'EVIDENCIA') || [];
 
     const renderContent = () => (
         <div className="flex flex-col h-full bg-white">
@@ -165,22 +168,54 @@ export const TareaDetailDrawer = ({
                     )}
                 </section>
 
-                {/* Evidence visual section */}
-                {tarea.imagenes?.length > 0 && (
+                {/* Imágenes Capturadas (Junta) */}
+                {imagenesCaptura.length > 0 && (
                     <section className="space-y-3 animate-in fade-in duration-300">
-                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 font-sans">Evidencias Visuales</h3>
+                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 font-sans flex items-center gap-1.5">
+                            <Icon name="photo_camera" size="14px" className="text-slate-300" />
+                            Imágenes de Captura
+                        </h3>
                         <div className="grid grid-cols-2 gap-3">
-                            {tarea.imagenes.map((img, idx) => (
+                            {imagenesCaptura.map((img, idx) => (
                                 <div 
-                                    key={idx} 
-                                    onClick={() => setActiveImageIndex(idx)}
+                                    key={img.id || idx} 
+                                    onClick={() => setViewerState({ images: imagenesCaptura, index: idx })}
                                     className="aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-white group cursor-pointer shadow-sm hover:shadow-md hover:border-blue-200 active:scale-98 transition-all relative"
                                 >
-                                    <img src={img.url} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Evidencia" />
+                                    <img src={img.url} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Captura" />
                                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center transition-all duration-300 opacity-0 group-hover:opacity-100">
                                         <div className="w-9 h-9 bg-white/90 rounded-xl flex items-center justify-center shadow-lg text-slate-700 hover:scale-110 active:scale-95 transition-all">
                                             <Icon name="zoom_in" size="18px" />
                                         </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                )}
+
+                {/* Evidencias de Entrega */}
+                {imagenesEvidencia.length > 0 && (
+                    <section className="space-y-3 animate-in fade-in duration-300">
+                        <h3 className="text-[10px] font-black text-amber-500 uppercase tracking-widest px-1 font-sans flex items-center gap-1.5">
+                            <Icon name="verified" size="14px" className="text-amber-400" />
+                            Evidencias de Entrega
+                        </h3>
+                        <div className="grid grid-cols-2 gap-3">
+                            {imagenesEvidencia.map((img, idx) => (
+                                <div 
+                                    key={img.id || idx} 
+                                    onClick={() => setViewerState({ images: imagenesEvidencia, index: idx })}
+                                    className="aspect-square rounded-2xl overflow-hidden border-2 border-amber-200 bg-amber-50 group cursor-pointer shadow-sm hover:shadow-md hover:border-amber-400 active:scale-98 transition-all relative"
+                                >
+                                    <img src={img.url} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Evidencia" />
+                                    <div className="absolute inset-0 bg-amber-900/0 group-hover:bg-amber-900/20 flex items-center justify-center transition-all duration-300 opacity-0 group-hover:opacity-100">
+                                        <div className="w-9 h-9 bg-white/90 rounded-xl flex items-center justify-center shadow-lg text-amber-600 hover:scale-110 active:scale-95 transition-all">
+                                            <Icon name="zoom_in" size="18px" />
+                                        </div>
+                                    </div>
+                                    <div className="absolute top-2 right-2 bg-amber-500 text-white text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md shadow-sm border border-amber-400">
+                                        Entregable
                                     </div>
                                 </div>
                             ))}
@@ -334,11 +369,11 @@ export const TareaDetailDrawer = ({
                     }}
                 />
             )}
-            {activeImageIndex !== null && (
+            {viewerState !== null && (
                 <ImageViewer
-                    images={tarea.imagenes}
-                    initialIndex={activeImageIndex}
-                    onClose={() => setActiveImageIndex(null)}
+                    images={viewerState.images}
+                    initialIndex={viewerState.index}
+                    onClose={() => setViewerState(null)}
                 />
             )}
         </div>,

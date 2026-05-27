@@ -5,7 +5,7 @@ import { TareasSummaryBar } from '../components/historico/tareas-summary-bar';
 import { TareasFilterBar } from '../components/historico/tareas-filter-bar';
 import { TareasTable } from '../components/historico/tareas-table';
 import { TareaCardGrid } from '../components/hoy/tarea-card-grid';
-import { TareaFormModal } from '../components/common/tarea-form-modal';
+import { TareaEditModal } from '../components/common/tarea-edit-modal';
 import { ROLES_ADMIN } from '../constants';
 
 export const HistoricoDesktop = ({
@@ -99,11 +99,12 @@ export const HistoricoDesktop = ({
                 />
             </div>
 
-            <TareaFormModal 
+            <TareaEditModal 
                 isOpen={Boolean(editTarget)} 
                 onClose={() => setEditTarget(null)} 
-                tareaAEditar={editTarget}
+                tarea={editTarget}
                 onSuccess={() => { onRefresh(); setEditTarget(null); }}
+                currentUser={currentUser}
             />
 
             <RefreshFab onClick={onRefresh} loading={loading} />

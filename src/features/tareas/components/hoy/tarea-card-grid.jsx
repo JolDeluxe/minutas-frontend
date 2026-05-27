@@ -10,6 +10,8 @@ export const TareaCardGrid = ({ tareas = [], onDetail }) => {
             {tareas.map((tarea) => {
                 const status = TAREA_STATUS_MAP[tarea.estado] || TAREA_STATUS_MAP.PENDIENTE;
                 const clasif = CLASIFICACION_MAP[tarea.clasificacion];
+                const imagenesCaptura = tarea.imagenes?.filter(img => img.tipo !== 'EVIDENCIA') || [];
+                const coverImage = imagenesCaptura.length > 0 ? imagenesCaptura[0] : tarea.imagenes?.[0];
 
                 return (
                     <div 
@@ -19,8 +21,8 @@ export const TareaCardGrid = ({ tareas = [], onDetail }) => {
                     >
                         {/* Card Header with Image */}
                         <div className="relative h-44 overflow-hidden">
-                            {tarea.imagenes?.[0] ? (
-                                <img src={tarea.imagenes[0].url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Tarea" />
+                            {coverImage ? (
+                                <img src={coverImage.url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Tarea" />
                             ) : (
                                 <div className="w-full h-full bg-slate-100 flex flex-col items-center justify-center text-slate-300">
                                     <Icon name="image" size="48px" />

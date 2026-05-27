@@ -45,7 +45,7 @@ export const Sidebar = () => {
         ${sidebarExpanded ? 'opacity-100' : 'opacity-0 hidden'}
       `}>
         <p className="fuente-titulos text-white text-xl tracking-wide whitespace-nowrap">
-          Cuadra Mantenimiento
+          Grupo Cuadra
         </p>
 
         <p className="font-codigo text-[10px] bg-marca-primario/50 text-cuadra-arena px-2 py-0.5 rounded-sm mt-1 mb-3 whitespace-nowrap shadow-inner">

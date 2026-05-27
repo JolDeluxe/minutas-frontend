@@ -22,6 +22,18 @@ const ACTION_CONFIG = {
         variant: "dark",
         className: "text-estado-rechazado hover:bg-estado-rechazado/10",
     },
+    entregar: {
+        icon: "check",
+        tooltip: "Entregar para Revisión",
+        variant: "dark",
+        className: "text-amber-500 hover:bg-amber-500/10",
+    },
+    aprobar: {
+        icon: "verified",
+        tooltip: "Aprobar y Cerrar",
+        variant: "dark",
+        className: "text-emerald-600 hover:bg-emerald-600/10",
+    },
     toggle_estatus_desactivar: {
         icon: "person_remove",
         tooltip: "Desactivar usuario",

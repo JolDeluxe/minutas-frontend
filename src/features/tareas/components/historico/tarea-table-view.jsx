@@ -1,5 +1,5 @@
 // src/features/tareas/components/tarea-table-view.jsx
-import { Icon, Badge } from '@/components/ui/z_index';
+import { Icon, Badge, TableActions } from '@/components/ui/z_index';
 import { TAREA_STATUS_MAP } from '../../constants';
 import { CLASIFICACION_MAP } from '../../../minutas/constants';
 import { formatFecha } from '@/lib/date';
@@ -21,6 +21,8 @@ export const TareaTableView = ({ tareas = [], onDetail }) => {
                     {tareas.map((tarea) => {
                         const status = TAREA_STATUS_MAP[tarea.estado] || TAREA_STATUS_MAP.PENDIENTE;
                         const clasif = CLASIFICACION_MAP[tarea.clasificacion];
+                        const imagenesCaptura = tarea.imagenes?.filter(img => img.tipo !== 'EVIDENCIA') || [];
+                        const coverImage = imagenesCaptura.length > 0 ? imagenesCaptura[0] : tarea.imagenes?.[0];
                         
                         return (
                             <tr key={tarea.id} className="group hover:bg-slate-50/80 transition-all cursor-pointer" onClick={() => onDetail(tarea)}>
@@ -28,8 +30,8 @@ export const TareaTableView = ({ tareas = [], onDetail }) => {
                                     <div className="flex items-center gap-3">
                                         {/* Thumbnail visible sin click */}
                                         <div className="w-14 h-14 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden shrink-0 shadow-sm transition-transform group-hover:scale-105">
-                                            {tarea.imagenes?.[0] ? (
-                                                <img src={tarea.imagenes[0].url} className="w-full h-full object-cover" alt="Tarea" />
+                                            {coverImage ? (
+                                                <img src={coverImage.url} className="w-full h-full object-cover" alt="Tarea" />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center text-slate-300">
                                                     <Icon name="image" size="24px" />
@@ -95,13 +97,13 @@ export const TareaTableView = ({ tareas = [], onDetail }) => {
                                         <span className="text-[11px] font-black uppercase tracking-tight">{status.label}</span>
                                     </div>
                                 </td>
-                                <td className="px-6 py-5 text-right">
-                                    <button 
-                                        onClick={(e) => { e.stopPropagation(); onDetail(tarea); }}
-                                        className="w-10 h-10 rounded-2xl bg-slate-50 text-slate-400 hover:bg-marca-primario/10 hover:text-marca-primario transition-all active:scale-90 flex items-center justify-center"
-                                    >
-                                        <Icon name="visibility" size="20px" />
-                                    </button>
+                                <td className="px-6 py-5 text-right flex justify-end">
+                                    <TableActions 
+                                        row={tarea} 
+                                        actions={[
+                                            { key: 'ver_detalle', enabled: true, onClick: (r) => { onDetail?.(r); } }
+                                        ]} 
+                                    />
                                 </td>
                             </tr>
                         );

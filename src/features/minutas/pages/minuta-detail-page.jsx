@@ -153,7 +153,7 @@ export default function MinutaDetailPage() {
   }, [allEntries, activeFilter]);
 
   const handleFilterByStatus = (estado) =>
-    setActiveFilter(prev => ({ ...prev, estado: prev.estado === status ? null : status, tipo: 'TAREA' }));
+    setActiveFilter(prev => ({ ...prev, estado: prev.estado === estado ? null : estado, tipo: 'TAREA' }));
 
   const handleFilterByTipo = (tipo) =>
     setActiveFilter(prev => ({ ...prev, tipo: prev.tipo === tipo ? 'TAREA' : tipo, estado: null }));
