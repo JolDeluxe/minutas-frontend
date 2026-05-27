@@ -153,7 +153,7 @@ export const OrganizeDrawer = ({
               </div>
 
               {/* Fecha Vencimiento */}
-              <div className="bg-slate-50 p-5 rounded-[1.5rem] border border-slate-200 shadow-inner">
+              <div className="bg-slate-50 p-5 rounded-3xl border border-slate-200 shadow-inner">
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-3 ml-1 flex items-center gap-2">
                   <Calendar size={14} /> Fecha Límite de Entrega
                 </label>

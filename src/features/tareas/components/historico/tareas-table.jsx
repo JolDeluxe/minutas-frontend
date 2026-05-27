@@ -184,11 +184,11 @@ export const TareasTable = ({
             headerClassName: 'w-[10%] min-w-[150px]',
             cell: (row) => {
                 if (row.isSkeleton) return <Skeleton className="h-28 w-28 rounded-2xl mx-auto" />;
-                const allImages = row.imagenes || [];
+                const captureImages = row.imagenes?.filter(img => img.tipo !== 'EVIDENCIA') || [];
                 return (
                     <TableImagePreview 
-                        images={allImages} 
-                        onClick={() => openViewer(allImages)} 
+                        images={captureImages} 
+                        onClick={() => openViewer(captureImages)} 
                     />
                 );
             },
@@ -409,7 +409,6 @@ export const TareasTable = ({
                 totalPages={totalPages}
                 totalItems={totalItems}
                 onPageChange={onPageChange}
-                onRowClick={onViewDetail}
                 sortConfig={sortConfig}
                 hidePagination={hidePagination}
                 rowClassName={(row) => {

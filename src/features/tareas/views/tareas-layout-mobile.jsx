@@ -5,6 +5,7 @@ import { GlassViewToggle, Icon } from '@/components/ui/z_index';
 import { MODULES_CONFIG } from '@/config/modules-config';
 import { useAuthStore } from '@/stores/auth-store';
 import { getTareas } from '../api/tareas-api';
+import { useTareasStore } from '../store/tareas-store';
 
 const calculateDaysWaiting = (createdAt) => {
     if (!createdAt) return 0;
@@ -24,6 +25,9 @@ export const TareasLayoutMobile = () => {
     const currentUser = user?.data || user;
     const userRole = currentUser?.rol;
 
+    // Estado global del departamento
+    const { departamento, setDepartamento } = useTareasStore();
+
     const [unassignedCount, setUnassignedCount] = useState(0);
     const [pendingApprovalCount, setPendingApprovalCount] = useState(0);
     const [hasCritical, setHasCritical] = useState(false);
@@ -34,11 +38,19 @@ export const TareasLayoutMobile = () => {
         const fetchCounts = async () => {
             try {
                 // Mis Tareas
-                const response = await getTareas({ tipo: 'TAREA', estado: 'PENDIENTE', responsableId: currentUser.id });
+                const paramsPend = { tipo: 'TAREA', estado: 'PENDIENTE', responsableId: currentUser.id };
+                if (userRole === 'ADMIN' && departamento) {
+                    paramsPend.departamento = departamento;
+                }
+                const response = await getTareas(paramsPend);
                 
                 let resApprov = null;
-                if (['JEFE', 'GERENCIA'].includes(userRole)) {
-                    resApprov = await getTareas({ estado: 'EN_REVISION', limit: 1 });
+                if (['JEFE', 'GERENCIA', 'ADMIN'].includes(userRole)) {
+                    const paramsApprov = { estado: 'EN_REVISION', limit: 1 };
+                    if (userRole === 'ADMIN' && departamento) {
+                        paramsApprov.departamento = departamento;
+                    }
+                    resApprov = await getTareas(paramsApprov);
                 }
 
                 if (isMounted) {
@@ -55,9 +67,18 @@ export const TareasLayoutMobile = () => {
         };
 
         fetchCounts();
+        
+        // Escuchar cambios de departamento para actualizar contadores inmediatamente
+        const handleDeptChange = () => fetchCounts();
+        window.addEventListener('tareas-departamento-changed', handleDeptChange);
+
         const interval = setInterval(fetchCounts, 60000);
-        return () => { isMounted = false; clearInterval(interval); };
-    }, [userRole, currentUser?.id]);
+        return () => { 
+            isMounted = false; 
+            clearInterval(interval); 
+            window.removeEventListener('tareas-departamento-changed', handleDeptChange);
+        };
+    }, [userRole, currentUser?.id, departamento]);
 
     const { moduleInfo, menuOptions } = useMemo(() => {
         const config = MODULES_CONFIG.find(m => m.id === 'tareas');
@@ -116,7 +137,7 @@ export const TareasLayoutMobile = () => {
             },
             menuOptions: filteredOptions
         };
-    }, [userRole, unassignedCount, hasCritical, location.pathname]);
+    }, [userRole, unassignedCount, hasCritical, location.pathname, pendingApprovalCount]);
 
     const activePath = menuOptions.find(opt => location.pathname.includes(opt.id))?.id
         || menuOptions[0]?.id
@@ -136,7 +157,7 @@ export const TareasLayoutMobile = () => {
 
             {/* ── 2. CONTROLES STICKY 100% TRANSPARENTES ── */}
             {menuOptions.length > 0 && (
-                <div className="sticky top-0 z-40 mb-3 py-1 flex items-center justify-center transition-all bg-transparent">
+                <div className="sticky top-0 z-40 mb-3 py-1.5 flex flex-col gap-2.5 items-center justify-center transition-all bg-transparent">
                     <div className="overflow-x-auto no-scrollbar w-full flex justify-center">
                         <GlassViewToggle
                             options={menuOptions}
@@ -145,6 +166,31 @@ export const TareasLayoutMobile = () => {
                             activeVariant="primary"
                         />
                     </div>
+
+                    {/* Selector de Departamento Centrado para ADMIN en Mobile */}
+                    {userRole === 'ADMIN' && (
+                        <div className="flex items-center bg-slate-100/90 p-0.5 rounded-xl border border-slate-200/50 shadow-inner max-w-xs backdrop-blur-md animate-in fade-in duration-300">
+                            {['DISEÑO', 'MARKETING'].map(opt => {
+                                const val = opt === 'DISEÑO' ? 'DISENO' : 'MARKETING';
+                                const isActive = departamento === val;
+                                return (
+                                    <button
+                                        key={opt}
+                                        onClick={() => setDepartamento(val)}
+                                        className={`flex items-center gap-1 px-3 py-1 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
+                                            isActive 
+                                                ? 'bg-white text-marca-primario shadow-sm ring-1 ring-slate-200/50 font-black' 
+                                                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50/50'
+                                        }`}
+                                    >
+                                        {opt === 'DISEÑO' && <Icon name="draw" size="12px" />}
+                                        {opt === 'MARKETING' && <Icon name="campaign" size="12px" />}
+                                        {opt}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
             )}
         </>

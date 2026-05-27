@@ -168,21 +168,21 @@ export const TareaEntregaModal = ({ isOpen, onClose, tareaId, onConfirm, submitt
             <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 animate-in fade-in duration-200">
                 <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
                 <div className="relative bg-white rounded-[2.5rem] shadow-2xl flex flex-col w-full max-w-lg max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200">
-                    <div className="px-6 py-5 flex items-center justify-between shrink-0 border-b border-slate-50">
+                    <div className="px-12 py-6 flex items-center justify-between shrink-0 border-b border-slate-50">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
                                 <Icon name="check_circle" size="20px" />
                             </div>
                             <h2 className="text-lg font-black text-slate-900 tracking-tight uppercase leading-none">Entregar para Revisión</h2>
                         </div>
-                        <button onClick={onClose} className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-colors active:scale-90">
+                        <button onClick={onClose} className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-colors active:scale-90 cursor-pointer">
                             <Icon name="close" size="20px" />
                         </button>
                     </div>
-                    <div className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar">
+                    <div className="flex-1 overflow-y-auto px-12 py-8 custom-scrollbar">
                         {renderContent()}
                     </div>
-                    <div className="p-6 bg-slate-50/50 border-t border-slate-100 shrink-0">
+                    <div className="px-12 pt-6 pb-10 bg-slate-50/50 border-t border-slate-100 shrink-0">
                         {renderFooter()}
                     </div>
                 </div>

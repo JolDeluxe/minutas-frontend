@@ -51,6 +51,7 @@ export const ActivasMobile = ({
     onClasificacionChange,
     statusActual,
     filtroDepartamento,
+    onReview,
 }) => {
     const [editTarget, setEditTarget] = useState(null);
 
@@ -62,30 +63,6 @@ export const ActivasMobile = ({
                     <div className="flex items-center gap-1.5 text-estado-rechazado font-bold text-xs animate-pulse">
                         <Icon name="warning" size="xs" />
                         <span>{totalAtrasadasGlobal} tareas atrasadas</span>
-                    </div>
-                )}
-
-                {/* Selector de Departamento en Móvil */}
-                {['ADMIN', 'GERENCIA', 'JEFE'].includes(currentUser?.rol) && (
-                    <div className="flex items-center bg-slate-100/80 p-0.5 rounded-xl border border-slate-200/50 shadow-inner w-full justify-between mt-1">
-                        {['DISEÑO', 'MARKETING'].map(opt => {
-                            const val = opt === 'DISEÑO' ? 'DISENO' : 'MARKETING';
-                            const activeVal = filtroDepartamento;
-                            const isActive = activeVal === val;
-                            return (
-                                <button
-                                    key={opt}
-                                    onClick={() => onFilterChange({ departamento: val })}
-                                    className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-[10px] font-black uppercase rounded-lg transition-all ${
-                                        isActive 
-                                            ? 'bg-white text-marca-primario shadow-sm ring-1 ring-slate-200/50' 
-                                            : 'text-slate-500 hover:text-slate-700'
-                                    }`}
-                                >
-                                    {opt}
-                                </button>
-                            );
-                        })}
                     </div>
                 )}
             </div>
@@ -145,6 +122,7 @@ export const ActivasMobile = ({
                                 onViewDetail={onViewDetail} 
                                 onEdit={setEditTarget}
                                 onChangeStatus={onChangeStatus}
+                                onReview={onReview}
                             />
                         ))
                 }

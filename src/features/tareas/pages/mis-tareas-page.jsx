@@ -7,6 +7,7 @@ import { useTareas } from '../hooks/use-tareas';
 import { MisTareasDesktop } from '../views/mis-tareas-desktop';
 import { MisTareasMobile } from '../views/mis-tareas-mobile';
 import { TareaDetailDrawer } from '../components/common/tarea-detail-drawer';
+import { useTareasStore } from '../store/tareas-store';
 
 const LIMIT = 20;
 
@@ -17,6 +18,9 @@ export default function MisTareasPage() {
     const isDesktop = useIsDesktop();
     const { user } = useAuthStore();
     const currentUser = user?.data || user;
+    
+    // Consumir el departamento global
+    const { departamento } = useTareasStore();
     
     const {
         tareas,
@@ -55,9 +59,12 @@ export default function MisTareasPage() {
         if (filters.linea) params.linea = filters.linea;
         if (filters.clasificacion) params.clasificacion = filters.clasificacion;
         if (filters.mostrarAtrasadas) params.atrasadas = true;
+        if (currentUser?.rol === 'ADMIN' && departamento) {
+            params.departamento = departamento;
+        }
 
         fetchTareas(params).catch(() => notify.error('Error al cargar tus tareas.'));
-    }, [page, filters, currentUser?.id, fetchTareas]);
+    }, [page, filters, currentUser?.id, fetchTareas, departamento, currentUser?.rol]);
 
     useEffect(() => { loadTareas(); }, [loadTareas]);
 

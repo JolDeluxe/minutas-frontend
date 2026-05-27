@@ -22,10 +22,10 @@ export const TareaTableView = ({ tareas = [], onDetail }) => {
                         const status = TAREA_STATUS_MAP[tarea.estado] || TAREA_STATUS_MAP.PENDIENTE;
                         const clasif = CLASIFICACION_MAP[tarea.clasificacion];
                         const imagenesCaptura = tarea.imagenes?.filter(img => img.tipo !== 'EVIDENCIA') || [];
-                        const coverImage = imagenesCaptura.length > 0 ? imagenesCaptura[0] : tarea.imagenes?.[0];
+                        const coverImage = imagenesCaptura.length > 0 ? imagenesCaptura[0] : null;
                         
                         return (
-                            <tr key={tarea.id} className="group hover:bg-slate-50/80 transition-all cursor-pointer" onClick={() => onDetail(tarea)}>
+                            <tr key={tarea.id} className="group hover:bg-slate-50/80 transition-all">
                                 <td className="px-6 py-5">
                                     <div className="flex items-center gap-3">
                                         {/* Thumbnail visible sin click */}

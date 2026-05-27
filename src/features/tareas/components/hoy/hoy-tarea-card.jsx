@@ -117,6 +117,7 @@ export const HoyTareaCard = ({
     currentUser,
     onViewDetail,
     onChangeStatus,
+    onReview,
     className,
 }) => {
 
@@ -269,15 +270,19 @@ export const HoyTareaCard = ({
                                     </button>
                                 )}
 
-                                {isEnRevision && esJefe && onChangeStatus && (
+                                {isEnRevision && esJefe && (onChangeStatus || onReview) && (
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            onChangeStatus?.(tarea.id, 'CERRADA');
+                                            if (onReview) {
+                                                onReview(tarea);
+                                            } else {
+                                                onChangeStatus?.(tarea.id, 'CERRADA');
+                                            }
                                         }}
-                                        className="h-7 px-3 bg-slate-900 hover:bg-neutral-800 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-black/20 active:scale-95 transition-all flex items-center gap-1"
+                                        className="h-7 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20 active:scale-95 transition-all flex items-center gap-1 cursor-pointer"
                                     >
-                                        <Icon name="verified" size="12px" className="text-emerald-400" /> Aprobar
+                                        <Icon name="verified" size="12px" /> Aprobar
                                     </button>
                                 )}
 

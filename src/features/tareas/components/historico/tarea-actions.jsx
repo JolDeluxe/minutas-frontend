@@ -12,6 +12,7 @@ export const TareaActions = ({
     onViewDetail,
     onEdit,
     onChangeStatus,
+    onReview,
 }) => {
     const [isEntregaModalOpen, setIsEntregaModalOpen] = useState(false);
 
@@ -41,7 +42,7 @@ export const TareaActions = ({
                 row={tarea} 
                 actions={[
                     { key: 'entregar', enabled: isPendiente && esAsignado && esResponsable && !isCerrada, onClick: (r) => { setIsEntregaModalOpen(true); } },
-                    { key: 'aprobar', enabled: isEnRevision && esJefe && esResponsable && !isCerrada, onClick: (r) => { onChangeStatus?.(r.id, 'CERRADA'); } },
+                    { key: 'aprobar', enabled: isEnRevision && esJefe && esResponsable && !isCerrada, onClick: (r) => { onReview ? onReview(r) : onChangeStatus?.(r.id, 'CERRADA'); } },
                     { key: 'ver_detalle', enabled: true, onClick: (r) => { onViewDetail?.(r); } },
                     { key: 'editar', enabled: (isPendiente && (esJefe || (userId && tarea.creadoPorId === userId))), onClick: (r) => { onEdit?.(r); } }
                 ]} 

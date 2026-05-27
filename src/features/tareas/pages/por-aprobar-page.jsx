@@ -4,9 +4,11 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useTareas } from '../hooks/use-tareas';
 import { TareasTable } from '../components/historico/tareas-table';
 import { TareaDetailDrawer } from '../components/common/tarea-detail-drawer';
+import { TareaRevisionModal } from '../components/common/tarea-revision-modal';
 import { Icon, Button, Skeleton, GlassViewToggle } from '@/components/ui/z_index';
 import { notify } from '@/components/notification/adaptive-notify';
 import { HoyTareaCard } from '../components/hoy/hoy-tarea-card';
+import { useTareasStore } from '../store/tareas-store';
 
 export default function PorAprobarPage() {
     const { user } = useAuthStore();
@@ -24,8 +26,12 @@ export default function PorAprobarPage() {
     const [page, setPage] = useState(1);
     const [selectedTarea, setSelectedTarea] = useState(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [revisionTarget, setRevisionTarget] = useState(null);
     const [viewMode, setViewMode] = useState(() => localStorage.getItem('por-aprobar-view') || 'table');
-    const [departamento, setDepartamento] = useState(() => currentUser?.departamento || 'DISENO');
+    
+    // Consumir el departamento global
+    const { departamento } = useTareasStore();
+    const activeDept = currentUser?.rol === 'ADMIN' ? departamento : (currentUser?.departamento || 'DISENO');
 
     const handleViewChange = (mode) => {
         setViewMode(mode);
@@ -39,10 +45,10 @@ export default function PorAprobarPage() {
             limit: 20,
             sort: JSON.stringify([{ createdAt: 'desc' }])
         };
-        if (departamento) params.departamento = departamento;
+        if (activeDept) params.departamento = activeDept;
 
         fetchTareas(params).catch(() => notify.error('Error al cargar tareas por aprobar.'));
-    }, [page, departamento, fetchTareas]);
+    }, [page, activeDept, fetchTareas]);
 
     useEffect(() => {
         loadTareas();
@@ -77,34 +83,6 @@ export default function PorAprobarPage() {
                         Revisa y cierra las tareas completadas por los coordinadores.
                     </p>
                 </div>
-
-                {/* Selector de Departamento */}
-                {['ADMIN', 'GERENCIA', 'JEFE'].includes(currentUser?.rol) && (
-                    <div className="flex items-center bg-slate-100/80 p-1 rounded-2xl border border-slate-200/50 shadow-inner shrink-0 self-center lg:self-auto">
-                        {['DISEÑO', 'MARKETING'].map(opt => {
-                            const val = opt === 'DISEÑO' ? 'DISENO' : 'MARKETING';
-                            const isActive = departamento === val;
-                            return (
-                                <button
-                                    key={opt}
-                                    onClick={() => {
-                                        setDepartamento(val);
-                                        setPage(1);
-                                    }}
-                                    className={`flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                                        isActive 
-                                            ? 'bg-white text-marca-primario shadow-sm ring-1 ring-slate-200/50 font-black' 
-                                            : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50/50'
-                                    }`}
-                                >
-                                    {opt === 'DISEÑO' && <Icon name="draw" size="14px" />}
-                                    {opt === 'MARKETING' && <Icon name="campaign" size="14px" />}
-                                    {opt}
-                                </button>
-                            );
-                        })}
-                    </div>
-                )}
 
                 <div className="flex items-center justify-center lg:justify-end gap-4 shrink-0">
                     <div className="bg-black text-white px-4 py-2 rounded-2xl flex items-center gap-2 shadow-lg">
@@ -144,6 +122,7 @@ export default function PorAprobarPage() {
                             tarea={tarea} 
                             currentUser={currentUser} 
                             onViewDetail={handleViewDetail} 
+                            onReview={setRevisionTarget}
                         />
                     ))}
                 </div>
@@ -160,6 +139,7 @@ export default function PorAprobarPage() {
                         totalItems={meta.totalFiltrado}
                         hideResponsables={false}
                         onChangeStatus={handleApprove}
+                        onReview={setRevisionTarget}
                     />
                 </div>
             )}
@@ -175,6 +155,19 @@ export default function PorAprobarPage() {
                 onChangeStatus={handleApprove}
                 submitting={submitting}
                 currentUser={currentUser}
+            />
+
+            <TareaRevisionModal
+                isOpen={Boolean(revisionTarget)}
+                onClose={() => setRevisionTarget(null)}
+                tarea={revisionTarget}
+                onConfirm={async () => {
+                    if (revisionTarget) {
+                        await handleApprove(revisionTarget.id, 'CERRADA');
+                        setRevisionTarget(null);
+                    }
+                }}
+                submitting={submitting}
             />
         </div>
     );

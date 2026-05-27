@@ -11,9 +11,48 @@ import { TareaPriorityBadge } from './tarea-priority-badge';
 import { TareaEntregaModal } from './tarea-entrega-modal';
 import { formatFecha, formatFechaHora } from '@/lib/date';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Sub-componentes internos
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Cabecera de sección: barra de color + icono + label + contador opcional */
+const SectionHeader = ({ icon, label, count, color = 'slate' }) => {
+    const colors = {
+        slate:  { bar: 'bg-slate-300',  icon: 'text-slate-400',  text: 'text-slate-400',  badge: 'bg-slate-100 text-slate-400' },
+        blue:   { bar: 'bg-blue-400',   icon: 'text-blue-400',   text: 'text-blue-500',   badge: 'bg-blue-100 text-blue-500'   },
+        amber:  { bar: 'bg-amber-400',  icon: 'text-amber-400',  text: 'text-amber-500',  badge: 'bg-amber-100 text-amber-500' },
+        emerald:{ bar: 'bg-emerald-400',icon: 'text-emerald-500',text: 'text-emerald-600',badge: 'bg-emerald-100 text-emerald-600'},
+    };
+    const c = colors[color] ?? colors.slate;
+    return (
+        <div className="flex items-center gap-2 mb-3">
+            <div className={cn('w-0.5 h-4 rounded-full shrink-0', c.bar)} />
+            <Icon name={icon} size="14px" className={c.icon} />
+            <span className={cn('text-[10px] font-black uppercase tracking-widest', c.text)}>{label}</span>
+            {count !== undefined && (
+                <span className={cn('ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full', c.badge)}>
+                    {count}
+                </span>
+            )}
+        </div>
+    );
+};
+
+/** Tarjeta de metadato individual */
+const MetaCard = ({ label, children, className }) => (
+    <div className={cn(
+        'p-3 bg-white rounded-xl border border-slate-100 flex flex-col gap-1 shadow-sm',
+        className
+    )}>
+        <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">{label}</span>
+        <div className="text-sm font-bold text-slate-800 leading-snug">{children}</div>
+    </div>
+);
+
+/** Visor de imágenes a pantalla completa */
 const ImageViewer = ({ images, initialIndex, onClose }) => {
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
-    
+
     useEffect(() => {
         document.body.style.overflow = 'hidden';
         return () => { document.body.style.overflow = 'unset'; };
@@ -24,22 +63,17 @@ const ImageViewer = ({ images, initialIndex, onClose }) => {
 
     return createPortal(
         <div className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center animate-in fade-in duration-200 pointer-events-auto">
-            {/* Close Button */}
-            <button 
-                onClick={onClose} 
+            <button
+                onClick={onClose}
                 className="absolute top-6 right-6 w-12 h-12 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-rose-600 transition-all z-[100001] shadow-lg active:scale-95"
             >
                 <Icon name="close" size="24px" />
             </button>
 
-            {/* Main Area */}
             <div className="relative w-full h-full flex items-center justify-center p-4 sm:p-12">
                 {images.length > 1 && (
-                    <button 
-                        onClick={(e) => { 
-                            e.stopPropagation(); 
-                            setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1)); 
-                        }}
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setCurrentIndex((p) => (p === 0 ? images.length - 1 : p - 1)); }}
                         className="absolute left-4 sm:left-8 w-14 h-14 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-all z-[100001] backdrop-blur-sm active:scale-95"
                     >
                         <Icon name="chevron_left" size="32px" />
@@ -47,19 +81,16 @@ const ImageViewer = ({ images, initialIndex, onClose }) => {
                 )}
 
                 <div className="relative max-w-[90vw] max-h-[85vh] flex items-center justify-center">
-                    <img 
-                        src={currentImg.url} 
-                        className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl animate-in zoom-in-95 duration-300" 
-                        alt="Evidencia ampliada" 
+                    <img
+                        src={currentImg.url}
+                        className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl animate-in zoom-in-95 duration-300"
+                        alt="Evidencia ampliada"
                     />
                 </div>
 
                 {images.length > 1 && (
-                    <button 
-                        onClick={(e) => { 
-                            e.stopPropagation(); 
-                            setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1)); 
-                        }}
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setCurrentIndex((p) => (p === images.length - 1 ? 0 : p + 1)); }}
                         className="absolute right-4 sm:right-8 w-14 h-14 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-all z-[100001] backdrop-blur-sm active:scale-95"
                     >
                         <Icon name="chevron_right" size="32px" />
@@ -67,17 +98,16 @@ const ImageViewer = ({ images, initialIndex, onClose }) => {
                 )}
             </div>
 
-            {/* Pagination Indicators */}
             {images.length > 1 && (
                 <div className="absolute bottom-8 flex gap-2 z-[100001]">
                     {images.map((_, i) => (
-                        <button 
-                            key={i} 
-                            onClick={() => setCurrentIndex(i)} 
+                        <button
+                            key={i}
+                            onClick={() => setCurrentIndex(i)}
                             className={cn(
-                                "h-2 rounded-full transition-all duration-300", 
-                                i === currentIndex ? "bg-white w-8 shadow-md" : "bg-white/30 w-2 hover:bg-white/50"
-                            )} 
+                                'h-2 rounded-full transition-all duration-300',
+                                i === currentIndex ? 'bg-white w-8 shadow-md' : 'bg-white/30 w-2 hover:bg-white/50'
+                            )}
                         />
                     ))}
                 </div>
@@ -86,6 +116,10 @@ const ImageViewer = ({ images, initialIndex, onClose }) => {
         document.body
     );
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Componente principal
+// ─────────────────────────────────────────────────────────────────────────────
 
 export const TareaDetailDrawer = ({
     isOpen,
@@ -98,266 +132,417 @@ export const TareaDetailDrawer = ({
 }) => {
     const isDesktop = useIsDesktop();
     const [isEntregaModalOpen, setIsEntregaModalOpen] = useState(false);
-    const [viewerState, setViewerState] = useState(null); // { images: [], index: number }
-    
+    const [viewerState, setViewerState] = useState(null);
+
     if (!isOpen || !tarea) return null;
 
     const { rol, id: userId } = currentUser ?? {};
-    const esJefe = ['ADMIN', 'JEFE', 'GERENCIA'].includes(rol);
-    const esAsignadoDirecto = tarea.responsables?.some((r) => r.id == userId);
-    const esResponsable = esAsignadoDirecto || esJefe;
+    const esJefe        = ['ADMIN', 'JEFE', 'GERENCIA'].includes(rol);
+    const esAsignado    = tarea.responsables?.some((r) => r.id == userId);
+    const esResponsable = esAsignado || esJefe;
 
-    const estado = tarea.estado?.toUpperCase();
+    const estado      = tarea.estado?.toUpperCase();
     const isPendiente = estado === 'PENDIENTE';
     const isEnRevision = estado === 'EN_REVISION';
-    const isCerrado = estado === 'CERRADA' || estado === 'DESCARTADA' || estado === 'CANCELADA';
+    const isCerrado   = estado === 'CERRADA' || estado === 'DESCARTADA' || estado === 'CANCELADA';
 
-    const imagenesCaptura = tarea.imagenes?.filter(img => img.tipo !== 'EVIDENCIA') || [];
-    const imagenesEvidencia = tarea.imagenes?.filter(img => img.tipo === 'EVIDENCIA') || [];
+    const imagenesCaptura  = tarea.imagenes?.filter((img) => img.tipo !== 'EVIDENCIA') || [];
+    const imagenesEvidencia = tarea.imagenes?.filter((img) => img.tipo === 'EVIDENCIA') || [];
+    const tieneImagenes    = imagenesCaptura.length > 0 || imagenesEvidencia.length > 0;
+
+    // ── Helpers de render ───────────────────────────────────────────────────
+
+    const renderImageGrid = (images, tipo = 'captura') => {
+        const esEvidencia = tipo === 'evidencia';
+        return (
+            <div className="grid grid-cols-3 gap-2">
+                {images.map((img, idx) => (
+                    <div
+                        key={img.id || idx}
+                        onClick={() => setViewerState({ images, index: idx })}
+                        className={cn(
+                            'relative aspect-square rounded-xl overflow-hidden cursor-pointer group transition-all duration-300',
+                            'shadow-sm hover:shadow-md active:scale-95',
+                            esEvidencia
+                                ? 'border-2 border-amber-200 hover:border-amber-400 bg-amber-50'
+                                : 'border border-slate-200 hover:border-blue-300 bg-white'
+                        )}
+                    >
+                        <img
+                            src={img.url}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            alt={esEvidencia ? 'Evidencia' : 'Captura'}
+                        />
+                        {/* Overlay zoom */}
+                        <div className={cn(
+                            'absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300',
+                            esEvidencia ? 'bg-amber-900/20' : 'bg-slate-900/15'
+                        )}>
+                            <div className={cn(
+                                'w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm',
+                                esEvidencia ? 'bg-amber-500/80' : 'bg-white/80'
+                            )}>
+                                <Icon name="zoom_in" size="16px" className={esEvidencia ? 'text-white' : 'text-slate-700'} />
+                            </div>
+                        </div>
+                        {/* Badge EVID */}
+                        {esEvidencia && (
+                            <div className="absolute top-1.5 left-1.5 bg-amber-500 text-white text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md leading-none shadow-sm">
+                                EVID
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
+    const renderNota = (nota) => {
+        const creador = nota.creadoPor || {};
+        return (
+            <div key={nota.id} className="flex gap-3 p-3.5 bg-white rounded-xl border border-slate-100 shadow-sm">
+                {/* Avatar */}
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center text-slate-500 font-bold text-[11px] shrink-0 shadow-inner">
+                    {creador.imagen
+                        ? <img src={creador.imagen} className="w-full h-full object-cover" alt={creador.nombre} />
+                        : creador.nombre?.charAt(0) || 'U'
+                    }
+                </div>
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline justify-between gap-2 mb-1">
+                        <p className="text-xs font-bold text-slate-800 truncate">{creador.nombre || 'Usuario'}</p>
+                        <p className="text-[9px] text-slate-400 font-semibold shrink-0">{formatFechaHora(nota.createdAt)}</p>
+                    </div>
+                    <p className="text-xs font-medium text-slate-600 leading-relaxed whitespace-pre-line">
+                        {nota.contenido}
+                    </p>
+                </div>
+            </div>
+        );
+    };
+
+    // ── Layout principal ────────────────────────────────────────────────────
 
     const renderContent = () => (
-        <div className="flex flex-col h-full bg-white">
-            {/* Minimal Clean Header */}
-            <div className="p-6 sm:p-8 border-b border-slate-100 shrink-0">
-                <div className="flex items-center gap-3 mb-2 flex-wrap">
-                    <span className="text-slate-400 text-xs font-mono font-bold tracking-wider">REF-#{tarea.id}</span>
+        <div className="flex flex-col h-full bg-white min-h-0">
+
+            {/* ══ HEADER ══════════════════════════════════════════════════════ */}
+            <div className={cn(
+                'shrink-0 border-b border-slate-100 bg-gradient-to-b from-slate-50 to-white text-left',
+                isDesktop ? 'px-8 py-5 pr-20' : 'p-6 pr-16'
+            )}>
+                {/* Fila superior: REF + badges */}
+                <div className="flex items-center gap-2.5 mb-2.5 flex-wrap">
+                    <span className="text-[10px] font-mono font-bold tracking-wider text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
+                        #{tarea.id}
+                    </span>
                     <TareaStatusBadge status={tarea.estado} size="xs" />
                     <TareaPriorityBadge priority={tarea.prioridad} />
                 </div>
-                
-                <h2 className={cn(
-                    "text-xl sm:text-2xl font-black text-slate-900 leading-tight tracking-tight",
-                    isCerrado && "line-through opacity-60 text-slate-400"
+
+                {/* Título principal */}
+                <h1 className={cn(
+                    'font-extrabold text-slate-800 leading-snug tracking-tight whitespace-pre-wrap text-left',
+                    isDesktop
+                        ? 'text-lg max-h-[72px] overflow-y-auto custom-scrollbar pr-2 mb-3'
+                        : 'text-base max-h-[120px] overflow-y-auto custom-scrollbar pr-2 mb-3',
+                    isCerrado && 'line-through opacity-50 text-slate-400'
                 )}>
                     {tarea.descripcion}
-                </h2>
+                </h1>
+
+                {/* Responsables */}
+                <div className="flex items-center gap-2 flex-wrap pt-3 border-t border-slate-100">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest shrink-0">
+                        Responsable:
+                    </span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                        {tarea.responsables?.length > 0
+                            ? tarea.responsables.map((r) => (
+                                <div
+                                    key={r.id}
+                                    className="inline-flex items-center gap-1.5 py-1 px-2.5 bg-white border border-slate-200/80 rounded-full shadow-sm text-xs font-bold text-slate-700"
+                                >
+                                    <div className="w-4 h-4 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center text-[8px] font-black text-slate-500 shrink-0">
+                                        {r.imagen
+                                            ? <img src={r.imagen} className="w-full h-full object-cover" alt={r.nombre} />
+                                            : r.nombre?.charAt(0)
+                                        }
+                                    </div>
+                                    <span>{r.nombre}</span>
+                                </div>
+                            ))
+                            : <span className="text-xs text-slate-400 italic font-medium">Sin asignar</span>
+                        }
+                    </div>
+                </div>
             </div>
 
-            {/* Content Body */}
-            <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8 custom-scrollbar">
-                {/* Core Details Grid */}
-                <section className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100/80 flex flex-col gap-1.5 shadow-sm">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Área Operativa</span>
-                        <p className="text-sm font-bold text-slate-800">{AREA_MAP[tarea.area] || 'General'}</p>
-                    </div>
-                    
-                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100/80 flex flex-col gap-1.5 shadow-sm">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Línea</span>
-                        <p className="text-sm font-bold text-slate-800">{LINEA_MAP[tarea.linea]?.label || tarea.linea || 'Multi'}</p>
-                    </div>
+            {/* ══ BODY: dos columnas en desktop, apilado en mobile ══════════ */}
+            {/*
+                flex-1 + min-h-0 + overflow-y-auto = el único scroll del modal,
+                todo el contenido vive aquí dentro.
+            */}
+            <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+                <div className={cn(
+                    isDesktop && 'grid grid-cols-12 divide-x divide-slate-100'
+                )}>
 
-                    {tarea.fechaVencimiento && (
-                        <div className="col-span-2 p-4 bg-slate-50 rounded-2xl border border-slate-100/80 flex flex-col gap-1.5 shadow-sm">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Vencimiento Operativo</span>
-                            <div className="flex items-center gap-2">
-                                <Icon name="event" size="sm" className="text-slate-400" />
-                                <p className="text-sm font-bold text-slate-800">{formatFecha(tarea.fechaVencimiento)}</p>
+                    {/* ── COLUMNA IZQUIERDA: contexto + origen + notas ──── */}
+                    <div className={cn(
+                        isDesktop ? 'col-span-7 p-8 space-y-6' : 'p-6 space-y-6'
+                    )}>
+
+                        {/* Sección: Detalles de la tarea */}
+                        <section>
+                            <SectionHeader icon="info" label="Detalles de la tarea" color="slate" />
+                            <div className="grid grid-cols-2 gap-2.5">
+                                <MetaCard label="Área">
+                                    {AREA_MAP[tarea.area] || 'General'}
+                                </MetaCard>
+                                <MetaCard label="Línea">
+                                    {LINEA_MAP[tarea.linea]?.label || tarea.linea || 'Multi'}
+                                </MetaCard>
+                                {tarea.fechaVencimiento && (
+                                    <MetaCard label="Fecha de Vencimiento" className="col-span-2">
+                                        <div className="flex items-center gap-2">
+                                            <Icon name="event" size="15px" className="text-slate-400 shrink-0" />
+                                            <span>{formatFecha(tarea.fechaVencimiento)}</span>
+                                        </div>
+                                    </MetaCard>
+                                )}
+                                <MetaCard label="Registrada el" className="col-span-2">
+                                    <div className="flex items-center gap-2">
+                                        <Icon name="schedule" size="15px" className="text-slate-400 shrink-0" />
+                                        <span>{formatFechaHora(tarea.createdAt)}</span>
+                                    </div>
+                                </MetaCard>
                             </div>
-                        </div>
-                    )}
+                        </section>
 
-                    {tarea.minuta && (
-                        <div className="col-span-2 p-4 bg-slate-50 rounded-2xl border border-slate-100/80 flex flex-col gap-1.5 shadow-sm">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Minuta de Origen</span>
-                            <div className="flex flex-col gap-1">
-                                <p className="text-sm font-bold text-slate-800">{tarea.minuta.titulo || `Minuta #${tarea.minutaId}`}</p>
-                                <p className="text-[10px] text-slate-400 font-medium italic">Registrada el {formatFechaHora(tarea.createdAt)}</p>
-                            </div>
-                        </div>
-                    )}
-                </section>
-
-                {/* Imágenes Capturadas (Junta) */}
-                {imagenesCaptura.length > 0 && (
-                    <section className="space-y-3 animate-in fade-in duration-300">
-                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 font-sans flex items-center gap-1.5">
-                            <Icon name="photo_camera" size="14px" className="text-slate-300" />
-                            Imágenes de Captura
-                        </h3>
-                        <div className="grid grid-cols-2 gap-3">
-                            {imagenesCaptura.map((img, idx) => (
-                                <div 
-                                    key={img.id || idx} 
-                                    onClick={() => setViewerState({ images: imagenesCaptura, index: idx })}
-                                    className="aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-white group cursor-pointer shadow-sm hover:shadow-md hover:border-blue-200 active:scale-98 transition-all relative"
-                                >
-                                    <img src={img.url} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Captura" />
-                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center transition-all duration-300 opacity-0 group-hover:opacity-100">
-                                        <div className="w-9 h-9 bg-white/90 rounded-xl flex items-center justify-center shadow-lg text-slate-700 hover:scale-110 active:scale-95 transition-all">
-                                            <Icon name="zoom_in" size="18px" />
-                                        </div>
+                        {/* Sección: Minuta de Origen (condicional) */}
+                        {tarea.minuta && (
+                            <section>
+                                <SectionHeader icon="description" label="Origen: Minuta" color="blue" />
+                                <div className="flex gap-3.5 items-start p-4 bg-blue-50/70 border border-blue-100 rounded-2xl">
+                                    {/* Icono doc */}
+                                    <div className="w-10 h-10 rounded-xl bg-blue-100 border border-blue-200/80 flex items-center justify-center shrink-0 shadow-sm">
+                                        <Icon name="description" size="20px" className="text-blue-500" />
                                     </div>
-                                </div>
-                            ))}
-                        </div>
-                    </section>
-                )}
-
-                {/* Evidencias de Entrega */}
-                {imagenesEvidencia.length > 0 && (
-                    <section className="space-y-3 animate-in fade-in duration-300">
-                        <h3 className="text-[10px] font-black text-amber-500 uppercase tracking-widest px-1 font-sans flex items-center gap-1.5">
-                            <Icon name="verified" size="14px" className="text-amber-400" />
-                            Evidencias de Entrega
-                        </h3>
-                        <div className="grid grid-cols-2 gap-3">
-                            {imagenesEvidencia.map((img, idx) => (
-                                <div 
-                                    key={img.id || idx} 
-                                    onClick={() => setViewerState({ images: imagenesEvidencia, index: idx })}
-                                    className="aspect-square rounded-2xl overflow-hidden border-2 border-amber-200 bg-amber-50 group cursor-pointer shadow-sm hover:shadow-md hover:border-amber-400 active:scale-98 transition-all relative"
-                                >
-                                    <img src={img.url} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Evidencia" />
-                                    <div className="absolute inset-0 bg-amber-900/0 group-hover:bg-amber-900/20 flex items-center justify-center transition-all duration-300 opacity-0 group-hover:opacity-100">
-                                        <div className="w-9 h-9 bg-white/90 rounded-xl flex items-center justify-center shadow-lg text-amber-600 hover:scale-110 active:scale-95 transition-all">
-                                            <Icon name="zoom_in" size="18px" />
-                                        </div>
-                                    </div>
-                                    <div className="absolute top-2 right-2 bg-amber-500 text-white text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md shadow-sm border border-amber-400">
-                                        Entregable
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </section>
-                )}
-
-                {/* Comments / Notes Section */}
-                {tarea.notas?.length > 0 && (
-                    <section className="space-y-3 animate-in fade-in duration-300">
-                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 font-sans">Notas y Comentarios de Entrega</h3>
-                        <div className="space-y-3">
-                            {tarea.notas.map((nota) => {
-                                const creador = nota.creadoPor || {};
-                                return (
-                                    <div key={nota.id} className="p-4 bg-slate-50 border border-slate-100/80 rounded-2xl shadow-sm flex flex-col gap-2.5">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center text-slate-500 font-bold text-xs shrink-0 shadow-inner">
-                                                {creador.imagen ? (
-                                                    <img src={creador.imagen} className="w-full h-full object-cover" alt={creador.nombre} />
-                                                ) : (
-                                                    creador.nombre?.charAt(0) || 'U'
-                                                )}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-xs font-bold text-slate-800 truncate">{creador.nombre || 'Usuario'}</p>
-                                                <p className="text-[9px] text-slate-400 font-semibold">{formatFechaHora(nota.createdAt)}</p>
-                                            </div>
-                                        </div>
-                                        <p className="text-xs font-medium text-slate-700 leading-relaxed pl-1 whitespace-pre-line">
-                                            {nota.contenido}
+                                    {/* Info */}
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-bold text-blue-900 leading-snug mb-1">
+                                            {tarea.minuta.titulo || `Minuta #${tarea.minutaId}`}
                                         </p>
+                                        <div className="flex items-center gap-1.5">
+                                            <Icon name="link" size="11px" className="text-blue-400" />
+                                            <span className="text-[10px] text-blue-500 font-semibold">
+                                                Tarea originada en esta minuta
+                                            </span>
+                                        </div>
+                                        {tarea.minuta.fecha && (
+                                            <p className="text-[10px] text-blue-400 font-medium mt-1">
+                                                Fecha de minuta: {formatFecha(tarea.minuta.fecha)}
+                                            </p>
+                                        )}
                                     </div>
-                                );
-                            })}
-                        </div>
-                    </section>
-                )}
+                                </div>
+                            </section>
+                        )}
 
-                {/* Team Section */}
-                <section className="space-y-3">
-                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Equipo Responsable</h3>
-                     <div className="grid grid-cols-1 gap-2">
-                         {tarea.responsables?.length > 0 ? (
-                             tarea.responsables.map(u => (
-                                 <div key={u.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100/80 shadow-sm">
-                                     <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-200 flex items-center justify-center text-slate-500 font-bold text-sm shrink-0 shadow-inner">
-                                         {u.imagen ? <img src={u.imagen} className="w-full h-full object-cover" alt={u.nombre} /> : u.nombre?.charAt(0)}
-                                     </div>
-                                     <div className="flex-1 min-w-0">
-                                         <p className="text-sm font-bold text-slate-800 truncate">{u.nombre}</p>
-                                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{u.rol}</p>
-                                     </div>
-                                 </div>
-                             ))
-                         ) : (
-                             <p className="text-xs text-slate-400 italic px-1">Sin responsables asignados.</p>
-                         )}
-                     </div>
-                </section>
+                        {/* Estado vacío si no hay minuta */}
+                        {!tarea.minuta && (
+                            <div className="flex flex-col items-center justify-center py-8 gap-2 opacity-40">
+                                <Icon name="inbox" size="28px" className="text-slate-300" />
+                                <p className="text-xs text-slate-400 font-semibold">Sin minuta de origen</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* ── COLUMNA DERECHA: imágenes ──────────────────────── */}
+                    <div className={cn(
+                        'bg-slate-50/60',
+                        isDesktop ? 'col-span-5 p-7 space-y-6' : 'p-6 space-y-6 border-t border-slate-100'
+                    )}>
+
+                        {/* Imágenes de Captura */}
+                        {imagenesCaptura.length > 0 && (
+                            <section>
+                                <SectionHeader
+                                    icon="photo_camera"
+                                    label="Imágenes de captura"
+                                    count={imagenesCaptura.length}
+                                    color="slate"
+                                />
+                                {renderImageGrid(imagenesCaptura, 'captura')}
+                            </section>
+                        )}
+
+                        {/* Evidencias de Entrega */}
+                        {imagenesEvidencia.length > 0 && (
+                            <section>
+                                <SectionHeader
+                                    icon="verified"
+                                    label="Evidencias de entrega"
+                                    count={imagenesEvidencia.length}
+                                    color="amber"
+                                />
+                                {renderImageGrid(imagenesEvidencia, 'evidencia')}
+
+                                {/* Info pill de evidencia */}
+                                <div className="mt-2.5 flex items-center gap-1.5 px-3 py-2 bg-amber-50 border border-amber-100 rounded-xl">
+                                    <Icon name="info" size="13px" className="text-amber-400 shrink-0" />
+                                    <span className="text-[10px] text-amber-600 font-semibold leading-tight">
+                                        Imágenes adjuntas al entregar la tarea
+                                    </span>
+                                </div>
+                            </section>
+                        )}
+
+                        {/* Notas de Entrega — van junto a las evidencias */}
+                        {tarea.notas?.length > 0 && (
+                            <section>
+                                <SectionHeader icon="chat_bubble" label="Notas de entrega" count={tarea.notas.length} color="emerald" />
+                                <div className="space-y-2.5">
+                                    {tarea.notas.map(renderNota)}
+                                </div>
+                            </section>
+                        )}
+
+                        {/* Estado vacío si no hay imágenes ni notas */}
+                        {!tieneImagenes && !tarea.notas?.length && (
+                            <div className="flex flex-col items-center justify-center py-12 gap-3">
+                                <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center">
+                                    <Icon name="hide_image" size="26px" className="text-slate-300" />
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-xs font-bold text-slate-400">Sin imágenes adjuntas</p>
+                                    <p className="text-[10px] text-slate-300 font-medium mt-0.5">
+                                        Se añadirán al entregar
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
 
-            {/* Clean Premium Action Footer */}
-            <div className="p-6 border-t border-slate-100 shrink-0 bg-slate-50/50 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-                {/* 1. Coordinador Action: Entregar */}
+            {/* ══ FOOTER: acciones ════════════════════════════════════════════ */}
+            <div className={cn(
+                'shrink-0 border-t border-slate-100 bg-white',
+                isDesktop
+                    ? 'px-8 py-4'
+                    : 'p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]'
+            )}>
+                {/* 1. Responsable: entregar */}
                 {isPendiente && esResponsable && (
-                    <Button 
+                    <Button
                         onClick={() => setIsEntregaModalOpen(true)}
-                        className="w-full py-4.5 rounded-xl font-black uppercase text-[11px] tracking-widest bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20 active:scale-95 transition-all"
+                        className="w-full py-3.5 rounded-xl font-black uppercase text-[11px] tracking-widest bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/25 active:scale-[0.98] transition-all"
                         isLoading={submitting}
-                        icon="check"
+                        icon="check_circle"
                     >
                         Entregar para Revisión
                     </Button>
                 )}
 
-                {/* 2. Jefatura Action: Aprobar */}
+                {/* 2. Jefatura: aprobar */}
                 {isEnRevision && esJefe && (
-                    <div className="flex flex-col gap-3">
-                        <div className="flex items-center gap-2 justify-center py-2.5 px-4 bg-blue-50 border border-blue-100/50 text-blue-700 rounded-xl">
-                             <Icon name="fact_check" size="16px" />
-                             <span className="text-[9px] font-black uppercase tracking-wider">Validación de Jefatura Pendiente</span>
+                    <div className="flex items-center gap-3">
+                        {/* Pill de estado */}
+                        <div className="flex items-center gap-1.5 px-3.5 py-2.5 bg-blue-50 border border-blue-100 text-blue-600 rounded-xl shrink-0">
+                            <Icon name="fact_check" size="15px" />
+                            <span className="text-[9px] font-black uppercase tracking-wider whitespace-nowrap">
+                                Pendiente de validación
+                            </span>
                         </div>
-                        
-                        <Button 
-                            onClick={() => onChangeStatus?.(tarea.id, 'CERRADA')}
-                            className="py-5 rounded-xl bg-black hover:bg-neutral-800 text-white shadow-lg shadow-black/20 font-black uppercase text-[11px] tracking-widest active:scale-95 transition-all w-full"
+                        {/* Botón aprobar */}
+                        <Button
+                            onClick={() => {
+                                if (window.confirm('¿Deseas aprobar y cerrar esta tarea?')) {
+                                    onChangeStatus?.(tarea.id, 'CERRADA');
+                                }
+                            }}
+                            className="flex-1 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/25 font-black uppercase text-[11px] tracking-widest active:scale-[0.98] transition-all cursor-pointer"
                             isLoading={submitting}
                             icon="verified"
                         >
-                            Aprobar y Cerrar Tarea
+                            Aprobar y Cerrar
                         </Button>
                     </div>
                 )}
 
-                {/* 3. Read Only Status States */}
+                {/* 3. Solo lectura: en revisión no-jefe */}
                 {isEnRevision && !esJefe && (
-                    <div className="flex items-center justify-center gap-2 py-3 px-4 bg-emerald-50 border border-emerald-100/50 text-emerald-700 rounded-xl">
-                        <Icon name="lock" size="16px" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-center">Entregada · En espera de validación</span>
+                    <div className="flex items-center justify-center gap-2 py-3 px-4 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl">
+                        <Icon name="lock" size="15px" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">
+                            Entregada · En espera de validación de jefatura
+                        </span>
                     </div>
                 )}
 
-                {/* 4. Kill Switch logic for Jefes */}
-                {!isCerrado && esJefe && (
-                    <div className="mt-4 pt-4 border-t border-slate-100">
-                        <Button 
-                            onClick={() => onUpdate?.(tarea.id, { estado: 'DESCARTADA' })}
-                            variant="ghost"
-                            className="w-full py-3.5 text-red-500 hover:text-red-700 hover:bg-red-50 font-black uppercase text-[10px] tracking-widest transition-all"
-                            isLoading={submitting}
-                            icon="delete_sweep"
-                        >
-                            Descartar Tarea
-                        </Button>
+                {/* 4. Cerrado / descartado */}
+                {isCerrado && (
+                    <div className="flex items-center justify-center gap-2 py-3 px-4 bg-slate-50 border border-slate-100 text-slate-400 rounded-xl">
+                        <Icon name="check_circle" size="15px" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">
+                            Tarea {tarea.estado?.toLowerCase()}
+                        </span>
                     </div>
                 )}
             </div>
         </div>
     );
 
-    const containerClasses = isDesktop 
-        ? "fixed top-0 right-0 h-full w-[460px] bg-white shadow-2xl border-l border-slate-100 z-1000 animate-in slide-in-from-right duration-500"
-        : "fixed inset-x-0 bottom-0 h-[85vh] bg-white rounded-t-[2.5rem] z-1000 animate-in slide-in-from-bottom duration-500 shadow-drawer overflow-hidden";
+    // ── Clases del contenedor ────────────────────────────────────────────────
+    const wrapperClasses = isDesktop
+        ? 'fixed inset-0 z-[2000] flex items-center justify-center p-6 animate-in fade-in duration-200'
+        : 'fixed inset-0 z-1000 flex items-end';
+
+    /*
+     * Desktop → max-w-4xl (896px) da suficiente espacio para las dos columnas.
+     * max-h-[92vh] + overflow-hidden en el wrapper, flex-col + min-h-0 adentro
+     * = modal que nunca se desborda y solo hace scroll interno si es necesario.
+     */
+    const containerClasses = isDesktop
+        ? 'relative bg-white rounded-[2rem] shadow-2xl shadow-slate-900/20 flex flex-col w-full max-w-4xl max-h-[92vh] overflow-hidden animate-in zoom-in-95 duration-300 border border-slate-100/80'
+        : 'fixed inset-x-0 bottom-0 h-[88vh] bg-white rounded-t-[2rem] z-1000 animate-in slide-in-from-bottom duration-500 shadow-drawer overflow-hidden flex flex-col';
 
     return createPortal(
-        <div className="fixed inset-0 z-1000 flex items-end sm:items-stretch sm:justify-end">
-            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-300" onClick={onClose} />
+        <div className={wrapperClasses}>
+            {/* Backdrop */}
+            <div
+                className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300"
+                onClick={onClose}
+            />
+
+            {/* Modal */}
             <div className={containerClasses}>
+                {/* Botón cerrar — desktop */}
                 {isDesktop && (
-                    <button 
+                    <button
                         onClick={onClose}
-                        className="absolute top-6 left-[-56px] w-11 h-11 rounded-xl bg-white text-slate-400 shadow-md flex items-center justify-center hover:text-rose-500 hover:scale-105 transition-all active:scale-95 group z-50 border border-slate-100"
+                        className="absolute top-5 right-5 w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-colors active:scale-90 z-50 border border-slate-200/50 cursor-pointer"
                     >
-                        <Icon name="close" size="20px" className="group-hover:rotate-90 transition-transform duration-300" />
+                        <Icon name="close" size="18px" />
                     </button>
                 )}
+
+                {/* Handle — mobile */}
                 {!isDesktop && (
-                    <div className="w-12 h-1 rounded-full bg-slate-200 mx-auto mt-4 mb-2 shrink-0" onClick={onClose} />
+                    <button
+                        onClick={onClose}
+                        className="w-10 h-1.5 rounded-full bg-slate-200 mx-auto mt-4 mb-1 shrink-0"
+                        aria-label="Cerrar"
+                    />
                 )}
+
                 {renderContent()}
             </div>
+
+            {/* Modal de entrega */}
             {isEntregaModalOpen && (
                 <TareaEntregaModal
                     isOpen={isEntregaModalOpen}
@@ -369,6 +554,8 @@ export const TareaDetailDrawer = ({
                     }}
                 />
             )}
+
+            {/* Visor de imágenes */}
             {viewerState !== null && (
                 <ImageViewer
                     images={viewerState.images}

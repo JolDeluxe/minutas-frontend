@@ -7,6 +7,8 @@ import { useTareas } from '../hooks/use-tareas';
 import { ActivasDesktop } from '../views/activas-desktop';
 import { ActivasMobile } from '../views/activas-mobile';
 import { TareaDetailDrawer } from '../components/common/tarea-detail-drawer';
+import { TareaRevisionModal } from '../components/common/tarea-revision-modal';
+import { useTareasStore } from '../store/tareas-store';
 
 const LIMIT = 20;
 
@@ -17,6 +19,10 @@ export default function ActivasPage() {
     const isDesktop = useIsDesktop();
     const { user } = useAuthStore();
     const currentUser = user?.data || user;
+
+    // Consumir el departamento global
+    const { departamento } = useTareasStore();
+    const activeDept = currentUser?.rol === 'ADMIN' ? departamento : (currentUser?.departamento || 'DISENO');
     
     const {
         tareas,
@@ -33,13 +39,13 @@ export default function ActivasPage() {
         prioridad: '',
         linea: '',
         clasificacion: '',
-        departamento: currentUser?.departamento || 'DISENO',
         mostrarAtrasadas: false,
     }));
     
     const [page, setPage] = useState(1);
     const [selectedTarea, setSelectedTarea] = useState(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [revisionTarget, setRevisionTarget] = useState(null);
 
     const loadTareas = useCallback(() => {
         const params = { 
@@ -56,11 +62,11 @@ export default function ActivasPage() {
         if (filters.prioridad) params.prioridad = filters.prioridad;
         if (filters.linea) params.linea = filters.linea;
         if (filters.clasificacion) params.clasificacion = filters.clasificacion;
-        if (filters.departamento) params.departamento = filters.departamento;
+        if (activeDept) params.departamento = activeDept;
         if (filters.mostrarAtrasadas) params.atrasadas = true;
 
         fetchTareas(params).catch(() => notify.error('Error al cargar tus tareas.'));
-    }, [page, filters, fetchTareas]);
+    }, [page, filters, fetchTareas, activeDept]);
 
     useEffect(() => { loadTareas(); }, [loadTareas]);
 
@@ -157,8 +163,9 @@ export default function ActivasPage() {
         filtroClasificacion: filters.clasificacion,
         onClasificacionChange: (c) => handleFilterChange({ clasificacion: c }),
         statusActual: filters.status,
-        filtroDepartamento: filters.departamento,
-        onDepartamentoChange: (d) => handleFilterChange({ departamento: d }),
+        filtroDepartamento: activeDept,
+        onDepartamentoChange: () => {},
+        onReview: setRevisionTarget,
     };
 
     return (
@@ -176,6 +183,19 @@ export default function ActivasPage() {
                 onUpdate={handleUpdateGeneric}
                 submitting={submitting}
                 currentUser={currentUser}
+            />
+
+            <TareaRevisionModal
+                isOpen={Boolean(revisionTarget)}
+                onClose={() => setRevisionTarget(null)}
+                tarea={revisionTarget}
+                onConfirm={async () => {
+                    if (revisionTarget) {
+                        await handleDirectStatusChange(revisionTarget.id, 'CERRADA');
+                        setRevisionTarget(null);
+                    }
+                }}
+                submitting={submitting}
             />
         </div>
     );

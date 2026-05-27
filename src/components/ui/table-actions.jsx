@@ -93,7 +93,10 @@ export const TableActions = ({ row, actions = [] }) => {
                         className="text-[13px] px-2 py-0.5 font-bold tracking-tight"
                     >
                         <button
-                            onClick={() => onClick?.(row)}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onClick?.(row);
+                            }}
                             className={cn(
                                 "p-1.5 rounded-md transition-colors cursor-pointer", // Padding del botón intacto
                                 config.className

@@ -63,6 +63,7 @@ export const ActivasDesktop = ({
     onClasificacionChange,
     statusActual,
     filtroDepartamento,
+    onReview,
 }) => {
     const [viewMode, setViewMode] = useState(() => localStorage.getItem('mis-entradas-view') || 'cards');
     const [editTarget, setEditTarget] = useState(null);
@@ -89,32 +90,7 @@ export const ActivasDesktop = ({
                     </p>
                 </div>
                 
-                {/* SELECTOR DE DEPARTAMENTO SI ES ADMIN/JEFE/GERENTE */}
-                {['ADMIN', 'GERENCIA', 'JEFE'].includes(currentUser?.rol) && (
-                    <div className="flex items-center bg-slate-100/85 p-1 rounded-xl border border-slate-200/50 shadow-inner">
-                        {['DISEÑO', 'MARKETING'].map(opt => {
-                            const val = opt === 'DISEÑO' ? 'DISENO' : 'MARKETING';
-                            const activeVal = filtroDepartamento;
-                            const isActive = activeVal === val;
-                            return (
-                                <button
-                                    key={opt}
-                                    onClick={() => onFilterChange({ departamento: val })}
-                                    className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                                        isActive 
-                                            ? 'bg-white text-marca-primario shadow-sm ring-1 ring-slate-200/50 font-black' 
-                                            : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50/50'
-                                    }`}
-                                >
-                                    {opt === 'DISEÑO' && <Icon name="draw" size="14px" />}
-                                    {opt === 'MARKETING' && <Icon name="campaign" size="14px" />}
-                                    {opt}
-                                </button>
-                            );
-                        })}
-                    </div>
-                )}
-                
+
                 <div className="flex items-center gap-3">
                     <div className="hidden sm:block text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">Vista:</div>
                     <GlassViewToggle 
@@ -193,6 +169,7 @@ export const ActivasDesktop = ({
                                         onViewDetail={onViewDetail} 
                                         onEdit={setEditTarget}
                                         onChangeStatus={onChangeStatus}
+                                        onReview={onReview}
                                     />
                                 ))}
                             </div>
@@ -205,6 +182,7 @@ export const ActivasDesktop = ({
                                     onChangeStatus={onChangeStatus}
                                     onViewDetail={onViewDetail}
                                     onEdit={setEditTarget}
+                                    onReview={onReview}
                                     hidePagination={true}
                                 />
                             </div>

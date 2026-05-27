@@ -7,6 +7,7 @@ import { useTareas } from '../hooks/use-tareas';
 import { HistoricoDesktop } from '../views/historico-desktop';
 import { HistoricoMobile } from '../views/historico-mobile';
 import { TareaDetailDrawer } from '../components/common/tarea-detail-drawer';
+import { useTareasStore } from '../store/tareas-store';
 
 const LIMIT = 20;
 
@@ -22,6 +23,10 @@ export default function HistoricoPage() {
         fetchTareas,
         updateTarea,
     } = useTareas();
+
+    const currentUser = user?.data || user;
+    const { departamento } = useTareasStore();
+    const activeDept = currentUser?.rol === 'ADMIN' ? departamento : (currentUser?.departamento || 'DISENO');
 
     const [filters, setFilters] = useState({
         search: '',
@@ -54,12 +59,13 @@ export default function HistoricoPage() {
         if (filters.prioridad) params.prioridad = filters.prioridad;
         if (filters.area) params.area = filters.area;
         if (filters.linea) params.linea = filters.linea;
+        if (activeDept) params.departamento = activeDept;
         
         if (year) params.year = year;
         if (month > 0) params.month = month;
 
         fetchTareas(params).catch(() => notify.error('Error al cargar el histórico.'));
-    }, [page, filters, year, month, fetchTareas]);
+    }, [page, filters, year, month, fetchTareas, activeDept]);
 
     useEffect(() => { loadTareas(); }, [loadTareas]);
 
