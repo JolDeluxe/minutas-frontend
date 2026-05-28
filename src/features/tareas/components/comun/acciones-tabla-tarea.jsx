@@ -14,10 +14,12 @@ export const AccionesTablaTarea = ({
     onChangeStatus,
     onReview,
     onDelete,
+    isPorAprobar = false,
 }) => {
     const [isEntregaModalOpen, setIsEntregaModalOpen] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [approveTarget, setApproveTarget] = useState(null);
+    const [forceCloseTarget, setForceCloseTarget] = useState(null);
 
     if (!tarea) return null;
 
@@ -30,6 +32,8 @@ export const AccionesTablaTarea = ({
     const isPendiente = estado === 'PENDIENTE';
     const isEnRevision = estado === 'EN_REVISION';
     const isCerrada = estado === 'CERRADA' || estado === 'DESCARTADA' || estado === 'CANCELADA';
+
+    const canForceClose = esJefe && !esAsignado && isPendiente && !isPorAprobar;
 
     return (
         <div className="flex items-center justify-center gap-1.5 min-w-[110px]">
@@ -46,6 +50,7 @@ export const AccionesTablaTarea = ({
                 actions={[
                     { key: 'entregar', enabled: isPendiente && esAsignado && esResponsable && !isCerrada, onClick: (r) => { setIsEntregaModalOpen(true); } },
                     { key: 'aprobar', enabled: isEnRevision && esJefe && esResponsable && !isCerrada, onClick: (r) => { if (onReview) onReview(r); else setApproveTarget(r); } },
+                    { key: 'forzar_cierre_tarea', enabled: canForceClose && !isCerrada, onClick: (r) => { setForceCloseTarget(r); } },
                     { key: 'ver_detalle', enabled: true, onClick: (r) => { onViewDetail?.(r); } },
                     { key: 'editar', enabled: (isPendiente && (esJefe || (userId && tarea.creadoPorId === userId))), onClick: (r) => { onEdit?.(r); } },
                     { key: 'borrar', enabled: isPendiente && (esJefe || (userId && tarea.creadoPorId === userId)), onClick: (r) => { setDeleteTarget(r); } }
@@ -93,6 +98,22 @@ export const AccionesTablaTarea = ({
                     confirmText="Aprobar"
                     cancelText="Cancelar"
                     variant="success"
+                />
+            )}
+
+            {forceCloseTarget && (
+                <ConfirmModal
+                    isOpen={Boolean(forceCloseTarget)}
+                    onClose={() => setForceCloseTarget(null)}
+                    onConfirm={async () => {
+                        if (onChangeStatus) await onChangeStatus(forceCloseTarget.id, 'CERRADA');
+                        setForceCloseTarget(null);
+                    }}
+                    title="Forzar Cierre de Tarea"
+                    message="¿Estás seguro de que deseas cerrar esta tarea sin pasar por revisión? Advertencia: no hubo entrega registrada para esta tarea."
+                    confirmText="Cerrar Tarea"
+                    cancelText="Cancelar"
+                    variant="danger"
                 />
             )}
         </div>

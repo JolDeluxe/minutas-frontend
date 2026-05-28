@@ -6,6 +6,7 @@ export const useUIStore = create(
     (set) => ({
       sidebarExpanded: true,
       mobileMenuOpen: false,
+      departamentoGlobal: 'DISEÑO',
 
       toggleSidebar: () => set((state) => ({ 
         sidebarExpanded: !state.sidebarExpanded 
@@ -20,11 +21,14 @@ export const useUIStore = create(
       toggleMobileMenu: () => set((state) => ({ 
         mobileMenuOpen: !state.mobileMenuOpen 
       })),
+
+      setDepartamentoGlobal: (dept) => set({ departamentoGlobal: dept }),
     }),
     {
       name: 'ui-storage',
       partialize: (state) => ({
         sidebarExpanded: state.sidebarExpanded,
+        departamentoGlobal: state.departamentoGlobal,
       }),
     }
   )

@@ -34,6 +34,12 @@ const ACTION_CONFIG = {
         variant: "dark",
         className: "text-emerald-600 hover:bg-emerald-600/10",
     },
+    forzar_cierre_tarea: {
+        icon: "gavel",
+        tooltip: "Forzar Cierre (Sin Entrega)",
+        variant: "error",
+        className: "text-rose-600 hover:bg-rose-600/10",
+    },
     toggle_estatus_desactivar: {
         icon: "person_remove",
         tooltip: "Desactivar usuario",

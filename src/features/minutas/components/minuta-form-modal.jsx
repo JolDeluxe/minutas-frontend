@@ -25,10 +25,19 @@ export const MinutaFormModal = ({
     const [submitted, setSubmitted] = useState(false);
     const [backendError, setBackendError] = useState('');
 
+    const formatToMexicanDate = (dateStr) => {
+        if (!dateStr) return '';
+        const parts = dateStr.split('-');
+        if (parts.length !== 3) return dateStr;
+        const [year, month, day] = parts;
+        return `${day}-${month}-${year}`;
+    };
+
     const tituloAuto = useMemo(() => {
         const d = fechaProgramada || new Date().toISOString().slice(0, 10);
+        const formattedDate = formatToMexicanDate(d);
         const l = LINEA_MAP[lineaDefault]?.label || lineaDefault;
-        return `${departamento} - ${d} - ${l}`.toUpperCase();
+        return `${departamento} - ${formattedDate} - ${l}`.toUpperCase();
     }, [departamento, fechaProgramada, lineaDefault]);
 
     const tituloActual = tituloModificado ? tituloManual : tituloAuto;
@@ -173,7 +182,7 @@ export const MinutaFormModal = ({
                             }}
                             error={!!fe.titulo}
                             helperText={fe.titulo || "Autogenerado. Puedes modificarlo si lo deseas."}
-                            placeholder="Ej. DISEÑO - 2026-05-19 - CALZADO"
+                            placeholder="Ej. DISEÑO - 19-05-2026 - CALZADO"
                         />
                     </div>
 

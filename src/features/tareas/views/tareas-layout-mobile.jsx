@@ -6,6 +6,7 @@ import { MODULES_CONFIG } from '@/config/modules-config';
 import { useAuthStore } from '@/stores/auth-store';
 import { getTareas } from '../api/tareas-api';
 import { useTareasStore } from '../store/tareas-store';
+import { DisenoIcon, MarketingIcon } from '@/features/minutas/components/icons/line-icons';
 
 const calculateDaysWaiting = (createdAt) => {
     if (!createdAt) return 0;
@@ -186,8 +187,8 @@ export const TareasLayoutMobile = () => {
                                             : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50/50'
                                     }`}
                                 >
-                                    {opt === 'DISEÑO' && <Icon name="draw" size="12px" />}
-                                    {opt === 'MARKETING' && <Icon name="campaign" size="12px" />}
+                                    {opt === 'DISEÑO' && <DisenoIcon size={12} />}
+                                    {opt === 'MARKETING' && <MarketingIcon size={12} />}
                                     {opt}
                                 </button>
                             );

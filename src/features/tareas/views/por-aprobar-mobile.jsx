@@ -77,10 +77,9 @@ export const PorAprobarMobile = ({
                                         tarea={tarea} 
                                         currentUser={currentUser} 
                                         onViewDetail={onViewDetail} 
-                                        onEdit={setEditTarget}
                                         onChangeStatus={handleApprove}
                                         onReview={onReview}
-                                        onDelete={handleDeleteTarea}
+                                        isPorAprobar={true}
                                     />
                                 ))}
                             </div>
@@ -94,7 +93,7 @@ export const PorAprobarMobile = ({
                                     hidePagination={true}
                                     onChangeStatus={handleApprove}
                                     onReview={onReview}
-                                    onDelete={handleDeleteTarea}
+                                    isPorAprobar={true}
                                 />
                             </div>
                         )

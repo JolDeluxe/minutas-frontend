@@ -1,6 +1,7 @@
-// src/features/tareas/components/hoy/hoy-tarea-card.jsx
+// src/features/tareas/components/comun/tarjeta-tarea.jsx
+// Componente unificado de tarjeta de tarea — compartido entre módulo Tareas y módulo Minutas (EntryCard)
 import { Icon, ConfirmModal, TableActions, Tooltip } from '@/components/ui/z_index';
-import { StickyNote, X, Plus } from 'lucide-react';
+import { StickyNote, X, Plus, Settings2 } from 'lucide-react';
 import { EtiquetaEstadoTarea } from './etiqueta-estado-tarea';
 import { EtiquetaPrioridadTarea } from './etiqueta-prioridad-tarea';
 import { ModalEntregarTarea } from './modal-entregar-tarea';
@@ -21,7 +22,70 @@ const isVencida = (tarea) => {
     return isPastDate(tarea.fechaVencimiento);
 };
 
-const CardImageCarousel = ({ images, lineInfo, isMarketing }) => {
+// ─────────────────────────────────────────────────────────────────────────────
+// ImageViewer — Modal premium para ver imágenes a pantalla completa.
+// Exportado para que entry-table.jsx y tabla-tareas.jsx puedan importarlo desde aquí.
+// ─────────────────────────────────────────────────────────────────────────────
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
+export const ImageViewer = ({ images, initialIndex, onClose }) => {
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = 'unset'; };
+  }, []);
+
+  if (!images || images.length === 0) return null;
+  const currentImg = images[currentIndex];
+
+  return createPortal(
+    <div className="fixed inset-0 z-[99999] bg-black/98 backdrop-blur-2xl flex flex-col items-center justify-center animate-in fade-in duration-300">
+      <button
+        onClick={onClose}
+        className="absolute top-6 right-6 w-14 h-14 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-rose-600 transition-all z-[100001] shadow-2xl"
+      >
+        <X size={36} />
+      </button>
+
+      <div className="relative w-full h-full flex items-center justify-center p-8 md:p-12">
+        {images.length > 1 && (
+          <button
+            onClick={(e) => { e.stopPropagation(); setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1)); }}
+            className="absolute left-8 w-16 h-16 rounded-full bg-white/5 text-white flex items-center justify-center hover:bg-white/20 transition-all z-[100001] backdrop-blur-md"
+          >
+            <ChevronLeft size={48} />
+          </button>
+        )}
+
+        <div className="relative max-w-[95vw] max-h-[90vh] flex items-center justify-center pointer-events-auto">
+          <img src={currentImg.preview || currentImg.url} className="max-w-full max-h-full object-contain rounded-2xl shadow-[0_0_80px_rgba(0,0,0,0.8)] animate-in zoom-in-95 duration-500 select-none" alt="Vista ampliada" />
+        </div>
+
+        {images.length > 1 && (
+          <button
+            onClick={(e) => { e.stopPropagation(); setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1)); }}
+            className="absolute right-8 w-16 h-16 rounded-full bg-white/5 text-white flex items-center justify-center hover:bg-white/20 transition-all z-[100001] backdrop-blur-md"
+          >
+            <ChevronRight size={48} />
+          </button>
+        )}
+      </div>
+
+      <div className="absolute bottom-10 flex gap-3 z-[100001]">
+        {images.map((_, i) => (
+          <button key={i} onClick={() => setCurrentIndex(i)} className={cn("h-2.5 rounded-full transition-all duration-300", i === currentIndex ? "bg-white w-10 shadow-[0_0_10px_rgba(255,255,255,0.5)]" : "bg-white/20 w-2.5 hover:bg-white/40")} />
+        ))}
+      </div>
+    </div>,
+    document.body
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CardImageCarousel — Carrusel de miniaturas con previsualización hover (Portal)
+// ─────────────────────────────────────────────────────────────────────────────
+const CardImageCarousel = ({ images, lineInfo, isMarketing, onImageClick }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showHover, setShowHover] = useState(false);
   const [coords, setCoords] = useState({ x: 0, y: 0 });
@@ -41,14 +105,10 @@ const CardImageCarousel = ({ images, lineInfo, isMarketing }) => {
   const handleMouseEnter = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const previewWidth = window.innerWidth < 640 ? 260 : 380;
-    
     let x = rect.right + 20;
-    if (x + previewWidth > window.innerWidth) {
-      x = rect.left - previewWidth - 20;
-    }
+    if (x + previewWidth > window.innerWidth) x = rect.left - previewWidth - 20;
     x = Math.max(20, x);
     let y = rect.top + (rect.height / 2);
-    
     setCoords({ x, y });
     setShowHover(true);
   };
@@ -56,15 +116,16 @@ const CardImageCarousel = ({ images, lineInfo, isMarketing }) => {
   return (
     <div className="relative group/img flex flex-col items-center gap-2 w-full" ref={containerRef}>
       <div
-        className="relative h-24 w-24 sm:h-28 sm:w-28 shrink-0 overflow-hidden rounded-[1.25rem] border-2 border-slate-200 bg-white shadow-sm flex items-center justify-center p-0.5 group-hover/img:border-marca-primario/40 transition-all active:scale-95"
+        className="relative h-11 w-11 min-[360px]:h-16 min-[360px]:w-16 sm:h-20 sm:w-20 shrink-0 overflow-hidden rounded-xl min-[360px]:rounded-[1rem] border-2 border-slate-200 bg-white shadow-sm flex items-center justify-center p-0.5 group-hover/img:border-marca-primario/40 transition-all active:scale-95 cursor-pointer"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={() => setShowHover(false)}
+        onClick={() => onImageClick?.(currentIndex)}
       >
-        <div className="relative w-full h-full rounded-[1rem] overflow-hidden bg-slate-50">
+        <div className="relative w-full h-full rounded-[0.75rem] overflow-hidden bg-slate-50">
           {images.map((img, i) => (
             <img
               key={i}
-              src={img.url}
+              src={img.preview || img.url}
               className={cn(
                 "absolute inset-0 h-full w-full object-cover transition-all duration-1000 ease-in-out",
                 i === currentIndex ? "opacity-100 scale-100" : "opacity-0 scale-110"
@@ -73,7 +134,7 @@ const CardImageCarousel = ({ images, lineInfo, isMarketing }) => {
             />
           ))}
         </div>
-        
+
         {images.length > 1 && (
           <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex gap-1 z-20">
             {images.map((_, i) => (
@@ -88,23 +149,23 @@ const CardImageCarousel = ({ images, lineInfo, isMarketing }) => {
       </div>
 
       <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-slate-200 shadow-xs animate-in fade-in duration-500 max-w-full">
-         {isMarketing ? (
-            <MarketingIcon size={14} style={{ color: lineInfo.color }} />
-         ) : (
-            <LineIconSelector type={lineInfo.value} size={16} style={{ color: lineInfo.color }} />
-         )}
-         <span className="text-[7px] font-black uppercase tracking-wider truncate" style={{ color: lineInfo.color }}>{lineInfo.label}</span>
+        {isMarketing ? (
+          <MarketingIcon size={14} style={{ color: lineInfo.color }} />
+        ) : (
+          <LineIconSelector type={lineInfo.value} size={16} style={{ color: lineInfo.color }} />
+        )}
+        <span className="text-[7px] font-black uppercase tracking-wider truncate" style={{ color: lineInfo.color }}>{lineInfo.label}</span>
       </div>
 
       {showHover && createPortal(
-        <div 
+        <div
           className="fixed z-[999999] pointer-events-none animate-in fade-in zoom-in-95 duration-200"
           style={{ left: coords.x, top: coords.y, transform: 'translateY(-50%)' }}
         >
           <div className="w-64 h-64 sm:w-[380px] sm:h-[380px] flex items-center justify-center relative overflow-hidden rounded-[2.5rem] bg-white border border-slate-200 p-2 shadow-[0_50px_120px_rgba(0,0,0,0.5)] ring-[12px] ring-white/20">
-            <img src={currentImg.url} alt="Preview Zoom" className="w-full h-full object-contain rounded-3xl drop-shadow-lg animate-in fade-in duration-500 bg-slate-50" />
+            <img src={currentImg.preview || currentImg.url} alt="Preview Zoom" className="w-full h-full object-contain rounded-3xl drop-shadow-lg animate-in fade-in duration-500 bg-slate-50" />
             <div className="absolute bottom-5 left-1/2 -translate-x-1/2 bg-slate-900/90 backdrop-blur-md px-5 py-2 rounded-full text-[10px] font-black text-white uppercase tracking-[0.3em] shadow-2xl border border-white/10">
-               Vista Rápida
+              Vista Rápida
             </div>
           </div>
         </div>,
@@ -114,6 +175,9 @@ const CardImageCarousel = ({ images, lineInfo, isMarketing }) => {
   );
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// EditableNote — Nota editable dentro del panel de notas
+// ─────────────────────────────────────────────────────────────────────────────
 const EditableNote = ({ note, onUpdate, onDelete, readOnly }) => {
   const [content, setContent] = useState(note.contenido || '');
   const [prevContenido, setPrevContenido] = useState(note.contenido);
@@ -166,6 +230,9 @@ const EditableNote = ({ note, onUpdate, onDelete, readOnly }) => {
   );
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// EntryNotesPostIt — Panel flotante de notas (Post-It premium)
+// ─────────────────────────────────────────────────────────────────────────────
 const EntryNotesPostIt = ({ entry, notes, onClose, onAddNote, onUpdateNote, onDeleteNote }) => {
   const [content, setContent] = useState('');
   const [saving, setSaving] = useState(false);
@@ -205,7 +272,7 @@ const EntryNotesPostIt = ({ entry, notes, onClose, onAddNote, onUpdateNote, onDe
           ) : (
             <div className="space-y-4">
               {notes.map((note, idx) => (
-                <EditableNote key={note.id || idx} note={note} onUpdate={(id, c) => onUpdateNote(entry.id, id || idx, c)} onDelete={(id) => onDeleteNote(entry.id, id || idx)} readOnly={entry.readOnly} />
+                <EditableNote key={note.id || idx} note={note} onUpdate={(id, c) => onUpdateNote(entry.id || entry.tempId, id || idx, c)} onDelete={(id) => onDeleteNote(entry.id || entry.tempId, id || idx)} readOnly={entry.readOnly} />
               ))}
             </div>
           )}
@@ -228,6 +295,19 @@ const EntryNotesPostIt = ({ entry, notes, onClose, onAddNote, onUpdateNote, onDe
   );
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// TareaCard — Tarjeta unificada para Tareas y Entradas de Minuta
+//
+// Props específicos de Tareas:
+//   tarea, currentUser, onViewDetail, onChangeStatus, onReview, onEdit, onDelete,
+//   isMisTareas, className
+//
+// Props adicionales para Minutas (EntryCard):
+//   isDraft         — Entrada en borrador (verde punteado)
+//   onOrganize      — Callback para organizar entradas SIN_ORGANIZAR
+//   onDownloadPdf   — Callback para generar PDF de entradas externas
+//   isGeneratingPdf — Estado de carga del PDF (string con el area)
+// ─────────────────────────────────────────────────────────────────────────────
 export const TareaCard = ({
     tarea,
     currentUser,
@@ -238,6 +318,12 @@ export const TareaCard = ({
     onDelete,
     isMisTareas = false,
     className,
+    // Props de Minutas (opcionales)
+    isDraft = false,
+    onOrganize,
+    onDownloadPdf,
+    isGeneratingPdf,
+    isPorAprobar = false,
 }) => {
 
     const [isEntregaModalOpen, setIsEntregaModalOpen] = useState(false);
@@ -245,8 +331,51 @@ export const TareaCard = ({
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [showNotesPanel, setShowNotesPanel] = useState(false);
     const [notas, setNotas] = useState(tarea.notas || []);
+    const [viewerIndex, setViewerIndex] = useState(null);
+    const [forceCloseTarget, setForceCloseTarget] = useState(null);
     const isExpanded = false;
 
+    // ── Normalización de datos ──────────────────────────────────────────────
+    // Soporta tanto tarea.responsables (módulo Tareas) como tarea.asignaciones (módulo Minutas)
+    const responsables = tarea.responsables
+        || (tarea.asignaciones?.map(a => ({ ...a.usuario, id: a.usuarioId ?? a.usuario?.id })) || []);
+
+    // Soporta tanto tarea.imagenes (Tareas) como tarea.images (Minutas)
+    const imagenesRaw = [
+        ...(tarea._localImages || []),
+        ...(tarea.imagenes || tarea.images || [])
+    ];
+    const imagenesCaptura = imagenesRaw.filter(img => img.tipo !== 'EVIDENCIA');
+    const hasImages = imagenesCaptura.length > 0;
+
+    // ── Flags de estado ─────────────────────────────────────────────────────
+    const { rol } = currentUser || {};
+    const esJefe = rol ? ROLES_ADMIN.includes(rol) : false;
+    const currentUserId = currentUser?.id;
+
+    const estado = tarea.estado?.toUpperCase() || 'PENDIENTE';
+    const isPendiente = estado === 'PENDIENTE';
+    const isEnRevision = estado === 'EN_REVISION';
+    const isCerrado = ESTADOS_FINALES.includes(estado);
+
+    // Soporte para entradas de Minutas: tipo y organización
+    const tipo = tarea.tipo || 'TAREA';
+    const isOrganized = tipo !== 'SIN_ORGANIZAR';
+    const isFormalizada = tipo === 'TAREA';
+    const isExternal = (currentUser?.departamento === 'DISEÑO' && tarea.area !== 'DISENO')
+        || (currentUser?.departamento === 'MARKETING' && tarea.area !== 'MARKETING')
+        // También soporta la lógica de entry-card (comparación directa con departamento del contexto)
+        || (tarea._isExternal === true);
+
+    const vencida = isVencida(tarea);
+    const isMarketing = tarea.departamento === 'MARKETING';
+
+    const esAsignadoDirecto = responsables.some(r => r.id == currentUserId)
+        || tarea.asignaciones?.some(a => a.usuarioId == currentUserId);
+
+    const canForceClose = esJefe && !esAsignadoDirecto && isPendiente && !isPorAprobar;
+
+    // ── Handlers de notas ───────────────────────────────────────────────────
     const handleAddNote = async (tareaId, contenido) => {
         try {
             const res = await createTareaNota({ tareaId, contenido });
@@ -288,20 +417,12 @@ export const TareaCard = ({
         }
     };
 
-    const { rol } = currentUser || {};
-    const esJefe = rol ? ROLES_ADMIN.includes(rol) : false;
-
-    const estado = tarea.estado?.toUpperCase() || 'PENDIENTE';
-    const isPendiente = estado === 'PENDIENTE';
-    const isEnRevision = estado === 'EN_REVISION';
-    const isCerrado = ESTADOS_FINALES.includes(estado);
-    
-    const vencida = isVencida(tarea);
-    const isMarketing = tarea.departamento === 'MARKETING';
-
+    // ── Estilos de tarjeta ──────────────────────────────────────────────────
     const getCardStyles = () => {
+        if (isDraft) return 'bg-emerald-50/40 hover:bg-emerald-100/60 ring-1 ring-emerald-500/10';
         if (vencida) return 'bg-red-50/40 hover:bg-red-100/60 ring-1 ring-red-500/20';
         if (isCerrado) return 'opacity-70 grayscale bg-slate-50/50 hover:bg-slate-100/60 border-slate-200/50';
+        if (isExternal) return 'bg-purple-50/30 border-l-4 border-l-purple-400';
         switch (estado) {
             case 'PENDIENTE': return 'bg-white hover:bg-amber-50/30';
             case 'EN_REVISION': return 'bg-blue-50/30 hover:bg-blue-100/50';
@@ -309,10 +430,6 @@ export const TareaCard = ({
         }
     };
 
-    const imagenesCaptura = tarea.imagenes?.filter(img => img.tipo !== 'EVIDENCIA') || [];
-    const hasImages = imagenesCaptura.length > 0;
-    const esAsignadoDirecto = tarea.responsables?.some((r) => r.id == currentUser?.id);
-    
     const lineInfo = {
         label: isMarketing ? 'Marketing' : (LINEA_MAP[tarea.linea]?.label || tarea.linea || '—'),
         color: isMarketing ? '#8b5cf6' : (LINEA_MAP[tarea.linea]?.color || '#64748b'),
@@ -320,12 +437,20 @@ export const TareaCard = ({
     };
 
     const clasif = CLASIFICACION_MAP[tarea.clasificacion] || null;
-    const isExternal = (currentUser?.departamento === 'DISEÑO' && tarea.area !== 'DISENO') || (currentUser?.departamento === 'MARKETING' && tarea.area !== 'MARKETING');
+
+    // ── Click principal de la tarjeta ────────────────────────────────────────
+    const handleCardClick = () => {
+        if (isDraft || !isOrganized) {
+            onOrganize?.(tarea);
+        } else if (isFormalizada) {
+            onViewDetail?.(tarea);
+        }
+    };
 
     return (
         <>
             <div
-                onClick={() => onViewDetail?.(tarea)}
+                onClick={handleCardClick}
                 className={cn(
                     'group relative flex flex-col transition-all duration-300 rounded-[1.5rem] border border-slate-200/80 overflow-hidden cursor-pointer',
                     isExpanded ? 'shadow-xl ring-2 ring-slate-200' : 'shadow-sm hover:shadow-md',
@@ -334,25 +459,28 @@ export const TareaCard = ({
                 )}
             >
                 <div className="flex flex-row h-full min-h-[140px]">
-                    
+
                     {/* PANEL IZQUIERDO: IMAGEN / IDENTIDAD */}
-                    <div className="flex flex-col items-center justify-center shrink-0 w-[105px] sm:w-[135px] bg-slate-50/50 border-r border-slate-100/50 p-2 sm:p-3 relative group/side">
+                    <div className="flex flex-col items-center justify-center shrink-0 w-[58px] min-[360px]:w-[78px] sm:w-[98px] bg-slate-50/50 border-r border-slate-100/50 p-1 min-[360px]:p-1.5 sm:p-2 relative group/side">
                         {hasImages ? (
-                            <CardImageCarousel 
-                                images={imagenesCaptura} 
+                            <CardImageCarousel
+                                images={imagenesCaptura}
                                 lineInfo={lineInfo}
                                 isMarketing={isMarketing}
+                                onImageClick={(idx) => setViewerIndex(idx)}
                             />
                         ) : (
-                            <div className="flex flex-col items-center justify-center w-full gap-2">
-                                <div className="flex flex-col items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-[1.5rem] transition-all duration-500 group-hover:scale-110 shadow-sm" style={{ backgroundColor: `${lineInfo.color}0f`, border: `1.5px solid ${lineInfo.color}25` }}>
-                                   {isMarketing ? (
-                                      <MarketingIcon size={32} style={{ color: lineInfo.color }} />
-                                   ) : (
-                                      <LineIconSelector type={tarea.linea} size={48} style={{ color: lineInfo.color }} />
-                                   )}
+                            <div className="flex flex-col items-center justify-center w-full gap-1 min-[360px]:gap-1.5">
+                                <div className="flex flex-col items-center justify-center w-9 h-9 min-[360px]:w-12 min-[360px]:h-12 sm:w-16 sm:h-16 rounded-xl min-[360px]:rounded-[1.25rem] transition-all duration-500 group-hover:scale-110 shadow-sm" style={{ backgroundColor: `${lineInfo.color}0f`, border: `1.5px solid ${lineInfo.color}25` }}>
+                                    <div className="scale-[0.55] min-[360px]:scale-[0.75] sm:scale-100 origin-center transition-transform">
+                                        {isMarketing ? (
+                                            <MarketingIcon size={24} style={{ color: lineInfo.color }} />
+                                        ) : (
+                                            <LineIconSelector type={tarea.linea} size={32} style={{ color: lineInfo.color }} />
+                                        )}
+                                    </div>
                                 </div>
-                                <span className="font-black tracking-[0.1em] text-[7px] sm:text-[8px] uppercase font-mono text-center leading-tight px-1" style={{ color: lineInfo.color }}>
+                                <span className="font-black tracking-[0.05em] min-[360px]:tracking-[0.1em] text-[5.5px] min-[360px]:text-[7px] sm:text-[8px] uppercase font-mono text-center leading-tight px-1" style={{ color: lineInfo.color }}>
                                     {lineInfo.label}
                                 </span>
                             </div>
@@ -360,38 +488,59 @@ export const TareaCard = ({
                     </div>
 
                     {/* PANEL DERECHO: CONTENIDO */}
-                    <div className="flex flex-col flex-1 min-w-0 p-3 sm:p-4">
-                        
+                    <div className="flex flex-col flex-1 min-w-0 p-2 min-[360px]:p-3 sm:p-4">
+
                         {/* Header: Status + Fechas */}
                         <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                            <div className="flex items-center gap-2 flex-wrap">
-                                <span className={cn(
-                                  "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border text-white shadow-sm transition-all",
-                                  isExternal ? "bg-purple-600 border-purple-500" : "bg-rose-600 border-rose-500"
-                                )}>
-                                  <Icon name="task_alt" size="10px" className="shrink-0" />
-                                  {isExternal ? `EXTERNA` : 'TAREA'}
-                                </span>
-                                <EtiquetaEstadoTarea status={estado} className="scale-90 origin-left" />
+                            <div className="flex items-center gap-1.5 min-[360px]:gap-2 flex-wrap scale-[0.82] min-[360px]:scale-90 sm:scale-100 origin-left transition-transform">
+                                {/* Badge de tipo */}
+                                {isOrganized && tipo !== 'DESCARTADA' && (
+                                    <span className={cn(
+                                        "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border text-white shadow-sm transition-all",
+                                        tipo === 'TAREA'
+                                            ? (isExternal ? "bg-purple-600 border-purple-500" : "bg-rose-600 border-rose-500")
+                                            : tipo === 'RECORDATORIO' ? "bg-indigo-600 border-indigo-500" : "bg-slate-600 border-slate-500"
+                                    )}>
+                                        <Icon name={tipo === 'TAREA' ? "task_alt" : "notifications"} size="10px" className="shrink-0" />
+                                        {isExternal ? 'EXTERNA' : tipo}
+                                    </span>
+                                )}
+                                {(isFormalizada || tipo === 'RECORDATORIO') && !isExternal && (
+                                    <EtiquetaEstadoTarea status={estado} className="scale-90 origin-left" />
+                                )}
                                 {isExternal && (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border bg-purple-100/50 text-purple-700 border-purple-200/50">
-                                    <Icon name="output" size="10px" />
-                                    {AREA_MAP[tarea.area] || tarea.area}
-                                  </span>
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border bg-purple-100/50 text-purple-700 border-purple-200/50">
+                                        <Icon name="output" size="10px" />
+                                        {AREA_MAP[tarea.area] || tarea.area}
+                                    </span>
                                 )}
                                 {clasif && (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border" style={{ backgroundColor: `${clasif.color}08`, color: clasif.color, borderColor: `${clasif.color}15` }}>
-                                    <Icon name={clasif.icon} size="10px" />
-                                    {clasif.label}
-                                  </span>
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border" style={{ backgroundColor: `${clasif.color}08`, color: clasif.color, borderColor: `${clasif.color}15` }}>
+                                        <Icon name={clasif.icon} size="10px" />
+                                        {clasif.label}
+                                    </span>
                                 )}
                                 {tarea.prioridad && <EtiquetaPrioridadTarea priority={tarea.prioridad} className="scale-90 origin-left" />}
                             </div>
-                            <div className="flex flex-col items-end shrink-0">
-                                <span className="text-[7px] sm:text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
-                                    #{tarea.id}
-                                </span>
-                                {vencida && <span className="text-[7px] font-black text-rose-500 animate-pulse uppercase">¡Vencida!</span>}
+                            <div className="flex items-center gap-1.5 shrink-0">
+                                {!isCerrado && !!onDelete && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setDeleteTarget(tarea);
+                                        }}
+                                        className="h-6 w-6 rounded-lg text-rose-500 hover:bg-rose-50 flex items-center justify-center transition-all active:scale-90"
+                                        title="Eliminar Tarea"
+                                    >
+                                        <Icon name="delete" className="!text-[14px]" />
+                                    </button>
+                                )}
+                                <div className="flex flex-col items-end">
+                                    <span className="text-[7px] sm:text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
+                                        #{tarea.id}
+                                    </span>
+                                    {vencida && <span className="text-[7px] font-black text-rose-500 animate-pulse uppercase">¡Vencida!</span>}
+                                </div>
                             </div>
                         </div>
 
@@ -399,31 +548,32 @@ export const TareaCard = ({
                         <div className="flex-1 min-h-0">
                             <div className="relative group/text">
                                 <p className={cn(
-                                    "whitespace-pre-wrap break-words text-[13px] font-semibold leading-relaxed text-slate-800 transition-all duration-300 px-0.5",
+                                    "whitespace-pre-wrap break-words text-[11.5px] min-[360px]:text-[13px] font-semibold leading-relaxed text-slate-800 transition-all duration-300",
+                                    isDraft ? "bg-slate-50/50 p-2 rounded-xl border border-dashed border-slate-200" : "px-0.5",
                                     isCerrado && "line-through text-slate-400 opacity-60",
                                     !isExpanded && "line-clamp-3"
                                 )}>
-                                    {tarea.descripcion}
+                                    {tarea.descripcion || 'Sin descripción...'}
                                 </p>
                             </div>
                         </div>
 
-                        {/* Metadatos Rápidos Extra (Opcional, en la expansión o inline) */}
-                        <div className="mt-3 pt-2.5 border-t border-slate-50 flex items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center gap-1.5">
+                        {/* Footer: Notas + Avatares + Acciones */}
+                        <div className="mt-2 min-[360px]:mt-3 pt-2 min-[360px]:pt-2.5 border-t border-slate-50 flex items-center justify-between gap-1.5 min-[360px]:gap-2" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center gap-1 min-[360px]:gap-1.5">
                                 <button onClick={(e) => { e.stopPropagation(); setShowNotesPanel(true); }} className={cn(
-                                    "flex h-7 px-2 items-center justify-center gap-1.5 rounded-lg border transition-all active:scale-95 shadow-xs",
+                                    "flex h-6 min-[360px]:h-7 px-1.5 min-[360px]:px-2 items-center justify-center gap-1 min-[360px]:gap-1.5 rounded-lg border transition-all active:scale-95 shadow-xs",
                                     notas.length > 0 ? "border-amber-300 bg-amber-400 text-white font-black" : "border-amber-200 bg-amber-50 text-amber-600"
                                 )}>
                                     <StickyNote size={14} />
                                     <span className="text-[10px]">{notas.length}</span>
                                 </button>
 
-                                {tarea.responsables?.length > 0 && (
+                                {responsables.length > 0 && (
                                     <div className="flex -space-x-2 ml-1">
-                                        {tarea.responsables.map((r) => (
+                                        {responsables.map((r) => (
                                             <Tooltip key={r.id} text={r.nombre} position="top">
-                                                <div className="h-6 w-6 rounded-full border border-white overflow-hidden bg-slate-100 flex items-center justify-center text-[8px] font-bold text-slate-500 shadow-xs shrink-0 ring-1 ring-slate-200 transition-all hover:scale-110 hover:z-10 cursor-help">
+                                                <div className="h-5 w-5 min-[360px]:h-6 min-[360px]:w-6 rounded-full border border-white overflow-hidden bg-slate-100 flex items-center justify-center text-[7px] min-[360px]:text-[8px] font-bold text-slate-500 shadow-xs shrink-0 ring-1 ring-slate-200 transition-all hover:scale-110 hover:z-10 cursor-help">
                                                     {r.imagen ? (
                                                         <img src={r.imagen} alt={r.nombre} className="h-full w-full object-cover" />
                                                     ) : (
@@ -439,12 +589,12 @@ export const TareaCard = ({
                             <div className="flex items-center gap-1.5">
                                 {isMisTareas ? (
                                     <>
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); onViewDetail?.(tarea); }} 
-                                            className="h-7 w-7 rounded-lg border border-slate-200 bg-white text-slate-400 hover:text-slate-700 flex items-center justify-center transition-all active:scale-90 shadow-xs" 
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); onViewDetail?.(tarea); }}
+                                            className="h-6 w-6 min-[360px]:h-7 min-[360px]:w-7 rounded-lg border border-slate-200 bg-white text-slate-400 hover:text-slate-700 flex items-center justify-center transition-all active:scale-90 shadow-xs"
                                             title="Ver Detalles"
                                         >
-                                            <Icon name="visibility" size="14px" />
+                                            <Icon name="visibility" className="!text-[12px] min-[360px]:!text-[14px]" />
                                         </button>
                                         {isPendiente && esAsignadoDirecto && (
                                             <button
@@ -452,34 +602,67 @@ export const TareaCard = ({
                                                     e.stopPropagation();
                                                     setIsEntregaModalOpen(true);
                                                 }}
-                                                className="h-7 px-3 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20 active:scale-95 transition-all flex items-center gap-1 cursor-pointer"
+                                                className="h-6 min-[360px]:h-7 px-2 min-[360px]:px-3 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-[8.5px] min-[360px]:text-[9px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20 active:scale-95 transition-all flex items-center gap-1 cursor-pointer"
                                             >
-                                                <Icon name="check" size="12px" /> Entregar
+                                                <Icon name="check" className="!text-[10px] min-[360px]:!text-[12px]" /> Entregar
                                             </button>
                                         )}
                                         {isEnRevision && (
-                                            <div className="h-7 px-2 bg-slate-50 border border-slate-100 text-slate-500 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1">
-                                                <Icon name="fact_check" size="12px" /> En Revisión
+                                            <div className="h-6 min-[360px]:h-7 px-1.5 min-[360px]:px-2 bg-slate-50 border border-slate-100 text-slate-500 rounded-lg text-[8.5px] min-[360px]:text-[9px] font-black uppercase tracking-widest flex items-center gap-1">
+                                                <Icon name="fact_check" className="!text-[10px] min-[360px]:!text-[12px]" /> En Revisión
                                             </div>
                                         )}
                                     </>
                                 ) : (
-                                    <TableActions 
-                                        row={tarea} 
-                                        actions={[
-                                            { key: 'entregar', enabled: isPendiente && esAsignadoDirecto, onClick: (r) => { setIsEntregaModalOpen(true); } },
-                                            { key: 'aprobar', enabled: isEnRevision && esJefe, onClick: (r) => { if (onReview) onReview(r); else setIsConfirmAprobarOpen(true); } },
-                                            { key: 'ver_detalle', enabled: true, onClick: (r) => { onViewDetail?.(r); } },
-                                            { key: 'editar', enabled: !isCerrado && onEdit, onClick: (r) => { onEdit(r); } },
-                                            { key: 'borrar', enabled: !isCerrado && onDelete, onClick: (r) => { setDeleteTarget(r); } }
-                                        ]} 
-                                    />
+                                    <>
+                                        {/* Botón PDF para externas (Minutas) */}
+                                        {isExternal && !isDraft && onDownloadPdf && (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); onDownloadPdf(tarea.area); }}
+                                                disabled={isGeneratingPdf === tarea.area}
+                                                className="h-6 min-[360px]:h-7 px-1.5 min-[360px]:px-2 rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white flex items-center gap-1 transition-all active:scale-90 shadow-xs font-black uppercase text-[9px] tracking-widest"
+                                                title="Generar PDF"
+                                            >
+                                                <Icon name={isGeneratingPdf === tarea.area ? "hourglass_empty" : "picture_as_pdf"} className={cn("!text-[12px]", isGeneratingPdf === tarea.area && "animate-spin")} />
+                                                PDF
+                                            </button>
+                                        )}
+
+                                        {/* Botón de organizar para entradas SIN_ORGANIZAR (Minutas) */}
+                                        {!isCerrado && !isOrganized && !isExternal && onOrganize && (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); onOrganize(tarea); }}
+                                                className="h-6 min-[360px]:h-7 w-6 min-[360px]:w-7 rounded-lg border border-marca-primario/20 bg-marca-primario/5 text-marca-primario flex items-center justify-center transition-all active:scale-90 shadow-xs"
+                                                title="Organizar Entrada"
+                                            >
+                                                <Settings2 size={13} />
+                                            </button>
+                                        )}
+
+                                        <div className="scale-[0.8] min-[360px]:scale-100 origin-right transition-transform">
+                                            <TableActions
+                                                row={tarea}
+                                                actions={[
+                                                    { key: 'entregar', enabled: isFormalizada && !isDraft && !isCerrado && !isExternal && isPendiente && esAsignadoDirecto, onClick: () => { setIsEntregaModalOpen(true); } },
+                                                    { key: 'aprobar', enabled: isFormalizada && !isDraft && !isCerrado && !isExternal && isEnRevision && esJefe, onClick: (r) => { if (onReview) onReview(r); else setIsConfirmAprobarOpen(true); } },
+                                                    { key: 'forzar_cierre_tarea', enabled: canForceClose && !isCerrado, onClick: (r) => { setForceCloseTarget(r); } },
+                                                    { key: 'ver_detalle', enabled: isFormalizada, onClick: (r) => { onViewDetail?.(r); } },
+                                                    { key: 'editar', enabled: !isCerrado && (isOrganized || isExternal) && !!onEdit, onClick: (r) => { onEdit(r); } },
+                                                ]}
+                                            />
+                                        </div>
+                                    </>
                                 )}
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* Visor de imágenes a pantalla completa */}
+            {viewerIndex !== null && (
+                <ImageViewer images={imagenesCaptura} initialIndex={viewerIndex} onClose={() => setViewerIndex(null)} />
+            )}
 
             {isEntregaModalOpen && (
                 <ModalEntregarTarea
@@ -514,7 +697,7 @@ export const TareaCard = ({
                     isOpen={Boolean(deleteTarget)}
                     onClose={() => setDeleteTarget(null)}
                     onConfirm={async () => {
-                        if (onDelete) await onDelete(deleteTarget.id);
+                        if (onDelete) await onDelete(deleteTarget.id || deleteTarget.tempId);
                         setDeleteTarget(null);
                     }}
                     title="Descartar Tarea"
@@ -533,6 +716,22 @@ export const TareaCard = ({
                     onAddNote={handleAddNote}
                     onUpdateNote={handleUpdateNote}
                     onDeleteNote={handleDeleteNote}
+                />
+            )}
+
+            {forceCloseTarget && (
+                <ConfirmModal
+                    isOpen={Boolean(forceCloseTarget)}
+                    onClose={() => setForceCloseTarget(null)}
+                    onConfirm={async () => {
+                        if (onChangeStatus) await onChangeStatus(forceCloseTarget.id, 'CERRADA');
+                        setForceCloseTarget(null);
+                    }}
+                    title="Forzar Cierre de Tarea"
+                    message="¿Estás seguro de que deseas cerrar esta tarea sin pasar por revisión? Advertencia: no hubo entrega registrada para esta tarea."
+                    confirmText="Cerrar Tarea"
+                    cancelText="Cancelar"
+                    variant="danger"
                 />
             )}
         </>

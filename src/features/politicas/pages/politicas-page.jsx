@@ -1,15 +1,21 @@
 // src/features/politicas/pages/politicas-page.jsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCatalogosStore } from '@/stores/catalogos-store';
 import { useTareas } from '@/features/tareas/hooks/use-tareas';
 import { TAREA_AREA_OPTS } from '@/features/tareas/constants';
 import { notify } from '@/components/notification/adaptive-notify';
+import { useUIStore } from '@/stores/ui-store';
+import { DisenoIcon, MarketingIcon } from '@/features/minutas/components/icons/line-icons';
 
 const PoliticasPage = () => {
   const { user } = useAuthStore();
   const currentUser = user?.data ?? user;
   const userDepto = currentUser?.departamento;
+  const isAdmin = currentUser?.rol === 'ADMIN';
+
+  const { departamentoGlobal, setDepartamentoGlobal } = useUIStore();
+  const activeDept = isAdmin ? (departamentoGlobal === 'DISEÑO' ? 'DISENO' : 'MARKETING') : (userDepto || 'DISENO');
 
   const { catalogos, fetchCatalogos, getLineasPorDepartamento } = useCatalogosStore();
 
@@ -40,19 +46,26 @@ const PoliticasPage = () => {
     if (searchQuery) params.q = searchQuery;
     if (selectedLinea !== 'TODOS') params.linea = selectedLinea;
     if (selectedArea !== 'TODOS') params.area = selectedArea;
+    if (activeDept) params.departamento = activeDept;
 
     fetchTareas(params).catch(() => notify.error('Error al cargar las políticas.'));
-  }, [selectedLinea, selectedArea, searchQuery, fetchTareas]);
+  }, [selectedLinea, selectedArea, searchQuery, fetchTareas, activeDept]);
 
   useEffect(() => {
     loadPoliticas();
   }, [loadPoliticas]);
 
+  // Si se cambia el departamento activo, reiniciar los filtros de línea y área para que no queden inconsistentes
+  useEffect(() => {
+    setSelectedLinea('TODOS');
+    setSelectedArea('TODOS');
+  }, [activeDept]);
+
   // Obtener líneas dinámicas del departamento
-  const lineasDisponibles = userDepto ? getLineasPorDepartamento(userDepto) : [];
+  const lineasDisponibles = activeDept ? getLineasPorDepartamento(activeDept) : [];
 
   // Filtrar áreas que correspondan al depto (en Diseño se usan áreas primarias, en Marketing se usan las de Marketing)
-  const areasDisponibles = userDepto === 'MARKETING'
+  const areasDisponibles = activeDept === 'MARKETING'
     ? [{ value: 'MARKETING', label: 'Marketing' }]
     : TAREA_AREA_OPTS;
 
@@ -73,16 +86,45 @@ const PoliticasPage = () => {
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       {/* Encabezado */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-white/10 pb-6">
-        <div>
+        <div className="flex-1">
           <h1 className="fuente-titulos text-3xl font-bold text-white tracking-wide flex items-center gap-2">
             <span className="material-symbols-rounded text-brand text-4xl">gavel</span>
             Políticas y Lineamientos
           </h1>
           <p className="text-white/60 text-sm mt-1">
             Políticas y lineamientos permanentes del departamento de{' '}
-            <span className="text-brand font-semibold">{userDepto || 'Global'}</span>
+            <span className="text-brand font-semibold">
+              {activeDept === 'DISENO' ? 'DISEÑO' : 'MARKETING'}
+            </span>
           </p>
         </div>
+
+        {/* Selector de Departamento (Admin) */}
+        {isAdmin && (
+          <div className="flex-shrink-0 flex justify-center py-1 animate-in fade-in duration-300">
+            <div className="flex items-center bg-slate-950/60 p-0.5 rounded-xl border border-white/10 shadow-inner max-w-xs backdrop-blur-md">
+              {['DISEÑO', 'MARKETING'].map(opt => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => setDepartamentoGlobal(opt)}
+                  className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    departamentoGlobal === opt 
+                      ? 'bg-brand text-white shadow-sm ring-1 ring-white/10 font-bold' 
+                      : 'text-white/50 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  {opt === 'DISEÑO' && <DisenoIcon size={14} />}
+                  {opt === 'MARKETING' && <MarketingIcon size={14} />}
+                  {opt}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Balanceador para escritorio */}
+        {isAdmin && <div className="flex-1 hidden md:block" />}
       </div>
 
       {/* Barra de Filtros */}

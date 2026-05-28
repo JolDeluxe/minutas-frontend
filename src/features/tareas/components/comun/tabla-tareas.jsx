@@ -9,7 +9,7 @@ import { cn } from '@/utils/cn';
 import { LineIconSelector, MarketingIcon } from '../../../minutas/components/icons/line-icons';
 import { LINEA_MAP, AREA_MAP } from '../../../minutas/constants';
 import { Tooltip } from '@/components/ui/z_index';
-import { ImageViewer } from '../../../minutas/components/timeline/entry-card';
+import { ImageViewer } from './tarjeta-tarea';
 
 const TableImagePreview = ({ images, onClick }) => {
   const [showHover, setShowHover] = useState(false);
@@ -155,6 +155,7 @@ export const TablaTareas = ({
     hidePagination = false,
     hideResponsables = false,
     onDelete,
+    isPorAprobar = false,
 }) => {
     const [viewerIndex, setViewerIndex] = useState(null);
     const [activeEntryImages, setActiveEntryImages] = useState([]);
@@ -390,6 +391,7 @@ export const TablaTareas = ({
                         onReview={onReview}
                         onCancel={onCancel}
                         onDelete={onDelete}
+                        isPorAprobar={isPorAprobar}
                     />
                 );
             },
@@ -416,6 +418,8 @@ export const TablaTareas = ({
                 hidePagination={hidePagination}
                 rowClassName={(row) => {
                     if (row.isSkeleton) return 'bg-white';
+                    const estadoFinal = ['CERRADA', 'CANCELADA', 'DESCARTADA'].includes(row.estado?.toUpperCase());
+                    if (estadoFinal) return 'opacity-70 grayscale bg-slate-50/50';
                     const isAdmin = ['ADMIN', 'GERENCIA', 'JEFE'].includes(currentUser?.rol);
                     if (!isAdmin) {
                         return row.isOverdue
@@ -423,8 +427,8 @@ export const TablaTareas = ({
                             : 'bg-white hover:bg-slate-50';
                     }
                     const isMarketing = row.departamento === 'MARKETING';
-                    return isMarketing 
-                        ? 'bg-purple-50/40 hover:bg-purple-100/60 border-b border-purple-200/50 text-slate-800' 
+                    return isMarketing
+                        ? 'bg-purple-50/40 hover:bg-purple-100/60 border-b border-purple-200/50 text-slate-800'
                         : 'bg-blue-50/40 hover:bg-blue-100/60 border-b border-blue-200/50 text-slate-800';
                 }}
                 onSortChange={(key) => {

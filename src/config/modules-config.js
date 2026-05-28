@@ -51,14 +51,14 @@ export const MODULES_CONFIG = [
   {
     id: 'recordatorios',
     name: 'Recordatorios',
-    icon: 'push_pin',
+    icon: 'notification_important',
     route: '/recordatorios',
     allowedRoles: ['ADMIN', 'GERENCIA', 'JEFE'],
   },
   {
     id: 'politicas',
     name: 'Políticas',
-    icon: 'gavel',
+    icon: 'policy',
     route: '/politicas',
     allowedRoles: ['ADMIN', 'GERENCIA'],
   },

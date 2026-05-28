@@ -247,7 +247,7 @@ export const GlassPaginationPill = ({
 // GlassViewToggle
 // ─────────────────────────────────────────────────────────────────────────────
 const DEFAULT_OPTIONS = [
-    { id: 'cards', label: 'Cards', icon: 'grid_view' },
+    { id: 'cards', label: 'Tarjeta', icon: 'grid_view' },
     { id: 'table', label: 'Tabla', icon: 'table_rows' },
 ];
 

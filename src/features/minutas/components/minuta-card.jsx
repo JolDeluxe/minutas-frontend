@@ -33,7 +33,7 @@ export const MinutaCard = ({ minuta, onViewDetail, badge = null, isAdmin = false
     const totalTareas = (resumen.completadas || 0) + (resumen.cerradas || 0) + (resumen.pendientes || 0);
     const porcentaje = resumen.porcentajeCompletado || 0;
     const atrasadas = resumen.atrasadas || 0;
-    const completadas = (resumen.completadas || 0) + (resumen.cerradas || 0);
+    const completadas = resumen.cerradas || 0;
     
     // Fecha REAL — lo que el jefe necesita para "la minuta del 28 de marzo"
     const fechaReal = formatFechaReal(minuta.fechaRealizada || minuta.fechaProgramada || minuta.createdAt);

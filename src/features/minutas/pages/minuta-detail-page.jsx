@@ -46,6 +46,7 @@ export default function MinutaDetailPage() {
   const [cerrando, setCerrando] = useState(false);
   const [reabriendo, setReabriendo] = useState(false);
   const [finalizando, setFinalizando] = useState(false);
+  const [showForceCloseModal, setShowForceCloseModal] = useState(false);
 
   const [activeFilter, setActiveFilter] = useState({
     tipo: 'TODAS',
@@ -171,14 +172,25 @@ export default function MinutaDetailPage() {
       if (t.tipo === 'POLITICA') totalPoliticas++;
       else if (t.tipo === 'RECORDATORIO') totalRecordatorios++;
       else if (t.tipo === 'TAREA' && !isExterna) {
-        totalTareas++;
-        if (t.estado === 'PENDIENTE') pendientes++;
-        else if (t.estado === 'EN_REVISION') enRevision++;
-        else if (t.estado === 'CERRADA') cerradas++;
-        if (t.fechaVencimiento && new Date(t.fechaVencimiento) < now && t.estado !== 'CERRADA' && t.estado !== 'EN_REVISION') atrasadas++;
+        const estadoUpper = t.estado?.toUpperCase();
+        if (estadoUpper === 'PENDIENTE') {
+          totalTareas++;
+          pendientes++;
+        } else if (estadoUpper === 'EN_REVISION') {
+          totalTareas++;
+          enRevision++;
+        } else if (estadoUpper === 'CERRADA') {
+          totalTareas++;
+          cerradas++;
+        }
+        
+        const isCompletada = estadoUpper === 'CERRADA' || estadoUpper === 'EN_REVISION';
+        if (t.fechaVencimiento && new Date(t.fechaVencimiento) < now && !isCompletada && estadoUpper !== 'CANCELADA') {
+          atrasadas++;
+        }
       }
     }
-    const porcentaje = totalTareas > 0 ? Math.round(((cerradas + enRevision) / totalTareas) * 100) : 0;
+    const porcentaje = totalTareas > 0 ? Math.round((cerradas / totalTareas) * 100) : 0;
     return { totalTareas, pendientes, enRevision, cerradas, atrasadas, porcentaje, totalPoliticas, totalRecordatorios, totalEntradas: allEntries.length };
   }, [allEntries, departamento]);
 
@@ -291,7 +303,8 @@ export default function MinutaDetailPage() {
 
   const handleStatusChange = async (entryId, payload) => {
     try {
-      await changeTareaStatus(entryId, payload);
+      const data = typeof payload === 'string' ? { estado: payload } : payload;
+      await changeTareaStatus(entryId, data);
       await refreshEntries();
       notify.success('Estado actualizado');
       return true;
@@ -423,14 +436,22 @@ export default function MinutaDetailPage() {
 
   const handleCerrar = async () => {
     if (draftEntries.length > 0 || draftNotes.length > 0) { setShowReviewModal(true); return; }
-    if (!confirm("¿Cerrar?")) return;
-    setCerrando(true);
-    try {
-      const res = await cerrarMinuta(id);
-      if (res.data?.advertencia) notify.warning(res.data.advertencia);
-      const resMinuta = await getMinutaById(id);
-      setMinuta(resMinuta.data?.data || resMinuta.data);
-    } finally { setCerrando(false); }
+    
+    const pendingTasks = tareas.filter(t => t.estado?.toUpperCase() === 'PENDIENTE');
+    const revisionTasks = tareas.filter(t => t.estado?.toUpperCase() === 'EN_REVISION');
+    
+    if (pendingTasks.length > 0 || revisionTasks.length > 0) {
+      setShowForceCloseModal(true);
+    } else {
+      if (!confirm("¿Cerrar minuta?")) return;
+      setCerrando(true);
+      try {
+        const res = await cerrarMinuta(id);
+        if (res.data?.advertencia) notify.warning(res.data.advertencia);
+        const resMinuta = await getMinutaById(id);
+        setMinuta(resMinuta.data?.data || resMinuta.data);
+      } finally { setCerrando(false); }
+    }
   };
 
   const handleReabrir = async () => {
@@ -511,5 +532,91 @@ export default function MinutaDetailPage() {
     clearDrafts, handleDownloadPdf, isGeneratingPdf
   };
 
-  return isDesktop ? <MinutaDetailDesktopView {...commonProps} /> : <MinutaDetailMobileView {...commonProps} />;
+  return (
+    <>
+      {isDesktop ? <MinutaDetailDesktopView {...commonProps} /> : <MinutaDetailMobileView {...commonProps} />}
+
+      {showForceCloseModal && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-lg overflow-hidden rounded-[2rem] border border-rose-100 bg-white p-6 shadow-2xl shadow-slate-950/30 animate-in zoom-in-95 duration-300 animate-out fade-out duration-200">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-4 mb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-500 text-white shadow-lg shadow-rose-500/20">
+                <Icon name="gavel" size="20px" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900">Forzar Cierre de Minuta</h3>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Confirmación requerida</p>
+              </div>
+            </div>
+
+            <div className="space-y-4 text-sm text-slate-600 font-medium">
+              {tareas.filter(t => t.estado?.toUpperCase() === 'PENDIENTE').length > 0 ? (
+                <>
+                  <p className="text-rose-600 font-bold bg-rose-50 p-3 rounded-xl border border-rose-100/50">
+                    Advertencia: Las siguientes tareas están PENDIENTES y no cuentan con entregas registradas. Se cerrarán forzosamente sin evidencias.
+                  </p>
+                  <div className="max-h-[160px] overflow-y-auto border border-slate-100 rounded-xl p-2 space-y-1.5 custom-scrollbar bg-slate-50/50">
+                    {tareas.filter(t => t.estado?.toUpperCase() === 'PENDIENTE').map(task => (
+                      <div key={task.id} className="flex items-center justify-between text-xs py-1 px-2 bg-white rounded-lg border border-slate-100 shadow-xs">
+                        <span className="font-bold text-slate-700 truncate max-w-[320px]">{task.descripcion}</span>
+                        <span className="text-[9px] font-black uppercase text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/50">Pendiente</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className="text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  Todas las tareas de esta minuta están en revisión. Si procedes, todas las tareas pasarán a estar cerradas junto con la minuta.
+                </p>
+              )}
+
+              {tareas.filter(t => t.estado?.toUpperCase() === 'EN_REVISION').length > 0 && (
+                <div className="text-xs text-slate-500 bg-blue-50/50 p-2.5 rounded-xl border border-blue-100/40">
+                  * Tareas en revisión ({tareas.filter(t => t.estado?.toUpperCase() === 'EN_REVISION').length}) también serán aprobadas y cerradas automáticamente.
+                </div>
+              )}
+
+              <p className="text-xs text-slate-400">
+                ¿Estás seguro de que deseas forzar el cierre de la minuta y de todas sus tareas asociadas? Esta acción es irreversible.
+              </p>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2.5 border-t border-slate-100 pt-4">
+              <button
+                onClick={() => setShowForceCloseModal(false)}
+                className="h-9 px-4 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-wider text-slate-500 hover:bg-slate-50 transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={async () => {
+                  setShowForceCloseModal(false);
+                  setCerrando(true);
+                  try {
+                    const tasksToClose = tareas.filter(t => ['PENDIENTE', 'EN_REVISION'].includes(t.estado?.toUpperCase()));
+                    await Promise.all(tasksToClose.map(t => changeTareaStatus(t.id, { estado: 'CERRADA' })));
+                    
+                    const res = await cerrarMinuta(id);
+                    if (res.data?.advertencia) notify.warning(res.data.advertencia);
+                    
+                    const resMinuta = await getMinutaById(id);
+                    setMinuta(resMinuta.data?.data || resMinuta.data);
+                    await refreshEntries();
+                    notify.success('Cierre forzado completado');
+                  } catch (err) {
+                    notify.error('Error al forzar cierre');
+                  } finally {
+                    setCerrando(false);
+                  }
+                }}
+                className="h-9 px-4 rounded-xl bg-rose-600 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-rose-500/20 hover:bg-rose-700 transition-all"
+              >
+                Confirmar Cierre
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }

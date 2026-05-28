@@ -7,6 +7,8 @@ import { MinutasDesktop } from '../views/minutas-desktop';
 import { MinutasMobile } from '../views/minutas-mobile';
 import { MinutaFormModal } from '../components/minuta-form-modal';
 
+import { useUIStore } from '@/stores/ui-store';
+
 const LIMIT = 50; // Más alto para que el agrupamiento por fecha funcione bien
 
 const MinutasPage = () => {
@@ -36,8 +38,8 @@ const MinutasPage = () => {
     // DEFAULT: TODAS — el dueño pidió TODAS por defecto en la vista general
     const [estadoFilter, setEstadoFilter] = useState('TODAS');
     
-    // Filtro Global de Departamento (ADMIN)
-    const [departamentoGlobal, setDepartamentoGlobal] = useState('DISEÑO');
+    // Filtro Global de Departamento (ADMIN) desde el UI Store
+    const { departamentoGlobal, setDepartamentoGlobal } = useUIStore();
     
     // Quick Navigate — fecha seleccionada en el calendario
     const [selectedDate, setSelectedDate] = useState(null);

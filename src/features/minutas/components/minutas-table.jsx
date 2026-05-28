@@ -147,9 +147,7 @@ export const MinutasTable = ({
 
                 const porcentaje = resumen.porcentajeCompletado || 0;
                 const atrasadas = resumen.atrasadas || 0;
-                const completadas =
-                    (resumen.completadas || 0) +
-                    (resumen.cerradas || 0);
+                const completadas = resumen.cerradas || 0;
 
                 const enProgreso = resumen.enProgreso || 0;
 

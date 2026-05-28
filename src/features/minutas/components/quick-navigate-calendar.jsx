@@ -58,9 +58,9 @@ const getMinutaBadgeStyle = (m, isSelected) => {
   
   if (isSelected) {
     return {
-      bgClass: "bg-slate-800 border-slate-700 text-white hover:bg-slate-750",
-      iconColor: "#ffffff",
-      deptColor: isMarketing ? "#c084fc" : "#60a5fa"
+      bgClass: "bg-white border-slate-300 text-slate-800 hover:bg-slate-50 shadow-2xs",
+      iconColor: lineColor,
+      deptColor: lineColor
     };
   }
   
@@ -161,59 +161,76 @@ const renderCornerIcon = (minutasDia, ultimaJuntaId, juntaAnteriorId) => {
 };
 
 const renderMinutasBadges = (minutasDia, isSelected) => {
-  if (minutasDia.length === 0) return <div className="h-6 mt-1" />;
+  if (minutasDia.length === 0) return <div className="h-5 mt-1 sm:h-7" />;
   
   return (
-    <div className="flex flex-row flex-wrap justify-center items-center gap-1 w-full mt-1 min-h-6">
-      {minutasDia.slice(0, 2).map((m, idx) => {
+    <div className="flex flex-row flex-wrap justify-center items-center gap-1 w-full mt-1 min-h-5 sm:min-h-7">
+      {/* 
+        En móviles (pantallas pequeñas), renderizamos pequeños círculos tipo LED de alta definición
+        para evitar que el calendario se deforme u overflow. En escritorio, renderizamos los badges detallados.
+      */}
+      {minutasDia.slice(0, 3).map((m, idx) => {
         const dept = m.departamento || m.creadoPor?.departamento || 'DISENO';
         const isMarketing = dept === 'MARKETING';
         const style = getMinutaBadgeStyle(m, isSelected);
-        
-        const showText = minutasDia.length === 1;
         const estadoText = m.estado === 'PROGRAMADA' ? 'Programada' : m.estado === 'ACTIVA' ? 'Activa' : 'Cerrada';
         
         return (
-          <div 
-            key={m.id || idx}
-            className={cn(
-              "flex items-center gap-1 px-1.5 py-0.5 rounded-lg border text-[8px] font-black uppercase tracking-wider shadow-2xs transition-all cursor-pointer shrink-0 max-w-full overflow-hidden",
-              style.bgClass
-            )}
-            title={`MN-${String(m.id).padStart(3, '0')} [${isMarketing ? 'Marketing' : 'Diseño'}]: ${m.titulo} — (${estadoText})`}
-          >
-            {m.estado === 'ACTIVA' ? (
-              <span className="relative flex h-1.5 w-1.5 shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
-              </span>
-            ) : m.estado === 'PROGRAMADA' ? (
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
-            ) : (
-              <span className="h-1.5 w-1.5 rounded-full bg-slate-450 shrink-0" />
-            )}
-            
-            {isMarketing ? (
-              <MarketingIcon size={10} style={{ color: style.iconColor }} className="shrink-0" />
-            ) : (
-              <LineIconSelector type={m.lineaDefault} size={15} style={{ color: style.iconColor }} className="shrink-0" />
-            )}
-            
-            {showText && (
-              <span className="truncate leading-none select-none tracking-tight">
-                {estadoText}
-              </span>
-            )}
+          <div key={m.id || idx} className="contents">
+            {/* VISTA DESKTOP: Badges premium con iconos grandes */}
+            <div 
+              className={cn(
+                "hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-xl border text-[9px] font-black uppercase tracking-wider shadow-2xs transition-all cursor-pointer shrink-0 max-w-full overflow-hidden",
+                style.bgClass
+              )}
+              title={`MN-${String(m.id).padStart(3, '0')} [${isMarketing ? 'Marketing' : 'Diseño'}]: ${m.titulo} — (${estadoText})`}
+            >
+              {m.estado === 'ACTIVA' ? (
+                <span className="relative flex h-1.5 w-1.5 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                </span>
+              ) : m.estado === 'PROGRAMADA' ? (
+                <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
+              ) : (
+                <span className="h-1.5 w-1.5 rounded-full bg-slate-400 shrink-0" />
+              )}
+              
+              {isMarketing ? (
+                <MarketingIcon size={18} style={{ color: style.iconColor }} className="shrink-0" />
+              ) : (
+                <LineIconSelector type={m.lineaDefault} size={24} style={{ color: style.iconColor }} className="shrink-0" />
+              )}
+              
+              {minutasDia.length === 1 && (
+                <span className="truncate leading-none select-none tracking-tight">
+                  {estadoText}
+                </span>
+              )}
+            </div>
+
+            {/* VISTA MÓVIL: LEDs ultralimpios y compactos que nunca deforman el día */}
+            <div 
+              className={cn(
+                "flex sm:hidden h-2.5 w-2.5 rounded-full border transition-all relative items-center justify-center shrink-0 shadow-3xs",
+                m.estado === 'ACTIVA' 
+                  ? 'bg-emerald-500 border-emerald-300 ring-2 ring-emerald-100/50' 
+                  : m.estado === 'PROGRAMADA'
+                    ? 'bg-blue-500 border-blue-300 ring-2 ring-blue-100/50'
+                    : 'bg-slate-400 border-slate-300 ring-2 ring-slate-100/50'
+              )}
+              title={`MN-${String(m.id).padStart(3, '0')} — (${estadoText})`}
+            />
           </div>
         );
       })}
       
-      {minutasDia.length > 2 && (
+      {minutasDia.length > 3 && (
         <span className={cn(
-          "text-[8px] font-black font-mono leading-none ml-0.5 shrink-0",
-          isSelected ? "text-slate-300" : "text-slate-600"
+          "text-[7px] font-black font-mono leading-none ml-0.5 shrink-0",
+          isSelected ? "text-sky-600" : "text-slate-400"
         )}>
-          +{minutasDia.length - 2}
+          +{minutasDia.length - 3}
         </span>
       )}
     </div>
@@ -399,41 +416,43 @@ export const QuickNavigateCalendar = ({
       {/* 1. COLLAPSED HEADER BAR */}
       <div 
         onClick={() => setIsExpanded(!isExpanded)}
-        className="flex items-center justify-between py-2 px-4 bg-slate-50/50 hover:bg-slate-50 transition-colors cursor-pointer select-none"
+        className="flex items-center justify-between py-2 px-3 sm:px-4 bg-slate-50/50 hover:bg-slate-50 transition-colors cursor-pointer select-none gap-2 flex-wrap sm:flex-nowrap"
       >
-        <div className="flex items-center gap-2 overflow-hidden mr-2">
-          <Icon name="calendar_month" size="16px" className={cn("transition-colors", hasActiveFilters ? "text-marca-primario" : "text-slate-400")} />
-          <span className="text-xs font-black uppercase tracking-wider text-slate-700 font-mono">
-            Calendario y Filtros de Fecha
-          </span>
+        <div className="flex flex-wrap items-center gap-1.5 min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Icon name="calendar_month" size="16px" className={cn("transition-colors", hasActiveFilters ? "text-marca-primario" : "text-slate-400")} />
+            <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-700 font-mono">
+              Calendario y Filtros
+            </span>
+          </div>
           
           {hasActiveFilters ? (
-            <span className="inline-flex items-center gap-1 bg-marca-primario/10 text-marca-primario text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-marca-primario/20 shadow-xs animate-pulseFast">
-              <span className="w-1.5 h-1.5 rounded-full bg-marca-primario"></span>
-              {activeFilterLabel}
+            <span className="inline-flex items-center gap-1 bg-marca-primario/10 text-marca-primario text-[8px] sm:text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-marca-primario/20 shadow-xs animate-pulseFast truncate max-w-[100px] sm:max-w-none">
+              <span className="w-1 h-1 rounded-full bg-marca-primario shrink-0"></span>
+              <span className="truncate leading-none">{activeFilterLabel}</span>
             </span>
           ) : (
-            <span className="text-[10px] font-bold text-slate-400">
-              (Historial completo)
+            <span className="text-[8px] sm:text-[10px] font-bold text-slate-400 shrink-0">
+              (Historial)
             </span>
           )}
         </div>
         
-        <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
           {hasActiveFilters && (
             <button
               onClick={handleClearAll}
-              className="text-[10px] font-bold text-rose-500 hover:text-rose-700 hover:bg-rose-50 px-2 py-1 rounded-lg transition-all flex items-center gap-0.5"
+              className="text-[9px] sm:text-[10px] font-bold text-rose-500 hover:text-rose-700 hover:bg-rose-50 px-2 py-1 rounded-lg transition-all flex items-center gap-0.5 cursor-pointer shrink-0"
               title="Limpiar todos los filtros de fecha"
             >
-              <Icon name="close" size="12px" />
+              <Icon name="close" size="10px" className="sm:size-[12px]" />
               Limpiar
             </button>
           )}
           
           <button 
             onClick={() => setIsExpanded(!isExpanded)}
-            className="p-1 rounded-lg hover:bg-slate-200/50 text-slate-500 hover:text-slate-800 transition-all flex items-center justify-center"
+            className="p-1 rounded-lg hover:bg-slate-200/50 text-slate-500 hover:text-slate-800 transition-all flex items-center justify-center cursor-pointer"
           >
             <Icon name={isExpanded ? "expand_less" : "expand_more"} size="18px" />
           </button>
@@ -519,7 +538,7 @@ export const QuickNavigateCalendar = ({
                         className={cn(
                           'flex-1 flex flex-col items-center py-1 px-0.5 rounded-xl border transition-all active:scale-95 relative min-w-0',
                           isSelected
-                            ? 'bg-slate-900 text-white border-slate-900 shadow-md ring-1 ring-slate-900 scale-102 z-10'
+                            ? 'bg-sky-50 text-sky-950 border-sky-400 shadow-md ring-2 ring-sky-200 scale-102 z-10 font-bold'
                             : isToday
                               ? 'bg-marca-primario/5 text-marca-primario border-marca-primario/30 shadow-xs ring-1 ring-marca-primario/20'
                               : minutasDia.length > 0
@@ -534,7 +553,7 @@ export const QuickNavigateCalendar = ({
                         {/* Weekday abbreviation */}
                         <span className={cn(
                           'text-[8px] font-bold uppercase tracking-wider leading-none',
-                          isSelected ? 'text-slate-300' : isToday ? 'text-marca-primario/80' : 'text-slate-400'
+                          isSelected ? 'text-slate-500' : isToday ? 'text-marca-primario/80' : 'text-slate-400'
                         )}>
                           {DIAS_SEMANA[(day.getDay() + 6) % 7]}
                         </span>
@@ -542,7 +561,7 @@ export const QuickNavigateCalendar = ({
                         {/* Day Number */}
                         <span className={cn(
                           'text-xs font-black font-mono leading-none my-0.5',
-                          isSelected ? 'text-white' : isToday ? 'text-marca-primario' : 'text-slate-800'
+                          isSelected ? 'text-slate-900' : isToday ? 'text-marca-primario' : 'text-slate-800'
                         )}>
                           {day.getDate()}
                         </span>
@@ -550,7 +569,7 @@ export const QuickNavigateCalendar = ({
                         {/* Month abbreviation */}
                         <span className={cn(
                           'text-[7px] font-semibold leading-none',
-                          isSelected ? 'text-slate-400' : 'text-slate-400'
+                          isSelected ? 'text-slate-500' : 'text-slate-400'
                         )}>
                           {day.toLocaleDateString('es-MX', { month: 'short' }).toUpperCase().replace('.', '')}
                         </span>
@@ -615,9 +634,9 @@ export const QuickNavigateCalendar = ({
                           onClick={() => handleSelectDay(day)}
                           style={!isSelected && minutasDia.length > 0 ? dayStyle : undefined}
                           className={cn(
-                            'flex flex-col items-center py-1.5 px-0.5 rounded-xl border transition-all active:scale-95 relative min-w-0 h-16 justify-between',
+                            'flex flex-col items-center py-1 px-0.5 rounded-xl border transition-all active:scale-95 relative min-w-0 h-14 sm:h-16 justify-between',
                             isSelected
-                              ? 'bg-slate-900 text-white border-slate-900 shadow-md ring-1 ring-slate-900 z-10'
+                              ? 'bg-sky-50 text-sky-950 border-sky-400 shadow-md ring-2 ring-sky-200 z-10 font-bold'
                               : isToday
                                 ? 'bg-marca-primario/5 text-marca-primario border-marca-primario/30 shadow-xs ring-1 ring-marca-primario/20'
                                 : minutasDia.length > 0
@@ -637,14 +656,17 @@ export const QuickNavigateCalendar = ({
                           {renderCornerIcon(minutasDia, ultimaJuntaId, juntaAnteriorId)}
                           <span className={cn(
                             'text-xs font-black font-mono leading-none',
-                            isSelected ? 'text-white' : isToday ? 'text-marca-primario' : isCurrentMonth ? 'text-slate-800' : 'text-slate-400'
+                            isSelected ? 'text-slate-950' : isToday ? 'text-marca-primario' : isCurrentMonth ? 'text-slate-800' : 'text-slate-400'
                           )}>
                             {day.getDate()}
                           </span>
-
+                          
                           {renderMinutasBadges(minutasDia, isSelected)}
-
-                          <span className="text-[6.5px] font-black text-slate-400 uppercase tracking-wide font-mono scale-90">
+                          
+                          <span className={cn(
+                            "text-[6.5px] font-black uppercase tracking-wide font-mono scale-90",
+                            isSelected ? "text-slate-500" : "text-slate-400"
+                          )}>
                             {day.toLocaleDateString('es-MX', { month: 'short' }).substring(0, 3).toUpperCase().replace('.', '')}
                           </span>
                         </button>

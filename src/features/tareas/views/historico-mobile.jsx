@@ -55,6 +55,7 @@ export const HistoricoMobile = ({
     existenciaGlobal,
     viewMode,
     onViewChange,
+    onDelete,
 }) => {
     const [editTarget, setEditTarget] = useState(null);
 
@@ -133,6 +134,7 @@ export const HistoricoMobile = ({
                                         onViewDetail={onViewDetail} 
                                         onEdit={setEditTarget}
                                         onChangeStatus={onChangeStatus}
+                                        onDelete={onDelete}
                                         onReview={onReview}
                                     />
                                 ))}

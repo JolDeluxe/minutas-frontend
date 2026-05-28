@@ -6,6 +6,7 @@ import { MODULES_CONFIG } from '@/config/modules-config';
 import { useAuthStore } from '@/stores/auth-store';
 import { getTareas } from '../api/tareas-api';
 import { useTareasStore } from '../store/tareas-store';
+import { DisenoIcon, MarketingIcon } from '@/features/minutas/components/icons/line-icons';
 
 export const TareasLayoutDesktop = () => {
     const navigate = useNavigate();
@@ -135,8 +136,8 @@ export const TareasLayoutDesktop = () => {
                                             : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50/50'
                                     }`}
                                 >
-                                    {opt === 'DISEÑO' && <Icon name="draw" size="14px" />}
-                                    {opt === 'MARKETING' && <Icon name="campaign" size="14px" />}
+                                    {opt === 'DISEÑO' && <DisenoIcon size={14} />}
+                                    {opt === 'MARKETING' && <MarketingIcon size={14} />}
                                     {opt}
                                 </button>
                             );

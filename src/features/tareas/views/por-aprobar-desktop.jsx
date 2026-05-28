@@ -96,7 +96,7 @@ export const PorAprobarDesktop = ({
                             currentUser={currentUser} 
                             onViewDetail={onViewDetail} 
                             onReview={onReview}
-                            onDelete={handleDeleteTarea}
+                            isPorAprobar={true}
                         />
                     ))}
                 </div>
@@ -114,7 +114,7 @@ export const PorAprobarDesktop = ({
                         hideResponsables={false}
                         onChangeStatus={handleApprove}
                         onReview={onReview}
-                        onDelete={handleDeleteTarea}
+                        isPorAprobar={true}
                     />
                 </div>
             )}

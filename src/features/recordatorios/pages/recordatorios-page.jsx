@@ -7,7 +7,8 @@ import { useTareas } from '@/features/tareas/hooks/use-tareas';
 import { notify } from '@/components/notification/adaptive-notify';
 import { GlassViewToggle, Icon, Skeleton, Table, Tooltip } from '@/components/ui/z_index';
 import { CLASIFICACION_MAP, LINEA_MAP, formatRelative } from '@/features/minutas/constants';
-import { LineIconSelector, MarketingIcon } from '@/features/minutas/components/icons/line-icons';
+import { LineIconSelector, MarketingIcon, DisenoIcon } from '@/features/minutas/components/icons/line-icons';
+import { useUIStore } from '@/stores/ui-store';
 import { ImageViewer } from '@/features/minutas/components/timeline/entry-card';
 import { cn } from '@/utils/cn';
 
@@ -323,7 +324,11 @@ const RecordatoriosPage = () => {
   const [recordatorios, setRecordatorios] = useState([]);
   const [loading, setLoading] = useState(false);
   const [scopeMode, setScopeMode] = useState('global');
-  const [selectedDepartamento, setSelectedDepartamento] = useState(() => (currentUser?.departamento === 'MARKETING' ? 'MARKETING' : 'DISENO'));
+  
+  // Consumir departamento global desde el UI store
+  const { departamentoGlobal, setDepartamentoGlobal } = useUIStore();
+  const selectedDepartamento = departamentoGlobal === 'DISEÑO' ? 'DISENO' : 'MARKETING';
+  
   const [selectedLinea, setSelectedLinea] = useState('');
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('recordatorios-view') || 'cards');
   const [viewer, setViewer] = useState(null);
@@ -334,16 +339,19 @@ const RecordatoriosPage = () => {
 
   useEffect(() => {
     if (isAdmin) return;
-    setSelectedDepartamento(userDepto === 'MARKETING' ? 'MARKETING' : 'DISENO');
-  }, [isAdmin, userDepto]);
+    const targetDept = userDepto === 'MARKETING' ? 'MARKETING' : 'DISEÑO';
+    if (departamentoGlobal !== targetDept) {
+      setDepartamentoGlobal(targetDept);
+    }
+  }, [isAdmin, userDepto, departamentoGlobal, setDepartamentoGlobal]);
 
   const lineasDisponibles = useMemo(() => {
     if (selectedDepartamento === 'MARKETING') return [];
     return getLineasPorDepartamento(selectedDepartamento);
   }, [getLineasPorDepartamento, selectedDepartamento]);
 
-  const handleDepartamentoChange = (departamento) => {
-    setSelectedDepartamento(departamento);
+  const handleDepartamentoChange = (dept) => {
+    setDepartamentoGlobal(dept === 'DISENO' ? 'DISEÑO' : 'MARKETING');
     setSelectedLinea('');
   };
 
@@ -400,7 +408,7 @@ const RecordatoriosPage = () => {
   return (
     <div className="mx-auto flex w-full max-w-full flex-col gap-5 p-2 md:p-5">
       <div className="flex flex-col gap-4 rounded-2xl border border-white/60 bg-white/55 px-5 py-4 shadow-sm backdrop-blur-md md:flex-row md:items-center md:justify-between">
-        <div>
+        <div className="flex-1">
           <h1 className="fuente-titulos text-3xl font-black tracking-tight text-slate-900">
             Recordatorios
           </h1>
@@ -409,7 +417,31 @@ const RecordatoriosPage = () => {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        {/* Centralized Department Switcher for ADMIN */}
+        {isAdmin && (
+          <div className="flex-shrink-0 flex justify-center py-1 animate-in fade-in duration-300">
+            <div className="flex items-center bg-slate-100/90 p-0.5 rounded-xl border border-slate-200/50 shadow-inner max-w-xs backdrop-blur-md">
+              {['DISEÑO', 'MARKETING'].map(opt => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => handleDepartamentoChange(opt === 'DISEÑO' ? 'DISENO' : 'MARKETING')}
+                  className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    departamentoGlobal === opt 
+                      ? 'bg-white text-marca-primario shadow-sm ring-1 ring-slate-200/50 font-bold' 
+                      : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50/50'
+                  }`}
+                >
+                  {opt === 'DISEÑO' && <DisenoIcon size={14} />}
+                  {opt === 'MARKETING' && <MarketingIcon size={14} />}
+                  {opt}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-1 items-center justify-end gap-3">
           <div className="rounded-2xl bg-slate-900 px-4 py-2 text-white shadow-lg">
             <div className="text-xl font-black leading-none">{recordatorios.length}</div>
             <div className="text-[8px] font-black uppercase tracking-widest text-white/50">Recordatorios</div>
@@ -445,27 +477,6 @@ const RecordatoriosPage = () => {
               </button>
             ))}
           </div>
-
-          {isAdmin && (
-            <div className="inline-flex w-full rounded-2xl border border-slate-200 bg-slate-50 p-1 md:w-auto">
-              {DEPARTAMENTO_OPTIONS.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => handleDepartamentoChange(option.value)}
-                  className={cn(
-                    'flex h-9 flex-1 items-center justify-center gap-2 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest transition-all md:flex-none',
-                    selectedDepartamento === option.value
-                      ? 'bg-white text-marca-primario shadow-sm ring-1 ring-slate-200'
-                      : 'text-slate-400 hover:text-slate-700'
-                  )}
-                >
-                  <Icon name={option.icon} size="15px" />
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
 
         {selectedDepartamento === 'MARKETING' ? (

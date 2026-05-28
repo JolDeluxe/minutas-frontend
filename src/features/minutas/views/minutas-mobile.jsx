@@ -72,7 +72,9 @@ export const MinutasMobile = ({
 }) => {
     const { user } = useAuthStore();
     const [viewMode, setViewModeState] = useState(() => {
-        return localStorage.getItem('minutas_view_mode') || 'table';
+        const saved = localStorage.getItem('minutas_view_mode');
+        if (saved) return saved;
+        return window.innerWidth >= 1024 ? 'table' : 'cards';
     });
 
     const setViewMode = (mode) => {
@@ -190,7 +192,6 @@ export const MinutasMobile = ({
                 className="mb-3 mx-1"
             />
 
-            {/* 🌟 BARRA ULTRA PREMIUM: STICKY + LIQUID GLASS FILTER BOARD */}
             <div className="sticky top-0 z-30 bg-white/40 backdrop-blur-lg px-1 py-2 mb-3 rounded-2xl border border-white/40 shadow-sm flex flex-col gap-2 transition-all duration-300">
                 
                 {/* Caja del Buscador con diseño limpio */}

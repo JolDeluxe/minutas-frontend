@@ -53,6 +53,7 @@ export const MisTareasMobile = ({
     statusActual,
     viewMode,
     onViewChange,
+    onDelete,
 }) => {
     const navigate = useNavigate();
     const [editTarget, setEditTarget] = useState(null);
@@ -145,6 +146,7 @@ export const MisTareasMobile = ({
                                         onEdit={setEditTarget}
                                         onChangeStatus={onChangeStatus}
                                         isMisTareas={true}
+                                        onDelete={onDelete}
                                     />
                                 ))}
                             </div>

@@ -85,7 +85,9 @@ export const MinutasDesktop = ({
 }) => {
     const { user } = useAuthStore();
     const [viewMode, setViewModeState] = useState(() => {
-        return localStorage.getItem('minutas_view_mode') || 'table';
+        const saved = localStorage.getItem('minutas_view_mode');
+        if (saved) return saved;
+        return window.innerWidth >= 1024 ? 'table' : 'cards';
     });
 
     const setViewMode = (mode) => {
@@ -129,8 +131,8 @@ export const MinutasDesktop = ({
         <div className="flex flex-col gap-2 relative">
             
             {/* HEADER: Título + Acciones */}
-            <div className="flex justify-between items-end mb-1">
-                <div>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+                <div className="flex-1">
                     <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight fuente-titulos">
                         Minutas
                     </h1>
@@ -145,26 +147,29 @@ export const MinutasDesktop = ({
                 </div>
                 
                 {isAdmin && (
-                    <div className="flex items-center self-center mx-4 bg-slate-100/80 p-1 rounded-xl border border-slate-200/50 shadow-inner">
-                        {['DISEÑO', 'MARKETING'].map(opt => (
-                            <button
-                                key={opt}
-                                onClick={() => setDepartamentoGlobal(opt)}
-                                className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                                    departamentoGlobal === opt 
-                                        ? 'bg-white text-marca-primario shadow-sm ring-1 ring-slate-200/50' 
-                                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50/50'
-                                }`}
-                            >
-                                {opt === 'DISEÑO' && <DisenoIcon size={14} />}
-                                {opt === 'MARKETING' && <MarketingIcon size={14} />}
-                                {opt}
-                            </button>
-                        ))}
+                    <div className="flex-shrink-0 flex justify-center py-1 animate-in fade-in duration-300">
+                        <div className="flex items-center bg-slate-100/90 p-0.5 rounded-xl border border-slate-200/50 shadow-inner max-w-xs backdrop-blur-md">
+                            {['DISEÑO', 'MARKETING'].map(opt => (
+                                <button
+                                    key={opt}
+                                    type="button"
+                                    onClick={() => setDepartamentoGlobal(opt)}
+                                    className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                                        departamentoGlobal === opt 
+                                            ? 'bg-white text-marca-primario shadow-sm ring-1 ring-slate-200/50 font-bold' 
+                                            : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50/50'
+                                    }`}
+                                >
+                                    {opt === 'DISEÑO' && <DisenoIcon size={14} />}
+                                    {opt === 'MARKETING' && <MarketingIcon size={14} />}
+                                    {opt}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 )}
                 
-                <div className="flex items-center gap-2 shrink-0 ml-auto">
+                <div className="flex flex-1 items-center gap-2 justify-end shrink-0">
                     {/* Atajos Ejecutivos de Dirección */}
                     {currentJuntaId && (
                         <div className="flex items-center gap-1.5 bg-slate-100/80 border border-slate-200/50 p-1 rounded-xl mr-1">

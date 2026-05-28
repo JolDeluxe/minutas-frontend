@@ -6,7 +6,7 @@ import { Settings2, StickyNote, Plus, X } from 'lucide-react';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { LineIconSelector, MarketingIcon } from '../icons/line-icons';
-import { ImageViewer } from './entry-card';
+import { ImageViewer } from '../../../tareas/components/comun/tarjeta-tarea';
 import { useAuthStore } from '@/stores/auth-store';
 import { ModalEntregarTarea } from '../../../tareas/components/comun/modal-entregar-tarea';
 
@@ -243,6 +243,7 @@ export const EntryTable = ({
   const [activeNotesEntryId, setActiveNotesEntryId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [approveTarget, setApproveTarget] = useState(null);
+  const [forceCloseTarget, setForceCloseTarget] = useState(null);
   const [isEntregaModalOpen, setIsEntregaModalOpen] = useState(false);
   const [selectedTareaForEntrega, setSelectedTareaForEntrega] = useState(null);
 
@@ -434,6 +435,8 @@ export const EntryTable = ({
         const isAsignado = row.asignaciones?.some(asig => asig.usuarioId === currentUserId);
         const estadoActual = row.estado || 'PENDIENTE';
         
+        const canForceClose = isJefe && !isAsignado && estadoActual === 'PENDIENTE';
+        
         return (
           <div className="flex items-center gap-2 justify-center">
             {/* Notas: Siempre visible */}
@@ -460,6 +463,7 @@ export const EntryTable = ({
                 actions={[
                     { key: 'entregar', enabled: isFormalizada && !isDraft && !isClosed && !isExternal && estadoActual === 'PENDIENTE' && isAsignado, onClick: (r) => { setSelectedTareaForEntrega(r); setIsEntregaModalOpen(true); } },
                     { key: 'aprobar', enabled: isFormalizada && !isDraft && !isClosed && !isExternal && estadoActual === 'EN_REVISION' && isJefe, onClick: (r) => { setApproveTarget(r); } },
+                    { key: 'forzar_cierre_tarea', enabled: canForceClose && !isClosed, onClick: (r) => { setForceCloseTarget(r); } },
                     { key: 'ver_detalle', enabled: row.tipo === 'TAREA', onClick: (r) => { onViewDetail?.(r); } },
                     { key: 'editar', enabled: !isClosed && (isOrganized || isExternal), onClick: (r) => { onEdit(r); } },
                     { key: 'borrar', enabled: !isClosed, onClick: (r) => { setDeleteTarget(r); } }
@@ -562,6 +566,22 @@ export const EntryTable = ({
           confirmText="Aprobar"
           cancelText="Cancelar"
           variant="success"
+        />
+      )}
+
+      {forceCloseTarget && (
+        <ConfirmModal
+          isOpen={Boolean(forceCloseTarget)}
+          onClose={() => setForceCloseTarget(null)}
+          onConfirm={async () => {
+            if (onChangeStatus) await onChangeStatus(forceCloseTarget.id, { estado: 'CERRADA' });
+            setForceCloseTarget(null);
+          }}
+          title="Forzar Cierre de Tarea"
+          message="¿Estás seguro de que deseas cerrar esta tarea sin pasar por revisión? Advertencia: no hubo entrega registrada para esta tarea."
+          confirmText="Cerrar Tarea"
+          cancelText="Cancelar"
+          variant="danger"
         />
       )}
     </>

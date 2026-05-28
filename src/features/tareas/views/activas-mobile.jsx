@@ -55,6 +55,7 @@ export const ActivasMobile = ({
     onReview,
     viewMode,
     onViewChange,
+    onDelete,
 }) => {
     const navigate = useNavigate();
     const [editTarget, setEditTarget] = useState(null);
@@ -147,6 +148,7 @@ export const ActivasMobile = ({
                                         onEdit={setEditTarget}
                                         onChangeStatus={onChangeStatus}
                                         onReview={onReview}
+                                        onDelete={onDelete}
                                     />
                                 ))}
                             </div>
