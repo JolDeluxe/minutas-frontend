@@ -172,6 +172,7 @@ export const ActivasDesktop = ({
                                         onEdit={setEditTarget}
                                         onChangeStatus={onChangeStatus}
                                         onReview={onReview}
+                                        onDelete={onDelete}
                                     />
                                 ))}
                             </div>

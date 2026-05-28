@@ -168,6 +168,8 @@ export const MisTareasDesktop = ({
                                         onViewDetail={onViewDetail} 
                                         onEdit={setEditTarget}
                                         onChangeStatus={onChangeStatus}
+                                        onDelete={onDelete}
+                                        isMisTareas={true}
                                     />
                                 ))}
                             </div>

@@ -122,6 +122,7 @@ export const MisTareasMobile = ({
                                 onViewDetail={onViewDetail} 
                                 onEdit={setEditTarget}
                                 onChangeStatus={onChangeStatus}
+                                isMisTareas={true}
                             />
                         ))
                 }

@@ -103,9 +103,12 @@ export const EntryFeed = ({
             <div className="h-px flex-1 bg-slate-200/60" />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          <div className={cn(
+            "grid gap-4 md:gap-6",
+            viewMode === 'table' ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+          )}>
             {viewMode === 'table' ? (
-              <div className="col-span-full animate-in fade-in slide-in-from-bottom-6 duration-500 ease-out">
+              <div className="animate-in fade-in slide-in-from-bottom-6 duration-500 ease-out">
                 <EntryTable
                   entries={section.entries}
                   departamento={departamento}

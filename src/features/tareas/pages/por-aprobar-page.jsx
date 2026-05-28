@@ -85,34 +85,44 @@ export default function PorAprobarPage() {
         }
     };
 
+    // <div className="flex flex-col gap-2">
+    //             <h2 className="fuente-titulos text-xl text-marca-primario uppercase tracking-tight">Tareas Activas</h2>
+    //             {totalAtrasadasGlobal > 0 && (
+    //                 <div className="flex items-center gap-1.5 text-estado-rechazado font-bold text-xs animate-pulse">
+    //                     <Icon name="warning" size="xs" />
+    //                     <span>{totalAtrasadasGlobal} tareas atrasadas</span>
+    //                 </div>
+    //             )}
+    //         </div>
+
     return (
         <div className="flex flex-col gap-6 animate-in fade-in duration-500 pb-20">
             {/* Header de la sección */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white/40 backdrop-blur-md px-6 py-5 rounded-3xl border border-white/60 shadow-sm">
-                <div>
-                    <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight fuente-titulos">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white/40 backdrop-blur-md px-4 py-5 md:px-6 rounded-3xl border border-white/60 shadow-sm text-center lg:text-left">
+                <div className="flex flex-col items-center lg:items-start w-full">
+                    <h2 className="fuente-titulos text-xl text-marca-primario uppercase tracking-tight">
                         Validación de Entregas
                     </h2>
-                    <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-0.5">
+                    <p className="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-wider mt-1 max-w-xs md:max-w-none">
                         Revisa y cierra las tareas completadas por los coordinadores.
                     </p>
                 </div>
 
-                <div className="flex items-center justify-center lg:justify-end gap-4 shrink-0">
-                    <div className="bg-black text-white px-4 py-2 rounded-2xl flex items-center gap-2 shadow-lg">
-                        <Icon name="fact_check" size="sm" />
-                        <span className="text-xs font-black uppercase tracking-widest">
+                <div className="flex flex-wrap items-center justify-center lg:justify-end gap-3 w-full lg:w-auto shrink-0">
+                    <div className="bg-green-700 text-white px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-2xl flex items-center justify-center gap-1.5 md:gap-2 shadow-lg w-fit">
+                        <Icon name="fact_check" size="sm" className="scale-75 md:scale-100" />
+                        <span className="text-[10px] md:text-xs font-black uppercase tracking-widest">
                             {meta.totalParaPaginador || 0} Pendientes
                         </span>
                     </div>
-                    <GlassViewToggle 
+                    {/* <GlassViewToggle 
                         value={viewMode} 
                         onChange={handleViewChange} 
                         options={[
                             { id: 'cards', label: 'Tarjetas', icon: 'grid_view' },
                             { id: 'table', label: 'Tabla', icon: 'table_rows' }
                         ]}
-                    />
+                    /> */}
                 </div>
             </div>
 

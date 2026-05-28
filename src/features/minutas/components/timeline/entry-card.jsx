@@ -1,4 +1,4 @@
-import { Icon, TableActions, ConfirmModal } from '@/components/ui/z_index';
+import { Icon, TableActions, ConfirmModal, Tooltip } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
 import {
   CLASIFICACION_MAP,
@@ -164,7 +164,7 @@ const EntryNotesPostIt = ({ entry, notes, onClose, onAddNote, onUpdateNote, onDe
               <StickyNote size={20} />
             </div>
             <div>
-              <p className="text-sm font-black text-amber-950">Notas de entrada</p>
+              <p className="text-sm font-black text-amber-950">Notas de tarea</p>
               <p className="text-[10px] font-black uppercase tracking-widest text-amber-700/60">{notes.length} registradas</p>
             </div>
           </div>
@@ -174,7 +174,7 @@ const EntryNotesPostIt = ({ entry, notes, onClose, onAddNote, onUpdateNote, onDe
         <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
           {notes.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-amber-200 bg-white/45 p-5 text-center">
-              <p className="text-xs font-bold text-amber-800/60">Esta entrada todavía no tiene notas.</p>
+              <p className="text-xs font-bold text-amber-800/60">Esta tarea todavía no tiene notas.</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -381,7 +381,7 @@ export const EntryCard = ({
   const getCardStyles = () => {
     if (isDraft) return 'bg-emerald-50/40 hover:bg-emerald-100/60 ring-1 ring-emerald-500/10';
     if (vencida) return 'bg-red-50/40 hover:bg-red-100/60 ring-1 ring-red-500/20';
-    if (isClosed) return 'opacity-85 bg-slate-50/50 hover:bg-slate-100/60';
+    if (isClosed) return 'opacity-70 grayscale bg-slate-50/50 hover:bg-slate-100/60 border-slate-200/50';
     if (isExternal) return 'bg-purple-50/30 border-l-4 border-l-purple-400';
     
     switch (estadoActual) {
@@ -409,18 +409,6 @@ export const EntryCard = ({
           getCardStyles()
         )}
       >
-        {/* Top Type Indicator */}
-        {!isDraft && isOrganized && entry.tipo !== 'DESCARTADA' && (
-          <div className={cn(
-            "w-full py-0.5 text-center text-[7px] font-black uppercase tracking-[0.2em] text-white shadow-inner",
-            entry.tipo === 'TAREA' ? (isExternal ? "bg-purple-500" : "bg-rose-500") : 
-            entry.tipo === 'RECORDATORIO' ? "bg-indigo-500" : "bg-purple-500"
-          )}>
-            {isExternal ? `EXTERNA: ${AREA_MAP[entry.area] || entry.area}` : 
-             entry.tipo === 'TAREA' ? 'TAREA' : entry.tipo}
-          </div>
-        )}
-
         <div className="flex flex-row h-full min-h-[140px]">
           
           {/* PANEL IZQUIERDO: IMAGEN / IDENTIDAD */}
@@ -455,7 +443,16 @@ export const EntryCard = ({
             {/* Header: Status + Badge + Fechas */}
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
               <div className="flex items-center gap-2 flex-wrap">
-                {!isDraft && !isExternal && <StatusTrafficLight entry={entry} size="sm" className="shrink-0" />}
+                {!isDraft && isOrganized && entry.tipo !== 'DESCARTADA' && (
+                  <span className={cn(
+                    "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border text-white shadow-sm transition-all",
+                    entry.tipo === 'TAREA' ? (isExternal ? "bg-purple-600 border-purple-500" : "bg-rose-600 border-rose-500") : 
+                    entry.tipo === 'RECORDATORIO' ? "bg-indigo-600 border-indigo-500" : "bg-slate-600 border-slate-500"
+                  )}>
+                    <Icon name={entry.tipo === 'TAREA' ? "task_alt" : "notifications"} size="10px" className="shrink-0" />
+                    {isExternal ? `EXTERNA` : entry.tipo}
+                  </span>
+                )}
                 {!isDraft && (entry.tipo === 'TAREA' || entry.tipo === 'RECORDATORIO') && !isExternal && (
                   <TareaStatusBadge status={estadoActual} className="scale-90 origin-left" />
                 )}
@@ -495,9 +492,8 @@ export const EntryCard = ({
             </div>
 
             {/* Extra Info: Oculto por defecto */}
-            {isExpanded && !isDraft && !isExternal && (
+            {/* {isExpanded && !isDraft && !isExternal && (
               <div className="mt-4 pt-3 border-t border-slate-50 space-y-3 animate-in slide-in-from-top-1 duration-300">
-                 {/* Responsables */}
                  {entry.asignaciones?.length > 0 && (
                    <div className="flex flex-col gap-1.5">
                      <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Responsables</span>
@@ -512,9 +508,9 @@ export const EntryCard = ({
                         ))}
                      </div>
                    </div>
-                 )}
+                 )} */}
                  
-                 {/* Fechas importantes */}
+                 {/* Fechas importantes
                  {entry.fechaVencimiento && (
                    <div className="pt-2">
                       <div className="bg-rose-50/50 p-2 rounded-xl border border-rose-100 w-full sm:w-1/2">
@@ -524,7 +520,7 @@ export const EntryCard = ({
                    </div>
                  )}
               </div>
-            )}
+            )} */}
 
             {/* Footer Actions: Compactos */}
             <div className="mt-3 pt-2.5 border-t border-slate-50 flex items-center justify-between gap-2">
@@ -536,22 +532,41 @@ export const EntryCard = ({
                   <StickyNote size={14} />
                   <span className="text-[10px]">{entryNotes.length || '+'}</span>
                 </button>
+
+                {entry.asignaciones?.length > 0 && (
+                  <div className="flex -space-x-2 ml-1">
+                    {entry.asignaciones.map((asig) => {
+                      const nombre = asig.usuario?.nombre || 'Responsable';
+                      return (
+                        <Tooltip key={asig.id} text={nombre} position="top">
+                          <div className="h-6 w-6 rounded-full border border-white overflow-hidden bg-slate-100 flex items-center justify-center text-[8px] font-bold text-slate-500 shadow-xs shrink-0 ring-1 ring-slate-200 transition-all hover:scale-110 hover:z-10 cursor-help">
+                            {asig.usuario?.imagen ? (
+                              <img src={asig.usuario.imagen} alt={nombre} className="h-full w-full object-cover" />
+                            ) : (
+                              nombre.charAt(0)
+                            )}
+                          </div>
+                        </Tooltip>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Botones de acción inteligentes */}
               <div className="flex items-center gap-1.5">
-                {hasExtraInfo && !isExternal && (
+                {/* {hasExtraInfo && !isExternal && (
                   <button onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }} className={cn("h-7 w-7 rounded-lg border transition-all active:scale-90 flex items-center justify-center shadow-xs", isExpanded ? "bg-slate-800 border-slate-800 text-white" : "bg-white border-slate-100 text-slate-400 hover:text-slate-800")}>
                     <Icon name={isExpanded ? "visibility_off" : "visibility"} size="14px" />
                   </button>
-                )}
+                )} */}
 
                 {/* PDF Button for External */}
                 {isExternal && !isDraft && onDownloadPdf && (
                   <button 
                     onClick={(e) => { e.stopPropagation(); onDownloadPdf(entry.area); }} 
                     disabled={isGeneratingPdf === entry.area}
-                    className="h-7 px-2.5 rounded-lg border border-purple-200 bg-purple-50 text-purple-600 hover:bg-purple-600 hover:text-white flex items-center gap-1.5 transition-all active:scale-90 shadow-xs font-black uppercase text-[9px] tracking-widest" 
+                    className="h-7 px-2.5 rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white flex items-center gap-1.5 transition-all active:scale-90 shadow-xs font-black uppercase text-[9px] tracking-widest" 
                     title="Generar y Compartir PDF"
                   >
                     <Icon name={isGeneratingPdf === entry.area ? "hourglass_empty" : "picture_as_pdf"} size="14px" className={isGeneratingPdf === entry.area ? "animate-spin" : ""} />
@@ -583,7 +598,7 @@ export const EntryCard = ({
       
       {showNotesPanel && (
         <EntryNotesPostIt 
-          entry={{ ...entry, readOnly: isClosed }} 
+          entry={{ ...entry, readOnly: isClosed || userRole === 'COORDINADOR' }}
           notes={entryNotes} 
           onClose={() => setShowNotesPanel(false)} 
           onAddNote={onCreateNote} 
@@ -612,8 +627,8 @@ export const EntryCard = ({
             if (onRemove) await onRemove(deleteTarget.id || deleteTarget.tempId);
             setDeleteTarget(null);
           }}
-          title="Descartar Entrada"
-          message="¿Estás seguro de que deseas descartar esta entrada? Esta acción eliminará permanentemente los datos."
+          title="Descartar Tarea"
+          message="¿Estás seguro de que deseas descartar esta tarea? Esta acción eliminará permanentemente los datos."
           confirmText="Descartar"
           cancelText="Cancelar"
           variant="danger"

@@ -88,7 +88,7 @@ const EntryNotesPostIt = ({ entry, notes, onClose, onAddNote, onUpdateNote, onDe
               <StickyNote size={20} />
             </div>
             <div>
-              <p className="text-sm font-black text-amber-950">Notas de entrada</p>
+              <p className="text-sm font-black text-amber-950">Notas de tarea</p>
               <p className="text-[10px] font-black uppercase tracking-widest text-amber-700/60">{notes.length} registradas</p>
             </div>
           </div>
@@ -97,7 +97,7 @@ const EntryNotesPostIt = ({ entry, notes, onClose, onAddNote, onUpdateNote, onDe
         <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
           {notes.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-amber-200 bg-white/45 p-5 text-center">
-              <p className="text-xs font-bold text-amber-800/60">Esta entrada todavía no tiene notas.</p>
+              <p className="text-xs font-bold text-amber-800/60">Esta tarea todavía no tiene notas.</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -283,7 +283,7 @@ export const EntryTable = ({
       align: "center",
       headerClassName: "w-[10%] min-w-[150px]",
       cell: (row) => {
-        const allImages = [...(row._localImages || []), ...(row.imagenes || row.images || [])];
+        const allImages = [...(row._localImages || []), ...(row.imagenes || row.images || [])].filter(img => img.tipo !== 'EVIDENCIA');
         return <TableImagePreview images={allImages} onClick={() => openViewer(allImages)} />;
       }
     },
@@ -437,7 +437,7 @@ export const EntryTable = ({
         return (
           <div className="flex items-center gap-2 justify-center">
             {/* Notas: Siempre visible */}
-            <button onClick={(e) => { e.stopPropagation(); setActiveNotesEntryId(row.id || row.tempId); }} className={cn("h-9 flex items-center gap-1.5 px-2.5 rounded-xl border transition-all active:scale-95 shadow-sm bg-white", entryNotes.length > 0 ? "border-amber-300 text-amber-700 bg-amber-50" : "border-slate-200 text-slate-400 hover:text-amber-600")} title="Notas de la tarea">
+            <button onClick={(e) => { e.stopPropagation(); setActiveNotesEntryId(row.id || row.tempId); }} className={cn("h-9 flex items-center gap-1.5 px-2.5 rounded-xl border transition-all active:scale-95 shadow-sm bg-white", entryNotes.length > 0 ? "border-amber-300 text-amber-700 bg-amber-200" : "border-yellow-400 text-yellow-500 hover:text-amber-600 bg-amber-50")} title="Notas de la tarea">
               <StickyNote size={16} />
               <span className="text-[11px] font-black">{entryNotes.length}</span>
             </button>
@@ -447,7 +447,7 @@ export const EntryTable = ({
               <button 
                 onClick={(e) => { e.stopPropagation(); onDownloadPdf(row.area); }} 
                 disabled={isGeneratingPdf === row.area}
-                className="h-9 px-2.5 rounded-xl border border-purple-200 bg-purple-50 text-purple-600 hover:bg-purple-600 hover:text-white flex items-center gap-1.5 transition-all active:scale-90 shadow-sm font-black uppercase text-[10px] tracking-widest" 
+                className="h-9 px-2.5 rounded-xl border border-red-200 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white flex items-center gap-1.5 transition-all active:scale-90 shadow-sm font-black uppercase text-[10px] tracking-widest" 
                 title="Generar PDF"
               >
                 <Icon name={isGeneratingPdf === row.area ? "hourglass_empty" : "picture_as_pdf"} size="16px" className={isGeneratingPdf === row.area ? "animate-spin" : ""} />
@@ -486,7 +486,7 @@ export const EntryTable = ({
           data={entries}
           keyField={(row) => row.id || row.tempId}
           loading={false}
-          emptyMessage="No hay entradas registradas aún."
+          emptyMessage="No hay tareas registradas aún."
           rowClassName={(row) => {
             const isDraft = Boolean(row.tempId);
             const isClosed = row.estado === 'CERRADA';
@@ -541,8 +541,8 @@ export const EntryTable = ({
             if (onRemove) await onRemove(deleteTarget.id || deleteTarget.tempId);
             setDeleteTarget(null);
           }}
-          title="Descartar Entrada"
-          message="¿Estás seguro de que deseas descartar esta entrada? Esta acción eliminará permanentemente los datos."
+          title="Descartar Tarea"
+          message="¿Estás seguro de que deseas descartar esta tarea? Esta acción eliminará permanentemente los datos."
           confirmText="Descartar"
           cancelText="Cancelar"
           variant="danger"

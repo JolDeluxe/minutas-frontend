@@ -25,6 +25,8 @@ import { DashboardLayout } from '@/layouts/dashboard-layout';
 import WelcomePage from '@/pages/welcome-page';
 import NotFound from '@/pages/not-found';
 
+import { TareasIndexRedirect } from '@/features/tareas/components/tareas-index-redirect';
+
 const ROLES = {
   minutas: MODULES_CONFIG.find(m => m.id === 'minutas')?.allowedRoles || [],
   usuarios: MODULES_CONFIG.find(m => m.id === 'usuarios')?.allowedRoles || [],
@@ -76,7 +78,7 @@ export const AppRoutes = () => {
           {/* Módulo: Tareas */}
           <Route element={<RoleGuard allowedRoles={ROLES.tareas} />}>
             <Route path="/tareas" element={<TareasPage />}>
-              <Route index element={<Navigate to="mis-tareas" replace />} />
+              <Route index element={<TareasIndexRedirect />} />
               
               <Route element={<RoleGuard allowedRoles={ROLES.misTareas} />}>
                 <Route path="mis-tareas" element={<MisTareasPage />} />
