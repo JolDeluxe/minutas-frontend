@@ -1,16 +1,17 @@
 // src/features/tareas/pages/por-aprobar-page.jsx
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { useAuthStore } from '@/stores/auth-store';
 import { useTareas } from '../hooks/use-tareas';
-import { TareasTable } from '../components/historico/tareas-table';
+import { PorAprobarDesktop } from '../views/por-aprobar-desktop';
+import { PorAprobarMobile } from '../views/por-aprobar-mobile';
 import { TareaDetailDrawer } from '../components/common/tarea-detail-drawer';
 import { TareaRevisionModal } from '../components/common/tarea-revision-modal';
-import { Icon, Button, Skeleton, GlassViewToggle } from '@/components/ui/z_index';
 import { notify } from '@/components/notification/adaptive-notify';
-import { HoyTareaCard } from '../components/hoy/hoy-tarea-card';
 import { useTareasStore } from '../store/tareas-store';
 
 export default function PorAprobarPage() {
+    const isDesktop = useIsDesktop();
     const { user } = useAuthStore();
     const currentUser = user?.data || user;
 
@@ -28,7 +29,7 @@ export default function PorAprobarPage() {
     const [selectedTarea, setSelectedTarea] = useState(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [revisionTarget, setRevisionTarget] = useState(null);
-    const [viewMode, setViewMode] = useState(() => localStorage.getItem('por-aprobar-view') || 'table');
+    const [viewMode, setViewMode] = useState(() => localStorage.getItem('por-aprobar-view') || 'cards');
     
     // Consumir el departamento global
     const { departamento } = useTareasStore();
@@ -85,89 +86,28 @@ export default function PorAprobarPage() {
         }
     };
 
-    // <div className="flex flex-col gap-2">
-    //             <h2 className="fuente-titulos text-xl text-marca-primario uppercase tracking-tight">Tareas Activas</h2>
-    //             {totalAtrasadasGlobal > 0 && (
-    //                 <div className="flex items-center gap-1.5 text-estado-rechazado font-bold text-xs animate-pulse">
-    //                     <Icon name="warning" size="xs" />
-    //                     <span>{totalAtrasadasGlobal} tareas atrasadas</span>
-    //                 </div>
-    //             )}
-    //         </div>
+    const sharedProps = {
+        tareas,
+        loading,
+        currentUser,
+        meta,
+        viewMode,
+        onViewChange: handleViewChange,
+        onViewDetail: handleViewDetail,
+        onReview: setRevisionTarget,
+        setPage,
+        page,
+        handleApprove,
+        handleDeleteTarea,
+        onRefresh: loadTareas
+    };
 
     return (
-        <div className="flex flex-col gap-6 animate-in fade-in duration-500 pb-20">
-            {/* Header de la sección */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white/40 backdrop-blur-md px-4 py-5 md:px-6 rounded-3xl border border-white/60 shadow-sm text-center lg:text-left">
-                <div className="flex flex-col items-center lg:items-start w-full">
-                    <h2 className="fuente-titulos text-xl text-marca-primario uppercase tracking-tight">
-                        Validación de Entregas
-                    </h2>
-                    <p className="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-wider mt-1 max-w-xs md:max-w-none">
-                        Revisa y cierra las tareas completadas por los coordinadores.
-                    </p>
-                </div>
-
-                <div className="flex flex-wrap items-center justify-center lg:justify-end gap-3 w-full lg:w-auto shrink-0">
-                    <div className="bg-green-700 text-white px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-2xl flex items-center justify-center gap-1.5 md:gap-2 shadow-lg w-fit">
-                        <Icon name="fact_check" size="sm" className="scale-75 md:scale-100" />
-                        <span className="text-[10px] md:text-xs font-black uppercase tracking-widest">
-                            {meta.totalParaPaginador || 0} Pendientes
-                        </span>
-                    </div>
-                    {/* <GlassViewToggle 
-                        value={viewMode} 
-                        onChange={handleViewChange} 
-                        options={[
-                            { id: 'cards', label: 'Tarjetas', icon: 'grid_view' },
-                            { id: 'table', label: 'Tabla', icon: 'table_rows' }
-                        ]}
-                    /> */}
-                </div>
-            </div>
-
-            {/* Contenido Principal */}
-            {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                        <Skeleton key={i} className="h-40 rounded-2xl bg-white border border-slate-100 shadow-sm" />
-                    ))}
-                </div>
-            ) : tareas.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 text-slate-400 bg-white rounded-3xl border border-slate-200 shadow-sm">
-                    <Icon name="task_alt" size="64px" className="mb-4 opacity-20" />
-                    <p className="text-lg font-medium italic">No hay tareas pendientes de aprobación</p>
-                </div>
-            ) : viewMode === 'cards' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {tareas.map((tarea) => (
-                        <HoyTareaCard 
-                            key={tarea.id} 
-                            tarea={tarea} 
-                            currentUser={currentUser} 
-                            onViewDetail={handleViewDetail} 
-                            onReview={setRevisionTarget}
-                        />
-                    ))}
-                </div>
-            ) : (
-                <div className="bg-white rounded-3xl border border-slate-200/60 shadow-sm overflow-hidden">
-                    <TareasTable 
-                        tareas={tareas}
-                        loading={loading}
-                        currentUser={currentUser}
-                        onViewDetail={handleViewDetail}
-                        onPageChange={setPage}
-                        page={page}
-                        totalPages={meta.totalPages}
-                        totalItems={meta.totalFiltrado}
-                        hideResponsables={false}
-                        onChangeStatus={handleApprove}
-                        onReview={setRevisionTarget}
-                        onDelete={handleDeleteTarea}
-                    />
-                </div>
-            )}
+        <div className="w-full">
+            {isDesktop
+                ? <PorAprobarDesktop {...sharedProps} />
+                : <PorAprobarMobile  {...sharedProps} />
+            }
 
             <TareaDetailDrawer 
                 isOpen={isDrawerOpen}

@@ -58,12 +58,15 @@ export const MisTareasMobile = ({
         <div className="flex flex-col gap-4 pb-28 px-4 animate-in fade-in duration-500">
             <div className="flex flex-col gap-1">
                 <h2 className="fuente-titulos text-xl text-marca-primario uppercase tracking-tight">Mis Tareas</h2>
-                {totalAtrasadasGlobal > 0 && (
-                    <div className="flex items-center gap-1.5 text-estado-rechazado font-bold text-xs animate-pulse">
-                        <Icon name="warning" size="xs" />
-                        <span>{totalAtrasadasGlobal} tareas atrasadas</span>
-                    </div>
-                )}
+                <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5 flex items-center gap-2">
+                    <span>{loading ? 'Cargando…' : `${tareas.length} TAREAS`}</span>
+                    {totalAtrasadasGlobal > 0 && (
+                        <span className="flex items-center gap-1 text-estado-rechazado animate-pulse">
+                            <Icon name="warning" size="xs" />
+                            {totalAtrasadasGlobal} atrasadas
+                        </span>
+                    )}
+                </div>
             </div>
 
             <HoySummaryBar 
