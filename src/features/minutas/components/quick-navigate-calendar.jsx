@@ -197,9 +197,13 @@ const renderMinutasBadges = (minutasDia, isSelected) => {
               )}
               
               {isMarketing ? (
-                <MarketingIcon size={18} style={{ color: style.iconColor }} className="shrink-0" />
+                <div className="bg-white/90 p-0.5 rounded-full shadow-sm shrink-0">
+                  <MarketingIcon size={18} style={{ color: style.iconColor }} />
+                </div>
               ) : (
-                <LineIconSelector type={m.lineaDefault} size={24} style={{ color: style.iconColor }} className="shrink-0" />
+                <div className="bg-white/90 p-0.5 rounded-full shadow-sm shrink-0">
+                  <LineIconSelector type={m.lineaDefault} size={24} style={{ color: style.iconColor }} />
+                </div>
               )}
               
               {minutasDia.length === 1 && (
@@ -416,19 +420,22 @@ export const QuickNavigateCalendar = ({
       {/* 1. COLLAPSED HEADER BAR */}
       <div 
         onClick={() => setIsExpanded(!isExpanded)}
-        className="flex items-center justify-between py-2 px-3 sm:px-4 bg-slate-50/50 hover:bg-slate-50 transition-colors cursor-pointer select-none gap-2 flex-wrap sm:flex-nowrap"
+        className="flex items-center justify-between py-2 px-3 sm:px-4 bg-slate-50/50 hover:bg-slate-50 transition-colors cursor-pointer select-none gap-2 w-full"
       >
-        <div className="flex flex-wrap items-center gap-1.5 min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-1.5 min-w-0 flex-1">
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
             <Icon name="calendar_month" size="16px" className={cn("transition-colors", hasActiveFilters ? "text-marca-primario" : "text-slate-400")} />
-            <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-700 font-mono">
+            <span className="hidden sm:inline text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-700 font-mono">
               Calendario y Filtros
+            </span>
+            <span className="sm:hidden inline text-[10px] font-black uppercase tracking-wider text-slate-700 font-mono">
+              Filtros
             </span>
           </div>
           
           {hasActiveFilters ? (
-            <span className="inline-flex items-center gap-1 bg-marca-primario/10 text-marca-primario text-[8px] sm:text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-marca-primario/20 shadow-xs animate-pulseFast truncate max-w-[100px] sm:max-w-none">
-              <span className="w-1 h-1 rounded-full bg-marca-primario shrink-0"></span>
+            <span className="inline-flex items-center gap-1 bg-marca-primario/10 text-marca-primario text-[8px] sm:text-[10px] font-extrabold px-1.5 sm:px-2 py-0.5 rounded-full border border-marca-primario/20 shadow-xs animate-pulseFast truncate max-w-[120px] sm:max-w-none">
+              <span className="w-1 h-1 rounded-full bg-marca-primario shrink-0 hidden sm:block"></span>
               <span className="truncate leading-none">{activeFilterLabel}</span>
             </span>
           ) : (
@@ -438,15 +445,15 @@ export const QuickNavigateCalendar = ({
           )}
         </div>
         
-        <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
           {hasActiveFilters && (
             <button
               onClick={handleClearAll}
-              className="text-[9px] sm:text-[10px] font-bold text-rose-500 hover:text-rose-700 hover:bg-rose-50 px-2 py-1 rounded-lg transition-all flex items-center gap-0.5 cursor-pointer shrink-0"
+              className="text-[9px] sm:text-[10px] font-bold text-rose-500 hover:text-rose-700 hover:bg-rose-50 px-1.5 sm:px-2 py-1 rounded-lg transition-all flex items-center gap-0.5 cursor-pointer shrink-0 border border-transparent hover:border-rose-200"
               title="Limpiar todos los filtros de fecha"
             >
               <Icon name="close" size="10px" className="sm:size-[12px]" />
-              Limpiar
+              <span className="hidden sm:inline">Limpiar</span>
             </button>
           )}
           
@@ -538,7 +545,7 @@ export const QuickNavigateCalendar = ({
                         className={cn(
                           'flex-1 flex flex-col items-center py-1 px-0.5 rounded-xl border transition-all active:scale-95 relative min-w-0',
                           isSelected
-                            ? 'bg-sky-50 text-sky-950 border-sky-400 shadow-md ring-2 ring-sky-200 scale-102 z-10 font-bold'
+                            ? 'bg-amber-50 text-amber-950 border-amber-300 shadow-md ring-2 ring-amber-100 scale-102 z-10 font-bold'
                             : isToday
                               ? 'bg-marca-primario/5 text-marca-primario border-marca-primario/30 shadow-xs ring-1 ring-marca-primario/20'
                               : minutasDia.length > 0
