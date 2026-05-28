@@ -5,8 +5,8 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useTareas } from '../hooks/use-tareas';
 import { PorAprobarDesktop } from '../views/por-aprobar-desktop';
 import { PorAprobarMobile } from '../views/por-aprobar-mobile';
-import { TareaDetailDrawer } from '../components/common/tarea-detail-drawer';
-import { TareaRevisionModal } from '../components/common/tarea-revision-modal';
+import { PanelDetalleTarea } from '../components/comun/panel-detalle-tarea';
+import { ModalRevisionTarea } from '../components/comun/modal-revision-tarea';
 import { notify } from '@/components/notification/adaptive-notify';
 import { useTareasStore } from '../store/tareas-store';
 
@@ -29,16 +29,9 @@ export default function PorAprobarPage() {
     const [selectedTarea, setSelectedTarea] = useState(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [revisionTarget, setRevisionTarget] = useState(null);
-    const [viewMode, setViewMode] = useState(() => localStorage.getItem('por-aprobar-view') || 'cards');
-    
-    // Consumir el departamento global
-    const { departamento } = useTareasStore();
+    // Consumir el departamento y viewMode global
+    const { departamento, viewMode, setViewMode } = useTareasStore();
     const activeDept = currentUser?.rol === 'ADMIN' ? departamento : (currentUser?.departamento || 'DISENO');
-
-    const handleViewChange = (mode) => {
-        setViewMode(mode);
-        localStorage.setItem('por-aprobar-view', mode);
-    };
 
     const loadTareas = useCallback(() => {
         const params = {
@@ -92,7 +85,7 @@ export default function PorAprobarPage() {
         currentUser,
         meta,
         viewMode,
-        onViewChange: handleViewChange,
+        onViewChange: setViewMode,
         onViewDetail: handleViewDetail,
         onReview: setRevisionTarget,
         setPage,
@@ -109,7 +102,7 @@ export default function PorAprobarPage() {
                 : <PorAprobarMobile  {...sharedProps} />
             }
 
-            <TareaDetailDrawer 
+            <PanelDetalleTarea 
                 isOpen={isDrawerOpen}
                 onClose={() => setIsDrawerOpen(false)}
                 tarea={selectedTarea}
@@ -123,7 +116,7 @@ export default function PorAprobarPage() {
                 currentUser={currentUser}
             />
 
-            <TareaRevisionModal
+            <ModalRevisionTarea
                 isOpen={Boolean(revisionTarget)}
                 onClose={() => setRevisionTarget(null)}
                 tarea={revisionTarget}

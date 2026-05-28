@@ -8,7 +8,7 @@ const PRIORIDAD_CONFIG = {
     CRITICA: { label: 'Crítica', cls: 'text-prioridad-critica bg-prioridad-critica/10 border-prioridad-critica/30' },
 };
 
-export const TareaPriorityBadge = ({ priority, className }) => {
+export const EtiquetaPrioridadTarea = ({ priority, className }) => {
     const cfg = PRIORIDAD_CONFIG[priority] ?? { label: priority, cls: 'text-slate-600 bg-slate-100 border-slate-200' };
     return (
         <span className={cn(

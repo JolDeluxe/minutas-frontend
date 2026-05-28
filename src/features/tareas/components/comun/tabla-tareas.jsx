@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Table, Skeleton, Icon } from '@/components/ui/z_index';
-import { TareaStatusBadge } from '../common/tarea-status-badge';
-import { TareaPriorityBadge } from '../common/tarea-priority-badge';
-import { TareaActions } from './tarea-actions';
+import { EtiquetaEstadoTarea } from './etiqueta-estado-tarea';
+import { EtiquetaPrioridadTarea } from './etiqueta-prioridad-tarea';
+import { AccionesTablaTarea } from './acciones-tabla-tarea';
 import { formatFecha, formatFechaRelativa } from '@/lib/date';
 import { cn } from '@/utils/cn';
 import { LineIconSelector, MarketingIcon } from '../../../minutas/components/icons/line-icons';
@@ -136,7 +136,7 @@ const ResponsablesCell = ({ lista }) => {
     );
 };
 
-export const TareasTable = ({
+export const TablaTareas = ({
     tareas,
     loading,
     currentUser,
@@ -289,6 +289,7 @@ export const TareasTable = ({
         ...(hideResponsables ? [] : [{
             header: 'Responsables',
             accessorKey: 'responsables',
+            align: 'center',
             sortable: false,
             headerClassName: 'w-[15%] min-w-[140px]',
             cell: (row) => {
@@ -305,7 +306,7 @@ export const TareasTable = ({
             cell: (row) => {
                 if (row.isSkeleton) return <Skeleton className="h-5 w-20 mx-auto rounded-md" />;
                 // SOLUCIÓN: Usamos row.estado siempre para evitar la inconsistencia con estadoOperativo
-                return <TareaStatusBadge status={row.estado} />;
+                return <EtiquetaEstadoTarea status={row.estado} />;
             },
         },
         {
@@ -316,7 +317,7 @@ export const TareasTable = ({
             headerClassName: 'w-[10%] min-w-[90px]',
             cell: (row) => {
                 if (row.isSkeleton) return <Skeleton className="h-5 w-14 mx-auto rounded-md" />;
-                return <TareaPriorityBadge priority={row.prioridad} />;
+                return <EtiquetaPrioridadTarea priority={row.prioridad} />;
             },
         },
         {
@@ -379,7 +380,7 @@ export const TareasTable = ({
                     </div>
                 );
                 return (
-                    <TareaActions
+                    <AccionesTablaTarea
                         tarea={row}
                         currentUser={currentUser}
                         onViewDetail={onViewDetail}

@@ -14,7 +14,7 @@ import { Link } from 'react-router-dom';
 import { canAccessModule } from '@/config/modules-config';
 import { useAuthStore } from '@/stores/auth-store';
 import { AREA_MAP } from '../constants';
-import { TareaDetailDrawer } from '../../tareas/components/common/tarea-detail-drawer';
+import { PanelDetalleTarea } from '../../tareas/components/comun/panel-detalle-tarea';
 
 export const MinutaDetailMobileView = ({
   minuta,
@@ -342,7 +342,7 @@ export const MinutaDetailMobileView = ({
       )}
 
       {isTareaDrawerOpen && selectedTareaForDetail && (
-        <TareaDetailDrawer
+        <PanelDetalleTarea
           isOpen={isTareaDrawerOpen}
           onClose={() => {
             setIsTareaDrawerOpen(false);

@@ -292,7 +292,7 @@ export const GlassViewToggle = ({
                         key={opt.id}
                         onClick={() => onChange(opt.id)}
                         style={isActive ? activeStyle : inactiveStyle}
-                        className="flex items-center gap-1.5 px-3 py-1.5 transition-all duration-200 active:scale-95 outline-none select-none relative z-10"
+                        className="flex items-center gap-0 sm:gap-1.5 px-2.5 py-1.5 sm:px-3.5 transition-all duration-200 active:scale-95 outline-none select-none relative z-10"
                     >
                         {isActive && <GlassSheen />}
                         <Icon
@@ -300,7 +300,7 @@ export const GlassViewToggle = ({
                             size="xs"
                             className={cn('relative z-10 transition-colors', isActive ? 'text-white' : 'text-slate-600')}
                         />
-                        <span className={cn('text-xs font-bold relative z-10 transition-colors', isActive ? 'text-white' : 'text-slate-600')}>
+                        <span className={cn('text-xs font-bold relative z-10 transition-colors hidden sm:inline', isActive ? 'text-white' : 'text-slate-600')}>
                             {opt.label}
                         </span>
                     </button>

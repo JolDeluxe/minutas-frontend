@@ -2,7 +2,7 @@ import { EntryFormModal } from '@/features/minutas/components/timeline/entry-for
 import { useTareas } from '../../hooks/use-tareas';
 import { notify } from '@/components/notification/adaptive-notify';
 
-export const TareaEditModal = ({ isOpen, onClose, tarea, onSuccess, currentUser }) => {
+export const ModalEditarTarea = ({ isOpen, onClose, tarea, onSuccess, currentUser }) => {
     const { updateTarea, addTareaImagen, deleteTareaImagen, submitting } = useTareas();
 
     const handleSave = async (id, payload, imagesData) => {

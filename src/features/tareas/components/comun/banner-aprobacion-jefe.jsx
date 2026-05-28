@@ -2,7 +2,7 @@
 import { Icon } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
 
-export const BossApprovalBanner = ({ count, isActive, onClick }) => {
+export const BannerAprobacionJefe = ({ count, isActive, onClick }) => {
     if (count <= 0) return null;
 
     return (

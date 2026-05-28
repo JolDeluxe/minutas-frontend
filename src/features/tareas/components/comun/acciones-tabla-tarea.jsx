@@ -2,11 +2,11 @@
 import { useState } from 'react';
 import { Icon, TableActions, ConfirmModal } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
-import { TareaEntregaModal } from '../common/tarea-entrega-modal';
+import { ModalEntregarTarea } from './modal-entregar-tarea';
 
 const ROLES_ADMIN = ['GERENCIA', 'JEFE', 'ADMIN'];
 
-export const TareaActions = ({
+export const AccionesTablaTarea = ({
     tarea,
     currentUser,
     onViewDetail,
@@ -53,7 +53,7 @@ export const TareaActions = ({
             />
 
             {isEntregaModalOpen && (
-                <TareaEntregaModal
+                <ModalEntregarTarea
                     isOpen={isEntregaModalOpen}
                     onClose={() => setIsEntregaModalOpen(false)}
                     tareaId={tarea.id}

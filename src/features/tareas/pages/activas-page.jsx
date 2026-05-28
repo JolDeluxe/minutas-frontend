@@ -6,8 +6,8 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useTareas } from '../hooks/use-tareas';
 import { ActivasDesktop } from '../views/activas-desktop';
 import { ActivasMobile } from '../views/activas-mobile';
-import { TareaDetailDrawer } from '../components/common/tarea-detail-drawer';
-import { TareaRevisionModal } from '../components/common/tarea-revision-modal';
+import { PanelDetalleTarea } from '../components/comun/panel-detalle-tarea';
+import { ModalRevisionTarea } from '../components/comun/modal-revision-tarea';
 import { useTareasStore } from '../store/tareas-store';
 
 const LIMIT = 20;
@@ -20,8 +20,8 @@ export default function ActivasPage() {
     const { user } = useAuthStore();
     const currentUser = user?.data || user;
 
-    // Consumir el departamento global
-    const { departamento } = useTareasStore();
+    // Consumir el departamento y viewMode global
+    const { departamento, viewMode, setViewMode } = useTareasStore();
     const activeDept = currentUser?.rol === 'ADMIN' ? departamento : (currentUser?.departamento || 'DISENO');
     
     const {
@@ -182,6 +182,8 @@ export default function ActivasPage() {
         onDepartamentoChange: () => {},
         onReview: setRevisionTarget,
         onDelete: handleDeleteTarea,
+        viewMode,
+        onViewChange: setViewMode,
     };
 
     return (
@@ -191,7 +193,7 @@ export default function ActivasPage() {
                 : <ActivasMobile  {...sharedProps} />
             }
 
-            <TareaDetailDrawer 
+            <PanelDetalleTarea 
                 isOpen={isDrawerOpen}
                 onClose={() => setIsDrawerOpen(false)}
                 tarea={selectedTarea}
@@ -202,7 +204,7 @@ export default function ActivasPage() {
                 currentUser={currentUser}
             />
 
-            <TareaRevisionModal
+            <ModalRevisionTarea
                 isOpen={Boolean(revisionTarget)}
                 onClose={() => setRevisionTarget(null)}
                 tarea={revisionTarget}

@@ -10,7 +10,7 @@ import {
 import { glassBase, GlassSheen } from '@/components/ui/liquid-glass-mobile';
 import { cn } from '@/utils/cn';
 
-export const HoyFilterBar = ({
+export const BarraFiltrosTareas = ({
     query,
     onSearchChange,
     filtroPrioridad,

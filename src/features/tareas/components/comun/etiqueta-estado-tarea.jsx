@@ -9,7 +9,7 @@ const ESTADO_CONFIG = {
     DESCARTADA: { label: 'Descartada', bg: 'bg-slate-100 text-slate-500 border-slate-200' },
 };
 
-export const TareaStatusBadge = ({ status, className }) => {
+export const EtiquetaEstadoTarea = ({ status, className }) => {
     const cfg = ESTADO_CONFIG[status] ?? { label: status, bg: 'bg-slate-100 text-slate-600 border-slate-200' };
     return (
         <span className={cn(

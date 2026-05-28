@@ -12,7 +12,7 @@ import { OrganizeDrawer } from '../components/organization/organize-drawer';
 import { useAuthStore } from '@/stores/auth-store';
 import { canAccessModule } from '@/config/modules-config';
 import { AREA_MAP } from '../constants';
-import { TareaDetailDrawer } from '../../tareas/components/common/tarea-detail-drawer';
+import { PanelDetalleTarea } from '../../tareas/components/comun/panel-detalle-tarea';
   
 export const MinutaDetailDesktopView = ({
   minuta,
@@ -349,7 +349,7 @@ export const MinutaDetailDesktopView = ({
       )}
 
       {isTareaDrawerOpen && selectedTareaForDetail && (
-        <TareaDetailDrawer
+        <PanelDetalleTarea
           isOpen={isTareaDrawerOpen}
           onClose={() => {
             setIsTareaDrawerOpen(false);

@@ -8,7 +8,7 @@ import { createPortal } from 'react-dom';
 import { LineIconSelector, MarketingIcon } from '../icons/line-icons';
 import { ImageViewer } from './entry-card';
 import { useAuthStore } from '@/stores/auth-store';
-import { TareaEntregaModal } from '../../../tareas/components/common/tarea-entrega-modal';
+import { ModalEntregarTarea } from '../../../tareas/components/comun/modal-entregar-tarea';
 
 const ESTADO_STYLES = {
   PENDIENTE: 'bg-amber-50 text-amber-700 border-amber-200',
@@ -517,7 +517,7 @@ export const EntryTable = ({
       )}
 
       {isEntregaModalOpen && selectedTareaForEntrega && (
-        <TareaEntregaModal
+        <ModalEntregarTarea
           isOpen={isEntregaModalOpen}
           onClose={() => {
             setIsEntregaModalOpen(false);

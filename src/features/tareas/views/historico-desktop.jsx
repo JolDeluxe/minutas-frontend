@@ -1,11 +1,11 @@
 // src/features/tareas/views/historico-desktop.jsx
 import { useState } from 'react';
-import { RefreshFab } from '@/components/ui/z_index';
-import { TareasSummaryBar } from '../components/historico/tareas-summary-bar';
-import { TareasFilterBar } from '../components/historico/tareas-filter-bar';
-import { TareasTable } from '../components/historico/tareas-table';
-import { TareaCardGrid } from '../components/hoy/tarea-card-grid';
-import { TareaEditModal } from '../components/common/tarea-edit-modal';
+import { RefreshFab, GlassViewToggle, GlassPaginationPill } from '@/components/ui/z_index';
+import { ResumenHistorico } from '../components/historico/resumen-historico';
+import { BarraFiltrosHistorico } from '../components/historico/barra-filtros-historico';
+import { TablaTareas } from '../components/comun/tabla-tareas';
+import { TareaCard } from '../components/comun/tarjeta-tarea';
+import { ModalEditarTarea } from '../components/comun/modal-editar-tarea';
 import { ROLES_ADMIN } from '../constants';
 
 export const HistoricoDesktop = ({
@@ -40,6 +40,8 @@ export const HistoricoDesktop = ({
     onYearChange,
     onMonthChange,
     existenciaGlobal,
+    viewMode,
+    onViewChange,
 }) => {
     const [editTarget, setEditTarget] = useState(null);
 
@@ -56,10 +58,21 @@ export const HistoricoDesktop = ({
                         )}
                     </p>
                 </div>
-                {/* Removed GlassViewToggle as it is not used in Historico yet, keeping space balanced */}
+                
+                <div className="flex items-center gap-3">
+                    <div className="hidden sm:block text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">Vista:</div>
+                    <GlassViewToggle 
+                        value={viewMode} 
+                        onChange={onViewChange} 
+                        options={[
+                            { id: 'cards', label: 'Tarjetas', icon: 'grid_view' },
+                            { id: 'table', label: 'Tabla', icon: 'table_rows' }
+                        ]}
+                    />
+                </div>
             </div>
 
-            <TareasSummaryBar 
+            <ResumenHistorico 
                 totalParaSummary={totalParaSummary}
                 conteos={conteos}
                 filtroActual={onFilterChange?.status}
@@ -68,7 +81,7 @@ export const HistoricoDesktop = ({
             />
 
             <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
-                <TareasFilterBar 
+                <BarraFiltrosHistorico 
                     currentUser={currentUser}
                     query={query}
                     onSearchChange={onSearchChange}
@@ -91,23 +104,54 @@ export const HistoricoDesktop = ({
             </div>
 
             <div className="min-h-[400px]">
-                <TareasTable 
-                    tareas={tareas}
-                    loading={loading}
-                    currentUser={currentUser}
-                    page={page}
-                    totalPages={totalPages}
-                    totalItems={totalParaPaginador}
-                    onPageChange={onPageChange}
-                    onViewDetail={onViewDetail}
-                    onEdit={(t) => setEditTarget(t)}
-                    onChangeStatus={onChangeStatus}
-                    onDelete={onDelete}
-                    onReview={onReview}
-                />
+                {viewMode === 'cards' ? (
+                    <div className="flex flex-col gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                            {tareas.map((tarea) => (
+                                <TareaCard 
+                                    key={tarea.id} 
+                                    tarea={tarea} 
+                                    currentUser={currentUser} 
+                                    onViewDetail={onViewDetail} 
+                                    onEdit={(t) => setEditTarget(t)}
+                                    onChangeStatus={onChangeStatus}
+                                    onDelete={onDelete}
+                                    onReview={onReview}
+                                />
+                            ))}
+                        </div>
+                        {totalPages > 1 && (
+                            <div className="flex justify-center mt-4">
+                                <GlassPaginationPill 
+                                    page={page} 
+                                    totalPages={totalPages} 
+                                    totalItems={totalParaPaginador} 
+                                    onPageChange={onPageChange} 
+                                    loading={loading}
+                                    bottom="24px"
+                                />
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <TablaTareas 
+                        tareas={tareas}
+                        loading={loading}
+                        currentUser={currentUser}
+                        page={page}
+                        totalPages={totalPages}
+                        totalItems={totalParaPaginador}
+                        onPageChange={onPageChange}
+                        onViewDetail={onViewDetail}
+                        onEdit={(t) => setEditTarget(t)}
+                        onChangeStatus={onChangeStatus}
+                        onDelete={onDelete}
+                        onReview={onReview}
+                    />
+                )}
             </div>
 
-            <TareaEditModal 
+            <ModalEditarTarea 
                 isOpen={Boolean(editTarget)} 
                 onClose={() => setEditTarget(null)} 
                 tarea={editTarget}

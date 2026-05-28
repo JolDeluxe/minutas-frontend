@@ -1,9 +1,9 @@
 // src/features/tareas/components/hoy/hoy-tarea-card.jsx
 import { Icon, ConfirmModal, TableActions, Tooltip } from '@/components/ui/z_index';
 import { StickyNote, X, Plus } from 'lucide-react';
-import { TareaStatusBadge } from '../common/tarea-status-badge';
-import { TareaPriorityBadge } from '../common/tarea-priority-badge';
-import { TareaEntregaModal } from '../common/tarea-entrega-modal';
+import { EtiquetaEstadoTarea } from './etiqueta-estado-tarea';
+import { EtiquetaPrioridadTarea } from './etiqueta-prioridad-tarea';
+import { ModalEntregarTarea } from './modal-entregar-tarea';
 import { isPastDate } from '@/lib/date';
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
@@ -228,7 +228,7 @@ const EntryNotesPostIt = ({ entry, notes, onClose, onAddNote, onUpdateNote, onDe
   );
 };
 
-export const HoyTareaCard = ({
+export const TareaCard = ({
     tarea,
     currentUser,
     onViewDetail,
@@ -372,7 +372,7 @@ export const HoyTareaCard = ({
                                   <Icon name="task_alt" size="10px" className="shrink-0" />
                                   {isExternal ? `EXTERNA` : 'TAREA'}
                                 </span>
-                                <TareaStatusBadge status={estado} className="scale-90 origin-left" />
+                                <EtiquetaEstadoTarea status={estado} className="scale-90 origin-left" />
                                 {isExternal && (
                                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border bg-purple-100/50 text-purple-700 border-purple-200/50">
                                     <Icon name="output" size="10px" />
@@ -385,7 +385,7 @@ export const HoyTareaCard = ({
                                     {clasif.label}
                                   </span>
                                 )}
-                                {tarea.prioridad && <TareaPriorityBadge priority={tarea.prioridad} className="scale-90 origin-left" />}
+                                {tarea.prioridad && <EtiquetaPrioridadTarea priority={tarea.prioridad} className="scale-90 origin-left" />}
                             </div>
                             <div className="flex flex-col items-end shrink-0">
                                 <span className="text-[7px] sm:text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
@@ -482,7 +482,7 @@ export const HoyTareaCard = ({
             </div>
 
             {isEntregaModalOpen && (
-                <TareaEntregaModal
+                <ModalEntregarTarea
                     isOpen={isEntregaModalOpen}
                     onClose={() => setIsEntregaModalOpen(false)}
                     tareaId={tarea.id}

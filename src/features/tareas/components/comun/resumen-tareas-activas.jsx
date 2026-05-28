@@ -31,7 +31,7 @@ const SummaryBarSkeleton = ({ count }) => (
     </>
 );
 
-export const HoySummaryBar = ({
+export const ResumenTareasActivas = ({
     totalParaSummary,
     conteos = {},
     filtroActual,

@@ -5,7 +5,7 @@ import { cn } from '@/utils/cn';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { formatFecha, formatFechaHora } from '@/lib/date';
 import { AREA_MAP, LINEA_MAP } from '../../../minutas/constants';
-import { TareaPriorityBadge } from './tarea-priority-badge';
+import { EtiquetaPrioridadTarea } from './etiqueta-prioridad-tarea';
 
 const ImageViewer = ({ images, initialIndex, onClose }) => {
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
@@ -83,7 +83,7 @@ const ImageViewer = ({ images, initialIndex, onClose }) => {
     );
 };
 
-export const TareaRevisionModal = ({ isOpen, onClose, tarea, onConfirm, submitting }) => {
+export const ModalRevisionTarea = ({ isOpen, onClose, tarea, onConfirm, submitting }) => {
     const isDesktop = useIsDesktop();
     const [viewerState, setViewerState] = useState(null);
 

@@ -6,7 +6,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useTareas } from '../hooks/use-tareas';
 import { MisTareasDesktop } from '../views/mis-tareas-desktop';
 import { MisTareasMobile } from '../views/mis-tareas-mobile';
-import { TareaDetailDrawer } from '../components/common/tarea-detail-drawer';
+import { PanelDetalleTarea } from '../components/comun/panel-detalle-tarea';
 import { useTareasStore } from '../store/tareas-store';
 
 const LIMIT = 20;
@@ -19,8 +19,8 @@ export default function MisTareasPage() {
     const { user } = useAuthStore();
     const currentUser = user?.data || user;
     
-    // Consumir el departamento global
-    const { departamento } = useTareasStore();
+    // Consumir el departamento y viewMode global
+    const { departamento, viewMode, setViewMode } = useTareasStore();
     
     const {
         tareas,
@@ -177,6 +177,8 @@ export default function MisTareasPage() {
         onClasificacionChange: (c) => handleFilterChange({ clasificacion: c }),
         statusActual: filters.status,
         onDelete: handleDeleteTarea,
+        viewMode,
+        onViewChange: setViewMode,
     };
 
     return (
@@ -186,7 +188,7 @@ export default function MisTareasPage() {
                 : <MisTareasMobile  {...sharedProps} />
             }
 
-            <TareaDetailDrawer 
+            <PanelDetalleTarea 
                 isOpen={isDrawerOpen}
                 onClose={() => setIsDrawerOpen(false)}
                 tarea={selectedTarea}

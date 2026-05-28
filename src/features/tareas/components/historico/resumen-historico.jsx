@@ -10,7 +10,7 @@ const ESTADOS_HISTORICO = [
     { id: 'DESCARTADA', label: 'Descartadas', color: 'rojo' },
 ];
 
-export const TareasSummaryBar = ({
+export const ResumenHistorico = ({
     totalParaSummary,
     conteos = {},
     filtroActual,

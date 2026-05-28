@@ -2,11 +2,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Icon, Button, SearchableSelect } from '@/components/ui/z_index';
 import { TAREA_PRIORIDAD_OPTS, ROLES_ADMIN } from '../../constants';
-import { TareaFechas } from './tarea-fechas';
+import { SelectorFechasHistorico } from './selector-fechas-historico';
 import { glassBase, GlassSheen } from '@/components/ui/liquid-glass-mobile';
 import { cn } from '@/utils/cn';
 
-export const TareasFilterBar = ({
+export const BarraFiltrosHistorico = ({
     currentUser,
     query,
     onSearchChange,
@@ -64,7 +64,7 @@ export const TareasFilterBar = ({
             <div className="w-full flex flex-col gap-2">
                 {showDates && (
                     <div className="w-full mb-1">
-                        <TareaFechas 
+                        <SelectorFechasHistorico 
                             year={year}
                             month={month}
                             onYearChange={onYearChange}
@@ -202,7 +202,7 @@ export const TareasFilterBar = ({
     return (
         <div className="w-full flex flex-col gap-3 pt-2">
             {showDates && (
-                <TareaFechas 
+                <SelectorFechasHistorico 
                     year={year}
                     month={month}
                     onYearChange={onYearChange}

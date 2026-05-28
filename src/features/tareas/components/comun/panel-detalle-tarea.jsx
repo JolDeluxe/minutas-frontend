@@ -6,9 +6,9 @@ import { TAREA_STATUS_MAP, TAREA_STATUS_OPTS, TAREA_PRIORIDAD_OPTS } from '../..
 import { CLASIFICACION_MAP, AREA_MAP, LINEA_MAP } from '../../../minutas/constants';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { createPortal } from 'react-dom';
-import { TareaStatusBadge } from './tarea-status-badge';
-import { TareaPriorityBadge } from './tarea-priority-badge';
-import { TareaEntregaModal } from './tarea-entrega-modal';
+import { EtiquetaEstadoTarea } from './etiqueta-estado-tarea';
+import { EtiquetaPrioridadTarea } from './etiqueta-prioridad-tarea';
+import { ModalEntregarTarea } from './modal-entregar-tarea';
 import { formatFecha, formatFechaHora } from '@/lib/date';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ const ImageViewer = ({ images, initialIndex, onClose }) => {
 // Componente principal
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const TareaDetailDrawer = ({
+export const PanelDetalleTarea = ({
     isOpen,
     onClose,
     tarea,
@@ -240,8 +240,8 @@ export const TareaDetailDrawer = ({
                     <span className="text-[10px] font-mono font-bold tracking-wider text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
                         #{tarea.id}
                     </span>
-                    <TareaStatusBadge status={tarea.estado} size="xs" />
-                    <TareaPriorityBadge priority={tarea.prioridad} />
+                    <EtiquetaEstadoTarea status={tarea.estado} size="xs" />
+                    <EtiquetaPrioridadTarea priority={tarea.prioridad} />
                 </div>
 
                 {/* Título principal */}
@@ -565,7 +565,7 @@ export const TareaDetailDrawer = ({
 
             {/* Modal de entrega */}
             {isEntregaModalOpen && (
-                <TareaEntregaModal
+                <ModalEntregarTarea
                     isOpen={isEntregaModalOpen}
                     onClose={() => setIsEntregaModalOpen(false)}
                     tareaId={tarea.id}

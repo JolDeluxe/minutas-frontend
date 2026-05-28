@@ -217,7 +217,7 @@ const TareaFechasMobile = ({ year, month, onYearChange, onMonthChange, existenci
     );
 };
 
-export const TareaFechas = ({ year, month, onYearChange, onMonthChange, existenciaGlobal = {} }) => {
+export const SelectorFechasHistorico = ({ year, month, onYearChange, onMonthChange, existenciaGlobal = {} }) => {
     return (
         <>
             <div className="hidden lg:block">

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth-store';
-import { useTareasStore } from '../store/tareas-store';
-import { getTareas } from '../api/tareas-api';
+import { useTareasStore } from '../../store/tareas-store';
+import { getTareas } from '../../api/tareas-api';
 
-export const TareasIndexRedirect = () => {
+export const RedireccionIndiceTareas = () => {
     const { user } = useAuthStore();
     const currentUser = user?.data || user;
     const { departamento } = useTareasStore();

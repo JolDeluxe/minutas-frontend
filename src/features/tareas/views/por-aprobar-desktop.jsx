@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton, RefreshFab, Icon, GlassViewToggle } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
-import { HoyTareaCard } from '../components/hoy/hoy-tarea-card';
-import { TareasTable } from '../components/historico/tareas-table';
-import { TareaEditModal } from '../components/common/tarea-edit-modal';
+import { TareaCard } from '../components/comun/tarjeta-tarea';
+import { TablaTareas } from '../components/comun/tabla-tareas';
+import { ModalEditarTarea } from '../components/comun/modal-editar-tarea';
 
 const CardSkeleton = () => (
     <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col gap-3">
@@ -88,9 +88,9 @@ export const PorAprobarDesktop = ({
                     <button onClick={onRefresh} className="mt-4 text-marca-primario hover:underline font-bold">Refrescar</button>
                 </div>
             ) : viewMode === 'cards' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {tareas.map((tarea) => (
-                        <HoyTareaCard 
+                        <TareaCard 
                             key={tarea.id} 
                             tarea={tarea} 
                             currentUser={currentUser} 
@@ -102,7 +102,7 @@ export const PorAprobarDesktop = ({
                 </div>
             ) : (
                 <div className="bg-white rounded-3xl border border-slate-200/60 shadow-sm overflow-hidden">
-                    <TareasTable 
+                    <TablaTareas 
                         tareas={tareas}
                         loading={loading}
                         currentUser={currentUser}
@@ -119,7 +119,7 @@ export const PorAprobarDesktop = ({
                 </div>
             )}
 
-            <TareaEditModal 
+            <ModalEditarTarea 
                 isOpen={Boolean(editTarget)} 
                 onClose={() => setEditTarget(null)} 
                 tarea={editTarget}

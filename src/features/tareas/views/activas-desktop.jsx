@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton, RefreshFab, Icon, GlassViewToggle } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
-import { HoyTareaCard } from '../components/hoy/hoy-tarea-card';
-import { HoySummaryBar } from '../components/hoy/hoy-summary-bar';
-import { HoyFilterBar } from '../components/hoy/hoy-filter-bar';
-import { TareaEditModal } from '../components/common/tarea-edit-modal';
-import { TareaDetailDrawer } from '../components/common/tarea-detail-drawer';
-import { TareasTable } from '../components/historico/tareas-table';
-import { BossApprovalBanner } from '../components/common/boss-approval-banner';
+import { TareaCard } from '../components/comun/tarjeta-tarea';
+import { ResumenTareasActivas } from '../components/comun/resumen-tareas-activas';
+import { BarraFiltrosTareas } from '../components/comun/barra-filtros-tareas';
+import { ModalEditarTarea } from '../components/comun/modal-editar-tarea';
+import { PanelDetalleTarea } from '../components/comun/panel-detalle-tarea';
+import { TablaTareas } from '../components/comun/tabla-tareas';
+import { BannerAprobacionJefe } from '../components/comun/banner-aprobacion-jefe';
 import { ROLES_ADMIN } from '../constants';
 
 
@@ -65,15 +65,11 @@ export const ActivasDesktop = ({
     filtroDepartamento,
     onReview,
     onDelete,
+    viewMode,
+    onViewChange,
 }) => {
     const navigate = useNavigate();
-    const [viewMode, setViewMode] = useState(() => localStorage.getItem('mis-entradas-view') || 'cards');
     const [editTarget, setEditTarget] = useState(null);
-
-    const handleViewChange = (mode) => {
-        setViewMode(mode);
-        localStorage.setItem('mis-entradas-view', mode);
-    };
 
     return (
         <div className="flex flex-col gap-3 relative animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -97,7 +93,7 @@ export const ActivasDesktop = ({
                     <div className="hidden sm:block text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">Vista:</div>
                     <GlassViewToggle 
                         value={viewMode} 
-                        onChange={handleViewChange} 
+                        onChange={onViewChange} 
                         options={[
                             { id: 'cards', label: 'Tarjetas', icon: 'grid_view' },
                             { id: 'table', label: 'Tabla', icon: 'table_rows' }
@@ -107,7 +103,7 @@ export const ActivasDesktop = ({
             </div>
 
             {['ADMIN', 'JEFE', 'GERENCIA'].includes(currentUser?.rol) && (
-                <BossApprovalBanner 
+                <BannerAprobacionJefe 
                     count={conteos?.EN_REVISION || 0}
                     isActive={false}
                     onClick={() => navigate('/tareas/por-aprobar')}
@@ -115,7 +111,7 @@ export const ActivasDesktop = ({
             )}
 
 
-            <HoySummaryBar 
+            <ResumenTareasActivas 
                 totalParaSummary={totalParaSummary} 
                 conteos={conteos} 
                 filtroActual={statusActual} 
@@ -124,7 +120,7 @@ export const ActivasDesktop = ({
             />
 
             <div className="bg-white px-4 py-3 rounded-2xl border border-slate-200 shadow-sm">
-                <HoyFilterBar 
+                <BarraFiltrosTareas 
                     query={query}
                     onSearchChange={onSearchChange}
                     filtroPrioridad={filtroPrioridad}
@@ -164,7 +160,7 @@ export const ActivasDesktop = ({
                         : viewMode === 'cards' ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                                 {tareas.map((tarea) => (
-                                    <HoyTareaCard 
+                                    <TareaCard 
                                         key={tarea.id} 
                                         tarea={tarea} 
                                         currentUser={currentUser} 
@@ -178,7 +174,7 @@ export const ActivasDesktop = ({
                             </div>
                         ) : (
                             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                                <TareasTable 
+                                <TablaTareas 
                                     tareas={tareas}
                                     loading={loading}
                                     currentUser={currentUser}
@@ -194,7 +190,7 @@ export const ActivasDesktop = ({
                 }
             </div>
 
-            <TareaEditModal 
+            <ModalEditarTarea 
                 isOpen={Boolean(editTarget)} 
                 onClose={() => setEditTarget(null)} 
                 tarea={editTarget}

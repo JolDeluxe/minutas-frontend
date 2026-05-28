@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Skeleton, Button, RefreshFab, Icon } from '@/components/ui/z_index';
-import { HoyTareaCard } from '../components/hoy/hoy-tarea-card';
-import { TareaEditModal } from '../components/common/tarea-edit-modal';
+import { Skeleton, Button, RefreshFab, Icon, GlassViewToggle } from '@/components/ui/z_index';
+import { TareaCard } from '../components/comun/tarjeta-tarea';
+import { ModalEditarTarea } from '../components/comun/modal-editar-tarea';
+import { TablaTareas } from '../components/comun/tabla-tareas';
 
 const CardSkeleton = () => (
     <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col gap-3">
@@ -29,45 +30,78 @@ export const PorAprobarMobile = ({
     page,
     handleApprove,
     handleDeleteTarea,
-    onRefresh
+    onRefresh,
+    viewMode,
+    onViewChange,
 }) => {
     const [editTarget, setEditTarget] = useState(null);
 
     return (
         <div className="flex flex-col gap-4 pb-28 px-4 animate-in fade-in duration-500">
-            <div className="flex flex-col gap-1">
-                <h2 className="fuente-titulos text-xl text-marca-primario uppercase tracking-tight">Tareas Por Aprobar</h2>
-                <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">
-                    {loading ? 'Cargando…' : `${meta?.totalParaPaginador || 0} tareas pendientes`}
+            <div className="flex justify-between items-center bg-white/40 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/60 shadow-sm">
+                <div className="flex flex-col gap-1">
+                    <h2 className="fuente-titulos text-xl text-marca-primario uppercase tracking-tight">Tareas Por Aprobar</h2>
+                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">
+                        {loading ? 'Cargando…' : `${meta?.totalParaPaginador || 0} tareas pendientes`}
+                    </div>
                 </div>
+                <GlassViewToggle 
+                    value={viewMode} 
+                    onChange={onViewChange} 
+                    options={[
+                        { id: 'cards', label: 'Tarjetas', icon: 'grid_view' },
+                        { id: 'table', label: 'Tabla', icon: 'table_rows' }
+                    ]}
+                />
             </div>
 
-            <div className="flex flex-col gap-3">
+            <div className="">
                 {loading && tareas.length === 0
-                    ? Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)
+                    ? (
+                        <div className="grid gap-3">
+                            {Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}
+                        </div>
+                    )
                     : tareas.length === 0
                         ? (
-                            <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                            <div className="flex flex-col items-center justify-center py-12 text-slate-400 bg-white rounded-3xl border border-slate-100 shadow-sm">
                                 <Icon name="fact_check" size="48px" className="mb-3 opacity-20" />
                                 <p className="text-sm font-medium italic">Sin tareas por revisar</p>
                             </div>
                         )
-                        : tareas.map((tarea) => (
-                            <HoyTareaCard 
-                                key={tarea.id} 
-                                tarea={tarea} 
-                                currentUser={currentUser} 
-                                onViewDetail={onViewDetail} 
-                                onEdit={setEditTarget}
-                                onChangeStatus={handleApprove}
-                                onReview={onReview}
-                                onDelete={handleDeleteTarea}
-                            />
-                        ))
+                        : viewMode === 'cards' ? (
+                            <div className="flex flex-col gap-3">
+                                {tareas.map((tarea) => (
+                                    <TareaCard 
+                                        key={tarea.id} 
+                                        tarea={tarea} 
+                                        currentUser={currentUser} 
+                                        onViewDetail={onViewDetail} 
+                                        onEdit={setEditTarget}
+                                        onChangeStatus={handleApprove}
+                                        onReview={onReview}
+                                        onDelete={handleDeleteTarea}
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto bg-white rounded-3xl border border-slate-100 shadow-sm">
+                                <TablaTareas 
+                                    tareas={tareas}
+                                    loading={loading}
+                                    currentUser={currentUser}
+                                    onViewDetail={onViewDetail}
+                                    hidePagination={true}
+                                    onChangeStatus={handleApprove}
+                                    onReview={onReview}
+                                    onDelete={handleDeleteTarea}
+                                />
+                            </div>
+                        )
                 }
             </div>
 
-            {page < (meta.totalPages || 1) && (
+            {viewMode === 'cards' && page < (meta.totalPages || 1) && (
                 <Button 
                     variant="outline" 
                     className="w-full py-4 rounded-3xl font-black uppercase text-[11px] tracking-widest border-2"
@@ -78,7 +112,7 @@ export const PorAprobarMobile = ({
                 </Button>
             )}
 
-            <TareaEditModal 
+            <ModalEditarTarea 
                 isOpen={Boolean(editTarget)} 
                 onClose={() => setEditTarget(null)} 
                 tarea={editTarget}

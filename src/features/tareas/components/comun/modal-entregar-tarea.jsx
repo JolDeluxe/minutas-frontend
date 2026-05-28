@@ -6,7 +6,7 @@ import { addTareaImagen, createTareaNota } from '../../api/tareas-api';
 import { cn } from '@/utils/cn';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 
-export const TareaEntregaModal = ({ isOpen, onClose, tareaId, onConfirm, submitting }) => {
+export const ModalEntregarTarea = ({ isOpen, onClose, tareaId, onConfirm, submitting }) => {
     const isDesktop = useIsDesktop();
     const [comentario, setComentario] = useState('');
     const [file, setFile] = useState(null);

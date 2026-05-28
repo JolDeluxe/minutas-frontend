@@ -6,8 +6,8 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useTareas } from '../hooks/use-tareas';
 import { HistoricoDesktop } from '../views/historico-desktop';
 import { HistoricoMobile } from '../views/historico-mobile';
-import { TareaDetailDrawer } from '../components/common/tarea-detail-drawer';
-import { TareaRevisionModal } from '../components/common/tarea-revision-modal';
+import { PanelDetalleTarea } from '../components/comun/panel-detalle-tarea';
+import { ModalRevisionTarea } from '../components/comun/modal-revision-tarea';
 import { useTareasStore } from '../store/tareas-store';
 
 const LIMIT = 20;
@@ -28,7 +28,7 @@ export default function HistoricoPage() {
     } = useTareas();
 
     const currentUser = user?.data || user;
-    const { departamento } = useTareasStore();
+    const { departamento, viewMode, setViewMode } = useTareasStore();
     const activeDept = currentUser?.rol === 'ADMIN' ? departamento : (currentUser?.departamento || 'DISENO');
 
     const [filters, setFilters] = useState({
@@ -176,6 +176,8 @@ export default function HistoricoPage() {
         existenciaGlobal: meta.existenciaGlobal || {},
         onDelete: handleDeleteTarea,
         onReview: setRevisionTarget,
+        viewMode,
+        onViewChange: setViewMode,
     };
 
     return (
@@ -185,7 +187,7 @@ export default function HistoricoPage() {
                 : <HistoricoMobile  {...sharedProps} />
             }
 
-            <TareaDetailDrawer 
+            <PanelDetalleTarea 
                 isOpen={isDrawerOpen}
                 onClose={() => setIsDrawerOpen(false)}
                 tarea={selectedTarea}
@@ -196,7 +198,7 @@ export default function HistoricoPage() {
                 currentUser={currentUser}
             />
 
-            <TareaRevisionModal
+            <ModalRevisionTarea
                 isOpen={Boolean(revisionTarget)}
                 onClose={() => setRevisionTarget(null)}
                 tarea={revisionTarget}

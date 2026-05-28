@@ -23,10 +23,10 @@ import {
   Camera
 } from 'lucide-react';
 import { LineIconSelector, MarketingIcon } from '../icons/line-icons';
-import { TareaStatusBadge } from '../../../tareas/components/common/tarea-status-badge';
+import { EtiquetaEstadoTarea } from '../../../tareas/components/comun/etiqueta-estado-tarea';
 import { formatFecha, isPastDate } from '@/lib/date';
 import { useAuthStore } from '@/stores/auth-store';
-import { TareaEntregaModal } from '../../../tareas/components/common/tarea-entrega-modal';
+import { ModalEntregarTarea } from '../../../tareas/components/comun/modal-entregar-tarea';
 import { StatusTrafficLight } from '../status-traffic-light';
 
 
@@ -454,7 +454,7 @@ export const EntryCard = ({
                   </span>
                 )}
                 {!isDraft && (entry.tipo === 'TAREA' || entry.tipo === 'RECORDATORIO') && !isExternal && (
-                  <TareaStatusBadge status={estadoActual} className="scale-90 origin-left" />
+                  <EtiquetaEstadoTarea status={estadoActual} className="scale-90 origin-left" />
                 )}
                 {isExternal && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border bg-purple-100/50 text-purple-700 border-purple-200/50">
@@ -608,7 +608,7 @@ export const EntryCard = ({
       )}
       {viewerIndex !== null && <ImageViewer images={allImages} initialIndex={viewerIndex} onClose={() => setViewerIndex(null)} />}
       {isEntregaModalOpen && (
-        <TareaEntregaModal
+        <ModalEntregarTarea
           isOpen={isEntregaModalOpen}
           onClose={() => setIsEntregaModalOpen(false)}
           tareaId={entry.id}
