@@ -1,6 +1,6 @@
 // src/features/tareas/views/historico-mobile.jsx
 import { useState } from 'react';
-import { Skeleton, Button, RefreshFab, Icon, GlassViewToggle } from '@/components/ui/z_index';
+import { Skeleton, RefreshFab, Icon, GlassViewToggle, GlassPaginationPill } from '@/components/ui/z_index';
 import { TareaCard } from '../components/comun/tarjeta-tarea';
 import { ResumenHistorico } from '../components/historico/resumen-historico';
 import { BarraFiltrosHistorico } from '../components/historico/barra-filtros-historico';
@@ -36,9 +36,12 @@ export const HistoricoMobile = ({
     onPrioridadChange,
     filtroResponsable,
     onResponsableChange,
+    filtroLinea,
+    onLineaChange,
     mostrarAtrasadas,
     onToggleAtrasadas,
     onFilterChange,
+    onPageChange,
     onRefresh,
     onChangeStatus,
     onViewDetail,
@@ -56,6 +59,7 @@ export const HistoricoMobile = ({
     viewMode,
     onViewChange,
     onDelete,
+    statusActual,
 }) => {
     const [editTarget, setEditTarget] = useState(null);
 
@@ -81,7 +85,7 @@ export const HistoricoMobile = ({
             <ResumenHistorico 
                 totalParaSummary={totalParaSummary} 
                 conteos={conteos} 
-                filtroActual={onFilterChange?.status} 
+                filtroActual={statusActual} 
                 onFilterChange={(status) => onFilterChange({ status })} 
                 loading={loading} 
             />
@@ -95,6 +99,8 @@ export const HistoricoMobile = ({
                     onPrioridadChange={onPrioridadChange}
                     filtroResponsable={filtroResponsable}
                     onResponsableChange={onResponsableChange}
+                    filtroLinea={filtroLinea}
+                    onLineaChange={onLineaChange}
                     opcionesResponsables={users}
                     mostrarAtrasadas={mostrarAtrasadas}
                     onToggleAtrasadas={onToggleAtrasadas}
@@ -156,15 +162,15 @@ export const HistoricoMobile = ({
                 }
             </div>
 
-            {viewMode === 'cards' && page < totalPages && (
-                <Button 
-                    variant="outline" 
-                    className="w-full py-4 rounded-3xl font-black uppercase text-[11px] tracking-widest border-2"
-                    onClick={() => onFilterChange({ page: page + 1 })}
-                    isLoading={loading}
-                >
-                    Cargar más historial
-                </Button>
+            {viewMode === 'cards' && (
+                <GlassPaginationPill
+                    page={page}
+                    totalPages={totalPages}
+                    totalItems={totalParaPaginador}
+                    onPageChange={onPageChange}
+                    loading={loading}
+                    bottom="88px"
+                />
             )}
 
             <ModalEditarTarea 

@@ -5,9 +5,7 @@ const ESTADOS_HISTORICO = [
     { id: 'TODOS', label: 'Total Historial', color: 'gris' },
     { id: 'PENDIENTE', label: 'Pendientes', color: 'pendiente' },
     { id: 'EN_REVISION', label: 'En Revisión', color: 'azul' },
-    { id: 'CERRADA', label: 'Cerradas', color: 'gris' },
-    { id: 'CANCELADA', label: 'Canceladas', color: 'rojo' },
-    { id: 'DESCARTADA', label: 'Descartadas', color: 'rojo' },
+    { id: 'CERRADA', label: 'Cerradas', color: 'cerrado' },
 ];
 
 export const ResumenHistorico = ({

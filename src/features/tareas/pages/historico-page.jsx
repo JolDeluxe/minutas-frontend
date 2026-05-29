@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { notify } from '@/components/notification/adaptive-notify';
 import { useAuthStore } from '@/stores/auth-store';
+import { useUsers } from '@/features/usuarios/hooks/use-users';
 import { useTareas } from '../hooks/use-tareas';
 import { HistoricoDesktop } from '../views/historico-desktop';
 import { HistoricoMobile } from '../views/historico-mobile';
@@ -26,6 +27,7 @@ export default function HistoricoPage() {
         changeStatus,
         deleteTarea,
     } = useTareas();
+    const { users, fetchUsers } = useUsers();
 
     const currentUser = user?.data || user;
     const { departamento, viewMode, setViewMode } = useTareasStore();
@@ -35,6 +37,7 @@ export default function HistoricoPage() {
         search: '',
         status: 'TODOS',
         prioridad: '',
+        responsable: '',
         area: '',
         linea: '',
         startDate: '',
@@ -54,13 +57,15 @@ export default function HistoricoPage() {
             page, 
             limit: LIMIT,
             sort: JSON.stringify([{ createdAt: 'desc' }]),
+            tipo: 'TAREA',
             todo: true
         };
 
         if (filters.search) params.q = filters.search;
         if (filters.status !== 'TODOS') params.estado = filters.status;
-        else params.estado = 'PENDIENTE,EN_REVISION,CERRADA,CANCELADA';
+        else params.estado = 'PENDIENTE,EN_REVISION,CERRADA';
         if (filters.prioridad) params.prioridad = filters.prioridad;
+        if (filters.responsable) params.responsableId = filters.responsable;
         if (filters.area) params.area = filters.area;
         if (filters.linea) params.linea = filters.linea;
         if (activeDept) params.departamento = activeDept;
@@ -72,6 +77,18 @@ export default function HistoricoPage() {
     }, [page, filters, year, month, fetchTareas, activeDept]);
 
     useEffect(() => { loadTareas(); }, [loadTareas]);
+
+    useEffect(() => {
+        const params = {
+            estado: 'ACTIVO',
+            limit: 100,
+            sort: JSON.stringify([{ nombre: 'asc' }]),
+        };
+
+        if (activeDept) params.departamento = activeDept;
+
+        fetchUsers(params).catch(() => notify.error('Error al cargar responsables.'));
+    }, [activeDept, fetchUsers]);
 
     const handleFilterChange = (newFilters) => {
         setFilters(prev => ({ ...prev, ...newFilters }));
@@ -144,22 +161,28 @@ export default function HistoricoPage() {
         });
     }, [tareas]);
 
+    const totalResumenHistorico = useMemo(() => {
+        return ['PENDIENTE', 'EN_REVISION', 'CERRADA']
+            .reduce((total, estado) => total + (meta.counts?.[estado] ?? 0), 0);
+    }, [meta.counts]);
+
     const sharedProps = {
         tareas: tareasSorted,
         loading,
         currentUser: currentUser,
         totalParaPaginador: meta.totalParaPaginador,
-        totalParaSummary: meta.totalFiltrado,
+        totalParaSummary: totalResumenHistorico,
         conteos: meta.counts,
         totalAtrasadasGlobal: meta.totalAtrasadas,
+        users,
         query: filters.search,
         onSearchChange: (q) => handleFilterChange({ search: q }),
         filtroPrioridad: filters.prioridad,
         onPrioridadChange: (p) => handleFilterChange({ prioridad: p }),
         filtroResponsable: filters.responsable,
         onResponsableChange: (r) => handleFilterChange({ responsable: r }),
-        mostrarAtrasadas: filters.mostrarAtrasadas,
-        onToggleAtrasadas: () => handleFilterChange({ mostrarAtrasadas: !filters.mostrarAtrasadas }),
+        filtroLinea: filters.linea,
+        onLineaChange: (l) => handleFilterChange({ linea: l }),
         onFilterChange: handleFilterChange,
         onPageChange: (p) => setPage(p),
         onRefresh: handleRefresh,
@@ -178,6 +201,7 @@ export default function HistoricoPage() {
         onReview: setRevisionTarget,
         viewMode,
         onViewChange: setViewMode,
+        statusActual: filters.status,
     };
 
     return (

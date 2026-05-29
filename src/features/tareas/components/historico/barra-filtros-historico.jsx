@@ -1,7 +1,8 @@
 // src/features/tareas/components/historico/tareas-filter-bar.jsx
 import { useState, useEffect, useMemo } from 'react';
 import { Icon, Button, SearchableSelect } from '@/components/ui/z_index';
-import { TAREA_PRIORIDAD_OPTS, ROLES_ADMIN } from '../../constants';
+import { useIsMobile, useIsTablet } from '@/hooks/useMediaQuery';
+import { TAREA_LINEA_OPTS, TAREA_PRIORIDAD_OPTS, ROLES_ADMIN } from '../../constants';
 import { SelectorFechasHistorico } from './selector-fechas-historico';
 import { glassBase, GlassSheen } from '@/components/ui/liquid-glass-mobile';
 import { cn } from '@/utils/cn';
@@ -14,6 +15,8 @@ export const BarraFiltrosHistorico = ({
     onPrioridadChange,
     filtroResponsable,
     onResponsableChange,
+    filtroLinea,
+    onLineaChange,
     opcionesResponsables = [],
     mostrarAtrasadas,
     onToggleAtrasadas,
@@ -30,6 +33,9 @@ export const BarraFiltrosHistorico = ({
     const [localValue, setLocalValue] = useState(query || '');
     const [prevQuery, setPrevQuery] = useState(query);
     const [isExpanded, setIsExpanded] = useState(false);
+    const isPhone = useIsMobile();
+    const isTablet = useIsTablet();
+    const isCompact = isMobile || isPhone || isTablet;
 
     const esAdmin = ROLES_ADMIN.has(currentUser?.rol);
 
@@ -49,17 +55,19 @@ export const BarraFiltrosHistorico = ({
     const activeFiltersCount = useMemo(() => {
         return [
             filtroPrioridad,
-            filtroResponsable
+            filtroResponsable,
+            filtroLinea
         ].filter(Boolean).length;
-    }, [filtroPrioridad, filtroResponsable]);
+    }, [filtroPrioridad, filtroResponsable, filtroLinea]);
 
     const handleClear = () => {
         if (onPrioridadChange) onPrioridadChange('');
         if (onResponsableChange) onResponsableChange('');
+        if (onLineaChange) onLineaChange('');
     };
 
     // --- RENDER MÓVIL ---
-    if (isMobile) {
+    if (isCompact) {
         return (
             <div className="w-full flex flex-col gap-2">
                 {showDates && (
@@ -109,7 +117,10 @@ export const BarraFiltrosHistorico = ({
                             overflow: 'hidden',
                             height: '32px',
                         }}
-                        className="active:scale-95 transition-all outline-none border border-slate-200/50 shadow-sm cursor-pointer shrink-0"
+                        className={cn(
+                            "active:scale-95 transition-all outline-none border border-slate-200/50 shadow-sm cursor-pointer",
+                            isPhone ? "flex-1 min-w-0 justify-center" : "shrink-0"
+                        )}
                     >
                         {(isExpanded || activeFiltersCount > 0) && <GlassSheen />}
                         <Icon 
@@ -127,7 +138,8 @@ export const BarraFiltrosHistorico = ({
                         )}
                     </button>
 
-                    <div className="relative">
+                    {onToggleAtrasadas && (
+                    <div className={cn("relative", isPhone && "flex-1 min-w-0")}>
                         <Button
                             variant="filtro_gris"
                             isActive={mostrarAtrasadas}
@@ -135,7 +147,8 @@ export const BarraFiltrosHistorico = ({
                             size="sm"
                             onClick={onToggleAtrasadas}
                             className={cn(
-                                "w-32 justify-center h-[32px] text-[11px] font-bold uppercase shrink-0 border border-slate-200/50",
+                                "justify-center h-[32px] text-[11px] font-bold uppercase shrink-0 border border-slate-200/50",
+                                isPhone ? "w-full" : "w-32",
                                 mostrarAtrasadas && "bg-amber-500 hover:bg-amber-600 text-white border-transparent ring-0"
                             )}
                         >
@@ -147,6 +160,7 @@ export const BarraFiltrosHistorico = ({
                             </span>
                         )}
                     </div>
+                    )}
                 </div>
 
                 {isExpanded && (
@@ -191,6 +205,18 @@ export const BarraFiltrosHistorico = ({
                                     />
                                 </div>
                             )}
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider pl-1">Línea</label>
+                                <SearchableSelect
+                                    options={TAREA_LINEA_OPTS}
+                                    value={filtroLinea}
+                                    onChange={onLineaChange}
+                                    placeholder="Línea..."
+                                    icon="category"
+                                    allOptionText="Todas las líneas"
+                                    className="w-full"
+                                />
+                            </div>
                         </div>
                     </div>
                 )}
@@ -259,6 +285,7 @@ export const BarraFiltrosHistorico = ({
 
                 <div className="flex-1" />
 
+                {onToggleAtrasadas && (
                 <div className="relative">
                     <Button
                         variant="filtro_gris"
@@ -279,6 +306,7 @@ export const BarraFiltrosHistorico = ({
                         </span>
                     )}
                 </div>
+                )}
             </div>
 
             {isExpanded && (
@@ -297,7 +325,7 @@ export const BarraFiltrosHistorico = ({
                         </button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 px-1">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 px-1">
                         {/* Prioridad */}
                         <div className="flex flex-col gap-1.5">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider pl-1">Prioridad</label>
@@ -327,6 +355,20 @@ export const BarraFiltrosHistorico = ({
                                 />
                             </div>
                         )}
+
+                        {/* Línea */}
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider pl-1">Línea</label>
+                            <SearchableSelect
+                                options={TAREA_LINEA_OPTS}
+                                value={filtroLinea}
+                                onChange={onLineaChange}
+                                placeholder="Línea..."
+                                icon="category"
+                                allOptionText="Todas las líneas"
+                                className="w-full"
+                            />
+                        </div>
                     </div>
                 </div>
             )}

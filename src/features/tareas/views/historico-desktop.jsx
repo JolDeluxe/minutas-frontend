@@ -25,6 +25,8 @@ export const HistoricoDesktop = ({
     onPrioridadChange,
     filtroResponsable,
     onResponsableChange,
+    filtroLinea,
+    onLineaChange,
     mostrarAtrasadas,
     onToggleAtrasadas,
     onFilterChange,
@@ -42,6 +44,7 @@ export const HistoricoDesktop = ({
     existenciaGlobal,
     viewMode,
     onViewChange,
+    statusActual,
 }) => {
     const [editTarget, setEditTarget] = useState(null);
 
@@ -75,7 +78,7 @@ export const HistoricoDesktop = ({
             <ResumenHistorico 
                 totalParaSummary={totalParaSummary}
                 conteos={conteos}
-                filtroActual={onFilterChange?.status}
+                filtroActual={statusActual}
                 onFilterChange={(status) => onFilterChange({ status })}
                 loading={loading}
             />
@@ -89,6 +92,8 @@ export const HistoricoDesktop = ({
                     onPrioridadChange={onPrioridadChange}
                     filtroResponsable={filtroResponsable}
                     onResponsableChange={onResponsableChange}
+                    filtroLinea={filtroLinea}
+                    onLineaChange={onLineaChange}
                     opcionesResponsables={users}
                     mostrarAtrasadas={mostrarAtrasadas}
                     onToggleAtrasadas={onToggleAtrasadas}

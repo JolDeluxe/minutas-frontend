@@ -19,12 +19,20 @@ const SCOPE_MODES = [
   { id: 'mine', label: 'Tuyas', icon: 'person_pin' },
 ];
 
+const PAGE_SIZE = 24;
+
 const normalizeRecordatoriosResponse = (response) => {
   if (Array.isArray(response)) return response;
   if (Array.isArray(response?.data)) return response.data;
   if (Array.isArray(response?.data?.data)) return response.data.data;
   return [];
 };
+
+const getPagination = (response) => (
+  response?.pagination ||
+  response?.data?.pagination ||
+  { total: 0, page: 1, totalPages: 1 }
+);
 
 const getLineInfo = (recordatorio) => {
   const isMarketing =
@@ -139,7 +147,6 @@ const Responsables = ({ asignaciones, compact = false }) => {
 
 const RecordatorioCard = ({ recordatorio, onDelete, onEdit, onOpenImages }) => {
   const scopeLabel = recordatorio.alcanceRecordatorio === 'PERSONAL' ? 'Personal' : 'Global';
-  const hasPhoto = (recordatorio.imagenes || []).length > 0;
 
   return (
     <article className="group relative flex min-h-full overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:bg-slate-50/30 hover:shadow-md">
@@ -304,7 +311,9 @@ export default function RecordatoriosPage() {
   const { users, fetchUsers } = useUsers();
   
   const [recordatorios, setRecordatorios] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('recordatorios-view') || 'cards');
   const [scopeMode, setScopeMode] = useState('global');
   const [selectedLinea, setSelectedLinea] = useState('');
@@ -327,10 +336,12 @@ export default function RecordatoriosPage() {
     return getLineasPorDepartamento(selectedDepartamento);
   }, [getLineasPorDepartamento, selectedDepartamento]);
 
-  const loadRecordatorios = useCallback(async () => {
-    setLoading(true);
+  const loadRecordatorios = useCallback(async (nextPage = 1, append = false) => {
+    if (append) setLoadingMore(true);
+    else setLoading(true);
+
     try {
-      const params = { page: 1, limit: 100 };
+      const params = { page: nextPage, limit: PAGE_SIZE };
       params.departamento = selectedDepartamento;
       if (selectedLinea) params.linea = selectedLinea;
 
@@ -341,19 +352,33 @@ export default function RecordatoriosPage() {
       }
 
       const response = await api.get('/api/recordatorios', { params });
-      setRecordatorios(normalizeRecordatoriosResponse(response));
+      const list = normalizeRecordatoriosResponse(response);
+      const nextPagination = getPagination(response);
+
+      setRecordatorios(prev => append ? [...prev, ...list] : list);
+      setPagination({
+        page: nextPagination.page ?? nextPage,
+        totalPages: nextPagination.totalPages ?? 1,
+        total: nextPagination.total ?? list.length,
+      });
     } catch (error) {
       console.error(error);
       notify.error('Error al cargar los recordatorios.');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }, [currentUser?.id, scopeMode, selectedDepartamento, selectedLinea]);
 
   useEffect(() => {
     if (scopeMode === 'mine' && !currentUser?.id) return;
-    loadRecordatorios();
+    loadRecordatorios(1, false);
   }, [currentUser?.id, loadRecordatorios, scopeMode]);
+
+  const handleLoadMore = () => {
+    if (loading || loadingMore || pagination.page >= pagination.totalPages) return;
+    loadRecordatorios(pagination.page + 1, true);
+  };
 
   const handleViewChange = (mode) => {
     setViewMode(mode);
@@ -394,7 +419,7 @@ export default function RecordatoriosPage() {
   };
 
   return (
-    <div className="flex h-full flex-col gap-4 p-3 animate-in fade-in sm:p-5 md:p-6 md:gap-5 max-w-[1400px] mx-auto">
+    <div className="flex h-full flex-col gap-4 p-3 animate-in fade-in sm:p-5 md:p-6 md:gap-5 max-w-full mx-auto">
       {/* Encabezado Principal */}
       <div className="flex flex-col gap-4 rounded-2xl border border-white/60 bg-white/55 px-5 py-4 shadow-sm backdrop-blur-md md:flex-row md:items-center md:justify-between">
         <div className="flex-1">
@@ -402,7 +427,7 @@ export default function RecordatoriosPage() {
             Recordatorios
           </h1>
           <p className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-            {selectedDepartamento === 'MARKETING' ? 'Marketing' : 'Diseño'} • {recordatorios.length} registrados
+            {selectedDepartamento === 'MARKETING' ? 'Marketing' : 'Diseño'} • {pagination.total || recordatorios.length} registrados
           </p>
         </div>
 
@@ -411,7 +436,6 @@ export default function RecordatoriosPage() {
             <div className="flex-shrink-0 flex justify-center py-1 animate-in fade-in duration-300">
                 <div className="flex items-center bg-slate-100/90 p-0.5 rounded-xl border border-slate-200/50 shadow-inner max-w-xs backdrop-blur-md">
                     {['DISEÑO', 'MARKETING'].map(opt => {
-                        const val = opt === 'DISEÑO' ? 'DISENO' : 'MARKETING';
                         const isActive = departamentoGlobal === opt;
                         return (
                             <button
@@ -436,7 +460,7 @@ export default function RecordatoriosPage() {
 
         <div className="flex flex-1 items-center justify-end gap-3">
           <div className="rounded-2xl bg-slate-900 px-4 py-2 text-white shadow-lg hidden sm:block">
-            <div className="text-xl font-black leading-none text-center">{recordatorios.length}</div>
+            <div className="text-xl font-black leading-none text-center">{pagination.total || recordatorios.length}</div>
             <div className="text-[8px] font-black uppercase tracking-widest text-white/50">Recordatorios</div>
           </div>
           <GlassViewToggle
@@ -580,6 +604,20 @@ export default function RecordatoriosPage() {
             data={recordatorios} 
             keyField="id" 
           />
+        </div>
+      )}
+
+      {!loading && recordatorios.length > 0 && pagination.page < pagination.totalPages && (
+        <div className="flex justify-center pt-1">
+          <Button
+            variant="outline"
+            icon="expand_more"
+            onClick={handleLoadMore}
+            isLoading={loadingMore}
+            className="w-full max-w-sm justify-center rounded-2xl py-3 text-[11px] font-black uppercase tracking-widest md:w-auto md:px-8"
+          >
+            Cargar más
+          </Button>
         </div>
       )}
 

@@ -13,6 +13,14 @@ import { useUIStore } from '@/stores/ui-store';
 import { ImageViewer } from '@/features/minutas/components/timeline/entry-card';
 import { cn } from '@/utils/cn';
 
+const PAGE_SIZE = 24;
+
+const getTareasPayload = (response) => {
+  if (response?.data?.tareas) return response.data;
+  if (response?.data?.data?.tareas) return response.data.data;
+  return null;
+};
+
 const getLineInfo = (politica) => {
   const isMarketing =
     politica.departamento === 'MARKETING' ||
@@ -91,7 +99,6 @@ const LineBadge = ({ politica, compact = false }) => {
 };
 
 const PoliticaCard = ({ politica, onDelete, onEdit, onOpenImages }) => {
-  const hasPhoto = (politica.imagenes || []).length > 0;
   return (
     <article className="group relative flex min-h-full overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:bg-slate-50/30 hover:shadow-md">
       <div className="flex w-full shrink-0 items-center justify-center border-r border-slate-100/70 bg-slate-50/50 p-2 sm:w-[125px] sm:p-3">
@@ -200,7 +207,9 @@ export default function PoliticasPage() {
   const { getLineasPorDepartamento, fetchCatalogos } = useCatalogosStore();
 
   const [politicas, setPoliticas] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('politicas-view') || 'cards');
   const [viewer, setViewer] = useState(null);
 
@@ -218,31 +227,52 @@ export default function PoliticasPage() {
     fetchCatalogos();
   }, [fetchCatalogos]);
 
-  const loadPoliticas = useCallback(async () => {
-    setLoading(true);
+  const loadPoliticas = useCallback(async (nextPage = 1, append = false) => {
+    if (append) setLoadingMore(true);
+    else setLoading(true);
+
     try {
-      const params = { tipo: 'POLITICA', todo: true, departamento: activeDept };
+      const params = {
+        tipo: 'POLITICA',
+        todo: true,
+        departamento: activeDept,
+        page: nextPage,
+        limit: PAGE_SIZE,
+      };
       const response = await api.get('/api/tareas', { params });
+      const payload = getTareasPayload(response);
       let list = [];
-      if (Array.isArray(response?.data?.tareas)) {
-        list = response.data.tareas;
+      if (Array.isArray(payload?.tareas)) {
+        list = payload.tareas;
       } else if (Array.isArray(response?.data)) {
         list = response.data;
       } else if (Array.isArray(response)) {
         list = response;
       }
-      setPoliticas(list);
+
+      setPoliticas(prev => append ? [...prev, ...list] : list);
+      setPagination({
+        page: payload?.page ?? nextPage,
+        totalPages: payload?.totalPages ?? 1,
+        total: payload?.total ?? list.length,
+      });
     } catch (error) {
       console.error(error);
       notify.error('Error al cargar las políticas.');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }, [activeDept]);
 
   useEffect(() => {
-    loadPoliticas();
+    loadPoliticas(1, false);
   }, [loadPoliticas]);
+
+  const handleLoadMore = () => {
+    if (loading || loadingMore || pagination.page >= pagination.totalPages) return;
+    loadPoliticas(pagination.page + 1, true);
+  };
 
   const handleDeletePolicy = async (id) => {
     try {
@@ -278,7 +308,7 @@ export default function PoliticasPage() {
   };
 
   return (
-    <div className="flex h-full flex-col gap-4 p-3 animate-in fade-in sm:p-5 md:p-6 md:gap-5 max-w-[1400px] mx-auto">
+    <div className="flex h-full flex-col gap-4 p-3 animate-in fade-in sm:p-5 md:p-6 md:gap-5 max-w-full mx-auto">
       {/* Encabezado Principal */}
       <div className="flex flex-col gap-4 rounded-2xl border border-white/60 bg-white/55 px-5 py-4 shadow-sm backdrop-blur-md md:flex-row md:items-center md:justify-between">
         <div className="flex-1">
@@ -286,7 +316,7 @@ export default function PoliticasPage() {
             Políticas y Lineamientos
           </h1>
           <p className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-            {activeDept === 'MARKETING' ? 'Marketing' : 'Diseño'} • {politicas.length} registradas
+            {activeDept === 'MARKETING' ? 'Marketing' : 'Diseño'} • {pagination.total || politicas.length} registradas
           </p>
         </div>
 
@@ -295,7 +325,6 @@ export default function PoliticasPage() {
             <div className="flex-shrink-0 flex justify-center py-1 animate-in fade-in duration-300">
                 <div className="flex items-center bg-slate-100/90 p-0.5 rounded-xl border border-slate-200/50 shadow-inner max-w-xs backdrop-blur-md">
                     {['DISEÑO', 'MARKETING'].map(opt => {
-                        const val = opt === 'DISEÑO' ? 'DISENO' : 'MARKETING';
                         const isActive = departamentoGlobal === opt;
                         return (
                             <button
@@ -320,7 +349,7 @@ export default function PoliticasPage() {
 
         <div className="flex flex-1 items-center justify-end gap-3">
           <div className="rounded-2xl bg-slate-900 px-4 py-2 text-white shadow-lg hidden sm:block">
-            <div className="text-xl font-black leading-none text-center">{politicas.length}</div>
+            <div className="text-xl font-black leading-none text-center">{pagination.total || politicas.length}</div>
             <div className="text-[8px] font-black uppercase tracking-widest text-white/50">Políticas</div>
           </div>
           <GlassViewToggle
@@ -400,6 +429,20 @@ export default function PoliticasPage() {
             data={politicas} 
             keyField="id" 
           />
+        </div>
+      )}
+
+      {!loading && politicas.length > 0 && pagination.page < pagination.totalPages && (
+        <div className="flex justify-center pt-1">
+          <Button
+            variant="outline"
+            icon="expand_more"
+            onClick={handleLoadMore}
+            isLoading={loadingMore}
+            className="w-full max-w-sm justify-center rounded-2xl py-3 text-[11px] font-black uppercase tracking-widest md:w-auto md:px-8"
+          >
+            Cargar más
+          </Button>
         </div>
       )}
 

@@ -33,19 +33,19 @@ export const MODULES_CONFIG = [
         allowedRoles: ['ADMIN', 'GERENCIA', 'JEFE'],
       },
       {
-        id: 'historico-tareas',
-        name: 'Histórico Global',
-        icon: 'history',
-        route: '/tareas/historico',
-        allowedRoles: ['ADMIN', 'GERENCIA', 'JEFE', 'COORDINADOR'],
-      },
-      {
         id: 'por-aprobar',
         name: 'Por Aprobar',
         icon: 'fact_check',
         route: '/tareas/por-aprobar',
         allowedRoles: ['ADMIN', 'GERENCIA', 'JEFE'],
-      }
+      },
+      {
+        id: 'historico-tareas',
+        name: 'Histórico',
+        icon: 'history',
+        route: '/tareas/historico',
+        allowedRoles: ['ADMIN', 'GERENCIA', 'JEFE', 'COORDINADOR'],
+      },
     ]
   },
   {
