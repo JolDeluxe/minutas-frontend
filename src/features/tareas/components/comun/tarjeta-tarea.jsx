@@ -334,6 +334,7 @@ export const TareaCard = ({
     const [viewerIndex, setViewerIndex] = useState(null);
     const [forceCloseTarget, setForceCloseTarget] = useState(null);
     const isExpanded = false;
+    const isRemoteDraft = Boolean(tarea._isRemoteDraft);
 
     // ── Normalización de datos ──────────────────────────────────────────────
     // Soporta tanto tarea.responsables (módulo Tareas) como tarea.asignaciones (módulo Minutas)
@@ -422,6 +423,7 @@ export const TareaCard = ({
 
     // ── Estilos de tarjeta ──────────────────────────────────────────────────
     const getCardStyles = () => {
+        if (isRemoteDraft) return 'bg-cyan-50/40 hover:bg-cyan-100/60 ring-1 ring-cyan-500/10';
         if (isDraft) return 'bg-emerald-50/40 hover:bg-emerald-100/60 ring-1 ring-emerald-500/10';
         if (vencida) return 'bg-red-50/40 hover:bg-red-100/60 ring-1 ring-red-500/20';
         if (isCerrado) return 'opacity-70 grayscale bg-slate-50/50 hover:bg-slate-100/60 border-slate-200/50';
@@ -443,6 +445,7 @@ export const TareaCard = ({
 
     // ── Click principal de la tarjeta ────────────────────────────────────────
     const handleCardClick = () => {
+        if (isRemoteDraft) return;
         if (isDraft || !isOrganized) {
             onOrganize?.(tarea);
         } else if (isFormalizada) {
@@ -526,7 +529,7 @@ export const TareaCard = ({
                                 {tarea.prioridad && <EtiquetaPrioridadTarea priority={tarea.prioridad} className="scale-90 origin-left" />}
                             </div>
                             <div className="flex items-center gap-1.5 shrink-0">
-                                {!isCerrado && !!onDelete && (
+                                {!isCerrado && !isRemoteDraft && !!onDelete && (
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
@@ -537,6 +540,12 @@ export const TareaCard = ({
                                     >
                                         <Icon name="delete" className="!text-[14px]" />
                                     </button>
+                                )}
+                                {isRemoteDraft && (
+                                    <span className="inline-flex items-center gap-1 rounded-lg border border-cyan-200 bg-cyan-50 px-2 py-0.5 text-[7px] font-black uppercase tracking-widest text-cyan-700">
+                                        <Icon name="group" size="10px" />
+                                        {tarea.author?.nombre || 'En vivo'}
+                                    </span>
                                 )}
                                 <div className="flex flex-col items-end">
                                     <span className="text-[7px] sm:text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
@@ -632,7 +641,7 @@ export const TareaCard = ({
                                         )}
 
                                         {/* Botón de organizar para entradas SIN_ORGANIZAR (Minutas) */}
-                                        {!isCerrado && !isOrganized && !isExternal && onOrganize && (
+                                        {!isCerrado && !isOrganized && !isExternal && !isRemoteDraft && onOrganize && (
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); onOrganize(tarea); }}
                                                 className="h-6 min-[360px]:h-7 w-6 min-[360px]:w-7 rounded-lg border border-marca-primario/20 bg-marca-primario/5 text-marca-primario flex items-center justify-center transition-all active:scale-90 shadow-xs"
@@ -648,9 +657,9 @@ export const TareaCard = ({
                                                 actions={[
                                                     { key: 'entregar', enabled: isFormalizada && !isDraft && !isCerrado && !isExternal && isPendiente && esAsignadoDirecto, onClick: () => { setIsEntregaModalOpen(true); } },
                                                     { key: 'aprobar', enabled: isFormalizada && !isDraft && !isCerrado && !isExternal && isEnRevision && puedeAprobar, onClick: (r) => { if (onReview) onReview(r); else setIsConfirmAprobarOpen(true); } },
-                                                    { key: 'forzar_cierre_tarea', enabled: canForceClose && !isCerrado, onClick: (r) => { setForceCloseTarget(r); } },
-                                                    { key: 'ver_detalle', enabled: isFormalizada, onClick: (r) => { onViewDetail?.(r); } },
-                                                    { key: 'editar', enabled: !isCerrado && (isOrganized || isExternal) && !!onEdit, onClick: (r) => { onEdit(r); } },
+                                                    { key: 'forzar_cierre_tarea', enabled: canForceClose && !isCerrado && !isRemoteDraft, onClick: (r) => { setForceCloseTarget(r); } },
+                                                    { key: 'ver_detalle', enabled: isFormalizada && !isRemoteDraft, onClick: (r) => { onViewDetail?.(r); } },
+                                                    { key: 'editar', enabled: !isCerrado && !isRemoteDraft && (isOrganized || isExternal) && !!onEdit, onClick: (r) => { onEdit(r); } },
                                                 ]}
                                             />
                                         </div>
@@ -713,7 +722,7 @@ export const TareaCard = ({
 
             {showNotesPanel && (
                 <EntryNotesPostIt
-                    entry={{ ...tarea, readOnly: isCerrado || rol === 'COORDINADOR' }}
+                    entry={{ ...tarea, readOnly: isCerrado || rol === 'COORDINADOR' || isRemoteDraft }}
                     notes={notas}
                     onClose={() => setShowNotesPanel(false)}
                     onAddNote={handleAddNote}

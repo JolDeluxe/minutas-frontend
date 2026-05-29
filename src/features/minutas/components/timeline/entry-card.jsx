@@ -38,6 +38,7 @@ export const EntryCard = ({
 }) => {
   const { user } = useAuthStore();
   const currentUser = user?.data || user;
+  const isRemoteDraft = Boolean(entry._isRemoteDraft);
 
   // Determinar si la entrada es externa al departamento actual
   const isExternal =
@@ -45,7 +46,7 @@ export const EntryCard = ({
     (departamento === 'MARKETING' && entry.area !== 'MARKETING');
 
   // Enriquecer la entrada con el flag de external para que TareaCard lo detecte
-  const entryEnriquecida = { ...entry, _isExternal: isExternal };
+  const entryEnriquecida = { ...entry, _isExternal: isExternal, readOnly: isRemoteDraft || entry.readOnly };
 
   return (
     <TareaCard
@@ -53,9 +54,9 @@ export const EntryCard = ({
       currentUser={currentUser}
       onViewDetail={onViewDetail}
       onChangeStatus={(id, status) => onChangeStatus?.(id, { estado: status })}
-      onEdit={onEdit}
-      onDelete={onRemove}
-      onOrganize={onOrganize}
+      onEdit={isRemoteDraft ? undefined : onEdit}
+      onDelete={isRemoteDraft ? undefined : onRemove}
+      onOrganize={isRemoteDraft ? undefined : onOrganize}
       onDownloadPdf={onDownloadPdf}
       isGeneratingPdf={isGeneratingPdf}
       isDraft={Boolean(entry.tempId)}

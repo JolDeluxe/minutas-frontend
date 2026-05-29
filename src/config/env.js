@@ -26,7 +26,7 @@ function validateEnv() {
   if (missing.length > 0) {
     const errorMsg = `
 ╔════════════════════════════════════════════════════════════╗
-║  ⚠️  ERROR CRÍTICO: Variables de Entorno Faltantes          ║
+║  ⚠️  ERROR DE CONFIGURACIÓN: Variables Faltantes            ║
 ╠════════════════════════════════════════════════════════════╣
 ║  Las siguientes variables son REQUERIDAS para esta APP:    ║
 ║  ${missing.map(v => `  - ${v}`).join('\n║ ')}
@@ -37,7 +37,11 @@ function validateEnv() {
     `.trim();
     
     console.error(errorMsg);
-    throw new Error('Configuración de entorno incompleta.');
+    
+    // Solo lanzar el error fatal en desarrollo para evitar pantalla en blanco en producción
+    if (import.meta.env.DEV) {
+      throw new Error('Configuración de entorno incompleta.');
+    }
   }
 }
 

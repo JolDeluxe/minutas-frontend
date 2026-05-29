@@ -8,6 +8,7 @@ import { idbGet, idbSet, idbDelete } from '@/lib/idb';
 export const useMinutaDraftStore = create((set, get) => ({
   minutaId: null,
   draftEntries: [],
+  remoteDraftEntries: [],
   draftNotes: [],
   initialized: false,
 
@@ -24,6 +25,7 @@ export const useMinutaDraftStore = create((set, get) => ({
         set({
           minutaId: id,
           draftEntries: record.data.draftEntries || [],
+          remoteDraftEntries: [],
           draftNotes: record.data.draftNotes || [],
           initialized: true,
         });
@@ -31,6 +33,7 @@ export const useMinutaDraftStore = create((set, get) => ({
         set({
           minutaId: id,
           draftEntries: [],
+          remoteDraftEntries: [],
           draftNotes: [],
           initialized: true,
         });
@@ -70,22 +73,69 @@ export const useMinutaDraftStore = create((set, get) => ({
       draftEntries: [newEntry, ...state.draftEntries],
     }));
     get().persist();
+    return newEntry;
   },
 
   updateDraftEntry: (tempId, updates) => {
+    let updatedEntry = null;
     set((state) => ({
-      draftEntries: state.draftEntries.map((e) =>
-        e.tempId === tempId ? { ...e, ...updates } : e
-      ),
+      draftEntries: state.draftEntries.map((e) => {
+        if (e.tempId !== tempId) return e;
+        updatedEntry = { ...e, ...updates, updatedAt: new Date().toISOString() };
+        return updatedEntry;
+      }),
     }));
     get().persist();
+    return updatedEntry;
   },
 
   removeDraftEntry: (tempId) => {
+    const removedEntry = get().draftEntries.find((e) => e.tempId === tempId) || null;
     set((state) => ({
       draftEntries: state.draftEntries.filter((e) => e.tempId !== tempId),
     }));
     get().persist();
+    return removedEntry;
+  },
+
+  // ── Entradas remotas en vivo (no se guardan localmente ni en BD) ─────────
+
+  setRemoteDraftEntries: (entries = []) => {
+    set({
+      remoteDraftEntries: entries
+        .filter((entry) => entry?.tempId)
+        .map((entry) => ({ ...entry, _isRemoteDraft: true, readOnly: true })),
+    });
+  },
+
+  upsertRemoteDraftEntry: (entry) => {
+    if (!entry?.tempId) return;
+    const normalized = { ...entry, _isRemoteDraft: true, readOnly: true };
+    set((state) => {
+      const exists = state.remoteDraftEntries.some((e) => e.tempId === normalized.tempId);
+      return {
+        remoteDraftEntries: exists
+          ? state.remoteDraftEntries.map((e) => (e.tempId === normalized.tempId ? normalized : e))
+          : [normalized, ...state.remoteDraftEntries],
+      };
+    });
+  },
+
+  removeRemoteDraftEntry: (tempId) => {
+    set((state) => ({
+      remoteDraftEntries: state.remoteDraftEntries.filter((e) => e.tempId !== tempId),
+    }));
+  },
+
+  removeRemoteDraftEntries: (tempIds = []) => {
+    const ids = new Set(tempIds);
+    set((state) => ({
+      remoteDraftEntries: state.remoteDraftEntries.filter((e) => !ids.has(e.tempId)),
+    }));
+  },
+
+  clearRemoteDrafts: () => {
+    set({ remoteDraftEntries: [] });
   },
 
   // ── Gestión de Notas (Post-its de Junta) ───────────────────────────────

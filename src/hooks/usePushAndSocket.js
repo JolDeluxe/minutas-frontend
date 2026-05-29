@@ -90,15 +90,19 @@ export const usePushAndSocket = () => {
             });
         });
 
-        // Intentar registro Push
-        if (Notification.permission === 'granted') {
-            subscribeToPush();
-        } else if (Notification.permission !== 'denied') {
-            Notification.requestPermission().then(permission => {
-                if (permission === 'granted') {
-                    subscribeToPush();
-                }
-            });
+        // Intentar registro Push si el navegador lo soporta de forma segura
+        if ('Notification' in window) {
+            if (window.Notification.permission === 'granted') {
+                subscribeToPush();
+            } else if (window.Notification.permission !== 'denied') {
+                window.Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        subscribeToPush();
+                    }
+                });
+            }
+        } else {
+            console.warn('[Push] Notificaciones no soportadas en este navegador o dispositivo.');
         }
 
         return () => {

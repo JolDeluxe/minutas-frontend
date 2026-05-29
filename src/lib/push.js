@@ -23,12 +23,12 @@ const urlBase64ToUint8Array = (base64String) => {
  */
 export const subscribeToPush = async () => {
     try {
-        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
             console.warn('[Push] No soportado en este navegador.');
             return null;
         }
 
-        const permission = await Notification.requestPermission();
+        const permission = await window.Notification.requestPermission();
         if (permission !== 'granted') {
             console.warn('[Push] Permiso denegado por el usuario.');
             return null;

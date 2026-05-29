@@ -272,7 +272,9 @@ export const EntryTable = ({
       headerClassName: "w-[4%] min-w-[50px]",
       cell: (row) => {
         const isDraft = Boolean(row.tempId);
+        const isRemoteDraft = Boolean(row._isRemoteDraft);
         const isExternal = (departamento === 'DISENO' && row.area !== 'DISENO') || (departamento === 'MARKETING' && row.area !== 'MARKETING');
+        if (isRemoteDraft) return <span className="inline-flex items-center gap-1 rounded-lg bg-cyan-100 px-2 py-0.5 text-[8px] font-black uppercase tracking-widest text-cyan-700 whitespace-nowrap">En vivo</span>;
         if (isDraft) return <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2 py-0.5 text-[8px] font-black uppercase tracking-widest text-emerald-700 whitespace-nowrap">Borrador</span>;
         if (isExternal) return <span className="inline-flex items-center gap-1 rounded-lg bg-purple-100 px-2 py-0.5 text-[8px] font-black uppercase tracking-widest text-purple-700 whitespace-nowrap">EXT</span>;
         return <span className="text-slate-400 font-mono text-xs">#{entries.indexOf(row) + 1}</span>;
@@ -294,10 +296,14 @@ export const EntryTable = ({
       headerClassName: "w-[25%] min-w-[200px]",
       cell: (row) => {
         const isDraft = Boolean(row.tempId);
+        const isRemoteDraft = Boolean(row._isRemoteDraft);
         const isOrganized = row.tipo !== 'SIN_ORGANIZAR';
         const isTarea = row.tipo === 'TAREA';
         
         const handleClick = () => {
+          if (isRemoteDraft) {
+            return;
+          }
           if (isDraft || !isOrganized) {
             onOrganize?.(row);
           } else if (isTarea) {
@@ -305,7 +311,7 @@ export const EntryTable = ({
           }
         };
 
-        const isClickable = isDraft || !isOrganized || isTarea;
+        const isClickable = !isRemoteDraft && (isDraft || !isOrganized || isTarea);
 
         return (
           <span 
@@ -315,6 +321,7 @@ export const EntryTable = ({
               isClickable ? "cursor-pointer text-slate-800 hover:text-marca-primario" : "text-slate-600"
             )}
             title={
+              isRemoteDraft ? `Borrador en vivo de ${row.author?.nombre || 'otro usuario'}` :
               isDraft || !isOrganized ? "Hacer clic para organizar esta entrada" :
               isTarea ? "Hacer clic para ver detalles de la tarea" :
               row.descripcion
@@ -430,6 +437,7 @@ export const EntryTable = ({
         const isOrganized = row.tipo !== 'SIN_ORGANIZAR';
         const entryNotes = row.notas || [];
         const isDraft = Boolean(row.tempId);
+        const isRemoteDraft = Boolean(row._isRemoteDraft);
         const isExternal = (departamento === 'DISENO' && row.area !== 'DISENO') || (departamento === 'MARKETING' && row.area !== 'MARKETING');
         const isFormalizada = row.tipo === 'TAREA';
         const isAsignado = row.asignaciones?.some(asig => asig.usuarioId === currentUserId);
@@ -466,15 +474,15 @@ export const EntryTable = ({
                 actions={[
                     { key: 'entregar', enabled: isFormalizada && !isDraft && !isClosed && !isExternal && estadoActual === 'PENDIENTE' && isAsignado, onClick: (r) => { setSelectedTareaForEntrega(r); setIsEntregaModalOpen(true); } },
                     { key: 'aprobar', enabled: isFormalizada && !isDraft && !isClosed && !isExternal && estadoActual === 'EN_REVISION' && puedeAprobar, onClick: (r) => { setApproveTarget(r); } },
-                    { key: 'forzar_cierre_tarea', enabled: canForceClose && !isClosed, onClick: (r) => { setForceCloseTarget(r); } },
-                    { key: 'ver_detalle', enabled: row.tipo === 'TAREA', onClick: (r) => { onViewDetail?.(r); } },
-                    { key: 'editar', enabled: !isClosed && (isOrganized || isExternal), onClick: (r) => { onEdit(r); } },
-                    { key: 'borrar', enabled: !isClosed, onClick: (r) => { setDeleteTarget(r); } }
+                    { key: 'forzar_cierre_tarea', enabled: canForceClose && !isClosed && !isRemoteDraft, onClick: (r) => { setForceCloseTarget(r); } },
+                    { key: 'ver_detalle', enabled: row.tipo === 'TAREA' && !isRemoteDraft, onClick: (r) => { onViewDetail?.(r); } },
+                    { key: 'editar', enabled: !isClosed && !isRemoteDraft && (isOrganized || isExternal), onClick: (r) => { onEdit(r); } },
+                    { key: 'borrar', enabled: !isClosed && !isRemoteDraft, onClick: (r) => { setDeleteTarget(r); } }
                 ]} 
             />
 
             {/* Organizar: Solo si NO está cerrada, NO está organizada (es SIN_ORGANIZAR) y NO es externa */}
-            {!isClosed && !isOrganized && !isExternal && (
+            {!isClosed && !isOrganized && !isExternal && !isRemoteDraft && (
               <button onClick={() => onOrganize(row)} className="h-9 w-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-slate-900 bg-white shadow-sm active:scale-90 transition-all" title="Organizar">
                 <Settings2 size={18} />
               </button>
@@ -496,7 +504,9 @@ export const EntryTable = ({
           emptyMessage="No hay tareas registradas aún."
           rowClassName={(row) => {
             const isDraft = Boolean(row.tempId);
+            const isRemoteDraft = Boolean(row._isRemoteDraft);
             const isClosed = row.estado === 'CERRADA';
+            if (isRemoteDraft) return 'bg-cyan-50/30 hover:bg-cyan-50/50 border-l-4 border-l-cyan-400';
             if (isDraft) return 'bg-emerald-50/20 hover:bg-emerald-50/40 border-l-4 border-l-emerald-400';
             if (isClosed) return 'opacity-70 grayscale bg-slate-50/50';
             return 'hover:bg-slate-50 transition-colors';
@@ -506,7 +516,7 @@ export const EntryTable = ({
 
       {activeEntryForNotes && (
         <EntryNotesPostIt
-          entry={{ ...activeEntryForNotes, readOnly: activeEntryForNotes.estado === 'CERRADA' }}
+          entry={{ ...activeEntryForNotes, readOnly: activeEntryForNotes.estado === 'CERRADA' || activeEntryForNotes._isRemoteDraft }}
           notes={activeEntryForNotes.notas || []}
           onClose={() => setActiveNotesEntryId(null)}
           onAddNote={onCreateNote}

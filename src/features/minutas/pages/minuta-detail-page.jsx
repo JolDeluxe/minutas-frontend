@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getMinutaById, iniciarMinuta, cancelarMinuta, cerrarMinuta, reabrirMinuta, finalizarMinuta, generarPdfPorArea } from '../api/minutas-api';
 import { useTareas } from '@/features/tareas/hooks/use-tareas';
@@ -6,21 +6,55 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useUsers } from '@/features/usuarios/hooks/use-users';
 import { notify } from '@/components/notification/adaptive-notify';
 import { useMinutaDraftStore } from '../stores/minuta-draft-store';
+import { useAuthStore } from '@/stores/auth-store';
+import socket from '@/lib/socket';
 
 import { Icon } from '@/components/ui/z_index';
 import { MinutaDetailDesktopView } from '../views/minuta-detail-desktop-view';
 import { MinutaDetailMobileView } from '../views/minuta-detail-mobile-view';
 
+const getClientId = () => {
+  const key = 'minutas_live_client_id';
+  let clientId = localStorage.getItem(key);
+  if (!clientId) {
+    clientId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : `client_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    localStorage.setItem(key, clientId);
+  }
+  return clientId;
+};
+
+const sanitizeDraftEntryForSocket = (entry) => {
+  if (!entry) return null;
+  const safeEntry = { ...entry };
+  const localImages = safeEntry._localImages || [];
+  delete safeEntry._localImages;
+  delete safeEntry.file;
+  delete safeEntry.preview;
+  delete safeEntry.readOnly;
+  delete safeEntry._isRemoteDraft;
+
+  return {
+    ...safeEntry,
+    _remoteImageCount: localImages.length,
+  };
+};
+
 export default function MinutaDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isDesktop = useMediaQuery('(min-width: 768px)');
+  const { user } = useAuthStore();
+  const currentUser = user?.data || user;
+  const clientIdRef = useRef(getClientId());
 
   const {
-    draftEntries, draftNotes, initStore,
+    draftEntries, remoteDraftEntries, draftNotes, initialized, initStore,
     addDraftEntry, updateDraftEntry, removeDraftEntry,
     addDraftNote, updateDraftNote, removeDraftNote,
-    clearDrafts
+    clearDrafts, setRemoteDraftEntries, upsertRemoteDraftEntry,
+    removeRemoteDraftEntry, removeRemoteDraftEntries, clearRemoteDrafts
   } = useMinutaDraftStore();
 
   const [minuta, setMinuta] = useState(null);
@@ -34,6 +68,8 @@ export default function MinutaDetailPage() {
   } = useTareas();
 
   const { users, fetchUsers } = useUsers();
+
+  const draftEntriesRef = useRef([]);
 
   const [showNotes, setShowNotes] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -77,6 +113,46 @@ export default function MinutaDetailPage() {
   }), [id, fetchTareas]);
 
   useEffect(() => {
+    draftEntriesRef.current = draftEntries;
+  }, [draftEntries]);
+
+  const emitDraftEntryUpsert = useCallback((entry) => {
+    const minutaId = Number(id);
+    const safeEntry = sanitizeDraftEntryForSocket(entry);
+    if (!minutaId || !safeEntry?.tempId) return;
+
+    const author = {
+      id: currentUser?.id,
+      nombre: currentUser?.nombre,
+      imagen: currentUser?.imagen,
+      rol: currentUser?.rol,
+    };
+
+    if (!socket.connected) socket.connect();
+    socket.emit('minuta:draft_entry_upsert', {
+      minutaId,
+      entry: safeEntry,
+      clientId: clientIdRef.current,
+      author,
+    });
+  }, [id, currentUser?.id, currentUser?.imagen, currentUser?.nombre, currentUser?.rol]);
+
+  const emitDraftEntryRemove = useCallback((tempId) => {
+    const minutaId = Number(id);
+    if (!minutaId || !tempId) return;
+    if (!socket.connected) socket.connect();
+    socket.emit('minuta:draft_entry_remove', { minutaId, tempId });
+  }, [id]);
+
+  const emitDraftEntriesRemove = useCallback((tempIds = []) => {
+    const minutaId = Number(id);
+    const ids = tempIds.filter(Boolean);
+    if (!minutaId || ids.length === 0) return;
+    if (!socket.connected) socket.connect();
+    socket.emit('minuta:draft_entries_remove', { minutaId, tempIds: ids });
+  }, [id]);
+
+  useEffect(() => {
     if (id) {
       initStore(id);
       const load = async () => {
@@ -97,7 +173,85 @@ export default function MinutaDetailPage() {
     }
   }, [id, initStore, navigate, refreshEntries, fetchUsers]);
 
-  const allEntries = useMemo(() => [...draftEntries, ...tareas], [draftEntries, tareas]);
+  useEffect(() => {
+    const minutaId = Number(id);
+    if (!minutaId) return;
+
+    const normalizeRemoteEntry = (entry) => ({
+      ...entry,
+      _isRemoteDraft: true,
+      readOnly: true,
+    });
+
+    const isOwnDraft = (entry) => entry?.clientId && entry.clientId === clientIdRef.current;
+
+    const handleSnapshot = (payload) => {
+      if (Number(payload?.minutaId) !== minutaId) return;
+      const remoteEntries = (payload.entries || [])
+        .filter((entry) => entry?.tempId && !isOwnDraft(entry))
+        .map(normalizeRemoteEntry);
+      setRemoteDraftEntries(remoteEntries);
+    };
+
+    const handleRemoteUpsert = (payload) => {
+      if (Number(payload?.minutaId) !== minutaId || !payload?.entry || isOwnDraft(payload.entry)) return;
+      upsertRemoteDraftEntry(normalizeRemoteEntry(payload.entry));
+    };
+
+    const handleRemoteRemove = (payload) => {
+      if (Number(payload?.minutaId) !== minutaId) return;
+      removeRemoteDraftEntry(payload.tempId);
+    };
+
+    const handleRemoteBulkRemove = (payload) => {
+      if (Number(payload?.minutaId) !== minutaId) return;
+      removeRemoteDraftEntries(payload.tempIds || []);
+    };
+
+    socket.on('minuta:drafts_snapshot', handleSnapshot);
+    socket.on('minuta:draft_entry_upsert', handleRemoteUpsert);
+    socket.on('minuta:draft_entry_remove', handleRemoteRemove);
+    socket.on('minuta:draft_entries_remove', handleRemoteBulkRemove);
+
+    if (!socket.connected) socket.connect();
+    socket.emit('join_minuta', {
+      minutaId,
+      clientId: clientIdRef.current,
+      user: {
+        id: currentUser?.id,
+        nombre: currentUser?.nombre,
+        imagen: currentUser?.imagen,
+        rol: currentUser?.rol,
+      },
+    });
+
+    return () => {
+      socket.emit('leave_minuta', { minutaId });
+      socket.off('minuta:drafts_snapshot', handleSnapshot);
+      socket.off('minuta:draft_entry_upsert', handleRemoteUpsert);
+      socket.off('minuta:draft_entry_remove', handleRemoteRemove);
+      socket.off('minuta:draft_entries_remove', handleRemoteBulkRemove);
+      clearRemoteDrafts();
+    };
+  }, [
+    id,
+    currentUser?.id,
+    currentUser?.imagen,
+    currentUser?.nombre,
+    currentUser?.rol,
+    setRemoteDraftEntries,
+    upsertRemoteDraftEntry,
+    removeRemoteDraftEntry,
+    removeRemoteDraftEntries,
+    clearRemoteDrafts,
+  ]);
+
+  useEffect(() => {
+    if (!initialized || !id || draftEntriesRef.current.length === 0) return;
+    draftEntriesRef.current.forEach(emitDraftEntryUpsert);
+  }, [initialized, id, emitDraftEntryUpsert]);
+
+  const allEntries = useMemo(() => [...draftEntries, ...remoteDraftEntries, ...tareas], [draftEntries, remoteDraftEntries, tareas]);
   const departamento = minuta?.departamento || 'DISENO';
 
   const filteredEntries = useMemo(() => {
@@ -194,8 +348,28 @@ export default function MinutaDetailPage() {
     return { totalTareas, pendientes, enRevision, cerradas, atrasadas, porcentaje, totalPoliticas, totalRecordatorios, totalEntradas: allEntries.length };
   }, [allEntries, departamento]);
 
+  const handleUpdateDraftEntry = useCallback((tempId, updates) => {
+    const updatedEntry = updateDraftEntry(tempId, updates);
+    if (updatedEntry) emitDraftEntryUpsert(updatedEntry);
+    return updatedEntry;
+  }, [emitDraftEntryUpsert, updateDraftEntry]);
+
+  const handleRemoveDraftEntry = useCallback((tempId) => {
+    const removedEntry = removeDraftEntry(tempId);
+    if (removedEntry) emitDraftEntryRemove(tempId);
+    return removedEntry;
+  }, [emitDraftEntryRemove, removeDraftEntry]);
+
+  const handleClearDrafts = useCallback(async () => {
+    emitDraftEntriesRemove(draftEntriesRef.current.map((entry) => entry.tempId));
+    await clearDrafts();
+  }, [clearDrafts, emitDraftEntriesRemove]);
+
   const handleCapture = (payload) => {
-    payload.tareas.forEach(t => addDraftEntry(t));
+    payload.tareas.forEach(t => {
+      const createdEntry = addDraftEntry(t);
+      emitDraftEntryUpsert(createdEntry);
+    });
     notify.success('Borrador añadido', { duration: 1500 });
   };
 
@@ -203,7 +377,7 @@ export default function MinutaDetailPage() {
     setIsSavingEntry(true);
     try {
       if (typeof entryId === 'string' || entryId.toString().startsWith('temp_')) {
-        updateDraftEntry(entryId, payload);
+        handleUpdateDraftEntry(entryId, payload);
         notify.success('Borrador actualizado');
         setEditEntry(null);
         return;
@@ -252,6 +426,7 @@ export default function MinutaDetailPage() {
       for (const note of draftNotes) {
         await createNotaGeneral({ contenido: note.contenido, minutaId: Number(id) });
       }
+      emitDraftEntriesRemove(draftEntries.map((entry) => entry.tempId));
       await clearDrafts();
       setShowReviewModal(false);
       if (closeAfterSave) {
@@ -271,7 +446,7 @@ export default function MinutaDetailPage() {
 
   const handleDeleteEntry = async (id) => {
     if (typeof id === 'string' || id.toString().startsWith('temp_')) {
-      removeDraftEntry(id);
+      handleRemoveDraftEntry(id);
       notify.success('Borrador eliminado');
       return;
     }
@@ -288,7 +463,7 @@ export default function MinutaDetailPage() {
   const handleOrganizeSave = async (entryId, payload) => {
     try {
       if (typeof entryId === 'string' || entryId.toString().startsWith('temp_')) {
-        updateDraftEntry(entryId, payload);
+        handleUpdateDraftEntry(entryId, payload);
         notify.success('Organizado (Borrador)');
       } else {
         await updateTarea(entryId, payload);
@@ -320,7 +495,7 @@ export default function MinutaDetailPage() {
         const entry = draftEntries.find(e => e.tempId === entryIdOrTempId);
         if (entry) {
           const newNotes = [...(entry.notas || []), { contenido, createdAt: new Date().toISOString() }];
-          updateDraftEntry(entryIdOrTempId, { notas: newNotes });
+          handleUpdateDraftEntry(entryIdOrTempId, { notas: newNotes });
           return true;
         }
         return false;
@@ -342,7 +517,7 @@ export default function MinutaDetailPage() {
         if (entry && entry.notas) {
           const newNotes = [...entry.notas];
           newNotes[noteIdOrIdx] = { ...newNotes[noteIdOrIdx], contenido };
-          updateDraftEntry(entryIdOrTempId, { notas: newNotes });
+          handleUpdateDraftEntry(entryIdOrTempId, { notas: newNotes });
           return true;
         }
         return false;
@@ -362,7 +537,7 @@ export default function MinutaDetailPage() {
         const entry = draftEntries.find(e => e.tempId === entryIdOrTempId);
         if (entry && entry.notas) {
           const newNotes = entry.notas.filter((_, i) => i !== noteIdOrIdx);
-          updateDraftEntry(entryIdOrTempId, { notas: newNotes });
+          handleUpdateDraftEntry(entryIdOrTempId, { notas: newNotes });
           notify.success('Nota de borrador eliminada');
           return true;
         }
@@ -384,7 +559,7 @@ export default function MinutaDetailPage() {
         const entry = draftEntries.find(e => e.tempId === entryId);
         if (entry) {
           const newImgs = [...(entry._localImages || []), { file, preview: URL.createObjectURL(file), id: Math.random().toString(36).substr(2, 9) }];
-          updateDraftEntry(entryId, { _localImages: newImgs });
+          handleUpdateDraftEntry(entryId, { _localImages: newImgs });
           return;
         }
       }
@@ -402,7 +577,7 @@ export default function MinutaDetailPage() {
         const entry = draftEntries.find(e => e.tempId === entryId);
         if (entry && entry._localImages) {
           const newImgs = entry._localImages.filter(img => img.id !== imagenId);
-          updateDraftEntry(entryId, { _localImages: newImgs });
+          handleUpdateDraftEntry(entryId, { _localImages: newImgs });
           return;
         }
       }
@@ -522,14 +697,14 @@ export default function MinutaDetailPage() {
     minuta, users, resumen, allEntries, filteredEntries, loadingTareas, departamento, politicasAcordadas, recordatoriosGenerales,
     activeFilter, setActiveFilter, handleFilterByStatus, handleFilterByTipo, handleResetFilter, viewMode, setViewMode: handleSetViewMode,
     handleCapture, draftEntries, draftNotes, addDraftNote, updateDraftNote, removeDraftNote,
-    handleDeleteEntry, removeDraftEntry, updateDraftEntry, 
+    handleDeleteEntry, removeDraftEntry: handleRemoveDraftEntry, updateDraftEntry: handleUpdateDraftEntry, 
     organizeEntry, setOrganizeEntry, handleOrganizeSave,
     editEntry, setEditEntry, handleEditEntrySave, isSavingEntry,
     updateTarea, changeTareaStatus: handleStatusChange, fetchTareas, refreshEntries, setShowReviewModal, showReviewModal,
     handleFinalSubmit, isSubmittingFinal, showNotes, setShowNotes, handleCreateEntryNote, handleUpdateEntryNote,
     handleDeleteEntryNote, handleAddEntryImage, handleDeleteEntryImage, handleIniciar, handleCancelar, handleCerrar, handleReabrir, handleFinalizar,
     iniciando, cancelando, cerrando, reabriendo, finalizando, minutaEstado: minuta?.estado,
-    clearDrafts, handleDownloadPdf, isGeneratingPdf
+    clearDrafts: handleClearDrafts, handleDownloadPdf, isGeneratingPdf
   };
 
   return (
