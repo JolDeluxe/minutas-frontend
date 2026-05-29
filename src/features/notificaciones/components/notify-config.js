@@ -12,4 +12,5 @@ export const TIPO_CONFIG = {
     TAREA_REASIGNADA:  { icon: 'swap_horiz',     color: 'text-estado-asignada',    bg: 'bg-estado-asignada/10',    label: 'Reasignación'         },
     REVISION_PENDIENTE:{ icon: 'fact_check',     color: 'text-estado-resuelto',    bg: 'bg-estado-resuelto/10',    label: 'Revisión pendiente'   },
     EQUIPO_RECHAZO:    { icon: 'warning',        color: 'text-estado-rechazado',   bg: 'bg-estado-rechazado/10',   label: 'Rechazo del equipo'   },
+    NUEVAS_ENTRADAS:   { icon: 'edit_document',  color: 'text-blue-500',           bg: 'bg-blue-50',               label: 'Minuta finalizada'    },
 };

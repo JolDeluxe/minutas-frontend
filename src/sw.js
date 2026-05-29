@@ -88,27 +88,27 @@ self.addEventListener('push', (event) => {
     );
 });
 
-// self.addEventListener('notificationclick', (event) => {
-//     event.notification.close();
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
 
-//     const targetUrl = event.notification.data?.url || '/';
+    const targetUrl = event.notification.data?.url || '/';
 
-//     event.waitUntil(
-//         clients
-//             .matchAll({ type: 'window', includeUncontrolled: true })
-//             .then((windowClients) => {
-//                 // Si ya hay una ventana con esa ruta, enfocamos en vez de abrir nueva
-//                 for (const client of windowClients) {
-//                     const clientPath = new URL(client.url).pathname;
-//                     const targetPath = targetUrl.startsWith('http')
-//                         ? new URL(targetUrl).pathname
-//                         : targetUrl;
+    event.waitUntil(
+        self.clients
+            .matchAll({ type: 'window', includeUncontrolled: true })
+            .then((windowClients) => {
+                // Si ya hay una ventana con esa ruta, enfocamos en vez de abrir nueva
+                for (const client of windowClients) {
+                    const clientPath = new URL(client.url).pathname;
+                    const targetPath = targetUrl.startsWith('http')
+                        ? new URL(targetUrl).pathname
+                        : targetUrl;
 
-//                     if (clientPath === targetPath && 'focus' in client) {
-//                         return client.focus();
-//                     }
-//                 }
-//                 return clients.openWindow(targetUrl);
-//             })
-//     );
-// });
+                    if (clientPath === targetPath && 'focus' in client) {
+                        return client.focus();
+                    }
+                }
+                return self.clients.openWindow(targetUrl);
+            })
+    );
+});

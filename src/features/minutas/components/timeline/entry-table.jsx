@@ -435,7 +435,10 @@ export const EntryTable = ({
         const isAsignado = row.asignaciones?.some(asig => asig.usuarioId === currentUserId);
         const estadoActual = row.estado || 'PENDIENTE';
         
-        const canForceClose = isJefe && !isAsignado && estadoActual === 'PENDIENTE';
+        const tieneJefeAsignado = row.asignaciones?.some(a => a.usuario?.rol === 'JEFE');
+        const puedeAprobar = userRole === 'ADMIN' || userRole === 'GERENCIA' || (userRole === 'JEFE' && !tieneJefeAsignado);
+        
+        const canForceClose = isJefe && !isAsignado && estadoActual === 'PENDIENTE' && row.tipo === 'TAREA';
         
         return (
           <div className="flex items-center gap-2 justify-center">
@@ -457,12 +460,12 @@ export const EntryTable = ({
                 PDF
               </button>
             )}
-
+ 
             <TableActions 
                 row={row} 
                 actions={[
                     { key: 'entregar', enabled: isFormalizada && !isDraft && !isClosed && !isExternal && estadoActual === 'PENDIENTE' && isAsignado, onClick: (r) => { setSelectedTareaForEntrega(r); setIsEntregaModalOpen(true); } },
-                    { key: 'aprobar', enabled: isFormalizada && !isDraft && !isClosed && !isExternal && estadoActual === 'EN_REVISION' && isJefe, onClick: (r) => { setApproveTarget(r); } },
+                    { key: 'aprobar', enabled: isFormalizada && !isDraft && !isClosed && !isExternal && estadoActual === 'EN_REVISION' && puedeAprobar, onClick: (r) => { setApproveTarget(r); } },
                     { key: 'forzar_cierre_tarea', enabled: canForceClose && !isClosed, onClick: (r) => { setForceCloseTarget(r); } },
                     { key: 'ver_detalle', enabled: row.tipo === 'TAREA', onClick: (r) => { onViewDetail?.(r); } },
                     { key: 'editar', enabled: !isClosed && (isOrganized || isExternal), onClick: (r) => { onEdit(r); } },
@@ -529,7 +532,8 @@ export const EntryTable = ({
           }}
           tareaId={selectedTareaForEntrega.id}
           onConfirm={async () => {
-            const nextStatus = (userRole === 'ADMIN' || userRole === 'GERENCIA' || userRole === 'JEFE') ? 'CERRADA' : 'EN_REVISION';
+            const isAsignado = selectedTareaForEntrega.asignaciones?.some(asig => asig.usuarioId === currentUserId);
+            const nextStatus = (userRole === 'ADMIN' || userRole === 'GERENCIA' || (userRole === 'JEFE' && !isAsignado)) ? 'CERRADA' : 'EN_REVISION';
             if (onChangeStatus) await onChangeStatus(selectedTareaForEntrega.id, { estado: nextStatus });
             setIsEntregaModalOpen(false);
             setSelectedTareaForEntrega(null);

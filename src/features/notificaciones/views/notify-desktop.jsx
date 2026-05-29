@@ -20,6 +20,7 @@ export const NotifyDesktop = ({
     onAction,
     onMarkRead,
     onMarkAll,
+    onGoToTareas,
 }) => {
     return (
         <div className="max-w-full mx-auto w-full space-y-4">
@@ -33,6 +34,7 @@ export const NotifyDesktop = ({
                 onTipoChange={onTipoChange}
                 onMarkAll={onMarkAll}
                 submitting={submitting}
+                onGoToTareas={onGoToTareas}
             />
 
             <Card className="min-h-[500px]">

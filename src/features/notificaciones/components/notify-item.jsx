@@ -3,24 +3,32 @@ import { formatRelativo } from '@/lib/date';
 import { cn } from '@/utils/cn';
 import { TIPO_CONFIG } from './notify-config';
 
-const ROLES_ADMIN = new Set(['SUPER_ADMIN', 'JEFE_MTTO', 'COORDINADOR_MTTO']);
+const ROLES_ADMIN = new Set(['ADMIN', 'GERENCIA']);
 
 const buildAcciones = (notif, rol) => {
     const { tipo, tareaId, accionada, tarea } = notif;
     const estadoActual = tarea?.estado || null;
 
-    if (!tareaId) return [];
+    if (!tareaId && tipo !== 'NUEVAS_ENTRADAS') return [];
 
-    const esTecnico = rol === 'TECNICO';
+    const esTecnico = rol === 'COORDINADOR';
     const esAdmin = ROLES_ADMIN.has(rol);
-    const esJefe = rol === 'JEFE_MTTO';
-    const esCoord = rol === 'COORDINADOR_MTTO';
+    const esJefe = rol === 'JEFE';
+    const esCoord = rol === 'COORDINADOR';
 
     const verDetalle = (label = 'Ver detalles') => ({
         key: 'ver_detalle',
         label,
         icon: 'visibility',
         variant: 'ghost',
+        isStatus: false,
+    });
+
+    const irATareas = () => ({
+        key: 'ir_a_tareas_tablero',
+        label: 'Ir a Tareas',
+        icon: 'task',
+        variant: 'neutro',
         isStatus: false,
     });
 
@@ -54,13 +62,13 @@ const buildAcciones = (notif, rol) => {
     const esEstadoTerminalAbsoluto = estadoActual && ['CERRADO', 'CANCELADA'].includes(estadoActual);
 
     if (esEstadoTerminalAbsoluto) {
-        return [verDetalle(), getEstadoChip()].filter(Boolean);
+        return [verDetalle(), irATareas(), getEstadoChip()].filter(Boolean);
     }
 
     // Si el estado es RESUELTO y el usuario NO es admin, mostramos el chip informativo (comportamiento técnico).
     // Si es Admin, NO entramos aquí para permitir que el switch evalúe la acción "Revisar".
     if (estadoActual === 'RESUELTO' && !esAdmin) {
-        return [verDetalle(), getEstadoChip()].filter(Boolean);
+        return [verDetalle(), irATareas(), getEstadoChip()].filter(Boolean);
     }
 
     // Validadores de apoyo para el switch
@@ -71,15 +79,16 @@ const buildAcciones = (notif, rol) => {
         case 'TAREA_ASIGNADA':
             if (accionada || yaIniciada) {
                 const statusChip = getEstadoChip();
-                return [verDetalle(), statusChip || chip('Ya iniciada', 'play_circle', 'bg-estado-en-progreso/10 text-estado-en-progreso border-estado-en-progreso/30')];
+                return [verDetalle(), irATareas(), statusChip || chip('Ya iniciada', 'play_circle', 'bg-estado-en-progreso/10 text-estado-en-progreso border-estado-en-progreso/30')];
             }
             if (esTecnico || esAdmin) {
                 return [
                     verDetalle(),
+                    irATareas(),
                     { key: 'iniciar', label: 'Iniciar', icon: 'play_arrow', variant: 'accion', isStatus: false, isCTA: true },
                 ];
             }
-            return [verDetalle()];
+            return [verDetalle(), irATareas()];
 
         case 'REVISION_PENDIENTE':
         case 'TAREA_RESUELTA':
@@ -90,16 +99,17 @@ const buildAcciones = (notif, rol) => {
                     ? 'bg-estado-rechazado/10 text-estado-rechazado border-estado-rechazado/30'
                     : 'bg-estado-resuelto/10 text-estado-resuelto border-estado-resuelto/30';
 
-                return [verDetalle(), chip(labelChip, iconChip, colorChip)];
+                return [verDetalle(), irATareas(), chip(labelChip, iconChip, colorChip)];
             }
             // Aquí ahora entrará el Admin correctamente porque el cortocircuito anterior ya no lo bloquea.
             if (esAdmin || esJefe || esCoord) {
                 return [
                     verDetalle(),
+                    irATareas(),
                     { key: 'revisar', label: 'Revisar', icon: 'fact_check', variant: 'guardar', isStatus: false, isCTA: true },
                 ];
             }
-            return [verDetalle()];
+            return [verDetalle(), irATareas()];
 
         case 'RECHAZO_TECNICO':
         case 'TAREA_RECHAZADA':
@@ -107,22 +117,23 @@ const buildAcciones = (notif, rol) => {
             if (estadoActual === 'RECHAZADO') {
                 return [
                     verDetalle('Ver motivo'),
-                    irAHoy(esAdmin ? 'Ver tarea' : 'Ir a mis tareas'),
+                    irATareas(),
                 ];
             }
-            return [verDetalle('Ver motivo'), getEstadoChip()].filter(Boolean);
+            return [verDetalle('Ver motivo'), irATareas(), getEstadoChip()].filter(Boolean);
 
         case 'NUEVO_REPORTE':
             if (esAdmin || esJefe || esCoord) {
                 if (yaAsignada) {
-                    return [verDetalle(), getEstadoChip()].filter(Boolean);
+                    return [verDetalle(), irATareas(), getEstadoChip()].filter(Boolean);
                 }
                 return [
                     verDetalle(),
+                    irATareas(),
                     { key: 'ir_a_bandeja', label: 'Ver en bandeja', icon: 'inbox', variant: 'accion', isStatus: false },
                 ];
             }
-            return tareaId ? [verDetalle()] : [];
+            return tareaId ? [verDetalle(), irATareas()] : [];
 
         case 'TAREA_CANCELADA':
         case 'TAREA_CERRADA':
@@ -130,10 +141,15 @@ const buildAcciones = (notif, rol) => {
         case 'TAREA_REASIGNADA':
         case 'TAREA_INICIADA':
         case 'TAREA_PAUSADA':
-            return [verDetalle(), getEstadoChip()].filter(Boolean);
+            return [verDetalle(), irATareas(), getEstadoChip()].filter(Boolean);
+
+        case 'NUEVAS_ENTRADAS':
+            return [
+                { key: 'organizar_minuta', label: 'Organizar Minuta', icon: 'edit_document', variant: 'accion', isCTA: true }
+            ];
 
         default:
-            return tareaId ? [verDetalle()] : [];
+            return tareaId ? [verDetalle(), irATareas()] : [];
     }
 };
 

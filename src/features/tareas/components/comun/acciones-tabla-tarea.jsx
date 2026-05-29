@@ -28,17 +28,20 @@ export const AccionesTablaTarea = ({
     const esAsignado = tarea.responsables?.some(r => r.id === userId);
     const esResponsable = (esAsignado || esJefe) && currentUser;
 
+    const tieneJefeAsignado = tarea.responsables?.some(r => r.rol === 'JEFE');
+    const puedeAprobar = rol === 'ADMIN' || rol === 'GERENCIA' || (rol === 'JEFE' && !tieneJefeAsignado);
+
     const estado = tarea.estado?.toUpperCase();
     const isPendiente = estado === 'PENDIENTE';
     const isEnRevision = estado === 'EN_REVISION';
     const isCerrada = estado === 'CERRADA' || estado === 'DESCARTADA' || estado === 'CANCELADA';
 
-    const canForceClose = esJefe && !esAsignado && isPendiente && !isPorAprobar;
+    const canForceClose = esJefe && !esAsignado && isPendiente && !isPorAprobar && tarea.tipo === 'TAREA';
 
     return (
         <div className="flex items-center justify-center gap-1.5 min-w-[110px]">
             {/* Indicador de "En Revisión" para Coordinadores cuando está completado */}
-            {isEnRevision && !esJefe && (
+            {isEnRevision && !puedeAprobar && (
                 <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 text-blue-600 rounded-xl border border-blue-100 shadow-sm animate-pulse">
                     <Icon name="hourglass_empty" size="14px" />
                     <span className="text-[10px] font-black uppercase tracking-tight">En Revisión</span>
@@ -49,7 +52,7 @@ export const AccionesTablaTarea = ({
                 row={tarea} 
                 actions={[
                     { key: 'entregar', enabled: isPendiente && esAsignado && esResponsable && !isCerrada, onClick: (r) => { setIsEntregaModalOpen(true); } },
-                    { key: 'aprobar', enabled: isEnRevision && esJefe && esResponsable && !isCerrada, onClick: (r) => { if (onReview) onReview(r); else setApproveTarget(r); } },
+                    { key: 'aprobar', enabled: isEnRevision && puedeAprobar && !isCerrada, onClick: (r) => { if (onReview) onReview(r); else setApproveTarget(r); } },
                     { key: 'forzar_cierre_tarea', enabled: canForceClose && !isCerrada, onClick: (r) => { setForceCloseTarget(r); } },
                     { key: 'ver_detalle', enabled: true, onClick: (r) => { onViewDetail?.(r); } },
                     { key: 'editar', enabled: (isPendiente && (esJefe || (userId && tarea.creadoPorId === userId))), onClick: (r) => { onEdit?.(r); } },
@@ -63,7 +66,7 @@ export const AccionesTablaTarea = ({
                     onClose={() => setIsEntregaModalOpen(false)}
                     tareaId={tarea.id}
                     onConfirm={async () => {
-                        const nextStatus = (rol === 'ADMIN' || rol === 'GERENCIA' || rol === 'JEFE') ? 'CERRADA' : 'EN_REVISION';
+                        const nextStatus = (rol === 'ADMIN' || rol === 'GERENCIA' || (rol === 'JEFE' && !esAsignado)) ? 'CERRADA' : 'EN_REVISION';
                         if (onChangeStatus) await onChangeStatus(tarea.id, nextStatus);
                     }}
                 />

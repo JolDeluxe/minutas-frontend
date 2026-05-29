@@ -1,4 +1,4 @@
-import { GlassFab, Icon, Skeleton, ScrollToTopButton, Spinner } from '@/components/ui/z_index';
+import { GlassFab, Icon, Skeleton, ScrollToTopButton, Spinner, Button } from '@/components/ui/z_index';
 import { glassBase, GlassSheen } from '@/components/ui/liquid-glass-mobile';
 import { NotifyItem } from '../components/notify-item';
 import { NotifyEmptyState } from '../components/notify-empty-state';
@@ -82,6 +82,7 @@ export const NotifyMobile = ({
     onAction,
     onMarkRead,
     onMarkAll,
+    onGoToTareas,
 }) => {
     // Al eliminar la paginación inferior, los botones flotantes bajan.
     const baseBottom = 84;
@@ -90,17 +91,21 @@ export const NotifyMobile = ({
 
     return (
         <>
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-3 gap-2">
                 <GlassToggle
                     soloNoLeidas={soloNoLeidas}
                     onToggle={onToggleNoLeidas}
                     noLeidas={meta.noLeidas}
                 />
-                {meta.noLeidas > 0 && (
-                    <p className="text-xs text-estado-asignada font-semibold">
-                        {meta.noLeidas} sin leer
-                    </p>
-                )}
+                <Button
+                    variant="neutro"
+                    size="sm"
+                    icon="task"
+                    onClick={onGoToTareas}
+                    className="border border-slate-200"
+                >
+                    Ir a Tareas
+                </Button>
             </div>
 
             <NotifyOverdueBanner currentUser={currentUser} />

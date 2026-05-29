@@ -21,6 +21,7 @@ export const NotifyFilterBar = ({
     noLeidas = 0,
     onMarkAll,
     submitting,
+    onGoToTareas,
 }) => (
     <div className="flex flex-col gap-3 pb-3 border-b border-slate-200 mb-0">
         <div className="flex items-center gap-3 flex-wrap">
@@ -57,19 +58,29 @@ export const NotifyFilterBar = ({
                 </div>
             </div>
 
-            {/* Marcar todas como leídas */}
-            {noLeidas > 0 && (
+            {/* Acciones del lado derecho */}
+            <div className="ml-auto flex items-center gap-2">
+                {noLeidas > 0 && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        icon="done_all"
+                        onClick={onMarkAll}
+                        isLoading={submitting}
+                    >
+                        Marcar todas como leídas
+                    </Button>
+                )}
                 <Button
-                    variant="ghost"
+                    variant="neutro"
                     size="sm"
-                    icon="done_all"
-                    onClick={onMarkAll}
-                    isLoading={submitting}
-                    className="ml-auto"
+                    icon="task"
+                    onClick={onGoToTareas}
+                    className="border border-slate-200"
                 >
-                    Marcar todas como leídas
+                    Ir a Tareas
                 </Button>
-            )}
+            </div>
         </div>
     </div>
 );

@@ -353,6 +353,9 @@ export const TareaCard = ({
     const esJefe = rol ? ROLES_ADMIN.includes(rol) : false;
     const currentUserId = currentUser?.id;
 
+    const tieneJefeAsignado = responsables.some(r => r.rol === 'JEFE');
+    const puedeAprobar = rol === 'ADMIN' || rol === 'GERENCIA' || (rol === 'JEFE' && !tieneJefeAsignado);
+
     const estado = tarea.estado?.toUpperCase() || 'PENDIENTE';
     const isPendiente = estado === 'PENDIENTE';
     const isEnRevision = estado === 'EN_REVISION';
@@ -373,7 +376,7 @@ export const TareaCard = ({
     const esAsignadoDirecto = responsables.some(r => r.id == currentUserId)
         || tarea.asignaciones?.some(a => a.usuarioId == currentUserId);
 
-    const canForceClose = esJefe && !esAsignadoDirecto && isPendiente && !isPorAprobar;
+    const canForceClose = esJefe && !esAsignadoDirecto && isPendiente && !isPorAprobar && tipo === 'TAREA';
 
     // ── Handlers de notas ───────────────────────────────────────────────────
     const handleAddNote = async (tareaId, contenido) => {
@@ -644,7 +647,7 @@ export const TareaCard = ({
                                                 row={tarea}
                                                 actions={[
                                                     { key: 'entregar', enabled: isFormalizada && !isDraft && !isCerrado && !isExternal && isPendiente && esAsignadoDirecto, onClick: () => { setIsEntregaModalOpen(true); } },
-                                                    { key: 'aprobar', enabled: isFormalizada && !isDraft && !isCerrado && !isExternal && isEnRevision && esJefe, onClick: (r) => { if (onReview) onReview(r); else setIsConfirmAprobarOpen(true); } },
+                                                    { key: 'aprobar', enabled: isFormalizada && !isDraft && !isCerrado && !isExternal && isEnRevision && puedeAprobar, onClick: (r) => { if (onReview) onReview(r); else setIsConfirmAprobarOpen(true); } },
                                                     { key: 'forzar_cierre_tarea', enabled: canForceClose && !isCerrado, onClick: (r) => { setForceCloseTarget(r); } },
                                                     { key: 'ver_detalle', enabled: isFormalizada, onClick: (r) => { onViewDetail?.(r); } },
                                                     { key: 'editar', enabled: !isCerrado && (isOrganized || isExternal) && !!onEdit, onClick: (r) => { onEdit(r); } },
@@ -670,7 +673,7 @@ export const TareaCard = ({
                     onClose={() => setIsEntregaModalOpen(false)}
                     tareaId={tarea.id}
                     onConfirm={async () => {
-                        const nextStatus = (rol === 'ADMIN' || rol === 'GERENCIA' || rol === 'JEFE') ? 'CERRADA' : 'EN_REVISION';
+                        const nextStatus = (rol === 'ADMIN' || rol === 'GERENCIA' || (rol === 'JEFE' && !esAsignadoDirecto)) ? 'CERRADA' : 'EN_REVISION';
                         if (onChangeStatus) await onChangeStatus(tarea.id, nextStatus);
                     }}
                 />

@@ -140,9 +140,10 @@ export const PanelDetalleTarea = ({
     if (!isOpen || !tarea) return null;
 
     const { rol, id: userId } = currentUser ?? {};
-    const esJefe        = ['ADMIN', 'JEFE', 'GERENCIA'].includes(rol);
-    const esAsignado    = tarea.responsables?.some((r) => r.id == userId);
-    const esResponsable = esAsignado || esJefe;
+    const tieneJefeAsignado = tarea.responsables?.some((r) => r.rol === 'JEFE');
+    const esJefe            = rol === 'ADMIN' || rol === 'GERENCIA' || (rol === 'JEFE' && !tieneJefeAsignado);
+    const esAsignado        = tarea.responsables?.some((r) => r.id == userId);
+    const esResponsable     = esAsignado || ['ADMIN', 'JEFE', 'GERENCIA'].includes(rol);
 
     const estado      = tarea.estado?.toUpperCase();
     const isPendiente = estado === 'PENDIENTE';
@@ -571,7 +572,7 @@ export const PanelDetalleTarea = ({
                     tareaId={tarea.id}
                     submitting={submitting}
                     onConfirm={async () => {
-                        const nextStatus = (rol === 'ADMIN' || rol === 'GERENCIA' || rol === 'JEFE') ? 'CERRADA' : 'EN_REVISION';
+                        const nextStatus = (rol === 'ADMIN' || rol === 'GERENCIA' || (rol === 'JEFE' && !esAsignado)) ? 'CERRADA' : 'EN_REVISION';
                         if (onChangeStatus) await onChangeStatus(tarea.id, nextStatus);
                     }}
                 />

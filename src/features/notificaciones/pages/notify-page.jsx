@@ -11,7 +11,7 @@ import { NotifyMobile } from '../views/notify-mobile';
 import { NotifyDetailModal } from '../components/notify-detail-modal';
 import { NotifyReviewModal } from '../components/notify-review-modal';
 import { NotifyStatusModal } from '../components/notify-status-modal';
-import { getTicketById, changeTicketStatus } from '@/features/tickets/api/tickets-api';
+import { getTareaById, changeTareaStatus, deleteTarea } from '@/features/tareas/api/tareas-api';
 
 const LIMIT = 20;
 
@@ -71,8 +71,9 @@ export default function NotifyPage() {
             const fetchFromUrl = async () => {
                 setFetchingTicket(true);
                 try {
-                    const ticket = await getTicketById(Number(ticketId));
-                    setActiveTicket(ticket);
+                    const ticket = await getTareaById(Number(ticketId));
+                    const taskData = ticket?.data ?? ticket;
+                    setActiveTicket(taskData);
                     setDetailOpen(true);
                 } catch (err) {
                     notify.error('No se pudo cargar el ticket solicitado.');
@@ -149,12 +150,26 @@ export default function NotifyPage() {
         }
 
         if (actionKey === 'ir_a_hoy') {
-            navigate(`/tickets/hoy?highlight=${notificacion.tareaId}`);
+            navigate(`/tareas/mis-tareas?highlight=${notificacion.tareaId}`);
             return;
         }
 
         if (actionKey === 'ir_a_bandeja') {
-            navigate('/tickets/bandeja');
+            navigate('/tareas/activas');
+            return;
+        }
+
+        if (actionKey === 'organizar_minuta') {
+            const match = notificacion.cuerpo.match(/#(\d+)/);
+            if (match) {
+                const minutaId = match[1];
+                const targetUrl = currentUser?.rol === 'GERENCIA' || currentUser?.rol === 'ADMIN'
+                    ? `/minutas/${minutaId}`
+                    : `/minutas/${minutaId}?linea=${currentUser?.linea || ''}`;
+                navigate(targetUrl);
+            } else {
+                navigate('/minutas');
+            }
             return;
         }
 
@@ -164,11 +179,32 @@ export default function NotifyPage() {
         setFetchingTicket(true);
 
         try {
-            const ticket = await getTicketById(notificacion.tareaId);
-            setActiveTicket(ticket);
+            if (actionKey === 'iniciar') {
+                await changeTareaStatus(notificacion.tareaId, { estado: 'EN_PROGRESO' });
+                notify.success('Tarea iniciada correctamente.');
+                markActioned(notificacion.id);
+                decrementNotifyStore();
+                setActiveNotif(null);
+                return;
+            }
+
+            const ticket = await getTareaById(notificacion.tareaId);
+            const taskData = ticket?.data ?? ticket;
+
+            if (actionKey === 'revisar') {
+                const tieneJefeAsignado = taskData.responsables?.some((r) => r.rol === 'JEFE');
+                const puedeAprobar = currentUser?.rol === 'ADMIN' || currentUser?.rol === 'GERENCIA' || (currentUser?.rol === 'JEFE' && !tieneJefeAsignado);
+                
+                if (!puedeAprobar) {
+                    notify.error('Como responsable de esta tarea, solo Gerencia puede aprobarla.');
+                    setActiveNotif(null);
+                    return;
+                }
+            }
+
+            setActiveTicket(taskData);
 
             if (actionKey === 'ver_detalle') setDetailOpen(true);
-            else if (actionKey === 'iniciar') setStatusOpen(true);
             else if (actionKey === 'revisar') setReviewOpen(true);
         } catch {
             notify.error('No se pudo cargar la tarea. Puede que ya no tengas acceso.');
@@ -176,12 +212,12 @@ export default function NotifyPage() {
         } finally {
             setFetchingTicket(false);
         }
-    }, [markRead, navigate, decrementNotifyStore]);
+    }, [markRead, navigate, decrementNotifyStore, markActioned]);
 
     const handleChangeStatus = useCallback(async (id, payload) => {
         setChangeSubmit(true);
         try {
-            await changeTicketStatus(id, payload);
+            await changeTareaStatus(id, payload);
             notify.success('Estado actualizado correctamente.');
 
             if (activeNotif?.id) {
@@ -201,6 +237,30 @@ export default function NotifyPage() {
             setChangeSubmit(false);
         }
     }, [activeNotif, markActioned]);
+
+    const handleUpdateGeneric = useCallback(async (id, payload) => {
+        try {
+            await changeTareaStatus(id, payload);
+            notify.success('Actualización exitosa.');
+            setDetailOpen(false);
+            setActiveTicket(null);
+            setActiveNotif(null);
+        } catch {
+            notify.error('Error al actualizar.');
+        }
+    }, []);
+
+    const handleDeleteTarea = useCallback(async (id) => {
+        try {
+            await deleteTarea(id);
+            notify.success('Tarea eliminada correctamente.');
+            setDetailOpen(false);
+            setActiveTicket(null);
+            setActiveNotif(null);
+        } catch {
+            notify.error('Error al eliminar la tarea.');
+        }
+    }, []);
 
     const handleCloseModals = useCallback(() => {
         setDetailOpen(false);
@@ -226,13 +286,23 @@ export default function NotifyPage() {
         onAction: handleAction,
         onMarkRead: markRead,
         onMarkAll: handleMarkAllRead,
+        onGoToTareas: () => navigate('/tareas'),
     };
 
     return (
         <div className="max-w-full mx-auto p-1 lg:p-10 m-1">
             {isDesktop ? <NotifyDesktop {...sharedProps} /> : <NotifyMobile {...sharedProps} />}
 
-            <NotifyDetailModal isOpen={detailOpen} onClose={handleCloseModals} ticket={activeTicket} />
+            <NotifyDetailModal 
+                isOpen={detailOpen} 
+                onClose={handleCloseModals} 
+                ticket={activeTicket} 
+                currentUser={currentUser}
+                onChangeStatus={handleChangeStatus}
+                onUpdate={handleUpdateGeneric}
+                onDelete={handleDeleteTarea}
+                submitting={changeSubmit}
+            />
             <NotifyReviewModal isOpen={reviewOpen} onClose={handleCloseModals} ticket={activeTicket} isSubmitting={changeSubmit} onConfirm={handleChangeStatus} />
             <NotifyStatusModal isOpen={statusOpen} onClose={handleCloseModals} ticket={activeTicket} currentUser={currentUser} isSubmitting={changeSubmit} onConfirm={handleChangeStatus} />
         </div>
