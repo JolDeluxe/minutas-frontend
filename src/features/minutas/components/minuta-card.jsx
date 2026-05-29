@@ -41,7 +41,7 @@ export const MinutaCard = ({ minuta, onViewDetail, badge = null, isAdmin = false
     const dept = minuta.departamento || minuta.creadoPor?.departamento;
     const isMarketing = dept === 'MARKETING';
     const lineInfo = isMarketing 
-        ? { label: 'Marketing', color: '#8b5cf6' } 
+        ? { label: 'Marketing', color: '#482b2c' } 
         : (LINEA_MAP[minuta.lineaDefault] || { label: minuta.lineaDefault, color: '#64748b' });
 
     const BADGE_CONFIG = {
@@ -80,7 +80,7 @@ export const MinutaCard = ({ minuta, onViewDetail, badge = null, isAdmin = false
                 finalBadgeCfg ? finalBadgeCfg.border : "border-slate-200/80",
                 isAdmin 
                     ? (isMarketing 
-                        ? "bg-purple-50 border-purple-200 hover:bg-purple-100 hover:border-purple-300 border-l-4 border-l-purple-500" 
+                        ? "bg-marca-primario/5 border-marca-primario/20 hover:bg-marca-primario/10 hover:border-marca-primario/30 border-l-4 border-l-marca-primario" 
                         : "bg-blue-50 border-blue-200 hover:bg-blue-100 hover:border-blue-300 border-l-4 border-l-blue-500")
                     : "bg-white border-slate-200 hover:border-slate-300"
             )}
@@ -125,7 +125,7 @@ export const MinutaCard = ({ minuta, onViewDetail, badge = null, isAdmin = false
                                 <span className={cn(
                                     "px-1.5 py-0.5 text-[7px] sm:text-[8px] font-black uppercase tracking-wider rounded border",
                                     isMarketing 
-                                        ? "bg-purple-100/50 text-purple-700 border-purple-200/40" 
+                                        ? "bg-marca-primario/10 text-marca-primario border-marca-primario/20" 
                                         : "bg-blue-100/50 text-blue-700 border-blue-200/40"
                                 )}>
                                     {isMarketing ? 'Marketing' : 'Diseño'}

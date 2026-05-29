@@ -28,7 +28,7 @@ const getLineInfo = (politica) => {
     politica.area === 'MARKETING';
 
   if (isMarketing) {
-    return { value: 'MARKETING', label: 'Marketing', color: '#8b5cf6', isMarketing: true };
+    return { value: 'MARKETING', label: 'Marketing', color: '#482b2c', isMarketing: true };
   }
 
   const fallback = politica.linea || 'DISENO';

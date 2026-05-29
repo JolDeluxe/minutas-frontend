@@ -10,8 +10,10 @@ import { LineIconSelector, MarketingIcon } from '../../../minutas/components/ico
 import { LINEA_MAP, AREA_MAP } from '../../../minutas/constants';
 import { Tooltip } from '@/components/ui/z_index';
 import { ImageViewer } from './tarjeta-tarea';
+import { useIsDesktop } from '@/hooks/useMediaQuery';
 
 const TableImagePreview = ({ images, onClick }) => {
+  const isDesktop = useIsDesktop();
   const [showHover, setShowHover] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [coords, setCoords] = useState({ x: 0, y: 0 });
@@ -32,6 +34,7 @@ const TableImagePreview = ({ images, onClick }) => {
   const currentImg = images[currentIndex]?.preview || images[currentIndex]?.url;
 
   const handleMouseEnter = () => {
+    if (!isDesktop) return;
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
       const spaceRight = window.innerWidth - rect.right;
@@ -54,7 +57,11 @@ const TableImagePreview = ({ images, onClick }) => {
     >
       <div 
         className="h-28 w-28 min-w-[7rem] shrink-0 rounded-2xl border-2 border-slate-100 bg-white relative z-10 cursor-pointer p-1 hover:border-marca-primario/30 transition-all group" 
-        onClick={onClick}
+        onClick={(e) => { 
+          e.stopPropagation(); 
+          setShowHover(false); 
+          onClick?.(e); 
+        }}
       >
         <div className="relative w-full h-full rounded-xl overflow-hidden shadow-sm">
           {images.map((img, i) => (
@@ -81,7 +88,7 @@ const TableImagePreview = ({ images, onClick }) => {
         </div>
       </div>
 
-      {showHover && createPortal(
+      {showHover && isDesktop && createPortal(
         <div 
           className="fixed z-99999 pointer-events-none animate-in fade-in zoom-in-95 duration-200" 
           style={{ 
@@ -217,7 +224,7 @@ export const TablaTareas = ({
                                 <span className={cn(
                                     "inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border whitespace-nowrap",
                                     isMarketing 
-                                        ? "bg-purple-50 text-purple-700 border-purple-200/60" 
+                                        ? "bg-marca-primario/10 text-marca-primario border-marca-primario/20" 
                                         : "bg-blue-50 text-blue-700 border-blue-200/60"
                                 )}>
                                     {isMarketing ? 'Marketing' : 'Diseño'}
@@ -235,7 +242,7 @@ export const TablaTareas = ({
                         {row.minuta && (
                             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                                 <Icon name="description" size="10px" className="text-slate-300 shrink-0" />
-                                <span className="text-[10px] text-slate-400 font-bold truncate max-w-[150px]" title={row.minuta.titulo}>
+                                <span className="text-[10px] text-slate-400 font-bold break-words whitespace-normal leading-tight max-w-[320px]" title={row.minuta.titulo}>
                                     {row.minuta.titulo || `Minuta #${row.minutaId}`}
                                 </span>
                                 {row.minuta.isJuntaActual && (
@@ -265,7 +272,7 @@ export const TablaTareas = ({
                 
                 const isMarketing = row.departamento === 'MARKETING';
                 const lineInfo = isMarketing 
-                    ? { label: 'Marketing', color: '#8b5cf6' } 
+                    ? { label: 'Marketing', color: '#482b2c' } 
                     : (LINEA_MAP[row.linea] || { label: row.linea || '—', color: '#64748b' });
 
                 return (
@@ -428,7 +435,7 @@ export const TablaTareas = ({
                     }
                     const isMarketing = row.departamento === 'MARKETING';
                     return isMarketing
-                        ? 'bg-purple-50/40 hover:bg-purple-100/60 border-b border-purple-200/50 text-slate-800'
+                        ? 'bg-marca-primario/5 hover:bg-marca-primario/10 border-b border-marca-primario/20 text-slate-800'
                         : 'bg-blue-50/40 hover:bg-blue-100/60 border-b border-blue-200/50 text-slate-800';
                 }}
                 onSortChange={(key) => {

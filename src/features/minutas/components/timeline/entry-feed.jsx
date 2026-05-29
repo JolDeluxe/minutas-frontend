@@ -87,7 +87,7 @@ export const EntryFeed = ({
             <div className={cn(
               "flex h-8 w-8 items-center justify-center rounded-lg shadow-sm border",
               section.tone === 'draft' ? "bg-emerald-500 border-emerald-400 text-white" : 
-              section.tone === 'external' ? "bg-purple-500 border-purple-400 text-white" : 
+              section.tone === 'external' ? "bg-marca-primario border-marca-acento text-white" : 
               "bg-slate-800 border-slate-700 text-white"
             )}>
               <Icon name={section.icon} size="18px" />
@@ -95,7 +95,7 @@ export const EntryFeed = ({
             <h3 className={cn(
               "text-[10px] font-black uppercase tracking-[0.25em]",
               section.tone === 'draft' ? "text-emerald-700" : 
-              section.tone === 'external' ? "text-purple-700" : 
+              section.tone === 'external' ? "text-marca-primario" : 
               "text-slate-500"
             )}>
               {section.label} ({section.entries.length})

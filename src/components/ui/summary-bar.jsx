@@ -74,11 +74,11 @@ const VARIANTS = {
         mobileBase: "bg-white border border-blue-200/80 text-blue-700 shadow-sm active:scale-[0.98]",
         mobileActive: "bg-gradient-to-b from-blue-500 to-blue-600 border border-blue-600 text-white shadow-md shadow-blue-500/25 active:scale-[0.98]",
     },
-    en_progreso: { // #8b5cf6 (violet)
-        desktopBase: "bg-white border border-violet-200/80 text-violet-700 shadow-sm hover:shadow-md hover:border-violet-300 hover:-translate-y-0.5 active:scale-[0.98] active:translate-y-0 active:shadow-sm",
-        desktopActive: "bg-gradient-to-b from-violet-500 to-violet-600 border border-violet-600 text-white shadow-md shadow-violet-500/25 active:scale-[0.98]",
-        mobileBase: "bg-white border border-violet-200/80 text-violet-700 shadow-sm active:scale-[0.98]",
-        mobileActive: "bg-gradient-to-b from-violet-500 to-violet-600 border border-violet-600 text-white shadow-md shadow-violet-500/25 active:scale-[0.98]",
+    en_progreso: { // #482b2c (marca-primario)
+        desktopBase: "bg-white border border-marca-primario/20 text-marca-primario shadow-sm hover:shadow-md hover:border-marca-primario/30 hover:-translate-y-0.5 active:scale-[0.98] active:translate-y-0 active:shadow-sm",
+        desktopActive: "bg-gradient-to-b from-marca-primario to-marca-primario-hover border border-marca-primario text-white shadow-md shadow-marca-primario/25 active:scale-[0.98]",
+        mobileBase: "bg-white border border-marca-primario/20 text-marca-primario shadow-sm active:scale-[0.98]",
+        mobileActive: "bg-gradient-to-b from-marca-primario to-marca-primario-hover border border-marca-primario text-white shadow-md shadow-marca-primario/25 active:scale-[0.98]",
     },
     en_pausa: { // #6b7280 (gray)
         desktopBase: "bg-white border border-gray-200/80 text-gray-600 shadow-sm hover:shadow-md hover:border-gray-300 hover:-translate-y-0.5 active:scale-[0.98] active:translate-y-0 active:shadow-sm",

@@ -263,20 +263,20 @@ export const OrganizeDrawer = ({
           )}
 
           {tipo === 'POLITICA' && (
-            <div className="bg-purple-50 p-6 rounded-[2rem] border-2 border-purple-200 flex items-start gap-5 animate-in zoom-in-95 duration-500 shadow-xl shadow-purple-500/10">
-               <div className="w-14 h-14 rounded-2xl bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-lg shadow-purple-600/30">
+            <div className="bg-marca-primario/5 p-6 rounded-[2rem] border-2 border-marca-primario/20 flex items-start gap-5 animate-in zoom-in-95 duration-500 shadow-xl shadow-marca-primario/5">
+               <div className="w-14 h-14 rounded-2xl bg-marca-primario text-white flex items-center justify-center shrink-0 shadow-lg shadow-marca-primario/20">
                   <ShieldCheck size={32} />
                </div>
                <div className="space-y-1">
-                  <h4 className="text-base font-black text-purple-950 uppercase tracking-tight leading-none">Lineamiento Permanente</h4>
-                  <p className="text-[11px] text-purple-800/80 font-bold leading-relaxed">
+                  <h4 className="text-base font-black text-marca-primario uppercase tracking-tight leading-none">Lineamiento Permanente</h4>
+                  <p className="text-[11px] text-marca-secundario font-bold leading-relaxed">
                     Esta entrada se clasificará como una **norma o directriz** institucional. 
                   </p>
-                  <div className="pt-2 flex items-center gap-2 text-purple-600 font-black text-[9px] uppercase tracking-widest">
+                  <div className="pt-2 flex items-center gap-2 text-marca-acento font-black text-[9px] uppercase tracking-widest">
                      <CheckCircle2 size={12} />
                      No genera tareas operativas
                   </div>
-                  <div className="flex items-center gap-2 text-purple-600 font-black text-[9px] uppercase tracking-widest">
+                  <div className="flex items-center gap-2 text-marca-acento font-black text-[9px] uppercase tracking-widest">
                      <CheckCircle2 size={12} />
                      Visible en el mural de políticas
                   </div>

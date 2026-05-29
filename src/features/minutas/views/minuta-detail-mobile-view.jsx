@@ -19,6 +19,7 @@ import { PanelDetalleTarea } from '../../tareas/components/comun/panel-detalle-t
 export const MinutaDetailMobileView = ({
   minuta,
   resumen,
+  allEntries,
   filteredEntries,
   politicasAcordadas = [],
   recordatoriosGenerales = [],
@@ -92,7 +93,7 @@ export const MinutaDetailMobileView = ({
           entries={filteredEntries} 
           onFilterByStatus={(status) => setActiveFilter(prev => ({ ...prev, estado: prev.estado === status ? null : status, tipo: 'TAREA' }))}
           onFilterByTipo={(tipo) => setActiveFilter(prev => ({ ...prev, tipo: prev.tipo === tipo ? 'TAREA' : tipo, estado: null }))}
-          onResetFilter={() => setActiveFilter({ tipo: 'TAREA', estado: null, clasificacion: null, area: null, linea: null, search: '' })}
+          onResetFilter={() => setActiveFilter({ tipo: 'TAREA', estado: null, clasificacion: null, area: null, linea: null, search: '', onlyExternal: false })}
           activeFilter={activeFilter}
           onIniciar={handleIniciar}
           onCancelar={handleCancelar}
@@ -114,7 +115,7 @@ export const MinutaDetailMobileView = ({
             resumen={resumen} 
             onFilterByStatus={(status) => setActiveFilter(prev => ({ ...prev, estado: prev.estado === status ? null : status, tipo: 'TAREA' }))}
             onFilterByTipo={(tipo) => setActiveFilter(prev => ({ ...prev, tipo: prev.tipo === tipo ? 'TAREA' : tipo, estado: null }))}
-            onResetFilter={() => setActiveFilter({ tipo: 'TAREA', estado: null, clasificacion: null, area: null, linea: null, search: '' })}
+            onResetFilter={() => setActiveFilter({ tipo: 'TAREA', estado: null, clasificacion: null, area: null, linea: null, search: '', onlyExternal: false })}
             activeFilter={activeFilter}
           />
           <MinutaJuntaComparison minutaId={minuta.id} />
@@ -215,6 +216,7 @@ export const MinutaDetailMobileView = ({
             viewMode={viewMode}
             setViewMode={setViewMode}
             isMobile={true}
+            allEntries={allEntries}
           />
         </div>
 

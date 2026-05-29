@@ -15,7 +15,8 @@ export const EntryFiltersBar = ({
   departamento, 
   viewMode, 
   setViewMode,
-  isMobile = false
+  isMobile = false,
+  allEntries = []
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const catalogos = useMemo(() => getCatalogos(departamento), [departamento]);
@@ -24,6 +25,15 @@ export const EntryFiltersBar = ({
   const activeFiltersCount = useMemo(() => {
     return [activeFilter.clasificacion, activeFilter.linea].filter(Boolean).length;
   }, [activeFilter.clasificacion, activeFilter.linea]);
+
+  const hasExternalEntries = useMemo(() => {
+    return allEntries.some(entry => {
+      return entry.area && (
+        ((departamento === 'DISENO' || departamento === 'DISEÑO') && entry.area !== 'DISENO') ||
+        (departamento === 'MARKETING' && entry.area !== 'MARKETING')
+      );
+    });
+  }, [allEntries, departamento]);
 
   const handleClear = () => {
     onChange({ ...DEFAULT_FILTER, tipo: activeFilter.tipo, search: activeFilter.search });
@@ -47,35 +57,66 @@ export const EntryFiltersBar = ({
         </div>
 
         <div className="flex justify-between items-center w-full px-0.5">
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            style={{
-              ...glassBase(isExpanded || activeFiltersCount > 0 ? 'primary' : 'light'),
-              borderRadius: 14,
-              padding: '7px 16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              position: 'relative',
-              overflow: 'hidden',
-            }}
-            className="active:scale-95 transition-all outline-none border border-slate-200/50 shadow-sm"
-          >
-            {(isExpanded || activeFiltersCount > 0) && <GlassSheen />}
-            <Icon 
-              name="filter_list" 
-              size="sm" 
-              className={isExpanded || activeFiltersCount > 0 ? "text-white relative z-10" : "text-slate-700 relative z-10"} 
-            />
-            <span className={cn("text-xs font-bold relative z-10", isExpanded || activeFiltersCount > 0 ? "text-white" : "text-slate-700")}>
-              Filtros Avanzados
-            </span>
-            {activeFiltersCount > 0 && (
-              <span className="absolute top-1 right-1 bg-white text-marca-primario text-[10px] w-4 h-4 flex items-center justify-center rounded-full font-bold z-20 shadow-sm">
-                {activeFiltersCount}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              style={{
+                ...glassBase(isExpanded || activeFiltersCount > 0 ? 'primary' : 'light'),
+                borderRadius: 14,
+                padding: '7px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+              className="active:scale-95 transition-all outline-none border border-slate-200/50 shadow-sm"
+            >
+              {(isExpanded || activeFiltersCount > 0) && <GlassSheen />}
+              <Icon 
+                name="filter_list" 
+                size="sm" 
+                className={isExpanded || activeFiltersCount > 0 ? "text-white relative z-10" : "text-slate-700 relative z-10"} 
+              />
+              <span className={cn("text-xs font-bold relative z-10", isExpanded || activeFiltersCount > 0 ? "text-white" : "text-slate-700")}>
+                Filtros
               </span>
+              {activeFiltersCount > 0 && (
+                <span className="absolute top-1 right-1 bg-white text-marca-primario text-[10px] w-4 h-4 flex items-center justify-center rounded-full font-bold z-20 shadow-sm">
+                  {activeFiltersCount}
+                </span>
+              )}
+            </button>
+
+            {hasExternalEntries && (
+              <button
+                onClick={() => onChange({ ...activeFilter, onlyExternal: !activeFilter.onlyExternal })}
+                style={{
+                  ...glassBase(activeFilter.onlyExternal ? 'secondary' : 'light'),
+                  borderRadius: 14,
+                  padding: '7px 12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+                className={cn(
+                  "active:scale-95 transition-all outline-none border shadow-sm",
+                  activeFilter.onlyExternal ? "border-marca-primario bg-marca-primario text-white" : "border-marca-primario/15 bg-marca-primario/5 text-marca-primario"
+                )}
+                title="Ver solo tareas de otros departamentos"
+              >
+                {activeFilter.onlyExternal && <GlassSheen />}
+                <Icon 
+                  name="output" 
+                  size="sm" 
+                  className={activeFilter.onlyExternal ? "text-white relative z-10" : "text-marca-primario relative z-10"} 
+                />
+                <span className="text-[10px] font-black uppercase tracking-wider relative z-10">Otros Deptos</span>
+              </button>
             )}
-          </button>
+          </div>
           
           <GlassViewToggle value={viewMode} onChange={setViewMode} />
         </div>
@@ -131,6 +172,22 @@ export const EntryFiltersBar = ({
         </div>
 
         <span className="w-px h-6 bg-slate-200" />
+
+        {hasExternalEntries && (
+          <button
+            onClick={() => onChange({ ...activeFilter, onlyExternal: !activeFilter.onlyExternal })}
+            className={cn(
+              "flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all active:scale-95",
+              activeFilter.onlyExternal
+                ? "bg-marca-primario text-white border-marca-primario shadow-md"
+                : "border-marca-primario/20 text-marca-primario bg-marca-primario/5 hover:border-marca-primario/30 hover:bg-marca-primario/10"
+            )}
+            title="Ver solo tareas de otros departamentos"
+          >
+            <Icon name="output" size="16px" className={activeFilter.onlyExternal ? "text-white animate-pulse" : "text-marca-primario"} />
+            <span className="text-xs font-black uppercase tracking-wider">Otros Departamentos</span>
+          </button>
+        )}
 
         <button
           onClick={() => setIsExpanded(!isExpanded)}

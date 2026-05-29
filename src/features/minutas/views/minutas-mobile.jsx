@@ -12,27 +12,40 @@ import { cn } from '@/utils/cn';
 import { useAuthStore } from '@/stores/auth-store';
 import { DisenoIcon, MarketingIcon } from '../components/icons/line-icons';
 
-const groupByDate = (minutas) => {
-    const groups = new Map();
-    for (const m of minutas) {
-        const d = new Date(m.fechaRealizada || m.fechaProgramada || m.createdAt);
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        if (!groups.has(key)) groups.set(key, { date: d, key, minutas: [] });
-        groups.get(key).minutas.push(m);
-    }
-    return Array.from(groups.values()).sort((a, b) => b.date - a.date);
-};
+const groupByStatusCategory = (minutas) => {
+    const groups = [
+        {
+            key: 'PROCESO',
+            label: 'Juntas en Proceso',
+            color: 'bg-emerald-500',
+            minutas: []
+        },
+        {
+            key: 'PROGRAMADAS',
+            label: 'Juntas Programadas',
+            color: 'bg-blue-500',
+            minutas: []
+        },
+        {
+            key: 'HISTORIAL',
+            label: 'Historial de Juntas',
+            color: 'bg-slate-400',
+            minutas: []
+        }
+    ];
 
-const formatDateHeader = (date) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    const diff = today.getTime() - d.getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    if (days === 0) return 'HOY';
-    if (days === 1) return 'AYER';
-    return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase();
+    for (const m of minutas) {
+        const status = m.estado?.toUpperCase() || 'PROGRAMADA';
+        if (['EN_CURSO', 'EN_ORGANIZACION', 'ACTIVA'].includes(status)) {
+            groups[0].minutas.push(m);
+        } else if (status === 'PROGRAMADA') {
+            groups[1].minutas.push(m);
+        } else {
+            groups[2].minutas.push(m);
+        }
+    }
+
+    return groups.filter(g => g.minutas.length > 0);
 };
 
 export const MinutasMobile = ({
@@ -96,7 +109,7 @@ export const MinutasMobile = ({
     const hasContent = !loading && displayMinutas.length > 0;
     const hasPaginator = hasContent && totalPages > 1;
 
-    const dateGroups = useMemo(() => groupByDate(displayMinutas), [displayMinutas]);
+    const statusGroups = useMemo(() => groupByStatusCategory(displayMinutas), [displayMinutas]);
 
     const currentUser = user?.data || user;
     const isAdmin = currentUser?.rol === 'ADMIN' || currentUser?.rol === 'SUPER_ADMIN';
@@ -269,11 +282,14 @@ export const MinutasMobile = ({
                             </p>
                         </div>
                     ) : (
-                        dateGroups.map((group) => (
-                            <div key={group.key} className="mb-4">
+                        statusGroups.map((group) => (
+                            <div key={group.key} className="mb-6">
                                 <h2 className="text-lg font-black text-slate-900 fuente-titulos tracking-tight mb-3 pl-1 flex items-center gap-2.5">
-                                    <span className="w-1 h-5 bg-marca-primario rounded-full" />
-                                    {formatDateHeader(group.date)}
+                                    <span className={cn("w-1 h-5 rounded-full", group.color)} />
+                                    {group.label}
+                                    <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full ml-1 shrink-0">
+                                        {group.minutas.length}
+                                    </span>
                                 </h2>
                                 <div className="grid grid-cols-1 min-[520px]:grid-cols-2 gap-4">
                                     {group.minutas.map(minuta => (

@@ -12,6 +12,7 @@ import { cn } from '@/utils/cn';
 import { LINEA_MAP, CLASIFICACION_MAP, AREA_MAP } from '../../../minutas/constants';
 import { LineIconSelector, MarketingIcon } from '../../../minutas/components/icons/line-icons';
 import { createTareaNota, updateTareaNota, deleteTareaNota } from '../../api/tareas-api';
+import { useIsDesktop } from '@/hooks/useMediaQuery';
 
 const ESTADOS_FINALES = ['CERRADA', 'CANCELADA', 'DESCARTADA'];
 const ROLES_ADMIN = ['GERENCIA', 'JEFE', 'ADMIN'];
@@ -59,7 +60,7 @@ export const ImageViewer = ({ images, initialIndex, onClose }) => {
         )}
 
         <div className="relative max-w-[95vw] max-h-[90vh] flex items-center justify-center pointer-events-auto">
-          <img src={currentImg.preview || currentImg.url} className="max-w-full max-h-full object-contain rounded-2xl shadow-[0_0_80px_rgba(0,0,0,0.8)] animate-in zoom-in-95 duration-500 select-none" alt="Vista ampliada" />
+          <img src={currentImg.preview || currentImg.url} className="max-w-[90vw] max-h-[75vh] w-auto h-auto object-contain rounded-2xl shadow-[0_0_80px_rgba(0,0,0,0.8)] animate-in zoom-in-95 duration-500 select-none" alt="Vista ampliada" />
         </div>
 
         {images.length > 1 && (
@@ -86,6 +87,7 @@ export const ImageViewer = ({ images, initialIndex, onClose }) => {
 // CardImageCarousel — Carrusel de miniaturas con previsualización hover (Portal)
 // ─────────────────────────────────────────────────────────────────────────────
 const CardImageCarousel = ({ images, lineInfo, isMarketing, onImageClick }) => {
+  const isDesktop = useIsDesktop();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showHover, setShowHover] = useState(false);
   const [coords, setCoords] = useState({ x: 0, y: 0 });
@@ -103,6 +105,7 @@ const CardImageCarousel = ({ images, lineInfo, isMarketing, onImageClick }) => {
   const currentImg = images[currentIndex];
 
   const handleMouseEnter = (e) => {
+    if (!isDesktop) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const previewWidth = window.innerWidth < 640 ? 260 : 380;
     let x = rect.right + 20;
@@ -119,7 +122,11 @@ const CardImageCarousel = ({ images, lineInfo, isMarketing, onImageClick }) => {
         className="relative h-11 w-11 min-[360px]:h-16 min-[360px]:w-16 sm:h-20 sm:w-20 shrink-0 overflow-hidden rounded-xl min-[360px]:rounded-[1rem] border-2 border-slate-200 bg-white shadow-sm flex items-center justify-center p-0.5 group-hover/img:border-marca-primario/40 transition-all active:scale-95 cursor-pointer"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={() => setShowHover(false)}
-        onClick={() => onImageClick?.(currentIndex)}
+        onClick={(e) => { 
+          e.stopPropagation(); 
+          setShowHover(false); 
+          onImageClick?.(currentIndex); 
+        }}
       >
         <div className="relative w-full h-full rounded-[0.75rem] overflow-hidden bg-slate-50">
           {images.map((img, i) => (
@@ -157,7 +164,7 @@ const CardImageCarousel = ({ images, lineInfo, isMarketing, onImageClick }) => {
         <span className="text-[7px] font-black uppercase tracking-wider truncate" style={{ color: lineInfo.color }}>{lineInfo.label}</span>
       </div>
 
-      {showHover && createPortal(
+      {showHover && isDesktop && createPortal(
         <div
           className="fixed z-[999999] pointer-events-none animate-in fade-in zoom-in-95 duration-200"
           style={{ left: coords.x, top: coords.y, transform: 'translateY(-50%)' }}
@@ -427,7 +434,7 @@ export const TareaCard = ({
         if (isDraft) return 'bg-emerald-50/40 hover:bg-emerald-100/60 ring-1 ring-emerald-500/10';
         if (vencida) return 'bg-red-50/40 hover:bg-red-100/60 ring-1 ring-red-500/20';
         if (isCerrado) return 'opacity-70 grayscale bg-slate-50/50 hover:bg-slate-100/60 border-slate-200/50';
-        if (isExternal) return 'bg-purple-50/30 border-l-4 border-l-purple-400';
+        if (isExternal) return 'bg-marca-primario/5 border-l-4 border-l-marca-primario';
         switch (estado) {
             case 'PENDIENTE': return 'bg-white hover:bg-amber-50/30';
             case 'EN_REVISION': return 'bg-blue-50/30 hover:bg-blue-100/50';
@@ -437,7 +444,7 @@ export const TareaCard = ({
 
     const lineInfo = {
         label: isMarketing ? 'Marketing' : (LINEA_MAP[tarea.linea]?.label || tarea.linea || '—'),
-        color: isMarketing ? '#8b5cf6' : (LINEA_MAP[tarea.linea]?.color || '#64748b'),
+        color: isMarketing ? '#482b2c' : (LINEA_MAP[tarea.linea]?.color || '#64748b'),
         value: tarea.linea
     };
 
@@ -504,7 +511,7 @@ export const TareaCard = ({
                                     <span className={cn(
                                         "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border text-white shadow-sm transition-all",
                                         tipo === 'TAREA'
-                                            ? (isExternal ? "bg-purple-600 border-purple-500" : "bg-rose-600 border-rose-500")
+                                            ? (isExternal ? "bg-marca-primario border-marca-primario-hover" : "bg-rose-600 border-rose-500")
                                             : tipo === 'RECORDATORIO' ? "bg-indigo-600 border-indigo-500" : "bg-slate-600 border-slate-500"
                                     )}>
                                         <Icon name={tipo === 'TAREA' ? "task_alt" : "notifications"} size="10px" className="shrink-0" />
@@ -515,7 +522,7 @@ export const TareaCard = ({
                                     <EtiquetaEstadoTarea status={estado} className="scale-90 origin-left" />
                                 )}
                                 {isExternal && (
-                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border bg-purple-100/50 text-purple-700 border-purple-200/50">
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border bg-marca-primario/10 text-marca-primario border-marca-primario/20">
                                         <Icon name="output" size="10px" />
                                         {AREA_MAP[tarea.area] || tarea.area}
                                     </span>

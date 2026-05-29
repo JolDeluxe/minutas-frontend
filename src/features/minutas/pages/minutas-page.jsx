@@ -175,8 +175,62 @@ const MinutasPage = () => {
         navigate(`/minutas/${minuta.id}`);
     };
 
+    // Ordenar minutas por Estado y Fecha:
+    // 1. EN_CURSO (azul) - En curso
+    // 2. EN_ORGANIZACION (naranja) - En organización
+    // 3. ACTIVA (verde) - Activa
+    // 4. PROGRAMADA (gris) - Programada
+    // 5. CERRADA (neutral) - Cerrada
+    // 6. CANCELADA (rojo) - Cancelada
+    const sortedMinutas = useMemo(() => {
+        if (!minutas) return [];
+        
+        const minutasCopy = [...minutas];
+        
+        const STATUS_ORDER = {
+            'EN_CURSO': 1,
+            'EN_ORGANIZACION': 2,
+            'ACTIVA': 3,
+            'PROGRAMADA': 4,
+            'CERRADA': 5,
+            'CANCELADA': 6
+        };
+        
+        return minutasCopy.sort((a, b) => {
+            const statusA = a.estado?.toUpperCase() || '';
+            const statusB = b.estado?.toUpperCase() || '';
+            
+            const orderA = STATUS_ORDER[statusA] ?? 99;
+            const orderB = STATUS_ORDER[statusB] ?? 99;
+            
+            if (orderA !== orderB) {
+                return orderA - orderB;
+            }
+            
+            // Secundario: Orden por fecha desc o segun sortConfig
+            const key = sortConfig?.key || 'fecha';
+            let valA, valB;
+            
+            if (key === 'fecha') {
+                valA = new Date(a.fechaRealizada || a.fechaProgramada || a.fecha || a.createdAt || 0).getTime();
+                valB = new Date(b.fechaRealizada || b.fechaProgramada || b.fecha || b.createdAt || 0).getTime();
+            } else {
+                valA = a[key];
+                valB = b[key];
+            }
+            
+            if (valA === undefined || valA === null) return 1;
+            if (valB === undefined || valB === null) return -1;
+            
+            const direction = sortConfig?.direction || 'desc';
+            if (valA < valB) return direction === 'asc' ? -1 : 1;
+            if (valA > valB) return direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }, [minutas, sortConfig]);
+
     const sharedProps = {
-        minutas,
+        minutas: sortedMinutas,
         loading,
         page,
         limit: LIMIT,

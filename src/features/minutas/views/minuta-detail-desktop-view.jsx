@@ -17,6 +17,7 @@ import { PanelDetalleTarea } from '../../tareas/components/comun/panel-detalle-t
 export const MinutaDetailDesktopView = ({
   minuta,
   resumen,
+  allEntries,
   filteredEntries,
   politicasAcordadas = [],
   recordatoriosGenerales = [],
@@ -88,7 +89,7 @@ export const MinutaDetailDesktopView = ({
         entries={filteredEntries}
         onFilterByStatus={(status) => setActiveFilter(prev => ({ ...prev, estado: prev.estado === status ? null : status, tipo: 'TAREA' }))}
         onFilterByTipo={(tipo) => setActiveFilter(prev => ({ ...prev, tipo: prev.tipo === tipo ? 'TAREA' : tipo, estado: null }))}
-        onResetFilter={() => setActiveFilter({ tipo: 'TAREA', estado: null, clasificacion: null, area: null, linea: null, search: '' })}
+        onResetFilter={() => setActiveFilter({ tipo: 'TAREA', estado: null, clasificacion: null, area: null, linea: null, search: '', onlyExternal: false })}
         activeFilter={activeFilter}
         onIniciar={handleIniciar}
         onCancelar={handleCancelar}
@@ -229,6 +230,7 @@ export const MinutaDetailDesktopView = ({
                     departamento={departamento}
                     viewMode={viewMode}
                     setViewMode={setViewMode}
+                    allEntries={allEntries}
                   />
                 </div>
               </div>

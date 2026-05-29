@@ -8,40 +8,40 @@ import { Button, Icon, GlassViewToggle } from '@/components/ui/z_index';
 import { useAuthStore } from '@/stores/auth-store';
 import { DisenoIcon, MarketingIcon } from '../components/icons/line-icons';
 
-/**
- * Agrupa las minutas por fecha (campo `fecha`) para mostrar encabezados tipo
- * "15 MAY 2026", "14 MAY 2026", etc.
- * El jefe necesita encontrar "la minuta del 28 de marzo" sin pensar.
- */
-const groupByDate = (minutas) => {
-    const groups = new Map();
-    for (const m of minutas) {
-        const d = new Date(m.fechaRealizada || m.fechaProgramada || m.createdAt);
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        if (!groups.has(key)) {
-            groups.set(key, { date: d, key, minutas: [] });
+const groupByStatusCategory = (minutas) => {
+    const groups = [
+        {
+            key: 'PROCESO',
+            label: 'Juntas en Proceso',
+            color: 'bg-emerald-500',
+            minutas: []
+        },
+        {
+            key: 'PROGRAMADAS',
+            label: 'Juntas Programadas',
+            color: 'bg-blue-500',
+            minutas: []
+        },
+        {
+            key: 'HISTORIAL',
+            label: 'Historial de Juntas',
+            color: 'bg-slate-400',
+            minutas: []
         }
-        groups.get(key).minutas.push(m);
-    }
-    // Ordenar por fecha descendente
-    return Array.from(groups.values()).sort((a, b) => b.date - a.date);
-};
+    ];
 
-const formatDateHeader = (date) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    
-    const diff = today.getTime() - d.getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    
-    if (days === 0) return 'HOY';
-    if (days === 1) return 'AYER';
-    
-    return d.toLocaleDateString('es-MX', { 
-        day: 'numeric', month: 'short', year: 'numeric' 
-    }).toUpperCase();
+    for (const m of minutas) {
+        const status = m.estado?.toUpperCase() || 'PROGRAMADA';
+        if (['EN_CURSO', 'EN_ORGANIZACION', 'ACTIVA'].includes(status)) {
+            groups[0].minutas.push(m);
+        } else if (status === 'PROGRAMADA') {
+            groups[1].minutas.push(m);
+        } else {
+            groups[2].minutas.push(m);
+        }
+    }
+
+    return groups.filter(g => g.minutas.length > 0);
 };
 
 export const MinutasDesktop = ({
@@ -109,8 +109,8 @@ export const MinutasDesktop = ({
 
     const hasContent = !loading && displayMinutas.length > 0;
 
-    // Agrupar minutas filtradas por fecha
-    const dateGroups = useMemo(() => groupByDate(displayMinutas), [displayMinutas]);
+    // Agrupar minutas filtradas por categoría de estado
+    const statusGroups = useMemo(() => groupByStatusCategory(displayMinutas), [displayMinutas]);
 
     const currentUser = user?.data || user;
     const isAdmin = currentUser?.rol === 'ADMIN' || currentUser?.rol === 'SUPER_ADMIN';
@@ -295,12 +295,14 @@ export const MinutasDesktop = ({
                             </p>
                         </div>
                     ) : (
-                        dateGroups.map((group) => (
-                            <div key={group.key}>
-                                {/* ENCABEZADO DE FECHA — como en el mockup Stitch */}
+                        statusGroups.map((group) => (
+                            <div key={group.key} className="mb-8">
                                 <h2 className="text-xl font-black text-slate-900 fuente-titulos tracking-tight mb-4 pl-1 flex items-center gap-3">
-                                    <span className="w-1.5 h-6 bg-marca-primario rounded-full" />
-                                    {formatDateHeader(group.date)}
+                                    <span className={cn("w-1.5 h-6 rounded-full", group.color)} />
+                                    {group.label}
+                                    <span className="text-xs font-bold bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-full ml-1 shrink-0">
+                                        {group.minutas.length}
+                                    </span>
                                 </h2>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

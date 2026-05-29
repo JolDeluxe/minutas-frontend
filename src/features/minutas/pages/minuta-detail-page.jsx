@@ -91,6 +91,7 @@ export default function MinutaDetailPage() {
     area: null,
     linea: null,
     search: '',
+    onlyExternal: false,
   });
 
   const [viewMode, setViewMode] = useState(() => {
@@ -252,7 +253,7 @@ export default function MinutaDetailPage() {
   }, [initialized, id, emitDraftEntryUpsert]);
 
   const allEntries = useMemo(() => [...draftEntries, ...remoteDraftEntries, ...tareas], [draftEntries, remoteDraftEntries, tareas]);
-  const departamento = minuta?.departamento || 'DISENO';
+  const departamento = minuta?.departamento || 'DISENO';
 
   const filteredEntries = useMemo(() => {
     const priorityWeight = { 'CRITICA': 0, 'ALTA': 1, 'MEDIA': 2, 'BAJA': 3 };
@@ -260,6 +261,13 @@ export default function MinutaDetailPage() {
     return allEntries
       .filter(entry => {
         if (entry.estado === 'CANCELADA') return false;
+        if (activeFilter.onlyExternal) {
+          const isExterna = entry.area && (
+            ((departamento === 'DISENO' || departamento === 'DISEÑO') && entry.area !== 'DISENO') ||
+            (departamento === 'MARKETING' && entry.area !== 'MARKETING')
+          );
+          if (!isExterna) return false;
+        }
         if (activeFilter.tipo && activeFilter.tipo !== 'TODAS' && entry.tipo !== activeFilter.tipo) {
           if (entry.tempId && (activeFilter.tipo === 'TAREA' || activeFilter.tipo === 'SIN_ORGANIZAR')) {} 
           else { return false; }
@@ -305,7 +313,7 @@ export default function MinutaDetailPage() {
         // Orden secundario: fecha de creación (más reciente arriba)
         return new Date(b.createdAt) - new Date(a.createdAt);
       });
-  }, [allEntries, activeFilter]);
+  }, [allEntries, activeFilter, departamento]);
 
   const handleFilterByStatus = (estado) =>
     setActiveFilter(prev => ({ ...prev, estado: prev.estado === estado ? null : estado, tipo: 'TAREA' }));
@@ -314,7 +322,7 @@ export default function MinutaDetailPage() {
     setActiveFilter(prev => ({ ...prev, tipo: prev.tipo === tipo ? 'TAREA' : tipo, estado: null }));
 
   const handleResetFilter = () =>
-    setActiveFilter({ tipo: 'TODAS', estado: null, clasificacion: null, area: null, linea: null, search: '' });
+    setActiveFilter({ tipo: 'TODAS', estado: null, clasificacion: null, area: null, linea: null, search: '', onlyExternal: false });
 
   const resumen = useMemo(() => {
     const now = new Date();

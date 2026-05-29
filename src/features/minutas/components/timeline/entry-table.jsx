@@ -1,7 +1,7 @@
 import { Table, Skeleton, Icon, Tooltip, TableActions, ConfirmModal } from "@/components/ui/z_index";
 import { cn } from "@/utils/cn";
 import { AREA_MAP, CLASIFICACION_MAP, ESTADO_TAREA_MAP, PRIORIDAD_MAP, LINEA_MAP } from '../../constants';
-import { formatFecha, isPastDate } from '@/lib/date';
+import { formatFecha, isPastDate, formatFechaRelativa } from '@/lib/date';
 import { Settings2, StickyNote, Plus, X } from 'lucide-react';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
@@ -9,6 +9,9 @@ import { LineIconSelector, MarketingIcon } from '../icons/line-icons';
 import { ImageViewer } from '../../../tareas/components/comun/tarjeta-tarea';
 import { useAuthStore } from '@/stores/auth-store';
 import { ModalEntregarTarea } from '../../../tareas/components/comun/modal-entregar-tarea';
+import { EtiquetaEstadoTarea } from "../../../tareas/components/comun/etiqueta-estado-tarea";
+import { EtiquetaPrioridadTarea } from "../../../tareas/components/comun/etiqueta-prioridad-tarea";
+import { useIsDesktop } from '@/hooks/useMediaQuery';
 
 const ESTADO_STYLES = {
   PENDIENTE: 'bg-amber-50 text-amber-700 border-amber-200',
@@ -132,6 +135,7 @@ const EntryNotesPostIt = ({ entry, notes, onClose, onAddNote, onUpdateNote, onDe
 
 // Componente para previsualización en hover en la tabla usando PORTAL de alta visibilidad
 const TableImagePreview = ({ images, onClick }) => {
+  const isDesktop = useIsDesktop();
   const [showHover, setShowHover] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [coords, setCoords] = useState({ x: 0, y: 0 });
@@ -153,6 +157,7 @@ const TableImagePreview = ({ images, onClick }) => {
   const currentImg = images[currentIndex]?.preview || images[currentIndex]?.url;
 
   const handleMouseEnter = () => {
+    if (!isDesktop) return;
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
       const spaceRight = window.innerWidth - rect.right;
@@ -175,7 +180,11 @@ const TableImagePreview = ({ images, onClick }) => {
     >
       <div 
         className="h-28 w-28 min-w-[7rem] shrink-0 rounded-2xl border-2 border-slate-100 bg-white relative z-10 cursor-pointer p-1 hover:border-marca-primario/30 transition-all group" 
-        onClick={onClick}
+        onClick={(e) => { 
+          e.stopPropagation(); 
+          setShowHover(false); 
+          onClick?.(e); 
+        }}
       >
         <div className="relative w-full h-full rounded-xl overflow-hidden shadow-sm">
           {images.map((img, i) => (
@@ -205,7 +214,7 @@ const TableImagePreview = ({ images, onClick }) => {
       </div>
 
       {/* SUPER PREVIEW (Portal) — Renderiza una versión mucho más grande en hover */}
-      {showHover && createPortal(
+      {showHover && isDesktop && createPortal(
         <div 
           className="fixed z-99999 pointer-events-none animate-in fade-in zoom-in-95 duration-200" 
           style={{ 
@@ -276,7 +285,7 @@ export const EntryTable = ({
         const isExternal = (departamento === 'DISENO' && row.area !== 'DISENO') || (departamento === 'MARKETING' && row.area !== 'MARKETING');
         if (isRemoteDraft) return <span className="inline-flex items-center gap-1 rounded-lg bg-cyan-100 px-2 py-0.5 text-[8px] font-black uppercase tracking-widest text-cyan-700 whitespace-nowrap">En vivo</span>;
         if (isDraft) return <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2 py-0.5 text-[8px] font-black uppercase tracking-widest text-emerald-700 whitespace-nowrap">Borrador</span>;
-        if (isExternal) return <span className="inline-flex items-center gap-1 rounded-lg bg-purple-100 px-2 py-0.5 text-[8px] font-black uppercase tracking-widest text-purple-700 whitespace-nowrap">EXT</span>;
+        if (isExternal) return <span className="inline-flex items-center gap-1 rounded-lg bg-marca-primario/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-widest text-marca-primario whitespace-nowrap">EXT</span>;
         return <span className="text-slate-400 font-mono text-xs">#{entries.indexOf(row) + 1}</span>;
       }
     },
@@ -339,7 +348,7 @@ export const EntryTable = ({
       headerClassName: "w-[10%] min-w-[120px]",
       cell: (row) => {
         const isExternal = (departamento === 'DISENO' && row.area !== 'DISENO') || (departamento === 'MARKETING' && row.area !== 'MARKETING');
-        if (isExternal) return <span className="text-[10px] font-black text-purple-600 uppercase bg-purple-50 px-2 py-1 rounded-md">{AREA_MAP[row.area] || row.area}</span>;
+        if (isExternal) return <span className="text-[10px] font-black text-marca-primario uppercase bg-marca-primario/5 px-2 py-1 rounded-md">{AREA_MAP[row.area] || row.area}</span>;
         if (!row.asignaciones || row.asignaciones.length === 0) return <span className="text-[11px] text-slate-300">—</span>;
         
         const tooltipText = row.asignaciones.map(a => a.usuario?.nombre).join('\n');
@@ -370,7 +379,7 @@ export const EntryTable = ({
       headerClassName: "w-[10%] min-w-[100px]",
       cell: (row) => {
         const isMarketing = departamento === 'MARKETING';
-        const lineInfo = isMarketing ? { label: 'Marketing', color: '#8b5cf6' } : (LINEA_MAP[row.linea] || { label: row.linea || '—', color: '#64748b' });
+        const lineInfo = isMarketing ? { label: 'Marketing', color: '#482b2c' } : (LINEA_MAP[row.linea] || { label: row.linea || '—', color: '#64748b' });
         return (
           <div className="flex flex-col items-center justify-center gap-0.5">
             <div className="flex items-center justify-center">
@@ -402,28 +411,78 @@ export const EntryTable = ({
         header: "Estado",
         accessorKey: "estado",
         align: "center",
-        headerClassName: "w-[10%] min-w-[110px]",
+        headerClassName: "w-[12%] min-w-[110px]",
         cell: (row) => {
+          if (row.tipo === 'SIN_ORGANIZAR') {
+            return (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold border uppercase tracking-wide whitespace-nowrap bg-amber-50 text-amber-600 border-amber-200">
+                Sin Organizar
+              </span>
+            );
+          }
           const estadoActual = row.estado || (row.tipo === 'TAREA' || row.tipo === 'RECORDATORIO' ? 'PENDIENTE' : null);
-          const estado = estadoActual ? ESTADO_TAREA_MAP[estadoActual] : null;
-          if (!estado) return <span className="text-[11px] text-slate-300">—</span>;
-          return (
-            <span className={cn('inline-flex items-center gap-1.5 rounded-xl border px-3 py-1 text-[9px] font-black uppercase tracking-widest whitespace-nowrap shadow-xs', ESTADO_STYLES[estadoActual] || 'bg-slate-50 text-slate-600 border-slate-200')}>
-              {estado.label}
-            </span>
-          );
+          if (!estadoActual) return <span className="text-[11px] text-slate-300">—</span>;
+          return <EtiquetaEstadoTarea status={estadoActual} />;
         }
       },
       {
-        header: "Vence",
+        header: "Prioridad",
+        accessorKey: "prioridad",
+        align: "center",
+        headerClassName: "w-[10%] min-w-[90px]",
+        cell: (row) => {
+          if (!row.prioridad) return <span className="text-[11px] text-slate-300">—</span>;
+          return <EtiquetaPrioridadTarea priority={row.prioridad} />;
+        }
+      },
+      {
+        header: "Vencimiento / Conclusión",
         accessorKey: "fechaVencimiento",
         align: "center",
-        headerClassName: "w-[10%] min-w-[100px]",
+        headerClassName: "w-[15%] min-w-[150px]",
         cell: (row) => {
+          const isResolvedOrClosed = row.estado === 'EN_REVISION' || row.estado === 'CERRADA';
+
+          if (isResolvedOrClosed) {
+            const fechaFin = row.completadoAt || row.cerradoAt || row.updatedAt;
+            const isLate = row.isLate ?? (row.fechaVencimiento && fechaFin && new Date(fechaFin) > new Date(row.fechaVencimiento));
+            return (
+              <div className="flex flex-col gap-0.5 text-[10px] w-full text-center items-center">
+                {row.fechaVencimiento ? (
+                  <div className="flex items-center gap-1">
+                    <span className="text-slate-400 font-bold uppercase">Venc:</span>
+                    <span className="text-slate-600 font-medium">{formatFecha(row.fechaVencimiento)}</span>
+                  </div>
+                ) : (
+                  <div className="text-slate-400 italic">Sin fecha límite</div>
+                )}
+                {fechaFin && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-slate-400 font-bold uppercase">Concl:</span>
+                    <span className={cn("font-bold", isLate ? "text-red-600" : "text-emerald-600")}>
+                      {formatFecha(fechaFin)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          }
+
           const isDraft = Boolean(row.tempId);
-          const overdue = !isDraft && row.fechaVencimiento && row.estado !== 'CERRADA' && row.estado !== 'EN_REVISION' && isPastDate(row.fechaVencimiento);
-          if (!row.fechaVencimiento) return <span className="text-[11px] text-slate-300">—</span>;
-          return <span className={cn('text-[11px] font-bold font-mono', overdue ? 'text-red-600 animate-pulse' : 'text-slate-500')}>{formatFecha(row.fechaVencimiento)}</span>;
+          const overdue = !isDraft && row.fechaVencimiento && isPastDate(row.fechaVencimiento);
+
+          const textoRelativo = row.fechaVencimiento ? formatFechaRelativa(row.fechaVencimiento) : 'Sin fecha límite';
+          const textoAbsoluto = row.fechaVencimiento ? formatFecha(row.fechaVencimiento) : '';
+          const mostrarAbsoluto = row.fechaVencimiento && (textoRelativo.toLowerCase() !== textoAbsoluto.toLowerCase());
+
+          return (
+            <div className="flex flex-col gap-0.5 text-xs text-center items-center">
+              <span className={cn('font-medium', overdue ? 'text-red-600 font-semibold' : 'text-slate-600')}>
+                {textoRelativo}
+              </span>
+              {mostrarAbsoluto && <span className="text-[10px] text-slate-400">{textoAbsoluto}</span>}
+            </div>
+          );
         }
       }
     ]),

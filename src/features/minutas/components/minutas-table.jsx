@@ -63,7 +63,7 @@ export const MinutasTable = ({
                             <span className={cn(
                                 "inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border whitespace-nowrap",
                                 isMarketing 
-                                    ? "bg-purple-50 text-purple-700 border-purple-200/60" 
+                                    ? "bg-marca-primario/10 text-marca-primario border-marca-primario/20" 
                                     : "bg-blue-50 text-blue-700 border-blue-200/60"
                             )}>
                                 {isMarketing ? 'Marketing' : 'Diseño'}
@@ -96,7 +96,7 @@ export const MinutasTable = ({
                 const isMarketing = (row.departamento || row.creadoPor?.departamento) === 'MARKETING';
 
                 const lineInfo = isMarketing
-                    ? { label: 'Marketing', color: '#8b5cf6' }
+                    ? { label: 'Marketing', color: '#482b2c' }
                     : (LINEA_MAP[row.lineaDefault] || {
                         label: row.lineaDefault,
                         color: '#64748b'
@@ -286,7 +286,7 @@ export const MinutasTable = ({
                 if (!isAdmin) return 'bg-white hover:bg-slate-50';
                 const isMarketing = (row.departamento || row.creadoPor?.departamento) === 'MARKETING';
                 return isMarketing 
-                    ? 'bg-purple-50 hover:bg-purple-100 border-b border-purple-200 text-slate-800' 
+                    ? 'bg-marca-primario/5 hover:bg-marca-primario/10 border-b border-marca-primario/20 text-slate-800' 
                     : 'bg-blue-50 hover:bg-blue-100 border-b border-blue-200 text-slate-800';
             }}
         />

@@ -21,7 +21,7 @@ export const ESTADO_OPERATIVO_COLORS = {
 export const ESTADO_TAREA_COLORS = {
   PENDIENTE:   'bg-slate-100 text-slate-600 border-slate-300',
   EN_PROGRESO: 'bg-amber-100 text-amber-700 border-amber-300',
-  COMPLETADO:  'bg-purple-100 text-purple-700 border-purple-300',
+  COMPLETADO:  'bg-marca-primario/10 text-marca-primario border-marca-primario/30',
   CERRADO:     'bg-emerald-100 text-emerald-700 border-emerald-300',
 };
 
