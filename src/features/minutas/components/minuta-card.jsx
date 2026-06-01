@@ -89,20 +89,6 @@ export const MinutaCard = ({ minuta, onViewDetail, onCancel, badge = null, isAdm
             )}
             onClick={() => onViewDetail?.(minuta)}
         >
-            {/* Botón Cancelar (X) — Flotante top-right */}
-            {canCancel && !!onCancel && (
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onCancel(minuta);
-                    }}
-                    className="absolute top-2 right-2 w-7 h-7 bg-white/90 backdrop-blur-md text-rose-500 rounded-full border border-rose-100 flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500 hover:text-white z-20"
-                    title="Cancelar Minuta"
-                >
-                    <Icon name="close" size="18px" />
-                </button>
-            )}
-
             {/* Badge: Junta Actual / Junta Anterior / Pendiente */}
             {finalBadgeCfg && (
                 <div className={cn(
@@ -113,21 +99,19 @@ export const MinutaCard = ({ minuta, onViewDetail, onCancel, badge = null, isAdm
                 </div>
             )}
 
-            <div className="flex flex-row p-4 gap-4 h-full">
+            <div className={cn("flex flex-row p-4 h-full", !isMarketing && "gap-4")}>
                 
-                {/* COLUMNA 1: IDENTIDAD VISUAL (Icono + Línea) */}
-                <div className="flex flex-col items-center justify-center shrink-0 w-[82px] sm:w-[96px] h-full border-r border-slate-100/50 pr-4">
-                    <div className="flex flex-col items-center justify-center w-full aspect-square rounded-[1.25rem] mb-2 transition-transform duration-500 group-hover:scale-105" style={{ backgroundColor: `${lineInfo.color}0f`, border: `1.5px solid ${lineInfo.color}25` }}>
-                        {isMarketing ? (
-                            <MarketingIcon size={35} style={{ color: lineInfo.color }} />
-                        ) : (
+                {/* COLUMNA 1: IDENTIDAD VISUAL (Icono + Línea) - Oculta en Marketing */}
+                {!isMarketing && (
+                    <div className="flex flex-col items-center justify-center shrink-0 w-[82px] sm:w-[96px] h-full border-r border-slate-100/50 pr-4">
+                        <div className="flex flex-col items-center justify-center w-full aspect-square rounded-[1.25rem] mb-2 transition-transform duration-500 group-hover:scale-105" style={{ backgroundColor: `${lineInfo.color}0f`, border: `1.5px solid ${lineInfo.color}25` }}>
                             <LineIconSelector type={minuta.lineaDefault} size={60} style={{ color: lineInfo.color }} />
-                        )}
+                        </div>
+                        <span className="font-black tracking-[0.1em] text-[7px] sm:text-[8px] uppercase font-mono text-center leading-none px-1" style={{ color: lineInfo.color }}>
+                            {lineInfo.label}
+                        </span>
                     </div>
-                    <span className="font-black tracking-[0.1em] text-[7px] sm:text-[8px] uppercase font-mono text-center leading-none px-1" style={{ color: lineInfo.color }}>
-                        {lineInfo.label}
-                    </span>
-                </div>
+                )}
 
                 {/* COLUMNA 2: INFORMACIÓN DETALLADA */}
                 <div className="flex flex-col flex-1 min-w-0 h-full">
@@ -149,17 +133,31 @@ export const MinutaCard = ({ minuta, onViewDetail, onCancel, badge = null, isAdm
                                 </span>
                             )}
                         </div>
-                        <div className={cn(
-                            "flex items-center gap-1 px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider rounded-md border shrink-0",
-                            estadoColor
-                        )}>
-                            {minuta.estado === 'ACTIVA' && (
-                                <span className="relative flex h-1.5 w-1.5">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
-                                </span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                            {canCancel && !!onCancel && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onCancel(minuta);
+                                    }}
+                                    className="h-6 w-6 rounded-lg text-rose-500 hover:bg-rose-50 flex items-center justify-center transition-all active:scale-90"
+                                    title="Cancelar Minuta"
+                                >
+                                    <Icon name="delete" className="!text-[14px]" />
+                                </button>
                             )}
-                            {estadoLabel}
+                            <div className={cn(
+                                "flex items-center gap-1 px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider rounded-md border shrink-0",
+                                estadoColor
+                            )}>
+                                {minuta.estado === 'ACTIVA' && (
+                                    <span className="relative flex h-1.5 w-1.5">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                                    </span>
+                                )}
+                                {estadoLabel}
+                            </div>
                         </div>
                     </div>
 

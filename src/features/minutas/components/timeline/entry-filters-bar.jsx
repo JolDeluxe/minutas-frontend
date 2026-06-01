@@ -7,7 +7,7 @@ import { glassBase, GlassSheen } from '@/components/ui/liquid-glass-mobile';
 import { cn } from '@/utils/cn';
 import { getCatalogos } from '../../constants';
 
-const DEFAULT_FILTER = { tipo: 'TAREA', estado: null, clasificacion: null, area: null, linea: null, search: '' };
+const DEFAULT_FILTER = { tipo: 'TODAS', estado: null, clasificacion: null, area: null, linea: null, search: '' };
 
 export const EntryFiltersBar = ({ 
   activeFilter, 
@@ -28,6 +28,9 @@ export const EntryFiltersBar = ({
 
   const hasExternalEntries = useMemo(() => {
     return allEntries.some(entry => {
+      const isDescartada = entry.tipo === 'DESCARTADA' || entry.estado === 'DESCARTADA' || entry.estado === 'CANCELADA';
+      if (isDescartada) return false;
+
       return entry.area && (
         ((departamento === 'DISENO' || departamento === 'DISEÑO') && entry.area !== 'DISENO') ||
         (departamento === 'MARKETING' && entry.area !== 'MARKETING')

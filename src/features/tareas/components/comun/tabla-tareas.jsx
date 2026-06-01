@@ -171,6 +171,9 @@ export const TablaTareas = ({
         setActiveEntryImages(images);
         setViewerIndex(0);
     };
+
+    const isAllMarketing = tareas?.length > 0 && tareas.every(t => t.departamento === 'MARKETING');
+
     const columns = [
         {
             header: 'ID',
@@ -261,39 +264,41 @@ export const TablaTareas = ({
                 );
             },
         },
-        {
-            header: 'Línea',
-            accessorKey: 'linea',
-            sortable: true,
-            align: 'center',
-            headerClassName: 'w-[10%] min-w-[100px]',
-            cell: (row) => {
-                if (row.isSkeleton) return <Skeleton className="h-10 w-10 rounded-full mx-auto" />;
-                
-                const isMarketing = row.departamento === 'MARKETING';
-                const lineInfo = isMarketing 
-                    ? { label: 'Marketing', color: '#7c3aed' } 
-                    : (LINEA_MAP[row.linea] || { label: row.linea || '—', color: '#64748b' });
+        ...(isAllMarketing ? [] : [
+            {
+                header: 'Línea',
+                accessorKey: 'linea',
+                sortable: true,
+                align: 'center',
+                headerClassName: 'w-[10%] min-w-[100px]',
+                cell: (row) => {
+                    if (row.isSkeleton) return <Skeleton className="h-10 w-10 rounded-full mx-auto" />;
+                    
+                    const isRowMarketing = row.departamento === 'MARKETING';
+                    const lineInfo = isRowMarketing 
+                        ? { label: 'Marketing', color: '#7c3aed' } 
+                        : (LINEA_MAP[row.linea] || { label: row.linea || '—', color: '#64748b' });
 
-                return (
-                    <div className="flex flex-col items-center justify-center gap-0.5">
-                        <div className="flex items-center justify-center">
-                            {isMarketing ? (
-                                <MarketingIcon size={50} style={{ color: lineInfo.color }} />
-                            ) : (
-                                <LineIconSelector type={row.linea} size={50} style={{ color: lineInfo.color }} />
-                            )}
+                    return (
+                        <div className="flex flex-col items-center justify-center gap-0.5">
+                            <div className="flex items-center justify-center">
+                                {isRowMarketing ? (
+                                    <MarketingIcon size={50} style={{ color: lineInfo.color }} />
+                                ) : (
+                                    <LineIconSelector type={row.linea} size={50} style={{ color: lineInfo.color }} />
+                                )}
+                            </div>
+                            <span 
+                                className="text-[7px] font-black uppercase tracking-widest font-mono leading-none text-center" 
+                                style={{ color: lineInfo.color }}
+                            >
+                                {lineInfo.label}
+                            </span>
                         </div>
-                        <span 
-                            className="text-[7px] font-black uppercase tracking-widest font-mono leading-none text-center" 
-                            style={{ color: lineInfo.color }}
-                        >
-                            {lineInfo.label}
-                        </span>
-                    </div>
-                );
-            },
-        },
+                    );
+                },
+            }
+        ]),
         ...(hideResponsables ? [] : [{
             header: 'Responsables',
             accessorKey: 'responsables',

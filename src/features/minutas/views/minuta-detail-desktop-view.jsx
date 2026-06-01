@@ -87,9 +87,9 @@ export const MinutaDetailDesktopView = ({
         minuta={minuta} 
         resumen={resumen} 
         entries={filteredEntries}
-        onFilterByStatus={(status) => setActiveFilter(prev => ({ ...prev, estado: prev.estado === status ? null : status, tipo: 'TAREA' }))}
-        onFilterByTipo={(tipo) => setActiveFilter(prev => ({ ...prev, tipo: prev.tipo === tipo ? 'TAREA' : tipo, estado: null }))}
-        onResetFilter={() => setActiveFilter({ tipo: 'TAREA', estado: null, clasificacion: null, area: null, linea: null, search: '', onlyExternal: false })}
+        onFilterByStatus={(status) => setActiveFilter(prev => ({ ...prev, estado: prev.estado === status ? null : status, tipo: 'TODAS' }))}
+        onFilterByTipo={(tipo) => setActiveFilter(prev => ({ ...prev, tipo: prev.tipo === tipo ? 'TODAS' : tipo, estado: null }))}
+        onResetFilter={() => setActiveFilter({ tipo: 'TODAS', estado: null, clasificacion: null, area: null, linea: null, search: '', onlyExternal: false })}
         activeFilter={activeFilter}
         onIniciar={handleIniciar}
         onCancelar={handleCancelar}
@@ -101,6 +101,7 @@ export const MinutaDetailDesktopView = ({
         cerrando={cerrando}
         reabriendo={reabriendo}
         finalizando={finalizando}
+        composerCollapsed={composerCollapsed}
       />
 
       <div className="flex flex-1 overflow-hidden relative">
@@ -222,7 +223,7 @@ export const MinutaDetailDesktopView = ({
                 </div>
               )}
 
-              <div className="flex items-center gap-4 bg-white/40 p-2 rounded-2xl backdrop-blur-md border border-white/60 sticky top-0 z-50 shadow-sm">
+              <div className="flex items-center gap-4 bg-white/40 p-2 rounded-2xl backdrop-blur-md border border-white/60 sticky top-0 z-20 shadow-sm">
                 <div className="flex-1 overflow-hidden">
                   <EntryFiltersBar 
                     activeFilter={activeFilter} 

@@ -305,9 +305,11 @@ export const PanelDetalleTarea = ({
                                 <MetaCard label="Área">
                                     {AREA_MAP[tarea.area] || 'General'}
                                 </MetaCard>
-                                <MetaCard label="Línea">
-                                    {LINEA_MAP[tarea.linea]?.label || tarea.linea || 'Multi'}
-                                </MetaCard>
+                                {tarea.departamento !== 'MARKETING' && tarea.area !== 'MARKETING' && (
+                                    <MetaCard label="Línea">
+                                        {LINEA_MAP[tarea.linea]?.label || tarea.linea || 'Multi'}
+                                    </MetaCard>
+                                )}
                                 {tarea.fechaVencimiento && (
                                     <MetaCard label="Fecha de Vencimiento" className="col-span-2">
                                         <div className="flex items-center gap-2">

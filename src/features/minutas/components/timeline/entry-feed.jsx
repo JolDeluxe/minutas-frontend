@@ -112,6 +112,7 @@ export const EntryFeed = ({
                 <EntryTable
                   entries={section.entries}
                   departamento={departamento}
+                  isDraftSection={section.key === 'drafts'}
                   onOrganize={onOrganize}
                   onRemove={onRemove}
                   onUpdateDraft={onUpdateDraft}

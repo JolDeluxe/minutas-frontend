@@ -91,9 +91,9 @@ export const MinutaDetailMobileView = ({
           minuta={minuta} 
           resumen={resumen} 
           entries={filteredEntries} 
-          onFilterByStatus={(status) => setActiveFilter(prev => ({ ...prev, estado: prev.estado === status ? null : status, tipo: 'TAREA' }))}
-          onFilterByTipo={(tipo) => setActiveFilter(prev => ({ ...prev, tipo: prev.tipo === tipo ? 'TAREA' : tipo, estado: null }))}
-          onResetFilter={() => setActiveFilter({ tipo: 'TAREA', estado: null, clasificacion: null, area: null, linea: null, search: '', onlyExternal: false })}
+          onFilterByStatus={(status) => setActiveFilter(prev => ({ ...prev, estado: prev.estado === status ? null : status, tipo: 'TODAS' }))}
+          onFilterByTipo={(tipo) => setActiveFilter(prev => ({ ...prev, tipo: prev.tipo === tipo ? 'TODAS' : tipo, estado: null }))}
+          onResetFilter={() => setActiveFilter({ tipo: 'TODAS', estado: null, clasificacion: null, area: null, linea: null, search: '', onlyExternal: false })}
           activeFilter={activeFilter}
           onIniciar={handleIniciar}
           onCancelar={handleCancelar}
@@ -105,6 +105,7 @@ export const MinutaDetailMobileView = ({
           cerrando={cerrando}
           reabriendo={reabriendo}
           finalizando={finalizando}
+          composerCollapsed={!composerExpanded}
         />
       </div>
 
@@ -113,9 +114,9 @@ export const MinutaDetailMobileView = ({
         <div className="mb-5 space-y-2">
           <MinutaExecutiveSummary 
             resumen={resumen} 
-            onFilterByStatus={(status) => setActiveFilter(prev => ({ ...prev, estado: prev.estado === status ? null : status, tipo: 'TAREA' }))}
-            onFilterByTipo={(tipo) => setActiveFilter(prev => ({ ...prev, tipo: prev.tipo === tipo ? 'TAREA' : tipo, estado: null }))}
-            onResetFilter={() => setActiveFilter({ tipo: 'TAREA', estado: null, clasificacion: null, area: null, linea: null, search: '', onlyExternal: false })}
+            onFilterByStatus={(status) => setActiveFilter(prev => ({ ...prev, estado: prev.estado === status ? null : status, tipo: 'TODAS' }))}
+            onFilterByTipo={(tipo) => setActiveFilter(prev => ({ ...prev, tipo: prev.tipo === tipo ? 'TODAS' : tipo, estado: null }))}
+            onResetFilter={() => setActiveFilter({ tipo: 'TODAS', estado: null, clasificacion: null, area: null, linea: null, search: '', onlyExternal: false })}
             activeFilter={activeFilter}
           />
           <MinutaJuntaComparison minutaId={minuta.id} />
@@ -208,7 +209,7 @@ export const MinutaDetailMobileView = ({
           </div>
         )}
 
-        <div className="sticky top-0 z-50 bg-white/40 backdrop-blur-lg px-1 py-2 mb-3 rounded-2xl border border-white/40 shadow-sm flex flex-col gap-2 transition-all duration-300"> 
+        <div className="sticky top-0 z-20 bg-white/40 backdrop-blur-lg px-1 py-2 mb-3 rounded-2xl border border-white/40 shadow-sm flex flex-col gap-2 transition-all duration-300"> 
           <EntryFiltersBar 
             activeFilter={activeFilter} 
             onChange={setActiveFilter}

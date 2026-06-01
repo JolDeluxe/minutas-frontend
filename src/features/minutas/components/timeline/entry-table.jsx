@@ -237,7 +237,7 @@ const TableImagePreview = ({ images, onClick }) => {
 };
 
 export const EntryTable = ({ 
-  entries, departamento, onOrganize, onRemove, onEdit, 
+  entries, departamento, isDraftSection, onOrganize, onRemove, onEdit, 
   onCreateNote, onUpdateNote, onDeleteNote, onChangeStatus, users,
   onDownloadPdf, isGeneratingPdf, onViewDetail
 }) => {
@@ -341,55 +341,65 @@ export const EntryTable = ({
         );
       }
     },
-    {
-      header: "Responsables",
-      accessorKey: "asignaciones",
-      align: "center",
-      headerClassName: "w-[10%] min-w-[120px]",
-      cell: (row) => {
-        const isExternal = (departamento === 'DISENO' && row.area !== 'DISENO') || (departamento === 'MARKETING' && row.area !== 'MARKETING');
-        if (isExternal) return <span className="text-[10px] font-black text-marca-primario uppercase bg-marca-primario/5 px-2 py-1 rounded-md">{AREA_MAP[row.area] || row.area}</span>;
-        if (!row.asignaciones || row.asignaciones.length === 0) return <span className="text-[11px] text-slate-300">—</span>;
-        
-        const tooltipText = row.asignaciones.map(a => a.usuario?.nombre).join('\n');
+    ...(isDraftSection ? [] : [
+      {
+        header: "Responsables",
+        accessorKey: "asignaciones",
+        align: "center",
+        headerClassName: "w-[10%] min-w-[120px]",
+        cell: (row) => {
+          const isExternal = (departamento === 'DISENO' && row.area !== 'DISENO') || (departamento === 'MARKETING' && row.area !== 'MARKETING');
+          if (isExternal) return <span className="text-[10px] font-black text-marca-primario uppercase bg-marca-primario/5 px-2 py-1 rounded-md">{AREA_MAP[row.area] || row.area}</span>;
+          
+          const isDraft = Boolean(row.tempId);
+          const isRemoteDraft = Boolean(row._isRemoteDraft);
+          const isOrganized = row.tipo !== 'SIN_ORGANIZAR';
+          if (isDraft || isRemoteDraft || !isOrganized) return <span className="text-[11px] text-slate-300">—</span>;
 
-        return (
-          <div className="flex justify-center">
-            <Tooltip text={tooltipText} position="top" className="whitespace-pre-line text-left">
-              <div className="flex -space-x-3 cursor-help py-1">
-                {row.asignaciones.map((asig) => (
-                  <div key={asig.id} className="h-10 w-10 rounded-full border-2 border-white overflow-hidden bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 shadow-md shrink-0 ring-1 ring-slate-200 transition-all hover:scale-110 hover:z-30">
-                    {asig.usuario?.imagen ? (
-                      <img src={asig.usuario.imagen} alt={asig.usuario.nombre} className="h-full w-full object-cover" />
-                    ) : (
-                      asig.usuario?.nombre?.charAt(0)
-                    )}
-                  </div>
-                ))}
-              </div>
-            </Tooltip>
-          </div>
-        );
-      }
-    },
-    {
-      header: "Línea",
-      accessorKey: "linea",
-      align: "center",
-      headerClassName: "w-[10%] min-w-[100px]",
-      cell: (row) => {
-        const isMarketing = departamento === 'MARKETING';
-        const lineInfo = isMarketing ? { label: 'Marketing', color: '#7c3aed' } : (LINEA_MAP[row.linea] || { label: row.linea || '—', color: '#64748b' });
-        return (
-          <div className="flex flex-col items-center justify-center gap-0.5">
-            <div className="flex items-center justify-center">
-              {isMarketing ? <MarketingIcon size={60} style={{ color: lineInfo.color }} /> : <LineIconSelector type={row.linea} size={60} style={{ color: lineInfo.color }} />}
+          if (!row.asignaciones || row.asignaciones.length === 0) return <span className="text-[11px] text-slate-300">—</span>;
+          
+          const tooltipText = row.asignaciones.map(a => a.usuario?.nombre).join('\n');
+
+          return (
+            <div className="flex justify-center">
+              <Tooltip text={tooltipText} position="top" className="whitespace-pre-line text-left">
+                <div className="flex -space-x-3 cursor-help py-1">
+                  {row.asignaciones.map((asig) => (
+                    <div key={asig.id} className="h-10 w-10 rounded-full border-2 border-white overflow-hidden bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 shadow-md shrink-0 ring-1 ring-slate-200 transition-all hover:scale-110 hover:z-30">
+                      {asig.usuario?.imagen ? (
+                        <img src={asig.usuario.imagen} alt={asig.usuario.nombre} className="h-full w-full object-cover" />
+                      ) : (
+                        asig.usuario?.nombre?.charAt(0)
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </Tooltip>
             </div>
-            <span className="text-[7px] font-black uppercase tracking-widest font-mono leading-none text-center" style={{ color: lineInfo.color }}>{lineInfo.label}</span>
-          </div>
-        );
+          );
+        }
       }
-    },
+    ]),
+    ...(departamento === 'MARKETING' ? [] : [
+      {
+        header: "Línea",
+        accessorKey: "linea",
+        align: "center",
+        headerClassName: "w-[10%] min-w-[100px]",
+        cell: (row) => {
+          const isMarketing = departamento === 'MARKETING';
+          const lineInfo = isMarketing ? { label: 'Marketing', color: '#7c3aed' } : (LINEA_MAP[row.linea] || { label: row.linea || '—', color: '#64748b' });
+          return (
+            <div className="flex flex-col items-center justify-center gap-0.5">
+              <div className="flex items-center justify-center">
+                {isMarketing ? <MarketingIcon size={60} style={{ color: lineInfo.color }} /> : <LineIconSelector type={row.linea} size={60} style={{ color: lineInfo.color }} />}
+              </div>
+              <span className="text-[7px] font-black uppercase tracking-widest font-mono leading-none text-center" style={{ color: lineInfo.color }}>{lineInfo.label}</span>
+            </div>
+          );
+        }
+      }
+    ]),
     {
       header: "Clasificación",
       accessorKey: "clasificacion",
@@ -413,10 +423,13 @@ export const EntryTable = ({
         align: "center",
         headerClassName: "w-[12%] min-w-[110px]",
         cell: (row) => {
-          if (row.tipo === 'SIN_ORGANIZAR') {
+          const isDraft = Boolean(row.tempId);
+          const isRemoteDraft = Boolean(row._isRemoteDraft);
+          
+          if (row.tipo === 'SIN_ORGANIZAR' || isDraft || isRemoteDraft) {
             return (
               <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold border uppercase tracking-wide whitespace-nowrap bg-amber-50 text-amber-600 border-amber-200">
-                Sin Organizar
+                Sin Clasificar
               </span>
             );
           }
@@ -424,14 +437,20 @@ export const EntryTable = ({
           if (!estadoActual) return <span className="text-[11px] text-slate-300">—</span>;
           return <EtiquetaEstadoTarea status={estadoActual} />;
         }
-      },
+      }
+    ]),
+    ...(isDraftSection ? [] : [
       {
         header: "Prioridad",
         accessorKey: "prioridad",
         align: "center",
         headerClassName: "w-[10%] min-w-[90px]",
         cell: (row) => {
-          if (!row.prioridad) return <span className="text-[11px] text-slate-300">—</span>;
+          const isDraft = Boolean(row.tempId);
+          const isRemoteDraft = Boolean(row._isRemoteDraft);
+          const isOrganized = row.tipo !== 'SIN_ORGANIZAR';
+
+          if (!row.prioridad || isDraft || isRemoteDraft || !isOrganized) return <span className="text-[11px] text-slate-300">—</span>;
           return <EtiquetaPrioridadTarea priority={row.prioridad} />;
         }
       },
@@ -441,6 +460,12 @@ export const EntryTable = ({
         align: "center",
         headerClassName: "w-[15%] min-w-[150px]",
         cell: (row) => {
+          const isDraft = Boolean(row.tempId);
+          const isRemoteDraft = Boolean(row._isRemoteDraft);
+          const isOrganized = row.tipo !== 'SIN_ORGANIZAR';
+          
+          if (isDraft || isRemoteDraft || !isOrganized) return <span className="text-[11px] text-slate-300">—</span>;
+
           const isResolvedOrClosed = row.estado === 'EN_REVISION' || row.estado === 'CERRADA';
 
           if (isResolvedOrClosed) {
@@ -468,7 +493,6 @@ export const EntryTable = ({
             );
           }
 
-          const isDraft = Boolean(row.tempId);
           const overdue = !isDraft && row.fechaVencimiento && isPastDate(row.fechaVencimiento);
 
           const textoRelativo = row.fechaVencimiento ? formatFechaRelativa(row.fechaVencimiento) : 'Sin fecha límite';
@@ -505,7 +529,7 @@ export const EntryTable = ({
         const tieneJefeAsignado = row.asignaciones?.some(a => a.usuario?.rol === 'JEFE');
         const puedeAprobar = userRole === 'ADMIN' || userRole === 'GERENCIA' || (userRole === 'JEFE' && !tieneJefeAsignado);
         
-        const canForceClose = isJefe && !isAsignado && estadoActual === 'PENDIENTE' && row.tipo === 'TAREA';
+        const canForceClose = isJefe && !isAsignado && estadoActual === 'PENDIENTE' && row.tipo === 'TAREA' && !isDraft && !isRemoteDraft;
         
         return (
           <div className="flex items-center gap-2 justify-center">

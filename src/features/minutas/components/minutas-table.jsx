@@ -30,6 +30,8 @@ export const MinutasTable = ({
     isAdmin = false,
     hidePagination = false,
 }) => {
+    const isAllMarketing = minutas?.length > 0 && minutas.every(m => (m.departamento || m.creadoPor?.departamento) === 'MARKETING');
+
     const columns = [
         {
             header: "ID",
@@ -85,51 +87,53 @@ export const MinutasTable = ({
                 );
             },
         },
-        {
-            header: "Línea",
-            accessorKey: "lineaDefault",
-            sortable: true,
-            align: "center",
-            headerClassName: "w-[15%] min-w-[120px]",
-            cell: (row) => {
-                if (row.isSkeleton) return <Skeleton className="h-4 w-20 mx-auto" />;
+        ...(isAllMarketing ? [] : [
+            {
+                header: "Línea",
+                accessorKey: "lineaDefault",
+                sortable: true,
+                align: "center",
+                headerClassName: "w-[15%] min-w-[120px]",
+                cell: (row) => {
+                    if (row.isSkeleton) return <Skeleton className="h-4 w-20 mx-auto" />;
 
-                const isMarketing = (row.departamento || row.creadoPor?.departamento) === 'MARKETING';
+                    const isRowMarketing = (row.departamento || row.creadoPor?.departamento) === 'MARKETING';
 
-                const lineInfo = isMarketing
-                    ? { label: 'Marketing', color: '#7c3aed' }
-                    : (LINEA_MAP[row.lineaDefault] || {
-                        label: row.lineaDefault,
-                        color: '#64748b'
-                    });
+                    const lineInfo = isRowMarketing
+                        ? { label: 'Marketing', color: '#7c3aed' }
+                        : (LINEA_MAP[row.lineaDefault] || {
+                            label: row.lineaDefault,
+                            color: '#64748b'
+                        });
 
-                return (
-                    <div className="flex flex-col items-center justify-center gap-1">
-                        <div className="flex items-center justify-center">
-                            {isMarketing ? (
-                                <MarketingIcon
-                                    size={50}
-                                    style={{ color: lineInfo.color }}
-                                />
-                            ) : (
-                                <LineIconSelector
-                                    type={row.lineaDefault}
-                                    size={70}
-                                    style={{ color: lineInfo.color }}
-                                />
-                            )}
+                    return (
+                        <div className="flex flex-col items-center justify-center gap-1">
+                            <div className="flex items-center justify-center">
+                                {isRowMarketing ? (
+                                    <MarketingIcon
+                                        size={50}
+                                        style={{ color: lineInfo.color }}
+                                    />
+                                ) : (
+                                    <LineIconSelector
+                                        type={row.lineaDefault}
+                                        size={70}
+                                        style={{ color: lineInfo.color }}
+                                    />
+                                )}
+                            </div>
+
+                            <span
+                                className="text-[7px] font-black uppercase tracking-widest font-mono leading-none text-center"
+                                style={{ color: lineInfo.color }}
+                            >
+                                {lineInfo.label}
+                            </span>
                         </div>
-
-                        <span
-                            className="text-[7px] font-black uppercase tracking-widest font-mono leading-none text-center"
-                            style={{ color: lineInfo.color }}
-                        >
-                            {lineInfo.label}
-                        </span>
-                    </div>
-                );
-            },
-        },
+                    );
+                },
+            }
+        ]),
         {
             header: "Progreso",
             accessorKey: "progreso",

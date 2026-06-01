@@ -8,6 +8,7 @@ import { MinutasMobile } from '../views/minutas-mobile';
 import { MinutaFormModal } from '../components/minuta-form-modal';
 
 import { useUIStore } from '@/stores/ui-store';
+import { ConfirmModal } from '@/components/ui/z_index';
 
 const LIMIT = 50; // Más alto para que el agrupamiento por fecha funcione bien
 
@@ -176,14 +177,22 @@ const MinutasPage = () => {
         navigate(`/minutas/${minuta.id}`);
     };
 
-    const handleCancelMinuta = async (minuta) => {
-        if (!window.confirm(`¿Estás seguro de que deseas cancelar la minuta "${minuta.titulo}"? Esta acción no se puede deshacer.`)) return;
+    const [minutaToCancel, setMinutaToCancel] = useState(null);
+
+    const handleCancelMinuta = (minuta) => {
+        setMinutaToCancel(minuta);
+    };
+
+    const confirmCancelMinuta = async () => {
+        if (!minutaToCancel) return;
         try {
-            await cancelMinuta(minuta.id);
+            await cancelMinuta(minutaToCancel.id);
             notify.success('Minuta cancelada correctamente.');
             await loadMinutas();
         } catch (err) {
             notify.error(err.response?.data?.error || 'Error al cancelar la minuta.');
+        } finally {
+            setMinutaToCancel(null);
         }
     };
 
@@ -301,6 +310,19 @@ const MinutasPage = () => {
                 submitting={submitting}
                 onSuccess={handleSaveMinuta}
             />
+
+            {minutaToCancel && (
+                <ConfirmModal
+                    isOpen={Boolean(minutaToCancel)}
+                    onClose={() => setMinutaToCancel(null)}
+                    onConfirm={confirmCancelMinuta}
+                    title="Cancelar Minuta"
+                    message={`¿Estás seguro de que deseas cancelar la minuta "${minutaToCancel.titulo}"? Esta acción no se puede deshacer.`}
+                    confirmText="Cancelar Minuta"
+                    cancelText="Volver"
+                    variant="danger"
+                />
+            )}
         </div>
     );
 };

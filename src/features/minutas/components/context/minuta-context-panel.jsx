@@ -14,7 +14,8 @@ import { MinutaJuntaComparison } from '../minuta-junta-comparison';
 export const MinutaContextPanel = ({ 
   minuta, resumen, onFilterByStatus, onFilterByTipo, onResetFilter, activeFilter,
   onIniciar, onCancelar, onCerrar, onReabrir, onFinalizar,
-  iniciando, cancelando, cerrando, reabriendo, finalizando
+  iniciando, cancelando, cerrando, reabriendo, finalizando,
+  composerCollapsed = true,
 }) => {
   const navigate = useNavigate();
   const isDesktop = useIsDesktop();
@@ -96,17 +97,19 @@ export const MinutaContextPanel = ({
             </Button>
           )}
 
-          {minuta.estado === 'EN_CURSO' && (
+          {minuta.estado === 'EN_CURSO' && resumen?.totalValidas > 0 && composerCollapsed && (
             <Button variant="marca" icon="stop_circle" onClick={onFinalizar} loading={finalizando} size="sm" className="h-7 px-2 md:px-4 text-[9px] font-black uppercase shadow-sm">
               <span className="hidden xs:inline">Finalizar</span>
             </Button>
           )}
 
-          {(minuta.estado === 'ACTIVA' || minuta.estado === 'EN_ORGANIZACION') && (
+          {(minuta.estado === 'ACTIVA' || minuta.estado === 'EN_ORGANIZACION' || minuta.estado === 'CERRADA') && (
             <div className="flex items-center gap-1">
-               <Button variant="dark" icon="check_circle" onClick={onCerrar} loading={cerrando} size="sm" className="h-7 px-1.5 xs:px-2 md:px-3 text-[9px] font-black uppercase">
-                 <span className="hidden xs:inline">Forzar Cierre</span>
-               </Button>
+               {(minuta.estado === 'ACTIVA' || minuta.estado === 'EN_ORGANIZACION') && (
+                 <Button variant="dark" icon="check_circle" onClick={onCerrar} loading={cerrando} size="sm" className="h-7 px-1.5 xs:px-2 md:px-3 text-[9px] font-black uppercase">
+                   <span className="hidden xs:inline">Forzar Cierre</span>
+                 </Button>
+               )}
                
                <Button variant="outline" icon="lock_open" onClick={onReabrir} loading={reabriendo} size="sm" className="h-7 px-1.5 xs:px-2 md:px-3 text-[9px] font-black uppercase border-slate-200 bg-white text-slate-600">
                  <span className="hidden xs:inline">Reabrir Sesión</span>
@@ -116,7 +119,7 @@ export const MinutaContextPanel = ({
 
           {minuta.estado !== 'CANCELADA' && resumen?.totalEntradas === 0 && (
             <button onClick={onCancelar} disabled={cancelando} className="w-7 h-7 flex items-center justify-center rounded-lg text-rose-400 hover:bg-rose-50 active:scale-90 transition-all">
-               <Icon name="cancel" size="16px" />
+               <Icon name="delete" size="16px" />
             </button>
           )}
         </div>

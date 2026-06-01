@@ -9,7 +9,7 @@ import { useMinutaDraftStore } from '../stores/minuta-draft-store';
 import { useAuthStore } from '@/stores/auth-store';
 import socket from '@/lib/socket';
 
-import { Icon } from '@/components/ui/z_index';
+import { Icon, ConfirmModal } from '@/components/ui/z_index';
 import { MinutaDetailDesktopView } from '../views/minuta-detail-desktop-view';
 import { MinutaDetailMobileView } from '../views/minuta-detail-mobile-view';
 
@@ -83,6 +83,8 @@ export default function MinutaDetailPage() {
   const [reabriendo, setReabriendo] = useState(false);
   const [finalizando, setFinalizando] = useState(false);
   const [showForceCloseModal, setShowForceCloseModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showCloseModal, setShowCloseModal] = useState(false);
 
   const [activeFilter, setActiveFilter] = useState({
     tipo: 'TODAS',
@@ -328,8 +330,12 @@ export default function MinutaDetailPage() {
     const now = new Date();
     let totalTareas = 0, pendientes = 0, enRevision = 0, cerradas = 0, atrasadas = 0;
     let totalPoliticas = 0, totalRecordatorios = 0;
+    let totalValidas = 0;
 
     for (const t of allEntries) {
+      if (t.tipo !== 'DESCARTADA' && t.estado !== 'DESCARTADA' && t.estado !== 'CANCELADA') {
+        totalValidas++;
+      }
       const isExterna = t.area && t.area !== departamento;
       if (t.tipo === 'POLITICA') totalPoliticas++;
       else if (t.tipo === 'RECORDATORIO') totalRecordatorios++;
@@ -353,7 +359,7 @@ export default function MinutaDetailPage() {
       }
     }
     const porcentaje = totalTareas > 0 ? Math.round((cerradas / totalTareas) * 100) : 0;
-    return { totalTareas, pendientes, enRevision, cerradas, atrasadas, porcentaje, totalPoliticas, totalRecordatorios, totalEntradas: allEntries.length };
+    return { totalTareas, pendientes, enRevision, cerradas, atrasadas, porcentaje, totalPoliticas, totalRecordatorios, totalEntradas: allEntries.length, totalValidas };
   }, [allEntries, departamento]);
 
   const handleUpdateDraftEntry = useCallback((tempId, updates) => {
@@ -608,12 +614,18 @@ export default function MinutaDetailPage() {
   };
 
   const handleCancelar = async () => {
-    if (!confirm("¿Cancelar?")) return;
+    setShowCancelModal(true);
+  };
+
+  const confirmCancelar = async () => {
     setCancelando(true);
+    setShowCancelModal(false);
     try {
       await cancelarMinuta(id);
       notify.success("Cancelada");
       navigate('/minutas');
+    } catch {
+      notify.error("Error al cancelar la minuta");
     } finally { setCancelando(false); }
   };
 
@@ -626,15 +638,22 @@ export default function MinutaDetailPage() {
     if (pendingTasks.length > 0 || revisionTasks.length > 0) {
       setShowForceCloseModal(true);
     } else {
-      if (!confirm("¿Cerrar minuta?")) return;
-      setCerrando(true);
-      try {
-        const res = await cerrarMinuta(id);
-        if (res.data?.advertencia) notify.warning(res.data.advertencia);
-        const resMinuta = await getMinutaById(id);
-        setMinuta(resMinuta.data?.data || resMinuta.data);
-      } finally { setCerrando(false); }
+      setShowCloseModal(true);
     }
+  };
+
+  const confirmCerrar = async () => {
+    setCerrando(true);
+    setShowCloseModal(false);
+    try {
+      const res = await cerrarMinuta(id);
+      if (res.data?.advertencia) notify.warning(res.data.advertencia);
+      const resMinuta = await getMinutaById(id);
+      setMinuta(resMinuta.data?.data || resMinuta.data);
+      notify.success("Minuta cerrada");
+    } catch {
+      notify.error("Error al cerrar la minuta");
+    } finally { setCerrando(false); }
   };
 
   const handleReabrir = async () => {
@@ -647,11 +666,18 @@ export default function MinutaDetailPage() {
   };
 
   const handleFinalizar = async () => {
+    if (allEntries.length === 0 && draftEntries.length === 0) {
+      notify.warning('No puedes finalizar una junta sin entradas. Captura al menos un punto o cancela la minuta.');
+      return;
+    }
     if (draftEntries.length > 0 || draftNotes.length > 0) { setShowReviewModal(true); return; }
     setFinalizando(true);
     try {
       const res = await finalizarMinuta(id);
       setMinuta(res.data?.data || res.data);
+      notify.success("Junta finalizada");
+    } catch {
+      notify.error("Error al finalizar la junta");
     } finally { setFinalizando(false); }
   };
 
@@ -799,6 +825,32 @@ export default function MinutaDetailPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showCancelModal && (
+        <ConfirmModal
+          isOpen={showCancelModal}
+          onClose={() => setShowCancelModal(false)}
+          onConfirm={confirmCancelar}
+          title="Cancelar Minuta"
+          message="¿Estás seguro de que deseas cancelar la minuta? Esta acción no se puede deshacer."
+          confirmText="Cancelar Minuta"
+          cancelText="Volver"
+          variant="danger"
+        />
+      )}
+
+      {showCloseModal && (
+        <ConfirmModal
+          isOpen={showCloseModal}
+          onClose={() => setShowCloseModal(false)}
+          onConfirm={confirmCerrar}
+          title="Cerrar Minuta"
+          message="¿Estás seguro de que deseas cerrar esta minuta? Ya no podrás agregar nuevas tareas."
+          confirmText="Cerrar Minuta"
+          cancelText="Volver"
+          variant="success"
+        />
       )}
     </>
   );

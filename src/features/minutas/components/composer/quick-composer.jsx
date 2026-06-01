@@ -230,7 +230,7 @@ export const QuickComposer = ({
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Captura</span>
             </div>
-            <button onClick={() => setIsCollapsed(true)} className="flex items-center gap-1 px-3 py-1 bg-slate-200/60 hover:bg-slate-250 text-slate-700 hover:text-slate-900 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm border border-slate-300/20"><X size={12} /> Volver</button>
+            <button onClick={() => setIsCollapsed(true)} className="flex items-center gap-1.5 px-6 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-[11px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-md border border-slate-700 cursor-pointer"><X size={16} /> Cerrar Captura</button>
           </div>
 
           <div className="flex-1 bg-white border border-slate-200/60 rounded-[1.5rem] p-4 lg:p-6 shadow-2xl flex flex-col gap-4 min-h-0 overflow-hidden">

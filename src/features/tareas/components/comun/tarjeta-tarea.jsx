@@ -155,14 +155,12 @@ const CardImageCarousel = ({ images, lineInfo, isMarketing, onImageClick }) => {
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-slate-200 shadow-xs animate-in fade-in duration-500 max-w-full">
-        {isMarketing ? (
-          <MarketingIcon size={14} style={{ color: lineInfo.color }} />
-        ) : (
+      {!isMarketing && (
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-slate-200 shadow-xs animate-in fade-in duration-500 max-w-full">
           <LineIconSelector type={lineInfo.value} size={16} style={{ color: lineInfo.color }} />
-        )}
-        <span className="text-[7px] font-black uppercase tracking-wider truncate" style={{ color: lineInfo.color }}>{lineInfo.label}</span>
-      </div>
+          <span className="text-[7px] font-black uppercase tracking-wider truncate" style={{ color: lineInfo.color }}>{lineInfo.label}</span>
+        </div>
+      )}
 
       {showHover && isDesktop && createPortal(
         <div
@@ -384,7 +382,7 @@ export const TareaCard = ({
     const esAsignadoDirecto = responsables.some(r => r.id == currentUserId)
         || tarea.asignaciones?.some(a => a.usuarioId == currentUserId);
 
-    const canForceClose = esJefe && !esAsignadoDirecto && isPendiente && !isPorAprobar && tipo === 'TAREA';
+    const canForceClose = esJefe && !esAsignadoDirecto && isPendiente && !isPorAprobar && tipo === 'TAREA' && !isDraft && !isRemoteDraft;
 
     // ── Handlers de notas ───────────────────────────────────────────────────
     const handleAddNote = async (tareaId, contenido) => {
@@ -473,41 +471,48 @@ export const TareaCard = ({
             >
                 <div className="flex flex-row h-full min-h-[140px]">
 
-                    {/* PANEL IZQUIERDO: IMAGEN / IDENTIDAD */}
-                    <div className="flex flex-col items-center justify-center shrink-0 w-[58px] min-[360px]:w-[78px] sm:w-[98px] bg-slate-50/50 border-r border-slate-100/50 p-1 min-[360px]:p-1.5 sm:p-2 relative group/side">
-                        {hasImages ? (
-                            <CardImageCarousel
-                                images={imagenesCaptura}
-                                lineInfo={lineInfo}
-                                isMarketing={isMarketing}
-                                onImageClick={(idx) => setViewerIndex(idx)}
-                            />
-                        ) : (
-                            <div className="flex flex-col items-center justify-center w-full gap-1 min-[360px]:gap-1.5">
-                                <div className="flex flex-col items-center justify-center w-9 h-9 min-[360px]:w-12 min-[360px]:h-12 sm:w-16 sm:h-16 rounded-xl min-[360px]:rounded-[1.25rem] transition-all duration-500 group-hover:scale-110 shadow-sm" style={{ backgroundColor: `${lineInfo.color}0f`, border: `1.5px solid ${lineInfo.color}25` }}>
-                                    <div className="scale-[0.55] min-[360px]:scale-[0.75] sm:scale-100 origin-center transition-transform">
-                                        {isMarketing ? (
-                                            <MarketingIcon size={24} style={{ color: lineInfo.color }} />
-                                        ) : (
-                                            <LineIconSelector type={tarea.linea} size={32} style={{ color: lineInfo.color }} />
-                                        )}
-                                    </div>
-                                </div>
-                                <span className="font-black tracking-[0.05em] min-[360px]:tracking-[0.1em] text-[5.5px] min-[360px]:text-[7px] sm:text-[8px] uppercase font-mono text-center leading-tight px-1" style={{ color: lineInfo.color }}>
-                                    {lineInfo.label}
-                                </span>
-                            </div>
-                        )}
-                    </div>
+      {/* PANEL IZQUIERDO: IMAGEN / IDENTIDAD */}
+      {(!isMarketing || hasImages) && (
+        <div className={cn(
+          "flex flex-col items-center shrink-0 w-[58px] min-[360px]:w-[78px] sm:w-[98px] bg-slate-50/50 border-r border-slate-100/50 p-1 min-[360px]:p-1.5 sm:p-2 relative group/side",
+          hasImages ? "justify-start pt-3" : "justify-center"
+        )}>
+          {hasImages ? (
+            <CardImageCarousel
+              images={imagenesCaptura}
+              lineInfo={lineInfo}
+              isMarketing={isMarketing}
+              onImageClick={(idx) => setViewerIndex(idx)}
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center w-full gap-1 min-[360px]:gap-1.5">
+              <div
+                className="flex flex-col items-center justify-center w-9 h-9 min-[360px]:w-12 min-[360px]:h-12 sm:w-16 sm:h-16 rounded-xl min-[360px]:rounded-[1.25rem] transition-all duration-500 group-hover:scale-110 shadow-sm"
+                style={{ backgroundColor: `${lineInfo.color}0f`, border: `1.5px solid ${lineInfo.color}25` }}
+              >
+                <div className="scale-[0.55] min-[360px]:scale-[0.75] sm:scale-100 origin-center transition-transform">
+                  <LineIconSelector type={tarea.linea} size={32} style={{ color: lineInfo.color }} />
+                </div>
+              </div>
+              <span
+                className="font-black tracking-[0.05em] min-[360px]:tracking-[0.1em] text-[5.5px] min-[360px]:text-[7px] sm:text-[8px] uppercase font-mono text-center leading-tight px-1"
+                style={{ color: lineInfo.color }}
+              >
+                {lineInfo.label}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
-                    {/* PANEL DERECHO: CONTENIDO */}
+      {/* PANEL DERECHO: CONTENIDO */}
                     <div className="flex flex-col flex-1 min-w-0 p-2 min-[360px]:p-3 sm:p-4">
 
                         {/* Header: Status + Fechas */}
                         <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                             <div className="flex items-center gap-1.5 min-[360px]:gap-2 flex-wrap scale-[0.82] min-[360px]:scale-90 sm:scale-100 origin-left transition-transform">
                                 {/* Badge de tipo */}
-                                {isOrganized && tipo !== 'DESCARTADA' && (
+                                {isOrganized && tipo !== 'DESCARTADA' && !isDraft && !isRemoteDraft && (
                                     <span className={cn(
                                         "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border text-white shadow-sm transition-all",
                                         tipo === 'TAREA'
@@ -518,10 +523,16 @@ export const TareaCard = ({
                                         {isExternal ? 'EXTERNA' : tipo}
                                     </span>
                                 )}
-                                {(isFormalizada || tipo === 'RECORDATORIO') && !isExternal && (
-                                    <EtiquetaEstadoTarea status={estado} className="scale-90 origin-left" />
+                                {(isDraft || isRemoteDraft || !isOrganized) ? (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[7px] sm:text-[8px] font-bold border uppercase tracking-wide whitespace-nowrap bg-amber-50 text-amber-600 border-amber-200">
+                                        Sin Clasificar
+                                    </span>
+                                ) : (
+                                    (isFormalizada || tipo === 'RECORDATORIO') && !isExternal && (
+                                        <EtiquetaEstadoTarea status={estado} className="scale-90 origin-left" />
+                                    )
                                 )}
-                                {isExternal && (
+                                {isExternal && !isDraft && !isRemoteDraft && (
                                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border bg-marca-primario/10 text-marca-primario border-marca-primario/20">
                                         <Icon name="output" size="10px" />
                                         {AREA_MAP[tarea.area] || tarea.area}
@@ -533,7 +544,7 @@ export const TareaCard = ({
                                         {clasif.label}
                                     </span>
                                 )}
-                                {tarea.prioridad && <EtiquetaPrioridadTarea priority={tarea.prioridad} className="scale-90 origin-left" />}
+                                {!isDraft && !isRemoteDraft && isOrganized && tarea.prioridad && <EtiquetaPrioridadTarea priority={tarea.prioridad} className="scale-90 origin-left" />}
                             </div>
                             <div className="flex items-center gap-1.5 shrink-0">
                                 {!isCerrado && !isRemoteDraft && !!onDelete && (
@@ -558,7 +569,7 @@ export const TareaCard = ({
                                     <span className="text-[7px] sm:text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
                                         #{tarea.id}
                                     </span>
-                                    {vencida && <span className="text-[7px] font-black text-rose-500 animate-pulse uppercase">¡Vencida!</span>}
+                                    {vencida && !isDraft && !isRemoteDraft && isOrganized && <span className="text-[7px] font-black text-rose-500 animate-pulse uppercase">¡Vencida!</span>}
                                 </div>
                             </div>
                         </div>
@@ -588,7 +599,7 @@ export const TareaCard = ({
                                     <span className="text-[10px]">{notas.length}</span>
                                 </button>
 
-                                {responsables.length > 0 && (
+                                {!isDraft && !isRemoteDraft && isOrganized && responsables.length > 0 && (
                                     <div className="flex -space-x-2 ml-1">
                                         {responsables.map((r) => (
                                             <Tooltip key={r.id} text={r.nombre} position="top">

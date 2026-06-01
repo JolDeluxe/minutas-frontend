@@ -191,7 +191,7 @@ export const MobileQuickComposer = ({
         ) : (
           <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-slate-200/60 shrink-0 select-none" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEndClose}>
             <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /><span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Captura Mobile</span></div>
-            <button onClick={handleClose} className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm border border-slate-200/30 touch-manipulation"><X size={12} /> Volver</button>
+            <button onClick={handleClose} className="flex items-center gap-1.5 px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 hover:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm border border-slate-300 cursor-pointer touch-manipulation"><X size={14} /> Volver / Cerrar</button>
           </div>
         )}
 
