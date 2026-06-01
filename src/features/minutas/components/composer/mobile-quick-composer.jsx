@@ -160,6 +160,13 @@ export const MobileQuickComposer = ({
     setNotasRapidas([]);
     setLocalImages([]);
     setExpanded(false);
+
+    // --- REINICIAR SELECTORES A SUS VALORES INICIALES ---
+    const defaultArea = catalogos.areas[0]?.value || departamento;
+    const defaultLineas = LINEAS_POR_AREA[defaultArea] || [];
+    setArea(defaultArea);
+    setLinea(defaultLineas.length > 0 ? (lineaDefault || defaultLineas[0]?.value) : null);
+    setClasificacion('');
   };
 
   const handleClose = (e) => {

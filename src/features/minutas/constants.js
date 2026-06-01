@@ -215,7 +215,6 @@ export const CATALOGOS_POR_DEPARTAMENTO = {
       { value: 'DIRECCION_CFI',     label: 'Dirección CFI' },
       { value: 'DIRECCION_ADJUNTA', label: 'Dirección Adjunta' },
       { value: 'DIRECCION_TIENDAS', label: 'Dirección Tiendas' },
-      { value: 'DIRECCION_MKT',     label: 'Dirección MKT' },
       { value: 'DIRECCION_ALTA_CALIDAD', label: 'Dirección Alta Calidad' },
     ],
     clasificaciones: [

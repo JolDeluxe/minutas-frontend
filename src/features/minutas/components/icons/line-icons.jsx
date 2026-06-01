@@ -75,6 +75,10 @@ export const LineIconSelector = ({ type, size = 28, className = '', style }) => 
   const normalizedType = String(type || '').trim().toUpperCase();
   const iconSize = toCssSize(size);
 
+  const renderIcon = (name) => (
+    <Icon name={name} size={iconSize} weight={50} opsz={size} className={className} style={style} />
+  );
+
   switch (normalizedType) {
     case 'CALZADO':
       return <ZapatoIcon size={size} className={className} style={style} />;
@@ -89,7 +93,28 @@ export const LineIconSelector = ({ type, size = 28, className = '', style }) => 
     case 'DISENO':
     case 'DISEÑO':
       return <DisenoIcon size={size} className={className} style={style} />;
+      
+    // Iconos de las líneas de áreas externas
+    case 'COMPRAS': return renderIcon('shopping_bag');
+    case 'PRODUCCION': return renderIcon('precision_manufacturing');
+    case 'INGENIERIA': return renderIcon('engineering');
+    case 'DESARROLLO': return renderIcon('construction');
+    case 'PT': return renderIcon('inventory');
+    case 'TRAFICO': return renderIcon('local_shipping');
+    case 'DIRECCION': return renderIcon('business');
+    case 'VISUAL': return renderIcon('visibility');
+    case 'ANALISIS_VENTAS': 
+    case 'ANALISIS VENTAS': return renderIcon('analytics');
+    case 'REDES_SOCIALES': 
+    case 'REDES SOCIALES': return renderIcon('share');
+    case 'PAGINA_WEB':
+    case 'PAGINA WEB': return renderIcon('language');
+    case 'EVENTOS': return renderIcon('event');
+    case 'DISENO_GRAFICO': 
+    case 'DISEÑO GRAFICO': return renderIcon('brush');
+    case 'OTROS': return renderIcon('more_horiz');
+
     default:
-      return <Icon name="category" size={iconSize} weight={50} opsz={size} className={className} style={style} />;
+      return renderIcon('category');
   }
 };

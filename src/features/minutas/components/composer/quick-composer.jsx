@@ -188,8 +188,32 @@ export const QuickComposer = ({
     setDescripcion('');
     setNotasRapidas([]);
     setImagenes([]);
+
+    // --- REINICIAR SELECTORES A SUS VALORES INICIALES ---
+    const defaultArea = catalogos.areas[0]?.value || departamento;
+    const defaultLineas = LINEAS_POR_AREA[defaultArea] || [];
+    setArea(defaultArea);
+    setLinea(defaultLineas.length > 0 ? (lineaDefault || defaultLineas[0]?.value) : null);
+    setClasificacion('');
+
     if (isDesktop) textareaRef.current?.focus();
-  }, [isValid, descripcion, notasRapidas, area, linea, clasificacion, minutaId, imagenes, onSubmit, submitting, isDesktop, tieneLineas]);
+  }, [
+    isValid, 
+    descripcion, 
+    notasRapidas, 
+    area, 
+    linea, 
+    clasificacion, 
+    minutaId, 
+    imagenes, 
+    onSubmit, 
+    submitting, 
+    isDesktop, 
+    tieneLineas,
+    catalogos,
+    departamento,
+    lineaDefault
+  ]);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
