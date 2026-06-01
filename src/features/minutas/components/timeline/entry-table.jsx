@@ -253,7 +253,7 @@ const TableImagePreview = ({ images, remoteImageCount, onClick }) => {
 export const EntryTable = ({ 
   entries, departamento, isDraftSection, onOrganize, onRemove, onEdit, 
   onCreateNote, onUpdateNote, onDeleteNote, onChangeStatus, users,
-  onDownloadPdf, isGeneratingPdf, onViewDetail
+  onDownloadPdf, isGeneratingPdf, onViewDetail, onToggleNotificado
 }) => {
   const { user } = useAuthStore();
   const currentUser = user?.data || user;
@@ -298,7 +298,16 @@ export const EntryTable = ({
         const isRemoteDraft = Boolean(row._isRemoteDraft);
         const isExternal = (departamento === 'DISENO' && row.area !== 'DISENO') || (departamento === 'MARKETING' && row.area !== 'MARKETING');
         if (isRemoteDraft) return <span className="inline-flex items-center gap-1 rounded-lg bg-cyan-100 px-2 py-0.5 text-[8px] font-black uppercase tracking-widest text-cyan-700 whitespace-nowrap">En vivo</span>;
-        if (isDraft) return <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2 py-0.5 text-[8px] font-black uppercase tracking-widest text-emerald-700 whitespace-nowrap">Borrador</span>;
+        if (isDraft) return (
+          <div className="flex flex-col items-start gap-0.5">
+            <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2 py-0.5 text-[8px] font-black uppercase tracking-widest text-emerald-700 whitespace-nowrap">Borrador</span>
+            {isExternal && (
+              <span className="inline-flex items-center rounded-md bg-marca-primario/10 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-widest text-marca-primario whitespace-nowrap">
+                {AREA_MAP[row.area] || row.area}
+              </span>
+            )}
+          </div>
+        );
         if (isExternal) return <span className="inline-flex items-center gap-1 rounded-lg bg-marca-primario/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-widest text-marca-primario whitespace-nowrap">EXT</span>;
         return <span className="text-slate-400 font-mono text-xs">#{entries.indexOf(row) + 1}</span>;
       }
@@ -568,10 +577,26 @@ export const EntryTable = ({
                 onClick={(e) => { e.stopPropagation(); onDownloadPdf(row.area); }} 
                 disabled={isGeneratingPdf === row.area}
                 className="h-9 px-2.5 rounded-xl border border-red-200 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white flex items-center gap-1.5 transition-all active:scale-90 shadow-sm font-black uppercase text-[10px] tracking-widest" 
-                title="Generar PDF"
+                title="Generar y compartir PDF"
               >
                 <Icon name={isGeneratingPdf === row.area ? "hourglass_empty" : "picture_as_pdf"} size="16px" className={isGeneratingPdf === row.area ? "animate-spin" : ""} />
                 PDF
+              </button>
+            )}
+
+            {/* Checkbox Notificado — solo ADMIN, solo externa, solo guardada */}
+            {userRole === 'ADMIN' && isExternal && !isDraft && !isRemoteDraft && onToggleNotificado && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggleNotificado(row.id); }}
+                title={row.notificadoAt ? `Notificado el ${new Date(row.notificadoAt).toLocaleDateString('es-MX')}` : 'Marcar como notificado'}
+                className={cn(
+                  "h-9 w-9 rounded-xl border flex items-center justify-center transition-all active:scale-90 shadow-sm",
+                  row.notificadoAt
+                    ? "bg-emerald-500 border-emerald-500 text-white"
+                    : "bg-white border-slate-200 text-slate-300 hover:border-emerald-400 hover:text-emerald-500"
+                )}
+              >
+                <Icon name={row.notificadoAt ? "check_circle" : "radio_button_unchecked"} size="16px" />
               </button>
             )}
  

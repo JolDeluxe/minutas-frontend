@@ -11,7 +11,8 @@ import {
     deleteTareaNota,
     addTareaImagen,
     deleteTareaImagen,
-    generarPdfTarea
+    generarPdfTarea,
+    toggleNotificadoTarea
 } from '../api/tareas-api';
 
 export const useTareas = () => {
@@ -171,6 +172,16 @@ export const useTareas = () => {
         }
     }, []);
 
+    const handleToggleNotificado = useCallback(async (id) => {
+        try {
+            const res = await toggleNotificadoTarea(id);
+            return res.data;
+        } catch (err) {
+            console.error("Error al actualizar notificado:", err);
+            throw err;
+        }
+    }, []);
+
     useEffect(() => {
         const handleSyncComplete = () => {
             if (Object.keys(lastFetchParams.current).length > 0 || tareas.length > 0) {
@@ -197,6 +208,7 @@ export const useTareas = () => {
         deleteTareaNota: handleDeleteTareaNota,
         addTareaImagen: handleAddTareaImagen,
         deleteTareaImagen: handleDeleteTareaImagen,
-        generarPdfTarea: handleGenerarPdfTarea
+        generarPdfTarea: handleGenerarPdfTarea,
+        toggleNotificado: handleToggleNotificado
     };
 };

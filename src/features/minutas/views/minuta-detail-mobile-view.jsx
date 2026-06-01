@@ -71,7 +71,8 @@ export const MinutaDetailMobileView = ({
   handleDeleteEntry,
   clearDrafts,
   handleDownloadPdf,
-  isGeneratingPdf
+  isGeneratingPdf,
+  handleToggleNotificado
 }) => {
   const [showPoliticas, setShowPoliticas] = useState(false);
   const [showRecordatorios, setShowRecordatorios] = useState(false);
@@ -245,6 +246,7 @@ export const MinutaDetailMobileView = ({
             setSelectedTareaForDetail(t);
             setIsTareaDrawerOpen(true);
           }}
+          onToggleNotificado={handleToggleNotificado}
         />
       </main>
       

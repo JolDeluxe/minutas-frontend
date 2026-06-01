@@ -107,7 +107,7 @@ export default function MinutaDetailPage() {
     tareas, fetchTareas, loadingTareas, deleteTarea,
     createTarea: createTareaApi, updateTarea, changeStatus: changeTareaStatus, createNotaGeneral, 
     createTareaNota, updateTareaNota, deleteTareaNota,
-    addTareaImagen, deleteTareaImagen, generarPdfTarea
+    addTareaImagen, deleteTareaImagen, generarPdfTarea, toggleNotificado: toggleNotificadoTarea
   } = useTareas();
 
   const { users, fetchUsers } = useUsers();
@@ -751,34 +751,48 @@ export default function MinutaDetailPage() {
       
       if (!url) throw new Error("No se pudo obtener la URL del PDF");
 
-      // 1. Descargar el archivo a la memoria del navegador como BLOB
       const response = await fetch(url);
       const blob = await response.blob();
       
-      // 2. Crear un nombre de archivo confiable con extensión .pdf
       const fechaObj = new Date(minuta.fechaRealizada || minuta.fechaProgramada || minuta.createdAt);
       const fechaFormateada = `${String(fechaObj.getDate()).padStart(2, '0')}-${String(fechaObj.getMonth() + 1).padStart(2, '0')}-${fechaObj.getFullYear()}`;
-      const fileName = `Tareas_${area}_${fechaFormateada}.pdf`;
+      const fileName = `Tarea_${area}_${fechaFormateada}.pdf`;
 
-      // 3. Crear link de descarga invisible para forzar al celular/PC a guardarlo como PDF
-      const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = fileName;
-      
-      // Necesario para que funcione en algunos navegadores móviles
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      // Limpiar memoria
-      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
+      // Intentar Web Share API (iOS, Android, macOS con Safari/Chrome)
+      if (navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'application/pdf' })] })) {
+        const pdfFile = new File([blob], fileName, { type: 'application/pdf' });
+        await navigator.share({
+          title: fileName,
+          files: [pdfFile],
+        });
+      } else {
+        // Fallback: descarga clásica para navegadores sin Share API
+        const blobUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
+      }
       
     } catch (err) {
+      // El usuario canceló el share — no es un error real
+      if (err?.name === 'AbortError') return;
       console.error("Error al descargar PDF:", err);
       notify.error('Error al descargar el PDF');
     } finally {
       setIsGeneratingPdf(null);
+    }
+  };
+
+  const handleToggleNotificado = async (tareaId) => {
+    try {
+      await toggleNotificadoTarea(tareaId);
+      await refreshEntries();
+    } catch {
+      notify.error('Error al actualizar estado de notificación');
     }
   };
 
@@ -798,7 +812,8 @@ export default function MinutaDetailPage() {
     handleFinalSubmit, isSubmittingFinal, showNotes, setShowNotes, handleCreateEntryNote, handleUpdateEntryNote,
     handleDeleteEntryNote, handleAddEntryImage, handleDeleteEntryImage, handleIniciar, handleCancelar, handleCerrar, handleReabrir, handleFinalizar,
     iniciando, cancelando, cerrando, reabriendo, finalizando, minutaEstado: minuta?.estado,
-    clearDrafts: handleClearDrafts, handleDownloadPdf, isGeneratingPdf
+    clearDrafts: handleClearDrafts, handleDownloadPdf, isGeneratingPdf,
+    handleToggleNotificado, currentUser
   };
 
   return (

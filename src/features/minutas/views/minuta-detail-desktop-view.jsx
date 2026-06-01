@@ -69,7 +69,8 @@ export const MinutaDetailDesktopView = ({
   handleDeleteEntry,
   clearDrafts,
   handleDownloadPdf,
-  isGeneratingPdf
+  isGeneratingPdf,
+  handleToggleNotificado
 }) => {
   const [showPoliticas, setShowPoliticas] = useState(false);
   const [showRecordatorios, setShowRecordatorios] = useState(false);
@@ -260,6 +261,7 @@ export const MinutaDetailDesktopView = ({
                   setSelectedTareaForDetail(t);
                   setIsTareaDrawerOpen(true);
                 }}
+                onToggleNotificado={handleToggleNotificado}
               />            </div>
           </div>
         </main>

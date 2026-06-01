@@ -112,6 +112,11 @@ export const generarPdfTarea = async (id) => {
     return await api.get(`/api/tareas/${id}/pdf`);
 };
 
+export const toggleNotificadoTarea = async (id) => {
+    return await api.patch(`/api/tareas/${id}/notificado`);
+};
+
+
 // ── Imágenes ─────────────────────────────────────────────────────────────
 
 export const addTareaImagen = async (tareaId, file, tipo = 'CAPTURA') => {
