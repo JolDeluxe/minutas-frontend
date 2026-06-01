@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon, Button, Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
-import { getCatalogos, TIPO_ENTRADA_MAP, PRIORIDAD_MAP, AREA_MAP, LINEA_MAP, CLASIFICACION_MAP } from '../../constants';
+import { getCatalogos, TIPO_ENTRADA_MAP, PRIORIDAD_MAP, AREA_MAP, LINEA_MAP, CLASIFICACION_MAP, LINEAS_POR_AREA } from '../../constants';
 import { useIsDesktop, useIsMobile } from '@/hooks/useMediaQuery';
 import { useUsers } from '@/features/usuarios/hooks/use-users';
 import { SearchableSelect } from '@/components/ui/searchable-select';
@@ -64,7 +64,8 @@ export const EntryFormModal = ({
   }, [isOpen, entry, fetchUsers]);
 
   const catalogos = useMemo(() => getCatalogos(departamento), [departamento]);
-  const hasLineas = catalogos.lineas.length > 0;
+  const lineasDisponibles = useMemo(() => LINEAS_POR_AREA[form.area] || [], [form.area]);
+  const hasLineas = lineasDisponibles.length > 0;
   const totalImagesCount = existingImages.length + localImages.length - imagesToDelete.length;
 
   const filteredUsers = useMemo(() => {
@@ -72,7 +73,12 @@ export const EntryFormModal = ({
   }, [users, departamento]);
 
   const handleFieldChange = (field, value) => {
-    setEditForm(prev => ({ ...prev, [field]: value }));
+    if (field === 'area') {
+      const newLineas = LINEAS_POR_AREA[value] || [];
+      setEditForm(prev => ({ ...prev, area: value, linea: newLineas.length > 0 ? newLineas[0].value : null }));
+    } else {
+      setEditForm(prev => ({ ...prev, [field]: value }));
+    }
   };
 
   const toggleResponsable = (userId) => {
@@ -268,7 +274,7 @@ export const EntryFormModal = ({
            {hasLineas && (
              <div className="flex flex-col gap-1.5">
                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Línea</label>
-                <select value={form.linea} onChange={(e) => handleFieldChange('linea', e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 shadow-sm">{catalogos.lineas.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}</select>
+                <select value={form.linea || ''} onChange={(e) => handleFieldChange('linea', e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 shadow-sm">{lineasDisponibles.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}</select>
              </div>
            )}
            <div className="flex flex-col gap-1.5">

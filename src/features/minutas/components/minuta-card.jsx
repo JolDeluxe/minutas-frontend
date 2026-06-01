@@ -24,7 +24,7 @@ const formatFechaReal = (dateStr) => {
     });
 };
 
-export const MinutaCard = ({ minuta, onViewDetail, badge = null, isAdmin = false }) => {
+export const MinutaCard = ({ minuta, onViewDetail, onCancel, badge = null, isAdmin = false }) => {
     const estadoLabel = ESTADO_MINUTA_MAP[minuta.estado]?.label || minuta.estado.replace(/_/g, ' ');
     const estadoColor = ESTADO_COLORS[minuta.estado] || 'bg-slate-50 text-slate-600 border-slate-200';
     
@@ -34,6 +34,9 @@ export const MinutaCard = ({ minuta, onViewDetail, badge = null, isAdmin = false
     const porcentaje = resumen.porcentajeCompletado || 0;
     const atrasadas = resumen.atrasadas || 0;
     const completadas = resumen.cerradas || 0;
+
+    const canCancel = (minuta.estado === 'PROGRAMADA' || minuta.estado === 'EN_CURSO') && 
+                     (resumen.totalEntradas === 0);
     
     // Fecha REAL — lo que el jefe necesita para "la minuta del 28 de marzo"
     const fechaReal = formatFechaReal(minuta.fechaRealizada || minuta.fechaProgramada || minuta.createdAt);
@@ -41,7 +44,7 @@ export const MinutaCard = ({ minuta, onViewDetail, badge = null, isAdmin = false
     const dept = minuta.departamento || minuta.creadoPor?.departamento;
     const isMarketing = dept === 'MARKETING';
     const lineInfo = isMarketing 
-        ? { label: 'Marketing', color: '#482b2c' } 
+        ? { label: 'Marketing', color: '#7c3aed' } 
         : (LINEA_MAP[minuta.lineaDefault] || { label: minuta.lineaDefault, color: '#64748b' });
 
     const BADGE_CONFIG = {
@@ -80,12 +83,26 @@ export const MinutaCard = ({ minuta, onViewDetail, badge = null, isAdmin = false
                 finalBadgeCfg ? finalBadgeCfg.border : "border-slate-200/80",
                 isAdmin 
                     ? (isMarketing 
-                        ? "bg-marca-primario/5 border-marca-primario/20 hover:bg-marca-primario/10 hover:border-marca-primario/30 border-l-4 border-l-marca-primario" 
+                        ? "bg-purple-50/50 border-purple-200 hover:bg-purple-100/60 hover:border-purple-300 border-l-4 border-l-purple-500" 
                         : "bg-blue-50 border-blue-200 hover:bg-blue-100 hover:border-blue-300 border-l-4 border-l-blue-500")
                     : "bg-white border-slate-200 hover:border-slate-300"
             )}
             onClick={() => onViewDetail?.(minuta)}
         >
+            {/* Botón Cancelar (X) — Flotante top-right */}
+            {canCancel && !!onCancel && (
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onCancel(minuta);
+                    }}
+                    className="absolute top-2 right-2 w-7 h-7 bg-white/90 backdrop-blur-md text-rose-500 rounded-full border border-rose-100 flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500 hover:text-white z-20"
+                    title="Cancelar Minuta"
+                >
+                    <Icon name="close" size="18px" />
+                </button>
+            )}
+
             {/* Badge: Junta Actual / Junta Anterior / Pendiente */}
             {finalBadgeCfg && (
                 <div className={cn(
@@ -125,7 +142,7 @@ export const MinutaCard = ({ minuta, onViewDetail, badge = null, isAdmin = false
                                 <span className={cn(
                                     "px-1.5 py-0.5 text-[7px] sm:text-[8px] font-black uppercase tracking-wider rounded border",
                                     isMarketing 
-                                        ? "bg-marca-primario/10 text-marca-primario border-marca-primario/20" 
+                                        ? "bg-purple-100/50 text-purple-700 border-purple-200/40" 
                                         : "bg-blue-100/50 text-blue-700 border-blue-200/40"
                                 )}>
                                     {isMarketing ? 'Marketing' : 'Diseño'}

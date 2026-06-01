@@ -51,6 +51,8 @@ export const AREA_MAP = {
   DIRECCION_CFI:     'Dirección CFI',
   DIRECCION_ADJUNTA: 'Dirección Adjunta',
   DIRECCION_TIENDAS: 'Dirección Tiendas',
+  DIRECCION_MKT:     'Dirección MKT',
+  DIRECCION_ALTA_CALIDAD: 'Dirección Alta Calidad',
 };
 
 export const LINEA_MAP = {
@@ -58,7 +60,61 @@ export const LINEA_MAP = {
   BOTA:       { label: 'Bota',       icon: 'boot',         color: '#475569' }, 
   ROPA:       { label: 'Ropa',       icon: 'checkroom',    color: '#0f172a' },
   ACCESORIOS: { label: 'Accesorios', icon: 'shopping_bag', color: '#94a3b8' },
-  MARKETING:  { label: 'Marketing',  icon: 'record_voice_over',     color: '#482b2c' },
+  MARKETING:  { label: 'Marketing',  icon: 'record_voice_over',     color: '#7c3aed' },
+};
+
+export const LINEAS_POR_AREA = {
+  DISENO: [
+    { value: 'CALZADO',    label: 'Calzado',    color: '#f97316', icon: 'footprint' },
+    { value: 'BOTA',       label: 'Bota',       color: '#482b2c', icon: 'hiking' },
+    { value: 'ROPA',       label: 'Ropa',       color: '#ec4899', icon: 'checkroom' },
+    { value: 'ACCESORIOS', label: 'Accesorios', color: '#14b8a6', icon: 'watch' },
+    { value: 'OTROS',      label: 'Otros',      color: '#64748b', icon: 'more_horiz' },
+  ],
+  DIRECCION_MBC: [
+    { value: 'COMPRAS',    label: 'Compras',    color: '#482b2c', icon: 'shopping_bag' },
+    { value: 'PRODUCCION', label: 'Producción', color: '#482b2c', icon: 'precision_manufacturing' },
+    { value: 'INGENIERIA', label: 'Ingeniería', color: '#482b2c', icon: 'engineering' },
+    { value: 'DESARROLLO', label: 'Desarrollo', color: '#482b2c', icon: 'construction' },
+    { value: 'PT',         label: 'PT',         color: '#482b2c', icon: 'inventory' },
+    { value: 'TRAFICO',    label: 'Tráfico',    color: '#482b2c', icon: 'local_shipping' },
+    { value: 'DIRECCION',  label: 'Dirección',  color: '#482b2c', icon: 'business' },
+  ],
+  DIRECCION_CFI: [
+    { value: 'COMPRAS',    label: 'Compras',    color: '#482b2c', icon: 'shopping_bag' },
+    { value: 'PRODUCCION', label: 'Producción', color: '#482b2c', icon: 'precision_manufacturing' },
+    { value: 'INGENIERIA', label: 'Ingeniería', color: '#482b2c', icon: 'engineering' },
+    { value: 'DESARROLLO', label: 'Desarrollo', color: '#482b2c', icon: 'construction' },
+    { value: 'PT',         label: 'PT',         color: '#482b2c', icon: 'inventory' },
+    { value: 'TRAFICO',    label: 'Tráfico',    color: '#482b2c', icon: 'local_shipping' },
+    { value: 'DIRECCION',  label: 'Dirección',  color: '#482b2c', icon: 'business' },
+  ],
+  DIRECCION_TIENDAS: [
+    { value: 'VISUAL',          label: 'Visual',          color: '#482b2c', icon: 'visibility' },
+    { value: 'ANALISIS_VENTAS', label: 'Análisis Ventas', color: '#482b2c', icon: 'analytics' },
+    { value: 'DIRECCION',       label: 'Dirección',       color: '#482b2c', icon: 'business' },
+  ],
+  DIRECCION_MKT: [
+    { value: 'REDES_SOCIALES', label: 'Redes Sociales', color: '#482b2c', icon: 'share' },
+    { value: 'PAGINA_WEB',     label: 'Página Web',     color: '#482b2c', icon: 'language' },
+    { value: 'EVENTOS',        label: 'Eventos',        color: '#482b2c', icon: 'event' },
+    { value: 'DISENO_GRAFICO', label: 'Diseño Gráfico', color: '#482b2c', icon: 'brush' },
+    { value: 'VISUAL',         label: 'Visual',         color: '#482b2c', icon: 'visibility' },
+    { value: 'OTROS',          label: 'Otros',          color: '#482b2c', icon: 'more_horiz' },
+  ],
+  DIRECCION_ALTA_CALIDAD: [
+    { value: 'COMPRAS',    label: 'Compras',    color: '#482b2c', icon: 'shopping_bag' },
+    { value: 'PRODUCCION', label: 'Producción', color: '#482b2c', icon: 'precision_manufacturing' },
+    { value: 'INGENIERIA', label: 'Ingeniería', color: '#482b2c', icon: 'engineering' },
+    { value: 'DESARROLLO', label: 'Desarrollo', color: '#482b2c', icon: 'construction' },
+    { value: 'PT',         label: 'PT',         color: '#482b2c', icon: 'inventory' },
+    { value: 'TRAFICO',    label: 'Tráfico',    color: '#482b2c', icon: 'local_shipping' },
+    { value: 'DIRECCION',  label: 'Dirección',  color: '#482b2c', icon: 'business' },
+  ],
+  DIRECCION_ADJUNTA: [
+    { value: 'DIRECCION',  label: 'Dirección',  color: '#482b2c', icon: 'business' }
+  ],
+  MARKETING: [],
 };
 
 export const PRIORIDAD_MAP = {
@@ -131,6 +187,8 @@ export const CATALOGOS_POR_DEPARTAMENTO = {
       { value: 'DIRECCION_CFI',     label: 'Dirección CFI' },
       { value: 'DIRECCION_ADJUNTA', label: 'Dirección Adjunta' },
       { value: 'DIRECCION_TIENDAS', label: 'Dirección Tiendas' },
+      { value: 'DIRECCION_MKT',     label: 'Dirección MKT' },
+      { value: 'DIRECCION_ALTA_CALIDAD', label: 'Dirección Alta Calidad' },
     ],
     clasificaciones: [
       { value: "IDEA", label: "Idea", color: "#482b2c", icon: "emoji_objects" },
@@ -157,6 +215,8 @@ export const CATALOGOS_POR_DEPARTAMENTO = {
       { value: 'DIRECCION_CFI',     label: 'Dirección CFI' },
       { value: 'DIRECCION_ADJUNTA', label: 'Dirección Adjunta' },
       { value: 'DIRECCION_TIENDAS', label: 'Dirección Tiendas' },
+      { value: 'DIRECCION_MKT',     label: 'Dirección MKT' },
+      { value: 'DIRECCION_ALTA_CALIDAD', label: 'Dirección Alta Calidad' },
     ],
     clasificaciones: [
       { value: 'REDES_SOCIALES',  label: 'Redes Sociales',  color: '#10b981', icon: 'share' },

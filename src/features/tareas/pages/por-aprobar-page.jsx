@@ -92,7 +92,8 @@ export default function PorAprobarPage() {
         page,
         handleApprove,
         handleDeleteTarea,
-        onRefresh: loadTareas
+        onRefresh: loadTareas,
+        filtroDepartamento: activeDept
     };
 
     return (

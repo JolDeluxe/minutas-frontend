@@ -1,6 +1,6 @@
 // src/features/usuarios/components/users-table.jsx
 import { useState } from "react";
-import { Table, Skeleton } from "@/components/ui/z_index";
+import { Table, Skeleton, Icon } from "@/components/ui/z_index";
 import { notify } from "@/components/notification/adaptive-notify";
 import { UserStatusBadge } from "./user-status-badge";
 import { UserFormModal } from "./user-form-modal";
@@ -8,6 +8,9 @@ import { UserStatusModal } from "./user-status-modal";
 import { UserDetailModal } from "./user-detail-modal";
 import { UserActions } from "./user-actions";
 import { updateUserStatus } from "../api/users-api";
+import { cn } from "@/utils/cn";
+import { LineIconSelector, MarketingIcon } from "../../minutas/components/icons/line-icons";
+import { LINEA_MAP } from "../../minutas/constants";
 
 const DEPARTAMENTO_LABEL = {
   DISENO: 'Diseño',
@@ -118,6 +121,69 @@ export const UsersTable = ({
           <span className="text-sm font-medium text-slate-700">
             {DEPARTAMENTO_LABEL[row.departamento] || row.departamento || <span className="text-slate-400 italic">Global (Sin departamento)</span>}
           </span>
+        );
+      },
+    },
+    {
+      header: "Líneas a Cargo",
+      accessorKey: "linea",
+      sortable: true,
+      headerClassName: "w-[15%] min-w-[150px]",
+      cell: (row) => {
+        if (row.isSkeleton) return <Skeleton className="h-4 w-24" />;
+        
+        const isMarketing = row.departamento === 'MARKETING';
+        
+        if (row.rol === 'ADMIN') {
+            return (
+                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-900 text-[9px] font-black uppercase tracking-widest text-white shadow-sm border border-slate-700">
+                    <Icon name="public" size="14px" />
+                    Acceso Total
+                </span>
+            );
+        }
+
+        if (row.rol === 'GERENCIA') {
+            return (
+                <span className={cn(
+                    "inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border shadow-sm",
+                    isMarketing ? "bg-purple-50 text-purple-700 border-purple-200" : "bg-blue-50 text-blue-700 border-blue-200"
+                )}>
+                    <Icon name="domain_verification" size="14px" />
+                    Todo {isMarketing ? 'Marketing' : 'Diseño'}
+                </span>
+            );
+        }
+
+        if (!row.linea) return <span className="text-slate-300 font-medium italic text-xs pl-2">—</span>;
+
+        return (
+          <div className="flex flex-wrap gap-1.5">
+            {row.linea.split(',').map((lKey, i) => {
+               const lInfo = isMarketing 
+                 ? { label: 'Marketing', color: '#7c3aed' } 
+                 : (LINEA_MAP[lKey] || { label: lKey, color: '#64748b' });
+               
+               return (
+                  <div 
+                    key={i} 
+                    className="flex items-center gap-1 pl-1 pr-2 py-0.5 rounded-full bg-white border border-slate-200 shadow-xs hover:border-slate-300 transition-all group/line"
+                    title={lInfo.label}
+                  >
+                    <div className="bg-slate-50 p-0.5 rounded-full flex items-center justify-center shrink-0">
+                        {isMarketing ? (
+                            <MarketingIcon size={16} style={{ color: lInfo.color }} />
+                        ) : (
+                            <LineIconSelector type={lKey} size={18} style={{ color: lInfo.color }} />
+                        )}
+                    </div>
+                    <span className="text-[9px] font-black uppercase tracking-tight text-slate-600">
+                        {lInfo.label}
+                    </span>
+                  </div>
+               );
+            })}
+          </div>
         );
       },
     },

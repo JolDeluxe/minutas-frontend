@@ -35,6 +35,8 @@ export const TAREA_AREA_OPTS = [
     { value: 'DIRECCION_CFI', label: 'Dirección CFI' },
     { value: 'DIRECCION_ADJUNTA', label: 'Dirección Adjunta' },
     { value: 'DIRECCION_TIENDAS', label: 'Dirección Tiendas' },
+    { value: 'DIRECCION_MKT', label: 'Dirección MKT' },
+    { value: 'DIRECCION_ALTA_CALIDAD', label: 'Dirección Alta Calidad' },
 ];
 
 export const TAREA_LINEA_OPTS = [

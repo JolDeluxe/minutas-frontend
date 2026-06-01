@@ -379,7 +379,7 @@ export const EntryTable = ({
       headerClassName: "w-[10%] min-w-[100px]",
       cell: (row) => {
         const isMarketing = departamento === 'MARKETING';
-        const lineInfo = isMarketing ? { label: 'Marketing', color: '#482b2c' } : (LINEA_MAP[row.linea] || { label: row.linea || '—', color: '#64748b' });
+        const lineInfo = isMarketing ? { label: 'Marketing', color: '#7c3aed' } : (LINEA_MAP[row.linea] || { label: row.linea || '—', color: '#64748b' });
         return (
           <div className="flex flex-col items-center justify-center gap-0.5">
             <div className="flex items-center justify-center">

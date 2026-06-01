@@ -102,10 +102,14 @@ export const UserCard = ({ usuario, currentUser, onEdit, onToggleStatus, onViewD
                 )}
 
                 {usuario.linea && (
-                    <p className="flex items-center gap-2">
-                        <Icon name="sell" size="xs" className="text-slate-300 shrink-0" />
-                        <span className="text-xs text-slate-500 truncate">{usuario.linea}</span>
-                    </p>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                        {usuario.linea.split(',').map((l, i) => (
+                            <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-[10px] font-bold text-slate-600 border border-slate-200">
+                                <Icon name="sell" size="10px" className="text-slate-400" />
+                                {l}
+                            </span>
+                        ))}
+                    </div>
                 )}
             </div>
 

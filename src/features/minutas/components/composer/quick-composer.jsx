@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Icon, Modal, ModalHeader, ModalBody, ModalFooter, Button as UIButton } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
-import { getCatalogos } from '../../constants';
+import { getCatalogos, LINEAS_POR_AREA } from '../../constants';
 import { LineIconSelector } from '../icons/line-icons';
 import { Camera, X, Plus, AlertCircle, Save, StickyNote, Trash2 } from 'lucide-react';
 
@@ -63,13 +63,16 @@ export const QuickComposer = ({
   onCollapseChange,
 }) => {
   const catalogos = useMemo(() => getCatalogos(departamento), [departamento]);
-  const tieneLineas = catalogos.lineas.length > 0;
 
   const [descripcion, setDescripcion] = useState('');
   const [notasRapidas, setNotasRapidas] = useState([]);
   const [clasificacion, setClasificacion] = useState('');
   const [area, setArea] = useState(catalogos.areas[0]?.value || 'DISENO');
-  const [linea, setLinea] = useState(tieneLineas ? (lineaDefault || catalogos.lineas[0]?.value) : null);
+  
+  const lineasDisponibles = useMemo(() => LINEAS_POR_AREA[area] || [], [area]);
+  const tieneLineas = lineasDisponibles.length > 0;
+
+  const [linea, setLinea] = useState(tieneLineas ? (lineaDefault || lineasDisponibles[0]?.value) : null);
   const [imagenes, setImagenes] = useState([]);
   const [showLimitError, setShowLimitError] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -323,7 +326,12 @@ export const QuickComposer = ({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 shrink-0">
                <div className="flex flex-col gap-1">
                   <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Área</label>
-                  <select value={area} onChange={(e) => setArea(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-marca-primario/10 transition-all shadow-sm">
+                  <select value={area} onChange={(e) => {
+                    const newArea = e.target.value;
+                    setArea(newArea);
+                    const newLineas = LINEAS_POR_AREA[newArea] || [];
+                    setLinea(newLineas.length > 0 ? newLineas[0].value : null);
+                  }} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-marca-primario/10 transition-all shadow-sm">
                     {catalogos.areas.map(({ value, label }) => (<option key={value} value={value}>{label}</option>))}
                   </select>
                </div>
@@ -333,7 +341,7 @@ export const QuickComposer = ({
                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Línea</label>
                     <select value={linea || ''} onChange={(e) => setLinea(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-marca-primario/10 transition-all shadow-sm">
                       <option value="">— Seleccionar Línea —</option>
-                      {catalogos.lineas.map(({ value, label }) => (<option key={value} value={value}>{label}</option>))}
+                      {lineasDisponibles.map(({ value, label }) => (<option key={value} value={value}>{label}</option>))}
                     </select>
                  </div>
                )}

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Input, Label, Select } from '@/components/form/z_index';
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Icon } from '@/components/ui/z_index';
 import { useCatalogosStore } from '@/stores/catalogos-store';
+import { cn } from '@/utils/cn';
 
 const ROL_MAP = {
     ADMIN: 'Administrador',
@@ -47,7 +48,7 @@ export const UserFormModal = ({
     const [password, setPassword] = useState('');
     const [rol, setRol] = useState('');
     const [departamento, setDepartamento] = useState('DISENO');
-    const [linea, setLinea] = useState('');
+    const [lineas, setLineas] = useState([]); // Cambiado a array
     const [imagenPreview, setImagenPreview] = useState(null);
     const [imagenFile, setImagenFile] = useState(undefined);
     const [usernameEdited, setUsernameEdited] = useState(false);
@@ -68,7 +69,9 @@ export const UserFormModal = ({
             setPassword('');
             setRol(usuarioAEditar.rol || '');
             setDepartamento(usuarioAEditar.departamento || '');
-            setLinea(usuarioAEditar.linea || '');
+            // Parsear CSV de linea a array
+            const lineasArr = usuarioAEditar.linea ? usuarioAEditar.linea.split(',') : [];
+            setLineas(lineasArr);
             setImagenPreview(usuarioAEditar.imagen || null);
             setImagenFile(undefined);
             setUsernameEdited(true);
@@ -79,12 +82,12 @@ export const UserFormModal = ({
             setPassword('');
             setRol('');
             setDepartamento(currentUser?.rol === 'GERENCIA' ? (currentUser?.departamento ?? 'DISENO') : 'DISENO');
-            setLinea('');
+            setLineas([]);
             setImagenPreview(null);
             setImagenFile(undefined);
             setUsernameEdited(false);
         }
-    }, [isOpen, esEdicion, usuarioAEditar, currentUser]);
+    }, [isOpen, esEdicion, usuarioAEditar, currentUser, fetchCatalogos]);
 
     const esAdmin = currentUser?.rol === 'ADMIN';
 
@@ -96,6 +99,14 @@ export const UserFormModal = ({
     ].filter((r) => r.visible);
 
     const lineasDisponibles = getLineasPorDepartamento(departamento);
+
+    const toggleLinea = (val) => {
+        if (rol === 'JEFE') {
+            setLineas(prev => prev.includes(val) ? prev.filter(l => l !== val) : [...prev, val]);
+        } else {
+            setLineas([val]);
+        }
+    };
 
     const handleNombreChange = (e) => {
         const val = e.target.value;
@@ -130,8 +141,8 @@ export const UserFormModal = ({
         if (password && password.length < 6) e.password = 'Mínimo 6 caracteres.';
         if (!rol) e.rol = 'Selecciona un rol.';
         if (rol !== 'ADMIN' && !departamento) e.departamento = 'Selecciona un departamento.';
-        if (rol === 'JEFE' && lineasDisponibles.length > 0 && !linea) {
-            e.linea = 'La línea es obligatoria para Jefes.';
+        if ((rol === 'JEFE' || rol === 'COORDINADOR') && lineasDisponibles.length > 0 && lineas.length === 0) {
+            e.linea = 'Debes seleccionar al menos una línea.';
         }
         return e;
     };
@@ -151,7 +162,11 @@ export const UserFormModal = ({
         if (username) formData.append('username', username);
         if (email) formData.append('email', email);
         if (password) formData.append('password', password);
-        if (linea) formData.append('linea', linea);
+        
+        // Enviar líneas como CSV
+        if (lineas.length > 0) {
+            formData.append('linea', lineas.join(','));
+        }
 
         if (imagenFile) {
             formData.append('imagen', imagenFile, imagenFile.name);
@@ -177,6 +192,8 @@ export const UserFormModal = ({
     };
 
     const fe = submitted ? getFormErrors() : {};
+
+    const showLineaSelection = rol === 'JEFE' || rol === 'COORDINADOR';
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="lg">
@@ -253,13 +270,16 @@ export const UserFormModal = ({
                     </div>
 
                     {/* ── ROL, ÁREA Y LÍNEA ── */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="flex flex-col gap-1.5">
                             <Label htmlFor="u-rol" error={!!fe.rol}>Rol *</Label>
                             <Select
                                 id="u-rol"
                                 value={rol}
-                                onChange={(e) => setRol(e.target.value)}
+                                onChange={(e) => {
+                                    setRol(e.target.value);
+                                    setLineas([]);
+                                }}
                                 error={!!fe.rol}
                                 helperText={fe.rol}
                             >
@@ -277,7 +297,7 @@ export const UserFormModal = ({
                                 value={departamento}
                                 onChange={(e) => {
                                     setDepartamento(e.target.value);
-                                    setLinea('');
+                                    setLineas([]);
                                 }}
                                 error={!!fe.departamento}
                                 helperText={fe.departamento}
@@ -292,27 +312,42 @@ export const UserFormModal = ({
                                 )}
                             </Select>
                         </div>
-
-                        {lineasDisponibles.length > 0 && (
-                            <div className="flex flex-col gap-1.5">
-                                <Label htmlFor="u-linea" error={!!fe.linea}>
-                                    Línea {rol === 'JEFE' ? '*' : '(Opcional)'}
-                                </Label>
-                                <Select
-                                    id="u-linea"
-                                    value={linea}
-                                    onChange={(e) => setLinea(e.target.value)}
-                                    error={!!fe.linea}
-                                    helperText={fe.linea}
-                                >
-                                    <option value="">Selecciona línea…</option>
-                                    {lineasDisponibles.map((l) => (
-                                        <option key={l.value} value={l.value}>{l.label}</option>
-                                    ))}
-                                </Select>
-                            </div>
-                        )}
                     </div>
+
+                    {showLineaSelection && lineasDisponibles.length > 0 && (
+                        <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-100">
+                            <Label error={!!fe.linea}>
+                                {rol === 'JEFE' ? 'Líneas asignadas (Varias) *' : 'Línea asignada (Única) *'}
+                            </Label>
+                            <div className="flex flex-wrap gap-2 mt-1">
+                                {lineasDisponibles.map(l => {
+                                    const active = lineas.includes(l.value);
+                                    return (
+                                        <button
+                                            key={l.value}
+                                            type="button"
+                                            onClick={() => toggleLinea(l.value)}
+                                            className={cn(
+                                                "flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border transition-all active:scale-95 shadow-sm",
+                                                active 
+                                                    ? "bg-slate-900 border-slate-900 text-white" 
+                                                    : "bg-white border-slate-200 text-slate-500 hover:border-slate-300"
+                                            )}
+                                        >
+                                            <div className={cn(
+                                                "w-4 h-4 rounded-md border flex items-center justify-center transition-colors",
+                                                active ? "bg-emerald-500 border-emerald-400 text-white" : "bg-slate-50 border-slate-200"
+                                            )}>
+                                                {active && <Icon name="check" size="12px" weight={900} />}
+                                            </div>
+                                            {l.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            {fe.linea && <p className="text-[10px] text-estado-rechazado font-bold mt-1 uppercase">{fe.linea}</p>}
+                        </div>
+                    )}
 
                     {/* ── CONTACTO Y SEGURIDAD ── */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

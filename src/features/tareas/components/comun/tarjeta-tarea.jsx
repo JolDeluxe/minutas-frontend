@@ -444,7 +444,7 @@ export const TareaCard = ({
 
     const lineInfo = {
         label: isMarketing ? 'Marketing' : (LINEA_MAP[tarea.linea]?.label || tarea.linea || '—'),
-        color: isMarketing ? '#482b2c' : (LINEA_MAP[tarea.linea]?.color || '#64748b'),
+        color: isMarketing ? '#7c3aed' : (LINEA_MAP[tarea.linea]?.color || '#64748b'),
         value: tarea.linea
     };
 

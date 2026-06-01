@@ -4,6 +4,7 @@ import {
   createMinuta,
   updateMinuta,
   changeMinutaStatus,
+  cancelarMinuta,
 } from '../api/minutas-api';
 
 export const useMinutas = () => {
@@ -93,6 +94,16 @@ export const useMinutas = () => {
     }
   }, []);
 
+  const handleCancel = useCallback(async (id) => {
+    setSubmitting(true);
+    try {
+      const res = await cancelarMinuta(id);
+      return res.data;
+    } finally {
+      setSubmitting(false);
+    }
+  }, []);
+
   // Reactivo: re-fetch al sincronizar si hubiera offline-queue
   useEffect(() => {
     const handleSyncComplete = () => {
@@ -115,5 +126,6 @@ export const useMinutas = () => {
     createMinuta: handleCreate,
     updateMinuta: handleUpdate,
     toggleStatus: handleToggleStatus,
+    cancelMinuta: handleCancel,
   };
 };

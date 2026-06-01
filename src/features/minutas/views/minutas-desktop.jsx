@@ -7,6 +7,7 @@ import { QuickNavigateCalendar } from '../components/quick-navigate-calendar';
 import { Button, Icon, GlassViewToggle } from '@/components/ui/z_index';
 import { useAuthStore } from '@/stores/auth-store';
 import { DisenoIcon, MarketingIcon } from '../components/icons/line-icons';
+import {cn} from '@/utils/cn';
 
 const groupByStatusCategory = (minutas) => {
     const groups = [
@@ -59,6 +60,7 @@ export const MinutasDesktop = ({
     onViewDetail,
     onOpenCreate,
     onEdit,
+    onCancel,
     filters,
     showFilters,
     onToggleFilters,
@@ -156,7 +158,7 @@ export const MinutasDesktop = ({
                                     onClick={() => setDepartamentoGlobal(opt)}
                                     className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                                         departamentoGlobal === opt 
-                                            ? 'bg-white text-marca-primario shadow-sm ring-1 ring-slate-200/50 font-bold' 
+                                            ? `bg-white shadow-sm ring-1 ring-slate-200/50 font-bold ${opt === 'MARKETING' ? 'text-purple-600' : 'text-blue-600'}` 
                                             : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50/50'
                                     }`}
                                 >
@@ -312,6 +314,7 @@ export const MinutasDesktop = ({
                                             minuta={minuta} 
                                             onViewDetail={onViewDetail}
                                             onEdit={onEdit}
+                                            onCancel={onCancel}
                                             isAdmin={isAdmin}
                                             badge={
                                                 ultimaJuntaId && (minuta.id === (
@@ -348,6 +351,7 @@ export const MinutasDesktop = ({
                     onSortChange={onSortChange}
                     onViewDetail={onViewDetail}
                     onEdit={onEdit}
+                    onCancel={onCancel}
                     isAdmin={isAdmin}
                     ultimaJuntaId={ultimaJuntaId}
                     juntaAnteriorId={juntaAnteriorId}

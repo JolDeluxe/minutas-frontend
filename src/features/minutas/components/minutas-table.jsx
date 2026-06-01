@@ -24,6 +24,7 @@ export const MinutasTable = ({
     onSortChange,
     onViewDetail,
     onEdit,
+    onCancel,
     ultimaJuntaId,
     juntaAnteriorId,
     isAdmin = false,
@@ -63,7 +64,7 @@ export const MinutasTable = ({
                             <span className={cn(
                                 "inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border whitespace-nowrap",
                                 isMarketing 
-                                    ? "bg-marca-primario/10 text-marca-primario border-marca-primario/20" 
+                                    ? "bg-purple-100/50 text-purple-700 border-purple-200/40" 
                                     : "bg-blue-50 text-blue-700 border-blue-200/60"
                             )}>
                                 {isMarketing ? 'Marketing' : 'Diseño'}
@@ -96,7 +97,7 @@ export const MinutasTable = ({
                 const isMarketing = (row.departamento || row.creadoPor?.departamento) === 'MARKETING';
 
                 const lineInfo = isMarketing
-                    ? { label: 'Marketing', color: '#482b2c' }
+                    ? { label: 'Marketing', color: '#7c3aed' }
                     : (LINEA_MAP[row.lineaDefault] || {
                         label: row.lineaDefault,
                         color: '#64748b'
@@ -247,12 +248,16 @@ export const MinutasTable = ({
             headerClassName: "w-[10%] min-w-[100px]",
             cell: (row) => {
                 if (row.isSkeleton) return <Skeleton className="h-8 w-16 mx-auto rounded-md" />;
+                const canCancel = (row.estado === 'PROGRAMADA' || row.estado === 'EN_CURSO') && 
+                                 (row.resumenOperativo?.totalEntradas === 0 || row._count?.tareas === 0);
+                
                 return (
                     <TableActions 
                         row={row} 
                         actions={[
                             { key: 'ver_detalle', enabled: true, onClick: (r) => { onViewDetail?.(r); } },
-                            { key: 'editar', enabled: !!onEdit, onClick: (r) => { onEdit?.(r); } }
+                            { key: 'editar', enabled: !!onEdit, onClick: (r) => { onEdit?.(r); } },
+                            { key: 'borrar', enabled: canCancel && !!onCancel, onClick: (r) => { onCancel?.(r); }, tooltip: 'Cancelar Minuta' }
                         ]} 
                     />
                 );
@@ -286,7 +291,7 @@ export const MinutasTable = ({
                 if (!isAdmin) return 'bg-white hover:bg-slate-50';
                 const isMarketing = (row.departamento || row.creadoPor?.departamento) === 'MARKETING';
                 return isMarketing 
-                    ? 'bg-marca-primario/5 hover:bg-marca-primario/10 border-b border-marca-primario/20 text-slate-800' 
+                    ? 'bg-purple-50/50 hover:bg-purple-100/50 border-b border-purple-200 text-slate-800' 
                     : 'bg-blue-50 hover:bg-blue-100 border-b border-blue-200 text-slate-800';
             }}
         />

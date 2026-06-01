@@ -71,15 +71,19 @@ export const ActivasDesktop = ({
     const navigate = useNavigate();
     const [editTarget, setEditTarget] = useState(null);
 
+    const activeDept = currentUser?.rol === 'ADMIN' ? (filtroDepartamento || 'DISENO') : (currentUser?.departamento || 'DISENO');
+    const isMarketing = activeDept === 'MARKETING';
+    const deptColorClass = isMarketing ? 'text-purple-700' : 'text-blue-700';
+
     return (
         <div className="flex flex-col gap-3 relative animate-in fade-in slide-in-from-bottom-2 duration-500">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white/40 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/60 shadow-sm">
                 <div>
-                    <h2 className="fuente-titulos text-2xl text-marca-primario uppercase tracking-tighter">Tareas Activas</h2>
+                    <h2 className={cn("fuente-titulos text-2xl uppercase tracking-tighter", deptColorClass)}>Tareas Activas</h2>
                     <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">
                         {loading ? 'Sincronizando…' : (
                             <>
-                                <span className="text-marca-primario">{tareas.length}</span> tarea{tareas.length !== 1 ? 's' : ''} activa{tareas.length !== 1 ? 's' : ''}
+                                <span className={cn("font-bold", deptColorClass)}>{tareas.length}</span> tarea{tareas.length !== 1 ? 's' : ''} activa{tareas.length !== 1 ? 's' : ''}
                                 {totalAtrasadasGlobal > 0 && (
                                     <span className="ml-2 text-estado-rechazado">· {totalAtrasadasGlobal} fuera de tiempo</span>
                                 )}

@@ -224,7 +224,7 @@ export const TablaTareas = ({
                                 <span className={cn(
                                     "inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border whitespace-nowrap",
                                     isMarketing 
-                                        ? "bg-marca-primario/10 text-marca-primario border-marca-primario/20" 
+                                        ? "bg-purple-100/50 text-purple-700 border-purple-200/40" 
                                         : "bg-blue-50 text-blue-700 border-blue-200/60"
                                 )}>
                                     {isMarketing ? 'Marketing' : 'Diseño'}
@@ -272,7 +272,7 @@ export const TablaTareas = ({
                 
                 const isMarketing = row.departamento === 'MARKETING';
                 const lineInfo = isMarketing 
-                    ? { label: 'Marketing', color: '#482b2c' } 
+                    ? { label: 'Marketing', color: '#7c3aed' } 
                     : (LINEA_MAP[row.linea] || { label: row.linea || '—', color: '#64748b' });
 
                 return (
@@ -435,7 +435,7 @@ export const TablaTareas = ({
                     }
                     const isMarketing = row.departamento === 'MARKETING';
                     return isMarketing
-                        ? 'bg-marca-primario/5 hover:bg-marca-primario/10 border-b border-marca-primario/20 text-slate-800'
+                        ? 'bg-purple-50/40 hover:bg-purple-100/60 border-b border-purple-200/50 text-slate-800'
                         : 'bg-blue-50/40 hover:bg-blue-100/60 border-b border-blue-200/50 text-slate-800';
                 }}
                 onSortChange={(key) => {

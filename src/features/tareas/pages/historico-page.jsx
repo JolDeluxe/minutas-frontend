@@ -202,6 +202,7 @@ export default function HistoricoPage() {
         viewMode,
         onViewChange: setViewMode,
         statusActual: filters.status,
+        filtroDepartamento: activeDept,
     };
 
     return (

@@ -7,6 +7,7 @@ import { TablaTareas } from '../components/comun/tabla-tareas';
 import { TareaCard } from '../components/comun/tarjeta-tarea';
 import { ModalEditarTarea } from '../components/comun/modal-editar-tarea';
 import { ROLES_ADMIN } from '../constants';
+import { cn } from '@/utils/cn';
 
 export const HistoricoDesktop = ({
     tareas,
@@ -45,18 +46,23 @@ export const HistoricoDesktop = ({
     viewMode,
     onViewChange,
     statusActual,
+    filtroDepartamento,
 }) => {
     const [editTarget, setEditTarget] = useState(null);
+
+    const activeDept = currentUser?.rol === 'ADMIN' ? (filtroDepartamento || 'DISENO') : (currentUser?.departamento || 'DISENO');
+    const isMarketing = activeDept === 'MARKETING';
+    const deptColorClass = isMarketing ? 'text-purple-700' : 'text-blue-700';
 
     return (
         <div className="flex flex-col gap-5 relative animate-in fade-in slide-in-from-bottom-2 duration-500">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white/40 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/60 shadow-sm">
                 <div>
-                    <h2 className="fuente-titulos text-2xl text-marca-primario uppercase tracking-tighter">Histórico de Tareas</h2>
+                    <h2 className={cn("fuente-titulos text-2xl uppercase tracking-tighter", deptColorClass)}>Histórico de Tareas</h2>
                     <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">
                         {loading ? 'Sincronizando…' : (
                             <>
-                                Mostrando <span className="text-marca-primario">{totalParaPaginador}</span> tareas en el historial
+                                Mostrando <span className={deptColorClass}>{totalParaPaginador}</span> tareas en el historial
                             </>
                         )}
                     </p>

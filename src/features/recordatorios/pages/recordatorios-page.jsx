@@ -41,7 +41,7 @@ const getLineInfo = (recordatorio) => {
     recordatorio.area === 'MARKETING';
 
   if (isMarketing) {
-    return { value: 'MARKETING', label: 'Marketing', color: '#482b2c', isMarketing: true };
+    return { value: 'MARKETING', label: 'Marketing', color: '#7c3aed', isMarketing: true };
   }
 
   const fallback = recordatorio.linea || 'DISENO';

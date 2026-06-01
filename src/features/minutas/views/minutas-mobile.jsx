@@ -63,6 +63,7 @@ export const MinutasMobile = ({
     onViewDetail,
     onOpenCreate,
     onEdit,
+    onCancel,
     filters,
     showFilters,
     onToggleFilters,
@@ -145,7 +146,7 @@ export const MinutasMobile = ({
                             onClick={() => setDepartamentoGlobal(opt)}
                             className={`flex flex-1 items-center justify-center gap-1 py-1.5 text-[10px] font-black tracking-wider uppercase rounded-lg transition-all ${
                                 departamentoGlobal === opt
-                                    ? 'bg-white text-marca-primario shadow-sm ring-1 ring-slate-200/50'
+                                    ? `bg-white shadow-sm ring-1 ring-slate-200/50 ${opt === 'MARKETING' ? 'text-purple-600' : 'text-blue-600'}`
                                     : 'text-slate-500 hover:text-slate-700'
                             }`}
                         >
@@ -298,6 +299,7 @@ export const MinutasMobile = ({
                                             minuta={minuta} 
                                             onViewDetail={onViewDetail}
                                             onEdit={onEdit}
+                                            onCancel={onCancel}
                                             isAdmin={isAdmin}
                                             badge={
                                                 ultimaJuntaId && (minuta.id === (
@@ -335,6 +337,7 @@ export const MinutasMobile = ({
                         onSortChange={onSortChange}
                         onViewDetail={onViewDetail}
                         onEdit={onEdit}
+                        onCancel={onCancel}
                         isAdmin={isAdmin}
                         ultimaJuntaId={ultimaJuntaId}
                         juntaAnteriorId={juntaAnteriorId}

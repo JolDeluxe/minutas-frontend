@@ -33,14 +33,19 @@ export const PorAprobarMobile = ({
     onRefresh,
     viewMode,
     onViewChange,
+    filtroDepartamento
 }) => {
     const [editTarget, setEditTarget] = useState(null);
+
+    const activeDept = currentUser?.rol === 'ADMIN' ? (filtroDepartamento || 'DISENO') : (currentUser?.departamento || 'DISENO');
+    const isMarketing = activeDept === 'MARKETING';
+    const deptColorClass = isMarketing ? 'text-purple-700' : 'text-blue-700';
 
     return (
         <div className="flex flex-col gap-4 pb-28 px-4 animate-in fade-in duration-500">
             <div className="flex justify-between items-center bg-white/40 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/60 shadow-sm">
                 <div className="flex flex-col gap-1">
-                    <h2 className="fuente-titulos text-xl text-marca-primario uppercase tracking-tight">Tareas Por Aprobar</h2>
+                    <h2 className={`fuente-titulos text-xl uppercase tracking-tight ${deptColorClass}`}>Tareas Por Aprobar</h2>
                     <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">
                         {loading ? 'Cargando…' : `${meta?.totalParaPaginador || 0} tareas pendientes`}
                     </div>

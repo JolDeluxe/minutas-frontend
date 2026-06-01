@@ -44,20 +44,25 @@ export const PorAprobarDesktop = ({
     page,
     handleApprove,
     handleDeleteTarea,
-    onRefresh
+    onRefresh,
+    filtroDepartamento
 }) => {
     const [editTarget, setEditTarget] = useState(null);
+
+    const activeDept = currentUser?.rol === 'ADMIN' ? (filtroDepartamento || 'DISENO') : (currentUser?.departamento || 'DISENO');
+    const isMarketing = activeDept === 'MARKETING';
+    const deptColorClass = isMarketing ? 'text-purple-700' : 'text-blue-700';
 
     return (
         <div className="flex flex-col gap-6 animate-in fade-in duration-500 pb-20">
             {/* Header de la sección armonizado */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white/40 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/60 shadow-sm">
                 <div>
-                    <h2 className="fuente-titulos text-2xl text-marca-primario uppercase tracking-tighter">Tareas Por Aprobar</h2>
+                    <h2 className={cn("fuente-titulos text-2xl uppercase tracking-tighter", deptColorClass)}>Tareas Por Aprobar</h2>
                     <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">
                         {loading ? 'Sincronizando…' : (
                             <>
-                                <span className="text-marca-primario">{meta?.totalParaPaginador || 0}</span> tarea{(meta?.totalParaPaginador || 0) !== 1 ? 's' : ''} pendiente{(meta?.totalParaPaginador || 0) !== 1 ? 's' : ''} de revisión
+                                <span className={cn("font-bold", deptColorClass)}>{meta?.totalParaPaginador || 0}</span> tarea{(meta?.totalParaPaginador || 0) !== 1 ? 's' : ''} pendiente{(meta?.totalParaPaginador || 0) !== 1 ? 's' : ''} de revisión
                             </>
                         )}
                     </p>

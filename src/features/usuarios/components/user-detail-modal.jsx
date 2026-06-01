@@ -89,7 +89,17 @@ export const UserDetailModal = ({ isOpen, onClose, usuario }) => {
                             fallback="Global (Sin departamento)"
                         />
                         {usuario.linea && (
-                            <DataRow icon="sell" label="Línea" value={usuario.linea} />
+                            <div className="flex flex-col gap-1.5">
+                                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Líneas Asignadas</span>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {usuario.linea.split(',').map((l, i) => (
+                                        <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-xs font-bold text-slate-700 border border-slate-200 shadow-sm">
+                                            <Icon name="sell" size="12px" className="text-slate-400" />
+                                            {l}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
                         )}
                     </div>
                 </div>

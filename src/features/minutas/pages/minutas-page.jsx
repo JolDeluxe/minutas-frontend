@@ -24,6 +24,7 @@ const MinutasPage = () => {
         fetchMinutas,
         createMinuta,
         updateMinuta,
+        cancelMinuta,
     } = useMinutas();
 
     const [query, setQuery] = useState('');
@@ -175,6 +176,17 @@ const MinutasPage = () => {
         navigate(`/minutas/${minuta.id}`);
     };
 
+    const handleCancelMinuta = async (minuta) => {
+        if (!window.confirm(`¿Estás seguro de que deseas cancelar la minuta "${minuta.titulo}"? Esta acción no se puede deshacer.`)) return;
+        try {
+            await cancelMinuta(minuta.id);
+            notify.success('Minuta cancelada correctamente.');
+            await loadMinutas();
+        } catch (err) {
+            notify.error(err.response?.data?.error || 'Error al cancelar la minuta.');
+        }
+    };
+
     // Ordenar minutas por Estado y Fecha:
     // 1. EN_CURSO (azul) - En curso
     // 2. EN_ORGANIZACION (naranja) - En organización
@@ -247,6 +259,7 @@ const MinutasPage = () => {
         onViewDetail: handleViewDetail,
         onOpenCreate: handleOpenCreate,
         onEdit: handleEdit,
+        onCancel: handleCancelMinuta,
         onToggleFilters: () => setShowFilters(!showFilters),
         onApplyFilters: (f) => { setFilters(f); setPage(1); },
         // Periodo

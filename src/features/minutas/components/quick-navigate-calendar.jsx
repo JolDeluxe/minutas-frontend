@@ -54,7 +54,7 @@ const dateToKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart
 const getMinutaBadgeStyle = (m, isSelected) => {
   const dept = m.departamento || m.creadoPor?.departamento || 'DISENO';
   const isMarketing = dept === 'MARKETING';
-  const lineColor = isMarketing ? '#482b2c' : (LINEA_MAP[m.lineaDefault]?.color || '#3b82f6');
+  const lineColor = isMarketing ? '#7c3aed' : (LINEA_MAP[m.lineaDefault]?.color || '#3b82f6');
   
   if (isSelected) {
     return {
@@ -93,7 +93,7 @@ const getDayStyle = (minutasDia) => {
     const m = minutasDia[0];
     const dept = m.departamento || m.creadoPor?.departamento || 'DISENO';
     const isMarketing = dept === 'MARKETING';
-    const lineColor = isMarketing ? '#482b2c' : (LINEA_MAP[m.lineaDefault]?.color || '#3b82f6');
+    const lineColor = isMarketing ? '#7c3aed' : (LINEA_MAP[m.lineaDefault]?.color || '#3b82f6');
     return { 
       backgroundColor: `${lineColor}1c`, // ~11% opacity of the department/line color
       borderColor: `${lineColor}55`,     // ~33% opacity border
@@ -109,7 +109,7 @@ const getDayStyle = (minutasDia) => {
   if (hasMarketing && hasDiseno) {
     // Beautiful linear gradient mixing Marketing (brand) and Diseño (blue/line color)
     const mDiseno = minutasDia.find(m => (m.departamento || m.creadoPor?.departamento || 'DISENO') !== 'MARKETING');
-    const colorMkt = '#482b2c';
+    const colorMkt = '#7c3aed';
     const colorDis = LINEA_MAP[mDiseno?.lineaDefault]?.color || '#3b82f6';
     return {
       background: `linear-gradient(135deg, ${colorMkt}1f 0%, ${colorDis}1f 100%)`,
@@ -118,8 +118,8 @@ const getDayStyle = (minutasDia) => {
     };
   } else if (hasMarketing) {
     return { 
-      backgroundColor: '#482b2c1c', 
-      borderColor: '#482b2c55', 
+      backgroundColor: '#7c3aed1c', 
+      borderColor: '#7c3aed55', 
       borderWidth: '1.5px' 
     };
   } else {

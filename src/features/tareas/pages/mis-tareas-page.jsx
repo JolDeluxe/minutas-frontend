@@ -176,6 +176,7 @@ export default function MisTareasPage() {
         filtroClasificacion: filters.clasificacion,
         onClasificacionChange: (c) => handleFilterChange({ clasificacion: c }),
         statusActual: filters.status,
+        filtroDepartamento: departamento,
         onDelete: handleDeleteTarea,
         viewMode,
         onViewChange: setViewMode,

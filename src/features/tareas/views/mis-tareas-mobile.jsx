@@ -51,6 +51,7 @@ export const MisTareasMobile = ({
     filtroClasificacion,
     onClasificacionChange,
     statusActual,
+    filtroDepartamento,
     viewMode,
     onViewChange,
     onDelete,
@@ -58,13 +59,17 @@ export const MisTareasMobile = ({
     const navigate = useNavigate();
     const [editTarget, setEditTarget] = useState(null);
 
+    const activeDept = currentUser?.rol === 'ADMIN' ? (filtroDepartamento || 'DISENO') : (currentUser?.departamento || 'DISENO');
+    const isMarketing = activeDept === 'MARKETING';
+    const deptColorClass = isMarketing ? 'text-purple-700' : 'text-blue-700';
+
     return (
         <div className="flex flex-col gap-4 pb-28 px-4 animate-in fade-in duration-500">
             <div className="flex justify-between items-center bg-white/40 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/60 shadow-sm">
                 <div className="flex flex-col gap-1">
-                    <h2 className="fuente-titulos text-xl text-marca-primario uppercase tracking-tight">Mis Tareas</h2>
+                    <h2 className={`fuente-titulos text-xl uppercase tracking-tight ${deptColorClass}`}>Mis Tareas</h2>
                     <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5 flex items-center gap-2">
-                        <span>{loading ? 'Cargando…' : `${tareas.length} TAREAS`}</span>
+                        <span className={deptColorClass}>{loading ? 'Cargando…' : `${tareas.length} TAREAS`}</span>
                         {totalAtrasadasGlobal > 0 && (
                             <span className="flex items-center gap-1 text-estado-rechazado animate-pulse">
                                 <Icon name="warning" size="xs" />
