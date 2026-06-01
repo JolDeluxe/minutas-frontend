@@ -35,6 +35,7 @@ export const EntryCard = ({
   isGeneratingPdf,
   onViewDetail,
   meetingMode,
+  onToggleNotificado,
 }) => {
   const { user } = useAuthStore();
   const currentUser = user?.data || user;
@@ -60,6 +61,7 @@ export const EntryCard = ({
       onDownloadPdf={onDownloadPdf}
       isGeneratingPdf={isGeneratingPdf}
       isDraft={Boolean(entry.tempId)}
+      onToggleNotificado={onToggleNotificado}
     />
   );
 };

@@ -151,6 +151,7 @@ export const EntryFeed = ({
                     onDownloadPdf={onDownloadPdf}
                     isGeneratingPdf={isGeneratingPdf}
                     onViewDetail={onViewDetail}
+                    onToggleNotificado={onToggleNotificado}
                   />
                 </div>
               ))

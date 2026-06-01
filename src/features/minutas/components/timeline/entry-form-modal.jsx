@@ -279,35 +279,54 @@ export const EntryFormModal = ({
         </div>
         <div className="space-y-3">
           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Responsables Asignados</label>
-          {!isMobile ? (
-            <SearchableSelect options={filteredUsers.map(u => ({ label: u.nombre, value: u.id }))} onChange={(val) => val && toggleResponsable(Number(val))} placeholder="Añadir responsable..." className="w-full h-11" />
-          ) : (
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none px-1">
-              {filteredUsers.map(u => (
-                <button key={u.id} onClick={() => toggleResponsable(u.id)} className={cn("flex flex-col items-center gap-1.5 shrink-0 transition-all", form.responsables.includes(u.id) ? "scale-105 opacity-100" : "opacity-40 grayscale")}>
-                  <div className={cn("w-14 h-14 rounded-full border-4 flex items-center justify-center overflow-hidden bg-slate-100", form.responsables.includes(u.id) ? "border-marca-primario shadow-lg" : "border-transparent")}>
-                    {u.imagen ? <img src={u.imagen} className="h-full w-full object-cover" /> : <Icon name="person" size="24px" className="text-slate-400" />}
-                  </div>
-                  <span className="text-[9px] font-black uppercase text-slate-600 truncate w-14 text-center">{u.nombre.split(' ')[0]}</span>
-                </button>
-              ))}
-            </div>
-          )}
-          <div className="flex flex-wrap gap-2 p-2 rounded-2xl bg-slate-50/50 border border-dashed border-slate-200 min-h-[44px]">
-            {form.responsables.length === 0 && <p className="text-[10px] text-slate-400 italic px-2 py-1">Sin responsables asignados</p>}
-            {form.responsables.map(uid => {
-              const u = users.find(x => x.id === uid);
-              if (!u) return null;
-              return (
-                <div key={uid} className="flex items-center gap-2 pl-1 pr-2 py-1 bg-white shadow-xs border border-slate-100 rounded-xl animate-in zoom-in-95">
-                  <div className="w-6 h-6 rounded-full overflow-hidden bg-slate-100 border border-slate-100">
-                    {u.imagen ? <img src={u.imagen} className="h-full w-full object-cover" /> : <Icon name="person" size="14px" />}
-                  </div>
-                  <span className="text-[10px] font-bold text-slate-700">{u.nombre.split(' ')[0]}</span>
-                  <button onClick={() => toggleResponsable(uid)} className="text-slate-300 hover:text-rose-500 transition-colors"><X size={12} /></button>
-                </div>
-              )
-            })}
+          <div className="flex flex-wrap gap-4 px-1 py-1 max-w-full">
+            {filteredUsers.length === 0 ? (
+              <p className="text-[10px] text-slate-400 italic">No hay responsables disponibles en tu departamento</p>
+            ) : (
+              filteredUsers.map(u => {
+                const isSelected = form.responsables.includes(u.id);
+                return (
+                  <button
+                    type="button"
+                    key={u.id}
+                    onClick={() => toggleResponsable(u.id)}
+                    className={cn(
+                      "flex flex-col items-center gap-1 shrink-0 transition-all select-none cursor-pointer focus:outline-none",
+                      isSelected ? "scale-105 font-bold" : "hover:scale-102"
+                    )}
+                    title={u.nombre}
+                  >
+                    <div className={cn(
+                      "w-11 h-11 rounded-full border-2 flex items-center justify-center overflow-hidden transition-all bg-slate-50 relative shadow-xs",
+                      isSelected 
+                        ? "border-emerald-500 ring-4 ring-emerald-100 shadow-md opacity-100" 
+                        : "border-slate-200 opacity-50 hover:opacity-85"
+                    )}>
+                      {u.imagen ? (
+                        <img src={u.imagen} className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="text-[10px] font-black uppercase text-slate-600">{u.nombre.charAt(0)}</span>
+                      )}
+                      
+                      {/* Check overlay en el avatar */}
+                      {isSelected && (
+                        <div className="absolute inset-0 bg-emerald-500/10 flex items-center justify-center">
+                          <div className="bg-emerald-500 text-white rounded-full p-0.5 shadow-sm">
+                            <Check size={8} strokeWidth={4} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <span className={cn(
+                      "text-[8.5px] uppercase tracking-wider text-center truncate w-12 leading-tight transition-colors",
+                      isSelected ? "text-emerald-800 font-extrabold" : "text-slate-500 font-bold"
+                    )}>
+                      {u.nombre.split(' ')[0]}
+                    </span>
+                  </button>
+                );
+              })
+            )}
           </div>
         </div>
         {form.tipo === 'TAREA' && (

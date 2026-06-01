@@ -471,7 +471,7 @@ export const EntryTable = ({
         }
       }
     ]),
-    ...(isDraftSection ? [] : [
+    ...(isDraftSection || isAllExternal ? [] : [
       {
         header: "Prioridad",
         accessorKey: "prioridad",

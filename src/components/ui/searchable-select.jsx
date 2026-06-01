@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { Icon, Tooltip } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
 
@@ -16,12 +17,51 @@ export const SearchableSelect = ({
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
     const containerRef = useRef(null);
+    const buttonRef = useRef(null);
+
+    // ── Calcular posición del botón para ubicar el portal ──
+    const updateCoords = () => {
+        if (buttonRef.current) {
+            const rect = buttonRef.current.getBoundingClientRect();
+            // Determinamos si hay más espacio arriba o abajo
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const dropdownHeight = Math.min(filteredOptions.length * 40 + 60, 300); // tamaño aproximado
+            
+            const renderUpward = spaceBelow < dropdownHeight && rect.top > dropdownHeight;
+
+            setCoords({
+                top: renderUpward 
+                    ? rect.top + window.scrollY - dropdownHeight - 8 
+                    : rect.bottom + window.scrollY + 4,
+                left: rect.left + window.scrollX,
+                width: rect.width,
+                maxHeight: `${dropdownHeight}px`
+            });
+        }
+    };
+
+    useEffect(() => {
+        if (isOpen) {
+            updateCoords();
+            window.addEventListener('resize', updateCoords);
+            window.addEventListener('scroll', updateCoords, true);
+        }
+        return () => {
+            window.removeEventListener('resize', updateCoords);
+            window.removeEventListener('scroll', updateCoords, true);
+        };
+    }, [isOpen]);
 
     // ── Interceptor de clics externos para cerrar el menú ──
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (containerRef.current && !containerRef.current.contains(event.target)) {
+            if (
+                containerRef.current && 
+                !containerRef.current.contains(event.target) &&
+                !event.target.closest('.searchable-select-portal')
+            ) {
                 setIsOpen(false);
             }
         };
@@ -39,6 +79,13 @@ export const SearchableSelect = ({
         ),
         [options, searchQuery]);
 
+    // Actualizar coordenadas si cambia la búsqueda (para re-calcular el tamaño)
+    useEffect(() => {
+        if (isOpen) {
+            updateCoords();
+        }
+    }, [searchQuery]);
+
     const handleSelect = (val) => {
         onChange(val);
         setIsOpen(false);
@@ -48,6 +95,7 @@ export const SearchableSelect = ({
     return (
         <div className="relative shrink-0" ref={containerRef}>
             <button
+                ref={buttonRef}
                 type="button"
                 disabled={disabled}
                 onClick={() => !disabled && setIsOpen(!isOpen)}
@@ -93,9 +141,22 @@ export const SearchableSelect = ({
                 )}
             </button>
 
-            {isOpen && !disabled && (
-                <div className={cn("absolute top-full left-0 mt-1 min-w-full w-max max-w-sm bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in", menuClassName)}>
-
+            {isOpen && !disabled && createPortal(
+                <div 
+                    className={cn(
+                        "absolute bg-white border border-slate-200 rounded-xl shadow-xl z-[99999] overflow-hidden animate-fade-in searchable-select-portal", 
+                        menuClassName
+                    )}
+                    style={{
+                        position: 'absolute',
+                        top: coords.top,
+                        left: coords.left,
+                        minWidth: coords.width,
+                        maxHeight: coords.maxHeight,
+                        width: 'max-content',
+                        maxWidth: '280px'
+                    }}
+                >
                     {/* Buscador Interno */}
                     <div className="p-2 border-b border-slate-100 bg-slate-50 sticky top-0">
                         <div className="relative">
@@ -112,7 +173,7 @@ export const SearchableSelect = ({
                     </div>
 
                     {/* Lista de Resultados */}
-                    <div className="max-h-60 overflow-y-auto py-1">
+                    <div className="overflow-y-auto py-1" style={{ maxHeight: `calc(${coords.maxHeight} - 48px)` }}>
                         {searchQuery === "" && allOptionText && (
                             <button
                                 onClick={() => handleSelect("")}
@@ -144,7 +205,8 @@ export const SearchableSelect = ({
                             </div>
                         )}
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

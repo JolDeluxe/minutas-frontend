@@ -329,6 +329,7 @@ export const TareaCard = ({
     onDownloadPdf,
     isGeneratingPdf,
     isPorAprobar = false,
+    onToggleNotificado,
 }) => {
 
     const [isEntregaModalOpen, setIsEntregaModalOpen] = useState(false);
@@ -458,6 +459,10 @@ export const TareaCard = ({
     // ── Click principal de la tarjeta ────────────────────────────────────────
     const handleCardClick = () => {
         if (isRemoteDraft) return;
+        if (isExternal && !isDraft) {
+            onViewDetail?.(tarea);
+            return;
+        }
         if (isDraft || !isOrganized) {
             onOrganize?.(tarea);
         } else if (isFormalizada) {
@@ -561,7 +566,7 @@ export const TareaCard = ({
                                         {clasif.label}
                                     </span>
                                 )}
-                                {!isDraft && !isRemoteDraft && isOrganized && tarea.prioridad && <EtiquetaPrioridadTarea priority={tarea.prioridad} className="scale-90 origin-left" />}
+                                {!isDraft && !isRemoteDraft && isOrganized && tarea.prioridad && !isExternal && <EtiquetaPrioridadTarea priority={tarea.prioridad} className="scale-90 origin-left" />}
                             </div>
                             <div className="flex items-center gap-1.5 shrink-0">
                                 {!isCerrado && !isRemoteDraft && !!onDelete && (
@@ -586,7 +591,7 @@ export const TareaCard = ({
                                     <span className="text-[7px] sm:text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
                                         #{tarea.id}
                                     </span>
-                                    {vencida && !isDraft && !isRemoteDraft && isOrganized && <span className="text-[7px] font-black text-rose-500 animate-pulse uppercase">¡Vencida!</span>}
+                                    {vencida && !isDraft && !isRemoteDraft && isOrganized && !isExternal && <span className="text-[7px] font-black text-rose-500 animate-pulse uppercase">¡Vencida!</span>}
                                 </div>
                             </div>
                         </div>
@@ -672,6 +677,22 @@ export const TareaCard = ({
                                             >
                                                 <Icon name={isGeneratingPdf === tarea.area ? "hourglass_empty" : "picture_as_pdf"} className={cn("!text-[12px]", isGeneratingPdf === tarea.area && "animate-spin")} />
                                                 PDF
+                                            </button>
+                                        )}
+
+                                        {/* Checkbox Notificado — solo ADMIN, solo externa, solo guardada */}
+                                        {rol === 'ADMIN' && isExternal && !isDraft && !isRemoteDraft && onToggleNotificado && (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); onToggleNotificado(tarea.id); }}
+                                                title={tarea.notificadoAt ? `Notificado el ${new Date(tarea.notificadoAt).toLocaleDateString('es-MX')}` : 'Marcar como notificado'}
+                                                className={cn(
+                                                    "h-6 min-[360px]:h-7 w-6 min-[360px]:w-7 rounded-lg border flex items-center justify-center transition-all active:scale-90 shadow-xs",
+                                                    tarea.notificadoAt
+                                                        ? "bg-emerald-500 border-emerald-500 text-white"
+                                                        : "bg-white border-slate-200 text-slate-300 hover:border-emerald-400 hover:text-emerald-500"
+                                                )}
+                                            >
+                                                <Icon name={tarea.notificadoAt ? "check_circle" : "radio_button_unchecked"} className="!text-[12px]" />
                                             </button>
                                         )}
 
