@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Skeleton, Button, RefreshFab, Icon, GlassViewToggle } from '@/components/ui/z_index';
+import { Skeleton, Button, Icon, GlassViewToggle } from '@/components/ui/z_index';
 import { TareaCard } from '../components/comun/tarjeta-tarea';
 import { ResumenTareasActivas } from '../components/comun/resumen-tareas-activas';
 import { BarraFiltrosTareas } from '../components/comun/barra-filtros-tareas';
@@ -191,7 +191,7 @@ export const MisTareasMobile = ({
                 currentUser={currentUser}
             />
 
-            <RefreshFab onClick={onRefresh} loading={loading} />
+
         </div>
     );
 };

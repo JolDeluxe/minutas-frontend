@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Skeleton, RefreshFab, Icon, GlassViewToggle } from '@/components/ui/z_index';
+import { Skeleton, Icon, GlassViewToggle } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
 import { TareaCard } from '../components/comun/tarjeta-tarea';
 import { ResumenTareasActivas } from '../components/comun/resumen-tareas-activas';
@@ -202,7 +202,7 @@ export const ActivasDesktop = ({
                 currentUser={currentUser}
             />
 
-            <RefreshFab onClick={onRefresh} loading={loading} />
+
         </div>
     );
 };

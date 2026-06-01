@@ -284,6 +284,7 @@ export default function MinutaDetailPage() {
   const [showForceCloseModal, setShowForceCloseModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showCloseModal, setShowCloseModal] = useState(false);
+  const [showFinalizarModal, setShowFinalizarModal] = useState(false);
   const [sharePdfData, setSharePdfData] = useState(null);
 
   const [activeFilter, setActiveFilter] = useState({
@@ -888,6 +889,11 @@ export default function MinutaDetailPage() {
       return;
     }
     if (draftEntries.length > 0 || draftNotes.length > 0) { setShowReviewModal(true); return; }
+    setShowFinalizarModal(true);
+  };
+
+  const confirmFinalizar = async () => {
+    setShowFinalizarModal(false);
     setFinalizando(true);
     try {
       const res = await finalizarMinuta(id);
@@ -1067,6 +1073,19 @@ export default function MinutaDetailPage() {
           title="Cerrar Minuta"
           message="¿Estás seguro de que deseas cerrar esta minuta? Ya no podrás agregar nuevas tareas."
           confirmText="Cerrar Minuta"
+          cancelText="Volver"
+          variant="success"
+        />
+      )}
+
+      {showFinalizarModal && (
+        <ConfirmModal
+          isOpen={showFinalizarModal}
+          onClose={() => setShowFinalizarModal(false)}
+          onConfirm={confirmFinalizar}
+          title="Finalizar Sesión"
+          message="¿Ya quieres finalizar la sesión y organizar las tareas?"
+          confirmText="Finalizar"
           cancelText="Volver"
           variant="success"
         />

@@ -414,13 +414,28 @@ export const EntryTable = ({
     ]),
     ...(departamento === 'MARKETING' ? [] : [
       {
-        header: "Línea",
+        header: isAllExternal ? "ÁREA" : "Línea",
         accessorKey: "linea",
         align: "center",
         headerClassName: "w-[10%] min-w-[100px]",
         cell: (row) => {
           const isMarketing = departamento === 'MARKETING';
           const lineInfo = isMarketing ? { label: 'Marketing', color: '#7c3aed' } : (LINEA_MAP[row.linea] || { label: row.linea || '—', color: '#64748b' });
+
+          if (isAllExternal) {
+            return (
+              <div className="flex items-center justify-center gap-1.5 font-semibold">
+                {isMarketing ? (
+                  <MarketingIcon size={18} style={{ color: lineInfo.color }} />
+                ) : (
+                  <LineIconSelector type={row.linea} size={18} style={{ color: lineInfo.color }} />
+                )}
+                <span className="text-[10px] uppercase font-bold text-slate-700 whitespace-nowrap" style={{ color: lineInfo.color }}>
+                  {lineInfo.label}
+                </span>
+              </div>
+            );
+          }
           return (
             <div className="flex flex-col items-center justify-center gap-0.5">
               <div className="flex items-center justify-center">

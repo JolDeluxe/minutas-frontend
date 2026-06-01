@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Skeleton, Button, RefreshFab, Icon, GlassViewToggle } from '@/components/ui/z_index';
+import { Skeleton, Button, Icon, GlassViewToggle } from '@/components/ui/z_index';
 import { TareaCard } from '../components/comun/tarjeta-tarea';
 import { ModalEditarTarea } from '../components/comun/modal-editar-tarea';
 import { TablaTareas } from '../components/comun/tabla-tareas';
@@ -124,7 +124,7 @@ export const PorAprobarMobile = ({
                 currentUser={currentUser}
             />
 
-            <RefreshFab onClick={onRefresh} loading={loading} />
+
         </div>
     );
 };

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Skeleton, RefreshFab, Icon, GlassViewToggle } from '@/components/ui/z_index';
+import { Skeleton, Icon, GlassViewToggle } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
 import { TareaCard } from '../components/comun/tarjeta-tarea';
 import { TablaTareas } from '../components/comun/tabla-tareas';
@@ -132,7 +132,7 @@ export const PorAprobarDesktop = ({
                 currentUser={currentUser}
             />
 
-            <RefreshFab onClick={onRefresh} loading={loading} />
+
         </div>
     );
 };

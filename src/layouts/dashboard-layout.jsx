@@ -4,6 +4,7 @@ import { usePushAndSocket } from '@/hooks/usePushAndSocket';
 import { DesktopLayout } from './desktop-layout.jsx';
 import { MobileLayout } from './mobile-layout.jsx';
 import { OfflineBanner } from '@/components/ui/offline-banner';
+import { RefreshFab } from '@/components/ui/refresh-fab';
 
 export const DashboardLayout = () => {
   const isDesktop = useIsDesktop();
@@ -15,6 +16,7 @@ export const DashboardLayout = () => {
     <>
       <OfflineBanner />
       {isDesktop ? <DesktopLayout /> : <MobileLayout />}
+      <RefreshFab />
     </>
   );
 };

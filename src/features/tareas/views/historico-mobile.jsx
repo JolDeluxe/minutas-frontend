@@ -1,6 +1,6 @@
 // src/features/tareas/views/historico-mobile.jsx
 import { useState } from 'react';
-import { Skeleton, RefreshFab, Icon, GlassViewToggle, GlassPaginationPill } from '@/components/ui/z_index';
+import { Skeleton, Icon, GlassViewToggle, GlassPaginationPill } from '@/components/ui/z_index';
 import { TareaCard } from '../components/comun/tarjeta-tarea';
 import { ResumenHistorico } from '../components/historico/resumen-historico';
 import { BarraFiltrosHistorico } from '../components/historico/barra-filtros-historico';
@@ -186,7 +186,7 @@ export const HistoricoMobile = ({
                 currentUser={currentUser}
             />
 
-            <RefreshFab onClick={onRefresh} loading={loading} />
+
         </div>
     );
 };

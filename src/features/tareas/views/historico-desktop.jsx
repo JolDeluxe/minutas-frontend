@@ -1,6 +1,6 @@
 // src/features/tareas/views/historico-desktop.jsx
 import { useState } from 'react';
-import { RefreshFab, GlassViewToggle, GlassPaginationPill } from '@/components/ui/z_index';
+import { GlassViewToggle, GlassPaginationPill } from '@/components/ui/z_index';
 import { ResumenHistorico } from '../components/historico/resumen-historico';
 import { BarraFiltrosHistorico } from '../components/historico/barra-filtros-historico';
 import { TablaTareas } from '../components/comun/tabla-tareas';
@@ -170,7 +170,7 @@ export const HistoricoDesktop = ({
                 currentUser={currentUser}
             />
 
-            <RefreshFab onClick={onRefresh} loading={loading} />
+
         </div>
     );
 };
