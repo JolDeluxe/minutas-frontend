@@ -28,6 +28,7 @@ export const OrganizeDrawer = ({
   const [responsables, setResponsables] = useState([]);
   const [fechaVencimiento, setFechaVencimiento] = useState('');
   const [alcanceRecordatorio, setAlcanceRecordatorio] = useState('DEPARTAMENTO');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -37,11 +38,23 @@ export const OrganizeDrawer = ({
       setResponsables([]);
       setFechaVencimiento('');
       setAlcanceRecordatorio('DEPARTAMENTO');
+      setError('');
     }
   }, [isOpen, entry?.id, fetchUsers]);
 
   const catalogos = useMemo(() => getCatalogos(departamento), [departamento]);
   
+  const minDate = useMemo(() => {
+    const todayStr = new Date().toLocaleDateString('sv-SE');
+    const originalDateStr = entry && entry.fechaVencimiento 
+      ? new Date(entry.fechaVencimiento).toISOString().split('T')[0] 
+      : '';
+    if (originalDateStr && originalDateStr < todayStr) {
+      return originalDateStr;
+    }
+    return todayStr;
+  }, [entry]);
+
   // Filtrar usuarios por el departamento de la entrada
   const filteredUsers = useMemo(() => {
     return users.filter(u => u.estado === 'ACTIVO' && (u.rol === 'ADMIN' || u.departamento === departamento));
@@ -58,6 +71,25 @@ export const OrganizeDrawer = ({
   };
 
   const handleSubmit = async () => {
+    if (tipo === 'TAREA' && fechaVencimiento) {
+      const todayStr = new Date().toLocaleDateString('sv-SE');
+      const originalDateStr = entry && entry.fechaVencimiento 
+        ? new Date(entry.fechaVencimiento).toISOString().split('T')[0] 
+        : '';
+      
+      if (fechaVencimiento < todayStr) {
+        if (originalDateStr) {
+          if (fechaVencimiento < originalDateStr) {
+            setError('La fecha límite no puede ser menor a la fecha original de la tarea.');
+            return;
+          }
+        } else {
+          setError('La fecha límite no puede ser menor a hoy.');
+          return;
+        }
+      }
+    }
+
     const payload = { tipo };
 
     if (tipo === 'TAREA') {
@@ -77,26 +109,52 @@ export const OrganizeDrawer = ({
 
   const CheckOption = ({ value, label, icon: LucideIcon, description }) => {
     const active = tipo === value;
+
+    // Configuración de colores premium según el tipo
+    const styles = {
+      TAREA: {
+        activeBg: "bg-emerald-50/70 border-emerald-500 text-emerald-950 shadow-sm",
+        inactiveBg: "bg-white border-slate-100 text-slate-600 hover:border-slate-200",
+        checkboxActive: "bg-emerald-600 border-emerald-600 text-white",
+        iconColorActive: "text-emerald-600",
+        descActive: "text-emerald-800/80"
+      },
+      RECORDATORIO: {
+        activeBg: "bg-blue-50/70 border-blue-500 text-blue-950 shadow-sm",
+        inactiveBg: "bg-white border-slate-100 text-slate-600 hover:border-slate-200",
+        checkboxActive: "bg-blue-600 border-blue-600 text-white",
+        iconColorActive: "text-blue-600",
+        descActive: "text-blue-800/80"
+      },
+      POLITICA: {
+        activeBg: "bg-purple-50/70 border-purple-500 text-purple-950 shadow-sm",
+        inactiveBg: "bg-white border-slate-100 text-slate-600 hover:border-slate-200",
+        checkboxActive: "bg-purple-600 border-purple-600 text-white",
+        iconColorActive: "text-purple-600",
+        descActive: "text-purple-800/80"
+      }
+    }[value];
+
     return (
       <button 
         onClick={() => setTipo(value)}
         className={cn(
           "flex items-start gap-4 p-4 rounded-2xl border-2 transition-all active:scale-[0.98] text-left w-full",
-          active ? "bg-slate-900 border-slate-800 shadow-lg text-white" : "bg-white border-slate-100 text-slate-600 hover:border-slate-200"
+          active ? styles.activeBg : styles.inactiveBg
         )}
       >
         <div className={cn(
-          "w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 mt-0.5",
-          active ? "bg-marca-primario border-marca-primario text-white" : "border-slate-200 bg-white"
+          "w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all",
+          active ? styles.checkboxActive : "border-slate-200 bg-white"
         )}>
           {active && <Check size={16} strokeWidth={4} />}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-             <LucideIcon size={16} className={active ? "text-marca-primario" : "text-slate-400"} />
+             <LucideIcon size={16} className={active ? styles.iconColorActive : "text-slate-400"} />
              <p className="text-[13px] font-black uppercase tracking-wide leading-none">{label}</p>
           </div>
-          <p className={cn("text-[10px] font-medium leading-snug", active ? "text-slate-400" : "text-slate-500")}>{description}</p>
+          <p className={cn("text-[10px] font-medium leading-snug", active ? styles.descActive : "text-slate-500")}>{description}</p>
         </div>
       </button>
     );
@@ -106,7 +164,7 @@ export const OrganizeDrawer = ({
     <div className="space-y-8">
       {/* 1. SELECCIÓN DE NATURALEZA (CHECKBOXES) */}
       <div className="space-y-3">
-        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">¿Qué naturaleza tiene esta entrada?</label>
+        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tipo de Tarea</label>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <CheckOption 
             value="TAREA" 
@@ -160,9 +218,21 @@ export const OrganizeDrawer = ({
                 <input 
                   type="date" 
                   value={fechaVencimiento} 
-                  onChange={(e) => setFechaVencimiento(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:ring-4 focus:ring-marca-primario/5"
+                  min={minDate}
+                  onChange={(e) => {
+                    setFechaVencimiento(e.target.value);
+                    setError('');
+                  }}
+                  className={cn(
+                    "w-full px-4 py-3 bg-white border rounded-xl text-sm font-bold focus:ring-4 focus:ring-marca-primario/5",
+                    error ? "border-rose-300 text-rose-900 focus:ring-rose-100 animate-shake" : "border-slate-200 text-slate-800"
+                  )}
                 />
+                {error && (
+                  <p className="mt-2 text-rose-600 font-extrabold text-[10px] uppercase tracking-wide flex items-center gap-1.5 ml-1 animate-in fade-in slide-in-from-top-1">
+                    <Icon name="error" size="14px" className="text-rose-500" /> {error}
+                  </p>
+                )}
               </div>
 
               {/* Responsables Tarea */}

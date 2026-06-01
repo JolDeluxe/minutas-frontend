@@ -25,6 +25,48 @@ const getClientId = () => {
   return clientId;
 };
 
+const generateCompressedThumbnail = (file, maxWidth = 300, maxHeight = 300, quality = 0.5) => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(dataUrl);
+        } else {
+          resolve(null);
+        }
+      };
+      img.onerror = () => resolve(null);
+      img.src = event.target.result;
+    };
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(file);
+  });
+};
+
 const sanitizeDraftEntryForSocket = (entry) => {
   if (!entry) return null;
   const safeEntry = { ...entry };
@@ -38,6 +80,7 @@ const sanitizeDraftEntryForSocket = (entry) => {
   return {
     ...safeEntry,
     _remoteImageCount: localImages.length,
+    _remoteImageThumbnails: localImages.map(img => img.base64Thumb).filter(Boolean),
   };
 };
 
@@ -216,6 +259,12 @@ export default function MinutaDetailPage() {
     socket.on('minuta:draft_entry_remove', handleRemoteRemove);
     socket.on('minuta:draft_entries_remove', handleRemoteBulkRemove);
 
+    const handleEntriesSaved = (payload) => {
+      if (Number(payload?.minutaId) !== minutaId) return;
+      refreshEntries();
+    };
+    socket.on('minuta:entries_saved', handleEntriesSaved);
+
     if (!socket.connected) socket.connect();
     socket.emit('join_minuta', {
       minutaId,
@@ -234,6 +283,7 @@ export default function MinutaDetailPage() {
       socket.off('minuta:draft_entry_upsert', handleRemoteUpsert);
       socket.off('minuta:draft_entry_remove', handleRemoteRemove);
       socket.off('minuta:draft_entries_remove', handleRemoteBulkRemove);
+      socket.off('minuta:entries_saved', handleEntriesSaved);
       clearRemoteDrafts();
     };
   }, [
@@ -247,6 +297,7 @@ export default function MinutaDetailPage() {
     removeRemoteDraftEntry,
     removeRemoteDraftEntries,
     clearRemoteDrafts,
+    refreshEntries,
   ]);
 
   useEffect(() => {
@@ -391,6 +442,9 @@ export default function MinutaDetailPage() {
     setIsSavingEntry(true);
     try {
       if (typeof entryId === 'string' || entryId.toString().startsWith('temp_')) {
+        if (imageActions.isDraft) {
+          payload._localImages = imageActions.localImages;
+        }
         handleUpdateDraftEntry(entryId, payload);
         notify.success('Borrador actualizado');
         setEditEntry(null);
@@ -572,7 +626,13 @@ export default function MinutaDetailPage() {
       if (typeof entryId === 'string' || isNaN(Number(entryId))) {
         const entry = draftEntries.find(e => e.tempId === entryId);
         if (entry) {
-          const newImgs = [...(entry._localImages || []), { file, preview: URL.createObjectURL(file), id: Math.random().toString(36).substr(2, 9) }];
+          const base64Thumb = await generateCompressedThumbnail(file);
+          const newImgs = [...(entry._localImages || []), { 
+            file, 
+            preview: URL.createObjectURL(file), 
+            id: Math.random().toString(36).substr(2, 9),
+            base64Thumb
+          }];
           handleUpdateDraftEntry(entryId, { _localImages: newImgs });
           return;
         }

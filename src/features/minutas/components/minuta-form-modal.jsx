@@ -10,6 +10,7 @@ export const MinutaFormModal = ({
     onSuccess,
     minutaAEditar,
     submitting,
+    departamentoGlobal,
 }) => {
     const { user } = useAuthStore();
     const esEdicion = Boolean(minutaAEditar);
@@ -33,6 +34,17 @@ export const MinutaFormModal = ({
         return `${day}-${month}-${year}`;
     };
 
+    const minDate = useMemo(() => {
+        const todayStr = new Date().toLocaleDateString('sv-SE');
+        const originalDateStr = minutaAEditar && minutaAEditar.fechaProgramada 
+            ? new Date(minutaAEditar.fechaProgramada).toISOString().slice(0, 10) 
+            : '';
+        if (originalDateStr && originalDateStr < todayStr) {
+            return originalDateStr;
+        }
+        return todayStr;
+    }, [minutaAEditar]);
+
     const tituloAuto = useMemo(() => {
         const d = fechaProgramada || new Date().toISOString().slice(0, 10);
         const formattedDate = formatToMexicanDate(d);
@@ -55,26 +67,54 @@ export const MinutaFormModal = ({
             setFechaProgramada(minutaAEditar.fechaProgramada ? new Date(minutaAEditar.fechaProgramada).toISOString().slice(0, 10) : '');
             setIniciarInmediatamente(false);
             if (minutaAEditar.departamento || minutaAEditar.creadoPor?.departamento) {
-                setDepartamento(minutaAEditar.departamento || minutaAEditar.creadoPor.departamento);
+                const dep = minutaAEditar.departamento || minutaAEditar.creadoPor.departamento;
+                setDepartamento(dep === 'DISENO' ? 'DISEÑO' : dep);
             }
         } else {
             setTituloManual('');
             setTituloModificado(false);
-            setLineaDefault('CALZADO');
-            setDepartamento(user?.departamento && user.departamento !== 'ADMIN' ? user.departamento : 'DISEÑO');
+            setIniciarInmediatamente(false);
+            
+            // Default active department from outside modal
+            let deptDefault = 'DISEÑO';
+            if (departamentoGlobal && departamentoGlobal !== 'TODAS') {
+                deptDefault = departamentoGlobal === 'DISENO' ? 'DISEÑO' : departamentoGlobal;
+            } else if (user?.departamento && user.departamento !== 'ADMIN') {
+                deptDefault = user.departamento === 'DISENO' ? 'DISEÑO' : user.departamento;
+            }
+            
+            setDepartamento(deptDefault);
+            setLineaDefault(deptDefault === 'MARKETING' ? 'MARKETING' : 'CALZADO');
+            
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             setFechaProgramada(now.toISOString().slice(0, 10));
-            setIniciarInmediatamente(false);
         }
-    }, [isOpen, esEdicion, minutaAEditar, user]);
+    }, [isOpen, esEdicion, minutaAEditar, user, departamentoGlobal]);
 
     const getFormErrors = () => {
         const e = {};
         if (!tituloActual.trim()) e.titulo = 'El título es obligatorio.';
         if (tituloActual.length < 3) e.titulo = 'Debe tener al menos 3 caracteres.';
         if (!lineaDefault) e.lineaDefault = 'Selecciona una línea por defecto.';
-        if (!fechaProgramada) e.fechaProgramada = 'La fecha es obligatoria.';
+        if (!fechaProgramada) {
+            e.fechaProgramada = 'La fecha es obligatoria.';
+        } else {
+            const todayStr = new Date().toLocaleDateString('sv-SE');
+            const originalDateStr = minutaAEditar && minutaAEditar.fechaProgramada 
+                ? new Date(minutaAEditar.fechaProgramada).toISOString().slice(0, 10) 
+                : '';
+            
+            if (fechaProgramada < todayStr) {
+                if (originalDateStr) {
+                    if (fechaProgramada < originalDateStr) {
+                        e.fechaProgramada = 'La fecha no puede ser menor a la fecha original de la minuta.';
+                    }
+                } else {
+                    e.fechaProgramada = 'La fecha no puede ser menor a hoy.';
+                }
+            }
+        }
         return e;
     };
 
@@ -128,6 +168,7 @@ export const MinutaFormModal = ({
                                 onChange={(e) => {
                                     const val = e.target.value;
                                     setDepartamento(val);
+                                    setTituloModificado(false); // Reset manual modification to allow auto-generation
                                     if (val === 'MARKETING') {
                                         setLineaDefault('MARKETING');
                                     } else {
@@ -145,15 +186,20 @@ export const MinutaFormModal = ({
                             <Select
                                 id="m-linea"
                                 value={lineaDefault}
-                                onChange={(e) => setLineaDefault(e.target.value)}
+                                onChange={(e) => {
+                                    setLineaDefault(e.target.value);
+                                    setTituloModificado(false); // Reset manual modification to allow auto-generation
+                                }}
                                 error={!!fe.lineaDefault}
                             >
                                 {departamento === 'MARKETING' ? (
                                     <option value="MARKETING">Marketing</option>
                                 ) : (
-                                    Object.entries(LINEA_MAP).map(([value, config]) => (
-                                        <option key={value} value={value}>{config.label}</option>
-                                    ))
+                                    Object.entries(LINEA_MAP)
+                                        .filter(([value]) => value !== 'MARKETING')
+                                        .map(([value, config]) => (
+                                            <option key={value} value={value}>{config.label}</option>
+                                        ))
                                 )}
                             </Select>
                         </div>
@@ -165,7 +211,11 @@ export const MinutaFormModal = ({
                             id="m-fecha"
                             type="date"
                             value={fechaProgramada}
-                            onChange={(e) => setFechaProgramada(e.target.value)}
+                            min={minDate}
+                            onChange={(e) => {
+                                setFechaProgramada(e.target.value);
+                                setTituloModificado(false); // Reset manual modification to allow auto-generation
+                            }}
                             error={!!fe.fechaProgramada}
                             helperText={fe.fechaProgramada}
                         />

@@ -8,6 +8,48 @@ import { useUsers } from '@/features/usuarios/hooks/use-users';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Camera, X, Plus, Save, Trash2, Calendar, UserPlus, Info, Pencil, Check } from 'lucide-react';
 
+const generateCompressedThumbnail = (file, maxWidth = 300, maxHeight = 300, quality = 0.5) => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(dataUrl);
+        } else {
+          resolve(null);
+        }
+      };
+      img.onerror = () => resolve(null);
+      img.src = event.target.result;
+    };
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(file);
+  });
+};
+
 /**
  * EntryFormModal — Sistema de edición integral de entradas organizacionales.
  * Estructura refinada: La configuración operativa sigue directamente a la naturaleza de la entrada.
@@ -40,6 +82,7 @@ export const EntryFormModal = ({
   const [localImages, setLocalImages] = useState([]); 
   const [existingImages, setExistingImages] = useState([]); 
   const [imagesToDelete, setExistingImagesToDelete] = useState([]); 
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -56,9 +99,16 @@ export const EntryFormModal = ({
           fechaVencimiento: entry.fechaVencimiento ? new Date(entry.fechaVencimiento).toISOString().split('T')[0] : '',
           alcanceRecordatorio: entry.alcanceRecordatorio || 'DEPARTAMENTO',
         });
-        setExistingImages(entry.imagenes || entry.images || []);
-        setLocalImages([]);
+        const isDraft = typeof entry.id === 'string' || entry.tempId;
+        if (isDraft) {
+          setExistingImages([]);
+          setLocalImages(entry._localImages || []);
+        } else {
+          setExistingImages(entry.imagenes || entry.images || []);
+          setLocalImages([]);
+        }
         setExistingImagesToDelete([]);
+        setError('');
       }
     }
   }, [isOpen, entry, fetchUsers]);
@@ -67,6 +117,17 @@ export const EntryFormModal = ({
   const lineasDisponibles = useMemo(() => LINEAS_POR_AREA[form.area] || [], [form.area]);
   const hasLineas = lineasDisponibles.length > 0;
   const totalImagesCount = existingImages.length + localImages.length - imagesToDelete.length;
+
+  const minDate = useMemo(() => {
+    const todayStr = new Date().toLocaleDateString('sv-SE');
+    const originalDateStr = entry && entry.fechaVencimiento 
+      ? new Date(entry.fechaVencimiento).toISOString().split('T')[0] 
+      : '';
+    if (originalDateStr && originalDateStr < todayStr) {
+      return originalDateStr;
+    }
+    return todayStr;
+  }, [entry]);
 
   const filteredUsers = useMemo(() => {
     return users.filter(u => u.estado === 'ACTIVO' && (u.rol === 'ADMIN' || u.departamento === departamento));
@@ -90,15 +151,23 @@ export const EntryFormModal = ({
     }));
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
     const availableSlots = 3 - totalImagesCount;
     if (availableSlots <= 0) return;
-    const newImgs = files.slice(0, availableSlots).map(file => ({
-      id: Math.random().toString(36).substr(2, 9),
-      file,
-      preview: URL.createObjectURL(file)
-    }));
+    
+    const sliced = files.slice(0, availableSlots);
+    const newImgs = [];
+    for (const file of sliced) {
+      const base64Thumb = await generateCompressedThumbnail(file);
+      newImgs.push({
+        id: Math.random().toString(36).substr(2, 9),
+        file,
+        preview: URL.createObjectURL(file),
+        base64Thumb
+      });
+    }
+    
     setLocalImages(prev => [...prev, ...newImgs]);
     e.target.value = '';
   };
@@ -116,15 +185,46 @@ export const EntryFormModal = ({
   };
 
   const handleSubmit = async () => {
-    if (!form.descripcion.trim()) return;
+    if (!form.descripcion.trim()) {
+      setError('La descripción es obligatoria.');
+      return;
+    }
+
+    if (form.tipo === 'TAREA' && form.fechaVencimiento) {
+      const todayStr = new Date().toLocaleDateString('sv-SE');
+      const originalDateStr = entry && entry.fechaVencimiento 
+        ? new Date(entry.fechaVencimiento).toISOString().split('T')[0] 
+        : '';
+      
+      if (form.fechaVencimiento < todayStr) {
+        if (originalDateStr) {
+          if (form.fechaVencimiento < originalDateStr) {
+            setError('La fecha límite no puede ser menor a la fecha original de la tarea.');
+            return;
+          }
+        } else {
+          setError('La fecha límite no puede ser menor a hoy.');
+          return;
+        }
+      }
+    }
+
     const payload = {
       ...form,
       ...(form.tipo !== 'TAREA' && { prioridad: null, fechaVencimiento: null, responsables: form.tipo === 'RECORDATORIO' && form.alcanceRecordatorio === 'PERSONAL' ? form.responsables : [] }),
     };
-    await onSave(entry.id || entry.tempId, payload, {
-      newImages: localImages.map(img => img.file),
-      deleteImageIds: imagesToDelete
-    });
+    const isDraft = typeof entry.id === 'string' || entry.tempId;
+    if (isDraft) {
+      await onSave(entry.id || entry.tempId, payload, {
+        isDraft: true,
+        localImages: localImages
+      });
+    } else {
+      await onSave(entry.id || entry.tempId, payload, {
+        newImages: localImages.map(img => img.file),
+        deleteImageIds: imagesToDelete
+      });
+    }
   };
 
   if (!isOpen || !entry) return null;
@@ -141,21 +241,21 @@ export const EntryFormModal = ({
           </button>
         )}
       </div>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="flex flex-wrap gap-3">
         {existingImages.filter(img => !imagesToDelete.includes(img.id)).map((img) => (
-          <div key={img.id} className="relative aspect-square rounded-2xl overflow-hidden border-2 border-slate-100 group shadow-sm">
+          <div key={img.id} className="relative w-24 h-24 shrink-0 rounded-2xl overflow-hidden border-2 border-slate-100 group shadow-sm">
             <img src={img.url} className="w-full h-full object-cover" alt="Adjunto" />
-            <button onClick={() => markExistingForDeletion(img.id)} className="absolute inset-0 bg-rose-600/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={20} /></button>
+            <button onClick={() => markExistingForDeletion(img.id)} className="absolute inset-0 bg-rose-600/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16} /></button>
           </div>
         ))}
         {localImages.map((img) => (
-          <div key={img.id} className="relative aspect-square rounded-2xl overflow-hidden border-2 border-emerald-200 group shadow-md animate-in zoom-in-90">
-            <img src={img.preview} className="w-full h-full object-cover" alt="Nuevo" />
-            <button onClick={() => removeLocalImage(img.id)} className="absolute inset-0 bg-slate-900/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X size={20} /></button>
+          <div key={img.id} className="relative w-24 h-24 shrink-0 rounded-2xl overflow-hidden border-2 border-emerald-200 group shadow-md animate-in zoom-in-90">
+            <img src={img.preview || img.base64Thumb} className="w-full h-full object-cover" alt="Nuevo" />
+            <button onClick={() => removeLocalImage(img.id)} className="absolute inset-0 bg-slate-900/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X size={16} /></button>
           </div>
         ))}
         {totalImagesCount < 3 && (
-          <button onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center justify-center aspect-square border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50 text-slate-400"><Plus size={24} /></button>
+          <button onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center justify-center w-24 h-24 shrink-0 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-500 transition-colors"><Plus size={20} /></button>
         )}
       </div>
       <input type="file" multiple accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileChange} />
@@ -214,7 +314,24 @@ export const EntryFormModal = ({
           <div className="pt-2">
             <div className="space-y-1.5 bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-inner">
               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5"><Calendar size={12} /> Fecha de Vencimiento</label>
-              <input type="date" value={form.fechaVencimiento} onChange={(e) => handleFieldChange('fechaVencimiento', e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 focus:ring-4 focus:ring-marca-primario/5" />
+              <input 
+                type="date" 
+                value={form.fechaVencimiento} 
+                min={minDate}
+                onChange={(e) => {
+                  handleFieldChange('fechaVencimiento', e.target.value);
+                  setError('');
+                }} 
+                className={cn(
+                  "w-full bg-white border rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-4 focus:ring-marca-primario/5",
+                  error && error.includes('fecha') ? "border-rose-300 text-rose-950 focus:ring-rose-100 animate-shake" : "border-slate-200 text-slate-700"
+                )} 
+              />
+              {error && error.includes('fecha') && (
+                <p className="mt-1.5 text-[10px] font-bold text-rose-600 uppercase tracking-wider flex items-center gap-1 ml-1 animate-in fade-in slide-in-from-top-1">
+                  <Icon name="error" size="14px" className="text-rose-500" /> {error}
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -222,90 +339,160 @@ export const EntryFormModal = ({
     );
   };
 
-  const renderFormContent = () => (
-    <div className={cn("grid gap-8", isDesktop ? "grid-cols-[1fr_1fr]" : "grid-cols-1")}>
-      {/* SECCIÓN 1: DATOS, NATURALEZA Y CONFIG OPERATIVA */}
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Descripción</label>
-          <textarea value={form.descripcion} onChange={(e) => handleFieldChange('descripcion', e.target.value)} className="w-full h-32 sm:h-40 p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base font-semibold text-slate-800 focus:outline-none focus:ring-4 focus:ring-marca-primario/5 resize-none shadow-inner" placeholder="Escribe el detalle aquí..." />
-        </div>
+  const renderFormContent = () => {
+    const isDraft = typeof entry.id === 'string' || entry.tempId;
 
-        {!isExternal && (
-          <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 shadow-sm space-y-4">
-             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Info size={14} className="text-marca-primario" /> Naturaleza de la Entrada</label>
-             <div className="flex flex-col gap-2">
-                {['TAREA', 'RECORDATORIO', 'POLITICA'].map(key => {
-                  const val = TIPO_ENTRADA_MAP[key];
-                  const active = form.tipo === key;
-                  return (
-                    <button key={key} onClick={() => handleFieldChange('tipo', key)} className={cn("flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all active:scale-95 text-left", active ? "bg-slate-900 border-slate-800 text-white shadow-lg" : "bg-white border-slate-100 text-slate-600 hover:border-slate-200")}>
-                      <div className="flex items-center gap-3">
-                         <Icon name={val.icon} size="18px" className={active ? "text-marca-primario" : "text-slate-400"} />
-                         <span className="text-xs font-bold uppercase tracking-wide">{val.label}</span>
-                      </div>
-                      {active && <Check size={16} strokeWidth={4} className="text-marca-primario" />}
-                    </button>
-                  )
-                })}
-             </div>
-             {form.tipo === 'RECORDATORIO' && (
-                <div className="pt-2 animate-in slide-in-from-top-1 duration-200">
-                   <div className="flex bg-slate-100 p-1 rounded-xl">
-                      <button onClick={() => handleFieldChange('alcanceRecordatorio', 'DEPARTAMENTO')} className={cn("flex-1 py-1.5 text-[9px] font-black uppercase rounded-lg transition-all", form.alcanceRecordatorio === 'DEPARTAMENTO' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}>General</button>
-                      <button onClick={() => handleFieldChange('alcanceRecordatorio', 'PERSONAL')} className={cn("flex-1 py-1.5 text-[9px] font-black uppercase rounded-lg transition-all", form.alcanceRecordatorio === 'PERSONAL' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}>Personal</button>
-                   </div>
-                </div>
+    if (isDraft) {
+      return (
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Descripción</label>
+            <textarea
+              value={form.descripcion}
+              onChange={(e) => {
+                handleFieldChange('descripcion', e.target.value);
+                setError('');
+              }}
+              className={cn(
+                "w-full h-32 sm:h-40 p-4 bg-slate-50 border rounded-2xl text-sm sm:text-base font-semibold focus:outline-none focus:ring-4 focus:ring-marca-primario/5 resize-none shadow-inner",
+                error && error.includes('descripción') ? "border-rose-300 focus:ring-rose-50 animate-shake" : "border-slate-200"
+              )}
+              placeholder="Escribe el detalle aquí..."
+            />
+            {error && error.includes('descripción') && (
+              <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest ml-1 flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1">
+                <Icon name="error" size="14px" className="text-rose-500" /> {error}
+              </p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+             {hasLineas && (
+               <div className="flex flex-col gap-1.5">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Línea</label>
+                  <select
+                    value={form.linea || ''}
+                    onChange={(e) => handleFieldChange('linea', e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 shadow-sm"
+                  >
+                    {lineasDisponibles.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+                  </select>
+               </div>
              )}
-          </div>
-        )}
-
-        {/* Panel Operativo (Aparece inmediatamente después de la naturaleza) */}
-        {renderOperativePanel()}
-      </div>
-
-      {/* SECCIÓN 2: DETALLES EXTRA Y MULTIMEDIA */}
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-           <div className="flex flex-col gap-1.5">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Área</label>
-              <select value={form.area} onChange={(e) => handleFieldChange('area', e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 shadow-sm">{catalogos.areas.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}</select>
-           </div>
-           {hasLineas && (
              <div className="flex flex-col gap-1.5">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Línea</label>
-                <select value={form.linea || ''} onChange={(e) => handleFieldChange('linea', e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 shadow-sm">{lineasDisponibles.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}</select>
-             </div>
-           )}
-           <div className="flex flex-col gap-1.5">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Tipo</label>
-              <select value={form.clasificacion} onChange={(e) => handleFieldChange('clasificacion', e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 shadow-sm">{catalogos.clasificaciones.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}</select>
-           </div>
-        </div>
-
-        {form.tipo === 'TAREA' && !isExternal && (
-          <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 shadow-sm space-y-4">
-             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Prioridad</label>
-             <div className="grid grid-cols-2 gap-2">
-                {Object.entries(PRIORIDAD_MAP).map(([key, val]) => {
-                  const active = form.prioridad === key;
-                  return (
-                    <button key={key} onClick={() => handleFieldChange('prioridad', key)} className={cn("flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 transition-all active:scale-95", active ? "text-white shadow-md" : "bg-white border-slate-100 text-slate-500")} style={active ? { backgroundColor: val.color, borderColor: val.color } : undefined}>
-                      <Icon name={val.icon} size="14px" />
-                      <span className="text-[10px] font-black uppercase">{val.label}</span>
-                    </button>
-                  )
-                })}
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Clasificación</label>
+                <select
+                  value={form.clasificacion}
+                  onChange={(e) => handleFieldChange('clasificacion', e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 shadow-sm"
+                >
+                  {catalogos.clasificaciones.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                </select>
              </div>
           </div>
-        )}
 
-        <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 shadow-sm">
-           {renderImagePanel()}
+          <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 shadow-sm">
+             {renderImagePanel()}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className={cn("grid gap-8", isDesktop ? "grid-cols-[1fr_1fr]" : "grid-cols-1")}>
+        {/* SECCIÓN 1: DATOS, NATURALEZA Y CONFIG OPERATIVA */}
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Descripción</label>
+            <textarea 
+              value={form.descripcion} 
+              onChange={(e) => {
+                handleFieldChange('descripcion', e.target.value);
+                setError('');
+              }} 
+              className={cn(
+                "w-full h-32 sm:h-40 p-4 bg-slate-50 border rounded-2xl text-sm sm:text-base font-semibold focus:outline-none focus:ring-4 focus:ring-marca-primario/5 resize-none shadow-inner",
+                error && error.includes('descripción') ? "border-rose-300 focus:ring-rose-50 animate-shake" : "border-slate-200"
+              )} 
+              placeholder="Escribe el detalle aquí..." 
+            />
+            {error && error.includes('descripción') && (
+              <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest ml-1 flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1">
+                <Icon name="error" size="14px" className="text-rose-500" /> {error}
+              </p>
+            )}
+          </div>
+
+          {!isExternal && (
+            <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 shadow-sm space-y-4">
+               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Info size={14} className="text-marca-primario" /> Tipo de Tarea</label>
+               <select
+                 value={form.tipo}
+                 onChange={(e) => handleFieldChange('tipo', e.target.value)}
+                 className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 shadow-sm focus:outline-none focus:ring-4 focus:ring-marca-primario/5"
+               >
+                 <option value="TAREA">Tarea</option>
+                 <option value="RECORDATORIO">Recordatorio</option>
+                 <option value="POLITICA">Política</option>
+               </select>
+               {form.tipo === 'RECORDATORIO' && (
+                  <div className="pt-2 animate-in slide-in-from-top-1 duration-200">
+                     <div className="flex bg-slate-100 p-1 rounded-xl">
+                        <button onClick={() => handleFieldChange('alcanceRecordatorio', 'DEPARTAMENTO')} className={cn("flex-1 py-1.5 text-[9px] font-black uppercase rounded-lg transition-all", form.alcanceRecordatorio === 'DEPARTAMENTO' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}>General</button>
+                        <button onClick={() => handleFieldChange('alcanceRecordatorio', 'PERSONAL')} className={cn("flex-1 py-1.5 text-[9px] font-black uppercase rounded-lg transition-all", form.alcanceRecordatorio === 'PERSONAL' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}>Personal</button>
+                     </div>
+                  </div>
+               )}
+            </div>
+          )}
+
+          {/* Panel Operativo (Aparece inmediatamente después de la naturaleza) */}
+          {renderOperativePanel()}
+        </div>
+
+        {/* SECCIÓN 2: DETALLES EXTRA Y MULTIMEDIA */}
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+             <div className="flex flex-col gap-1.5">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Área</label>
+                <select value={form.area} onChange={(e) => handleFieldChange('area', e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 shadow-sm">{catalogos.areas.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}</select>
+             </div>
+             {hasLineas && (
+               <div className="flex flex-col gap-1.5">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Línea</label>
+                  <select value={form.linea || ''} onChange={(e) => handleFieldChange('linea', e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 shadow-sm">{lineasDisponibles.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}</select>
+               </div>
+             )}
+             <div className="flex flex-col gap-1.5">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Tipo</label>
+                <select value={form.clasificacion} onChange={(e) => handleFieldChange('clasificacion', e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 shadow-sm">{catalogos.clasificaciones.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}</select>
+             </div>
+          </div>
+
+          {form.tipo === 'TAREA' && !isExternal && (
+            <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 shadow-sm space-y-4">
+               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Prioridad</label>
+               <div className="grid grid-cols-2 gap-2">
+                  {Object.entries(PRIORIDAD_MAP).map(([key, val]) => {
+                    const active = form.prioridad === key;
+                    return (
+                      <button key={key} onClick={() => handleFieldChange('prioridad', key)} className={cn("flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 transition-all active:scale-95", active ? "text-white shadow-md" : "bg-white border-slate-100 text-slate-500")} style={active ? { backgroundColor: val.color, borderColor: val.color } : undefined}>
+                        <Icon name={val.icon} size="14px" />
+                        <span className="text-[10px] font-black uppercase">{val.label}</span>
+                      </button>
+                    )
+                  })}
+               </div>
+            </div>
+          )}
+
+          <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 shadow-sm">
+             {renderImagePanel()}
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const footerActions = (
     <div className="flex gap-4 w-full">

@@ -309,6 +309,7 @@ const MinutasPage = () => {
                 minutaAEditar={minutaToEdit}
                 submitting={submitting}
                 onSuccess={handleSaveMinuta}
+                departamentoGlobal={departamentoGlobal}
             />
 
             {minutaToCancel && (

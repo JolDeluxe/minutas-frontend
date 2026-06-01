@@ -134,7 +134,7 @@ const EntryNotesPostIt = ({ entry, notes, onClose, onAddNote, onUpdateNote, onDe
 };
 
 // Componente para previsualización en hover en la tabla usando PORTAL de alta visibilidad
-const TableImagePreview = ({ images, onClick }) => {
+const TableImagePreview = ({ images, remoteImageCount, onClick }) => {
   const isDesktop = useIsDesktop();
   const [showHover, setShowHover] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -152,9 +152,23 @@ const TableImagePreview = ({ images, onClick }) => {
     return () => clearInterval(interval);
   }, [images]);
 
+  if ((!images || images.length === 0) && remoteImageCount > 0) {
+    return (
+      <div className="h-28 w-28 min-w-[7rem] shrink-0 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 flex flex-col items-center justify-center gap-1.5 p-2 text-slate-400 select-none shadow-xs mx-auto">
+        <Icon name="photo_camera" size="20px" className="text-slate-400/80 animate-pulse" />
+        <span className="text-[10px] font-black tracking-widest text-slate-500 uppercase text-center leading-tight">
+          {remoteImageCount} {remoteImageCount === 1 ? 'Foto' : 'Fotos'}
+        </span>
+        <span className="text-[8px] font-black uppercase text-slate-400/80 tracking-wider">
+          En borrador
+        </span>
+      </div>
+    );
+  }
+
   if (!images || images.length === 0) return <span className="text-[11px] text-slate-300">—</span>;
   
-  const currentImg = images[currentIndex]?.preview || images[currentIndex]?.url;
+  const currentImg = images[currentIndex]?.preview || images[currentIndex]?.url || images[currentIndex]?.base64Thumb;
 
   const handleMouseEnter = () => {
     if (!isDesktop) return;
@@ -190,7 +204,7 @@ const TableImagePreview = ({ images, onClick }) => {
           {images.map((img, i) => (
             <img 
               key={i}
-              src={img.preview || img.url} 
+              src={img.preview || img.url || img.base64Thumb} 
               alt={`Preview ${i}`} 
               className={cn(
                 "absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ease-in-out group-hover:scale-110",
@@ -295,8 +309,17 @@ export const EntryTable = ({
       align: "center",
       headerClassName: "w-[10%] min-w-[150px]",
       cell: (row) => {
-        const allImages = [...(row._localImages || []), ...(row.imagenes || row.images || [])].filter(img => img.tipo !== 'EVIDENCIA');
-        return <TableImagePreview images={allImages} onClick={() => openViewer(allImages)} />;
+        const allImages = [
+          ...(row._localImages || []),
+          ...(row._remoteImageThumbnails || []).map((b64, idx) => ({
+            id: `remote_thumb_${idx}`,
+            preview: b64,
+            url: b64,
+            _isRemote: true
+          })),
+          ...(row.imagenes || row.images || [])
+        ].filter(img => img.tipo !== 'EVIDENCIA');
+        return <TableImagePreview images={allImages} remoteImageCount={row._remoteImageCount} onClick={() => openViewer(allImages)} />;
       }
     },
     {

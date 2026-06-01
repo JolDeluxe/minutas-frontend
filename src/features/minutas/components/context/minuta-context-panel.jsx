@@ -55,20 +55,20 @@ export const MinutaContextPanel = ({
       </div>
 
       {/* Header Unificado y Legible */}
-      <header className="px-3 md:px-6 py-2.5 flex items-center justify-between gap-2 md:gap-4 relative z-20">
+      <header className="px-3 md:px-6 py-2.5 md:py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 md:gap-4 relative z-20">
         
-        {/* IZQUIERDA: Regresar e Info en bloque vertical compacto */}
-        <div className="flex items-center gap-1.5 md:gap-3 min-w-0 flex-1">
+        {/* FILA 1 (Móvil) / PANEL IZQUIERDO (Desktop) */}
+        <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
           <button 
             onClick={() => navigate('/minutas')}
             className="w-7 h-7 md:w-10 md:h-10 flex items-center justify-center rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 active:scale-90 transition-all shrink-0"
           >
             <Icon name="chevron_left" size="18px" />
           </button>
-
+ 
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 mb-0.5">
-              <h2 className="text-[11px] xs:text-[13px] md:text-lg font-black text-slate-900 fuente-titulos tracking-tight leading-none truncate">
+            <div className="flex items-center gap-2 flex-wrap mb-0.5">
+              <h2 className="text-[12px] xs:text-[14px] md:text-lg font-black text-slate-900 fuente-titulos tracking-tight leading-tight md:truncate break-words whitespace-normal md:whitespace-nowrap">
                 {minuta.titulo}
               </h2>
               <span className={cn(
@@ -78,7 +78,9 @@ export const MinutaContextPanel = ({
                 {estadoLabel}
               </span>
             </div>
-            <div className="flex items-center gap-1.5">
+            
+            {/* Metadata (Visible en este bloque solo en Desktop) */}
+            <div className="hidden md:flex items-center gap-1.5">
                <span className="text-[7px] md:text-[10px] font-bold text-slate-400 font-mono whitespace-nowrap">#{minuta.id} · {fecha.split(',')[1] || fecha}</span>
                <div className="flex items-center gap-1 text-[8px] md:text-[10px] text-slate-500 font-black uppercase">
                   <span className="w-0.5 h-0.5 rounded-full bg-slate-300 mx-0.5" />
@@ -89,8 +91,55 @@ export const MinutaContextPanel = ({
           </div>
         </div>
 
-        {/* DERECHA: Botones de Acción - Claros pero delgados */}
-        <div className="flex items-center gap-1 shrink-0 ml-auto">
+        {/* FILA 2 (Solo Móvil) - Contiene metadatos y botones de acción lado a lado */}
+        <div className="flex md:hidden items-center justify-between gap-2 border-t border-slate-100 pt-2 mt-0.5">
+          {/* Metadata en Móvil */}
+          <div className="flex flex-col gap-0.5 min-w-0">
+            <span className="text-[8px] font-bold text-slate-400 font-mono whitespace-nowrap">#{minuta.id} · {fecha.split(',')[1] || fecha}</span>
+            <div className="flex items-center gap-1 text-[8px] text-slate-500 font-black uppercase">
+              <LineIconSelector type={minuta.lineaDefault} size={14} className="text-slate-400 shrink-0" />
+              <span>{LINEA_MAP[minuta.lineaDefault]?.label}</span>
+            </div>
+          </div>
+
+          {/* Botones de Acción en Móvil */}
+          <div className="flex items-center gap-1 shrink-0">
+            {minuta.estado === 'PROGRAMADA' && (
+              <Button variant="marca" icon="play_arrow" onClick={onIniciar} loading={iniciando} size="sm" className="h-7 px-2 text-[9px] font-black uppercase">
+                <span>Iniciar</span>
+              </Button>
+            )}
+
+            {minuta.estado === 'EN_CURSO' && resumen?.totalValidas > 0 && composerCollapsed && (
+              <Button variant="marca" icon="stop_circle" onClick={onFinalizar} loading={finalizando} size="sm" className="h-7 px-2 text-[9px] font-black uppercase shadow-sm">
+                <span>Finalizar</span>
+              </Button>
+            )}
+
+            {(minuta.estado === 'ACTIVA' || minuta.estado === 'EN_ORGANIZACION' || minuta.estado === 'CERRADA') && (
+              <div className="flex items-center gap-1">
+                 {(minuta.estado === 'ACTIVA' || minuta.estado === 'EN_ORGANIZACION') && (
+                   <Button variant="dark" icon="check_circle" onClick={onCerrar} loading={cerrando} size="sm" className="h-7 px-1.5 text-[9px] font-black uppercase">
+                     <span>Forzar Cierre</span>
+                   </Button>
+                 )}
+                 
+                 <Button variant="outline" icon="lock_open" onClick={onReabrir} loading={reabriendo} size="sm" className="h-7 px-1.5 text-[9px] font-black uppercase border-slate-200 bg-white text-slate-600">
+                   <span>Reabrir</span>
+                 </Button>
+              </div>
+            )}
+
+            {minuta.estado !== 'CANCELADA' && resumen?.totalEntradas === 0 && (
+              <button onClick={onCancelar} disabled={cancelando} className="w-7 h-7 flex items-center justify-center rounded-lg text-rose-400 hover:bg-rose-50 active:scale-90 transition-all">
+                 <Icon name="delete" size="16px" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* PANEL DE ACCIONES (Solo Desktop) */}
+        <div className="hidden md:flex items-center gap-1 shrink-0 ml-auto">
           {minuta.estado === 'PROGRAMADA' && (
             <Button variant="marca" icon="play_arrow" onClick={onIniciar} loading={iniciando} size="sm" className="h-7 px-2 md:px-4 text-[9px] font-black uppercase">
               <span className="hidden xs:inline">Iniciar</span>

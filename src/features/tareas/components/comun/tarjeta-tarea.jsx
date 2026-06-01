@@ -60,7 +60,7 @@ export const ImageViewer = ({ images, initialIndex, onClose }) => {
         )}
 
         <div className="relative max-w-[95vw] max-h-[90vh] flex items-center justify-center pointer-events-auto">
-          <img src={currentImg.preview || currentImg.url} className="max-w-[90vw] max-h-[75vh] w-auto h-auto object-contain rounded-2xl shadow-[0_0_80px_rgba(0,0,0,0.8)] animate-in zoom-in-95 duration-500 select-none" alt="Vista ampliada" />
+          <img src={currentImg.preview || currentImg.url || currentImg.base64Thumb} className="max-w-[90vw] max-h-[75vh] w-auto h-auto object-contain rounded-2xl shadow-[0_0_80px_rgba(0,0,0,0.8)] animate-in zoom-in-95 duration-500 select-none" alt="Vista ampliada" />
         </div>
 
         {images.length > 1 && (
@@ -132,7 +132,7 @@ const CardImageCarousel = ({ images, lineInfo, isMarketing, onImageClick }) => {
           {images.map((img, i) => (
             <img
               key={i}
-              src={img.preview || img.url}
+              src={img.preview || img.url || img.base64Thumb}
               className={cn(
                 "absolute inset-0 h-full w-full object-cover transition-all duration-1000 ease-in-out",
                 i === currentIndex ? "opacity-100 scale-100" : "opacity-0 scale-110"
@@ -168,7 +168,7 @@ const CardImageCarousel = ({ images, lineInfo, isMarketing, onImageClick }) => {
           style={{ left: coords.x, top: coords.y, transform: 'translateY(-50%)' }}
         >
           <div className="w-64 h-64 sm:w-[380px] sm:h-[380px] flex items-center justify-center relative overflow-hidden rounded-[2.5rem] bg-white border border-slate-200 p-2 shadow-[0_50px_120px_rgba(0,0,0,0.5)] ring-[12px] ring-white/20">
-            <img src={currentImg.preview || currentImg.url} alt="Preview Zoom" className="w-full h-full object-contain rounded-3xl drop-shadow-lg animate-in fade-in duration-500 bg-slate-50" />
+            <img src={currentImg.preview || currentImg.url || currentImg.base64Thumb} alt="Preview Zoom" className="w-full h-full object-contain rounded-3xl drop-shadow-lg animate-in fade-in duration-500 bg-slate-50" />
             <div className="absolute bottom-5 left-1/2 -translate-x-1/2 bg-slate-900/90 backdrop-blur-md px-5 py-2 rounded-full text-[10px] font-black text-white uppercase tracking-[0.3em] shadow-2xl border border-white/10">
               Vista Rápida
             </div>
@@ -349,10 +349,17 @@ export const TareaCard = ({
     // Soporta tanto tarea.imagenes (Tareas) como tarea.images (Minutas)
     const imagenesRaw = [
         ...(tarea._localImages || []),
+        ...(tarea._remoteImageThumbnails || []).map((b64, idx) => ({
+            id: `remote_thumb_${idx}`,
+            preview: b64,
+            url: b64,
+            _isRemote: true
+        })),
         ...(tarea.imagenes || tarea.images || [])
     ];
     const imagenesCaptura = imagenesRaw.filter(img => img.tipo !== 'EVIDENCIA');
     const hasImages = imagenesCaptura.length > 0;
+    const hasRemoteImages = !hasImages && (Number(tarea._remoteImageCount) > 0);
 
     // ── Flags de estado ─────────────────────────────────────────────────────
     const { rol } = currentUser || {};
@@ -472,10 +479,10 @@ export const TareaCard = ({
                 <div className="flex flex-row h-full min-h-[140px]">
 
       {/* PANEL IZQUIERDO: IMAGEN / IDENTIDAD */}
-      {(!isMarketing || hasImages) && (
+      {(!isMarketing || hasImages || hasRemoteImages) && (
         <div className={cn(
           "flex flex-col items-center shrink-0 w-[58px] min-[360px]:w-[78px] sm:w-[98px] bg-slate-50/50 border-r border-slate-100/50 p-1 min-[360px]:p-1.5 sm:p-2 relative group/side",
-          hasImages ? "justify-start pt-3" : "justify-center"
+          (hasImages || hasRemoteImages) ? "justify-start pt-3" : "justify-center"
         )}>
           {hasImages ? (
             <CardImageCarousel
@@ -484,6 +491,16 @@ export const TareaCard = ({
               isMarketing={isMarketing}
               onImageClick={(idx) => setViewerIndex(idx)}
             />
+          ) : hasRemoteImages ? (
+            <div className="relative h-11 w-11 min-[360px]:h-16 min-[360px]:w-16 sm:h-20 sm:w-20 shrink-0 overflow-hidden rounded-xl min-[360px]:rounded-[1rem] border-2 border-dashed border-slate-200 bg-slate-100/30 flex flex-col items-center justify-center gap-1 p-1 text-slate-400 shadow-xs mt-2">
+              <Icon name="photo_camera" size="18px" className="text-slate-400/80 animate-pulse shrink-0" />
+              <span className="text-[7px] min-[360px]:text-[8px] font-black uppercase tracking-wider text-slate-500 leading-none text-center">
+                {tarea._remoteImageCount} {tarea._remoteImageCount === 1 ? 'Foto' : 'Fotos'}
+              </span>
+              <span className="text-[5.5px] min-[360px]:text-[6px] font-bold uppercase text-slate-400/70 leading-none tracking-widest text-center mt-0.5 whitespace-nowrap">
+                Borrador
+              </span>
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center w-full gap-1 min-[360px]:gap-1.5">
               <div

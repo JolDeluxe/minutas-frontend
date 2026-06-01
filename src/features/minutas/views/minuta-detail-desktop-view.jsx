@@ -223,7 +223,7 @@ export const MinutaDetailDesktopView = ({
                 </div>
               )}
 
-              <div className="flex items-center gap-4 bg-white/40 p-2 rounded-2xl backdrop-blur-md border border-white/60 sticky top-0 z-20 shadow-sm">
+              <div className="flex items-center gap-4 bg-slate-50/90 p-2 rounded-2xl backdrop-blur-md border border-slate-200/50 sticky top-0 z-30 shadow-sm">
                 <div className="flex-1 overflow-hidden">
                   <EntryFiltersBar 
                     activeFilter={activeFilter} 
