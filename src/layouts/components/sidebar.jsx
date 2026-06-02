@@ -49,7 +49,7 @@ export const Sidebar = () => {
         </p>
 
         <p className="font-codigo text-[10px] bg-marca-primario/50 text-cuadra-arena px-2 py-0.5 rounded-sm mt-1 mb-3 whitespace-nowrap shadow-inner">
-          v.desarrollo
+          v1.0.0-beta
         </p>
 
         <p className="text-[10px] text-white/50 text-center leading-tight">
