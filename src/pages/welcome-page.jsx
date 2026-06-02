@@ -2,10 +2,12 @@ import React from 'react';
 import { useAuthStore } from '@/stores/auth-store';
 import { Icon } from '@/components/ui/icon';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
+import { getLogoByUser } from '@/utils/resolve-logo';
 
 const WelcomePage = () => {
   const user = useAuthStore((state) => state.user);
   const currentUser = user?.data || user;
+  const logoUrl = getLogoByUser(currentUser);
   const isDesktop = useIsDesktop();
 
   const rolLabels = {
@@ -26,8 +28,8 @@ const WelcomePage = () => {
 
       {/* Logo */}
       <img
-        src="/img/01_Cuadra_Diseño.webp"
-        alt="Cuadra — Diseño e Imagen"
+        src={logoUrl}
+        alt="Cuadra"
         className={`w-auto object-contain mb-8 drop-shadow-md ${isDesktop ? 'h-20' : 'h-14'}`}
       />
 

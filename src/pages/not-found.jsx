@@ -3,16 +3,20 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/z_index';
+import { useAuthStore } from '@/stores/auth-store';
+import { getLogoByUser } from '@/utils/resolve-logo';
 
 const NotFoundPage = () => {
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
+  const logoUrl = getLogoByUser(user);
 
   return (
     <main className="w-dvw h-dvh overflow-hidden bg-cuadra-arena flex flex-col items-center justify-between p-6 box-border">
 
       <header className="shrink-0 w-full flex justify-center pt-6">
         <img
-          src="/img/01_Cuadra.webp"
+          src={logoUrl}
           alt="Logotipo Cuadra"
           className="h-12 md:h-16 w-auto object-contain"
         />

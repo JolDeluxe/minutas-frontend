@@ -13,7 +13,7 @@ export const LoginMobile = ({ view, bgImage, onBack, ...formProps }) => {
 
       <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-100 p-6 sm:p-8 text-slate-800">
         <div className="flex justify-center mb-6">
-          <img src="/img/01_Cuadra_Diseño.webp" alt="Cuadra — Diseño e Imagen" className="w-60 h-auto object-contain" />
+          <img src="/img/grupo_cuadra_logo.png" alt="Cuadra" className="w-60 h-auto object-contain" />
         </div>
 
         {view === 'login' && <LoginForm {...formProps} />}

@@ -2,9 +2,13 @@ import React from 'react';
 import { Icon } from '@/components/ui/icon';
 import { Tooltip } from '@/components/ui/tooltip';
 import { useUIStore } from '@/stores/ui-store';
+import { useAuthStore } from '@/stores/auth-store';
+import { getLogoByUser } from '@/utils/resolve-logo';
 
 export const SidebarHeader = () => {
   const { sidebarExpanded, toggleSidebar } = useUIStore();
+  const { user } = useAuthStore();
+  const logoUrl = getLogoByUser(user);
   const tooltipText = sidebarExpanded ? 'Contraer menú' : 'Expandir menú';
 
   return (
@@ -12,8 +16,8 @@ export const SidebarHeader = () => {
       <div className="flex items-center justify-center px-4 w-full h-full">
         {sidebarExpanded ? (
           <img 
-            src="/img/01_Cuadra.webp" 
-            alt="Cuadra Mantenimiento" 
+            src={logoUrl} 
+            alt="Cuadra" 
             className="h-10 w-auto object-contain animate-in fade-in zoom-in duration-300"
           />
         ) : (

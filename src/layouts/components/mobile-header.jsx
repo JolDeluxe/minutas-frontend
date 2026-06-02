@@ -6,6 +6,7 @@ import { useUIStore } from '@/stores/ui-store';
 import { glassBase, GlassSheen } from '@/components/ui/liquid-glass-mobile';
 import { useNotifyStore } from '@/stores/notify-store';
 import { NotifyBadge } from '@/features/notificaciones/components/notify-badge';
+import { getLogoByUser } from '@/utils/resolve-logo';
 
 // Recibe la prop showBurger para decidir si renderiza el botón del menú lateral
 export const MobileHeader = ({ showBurger = false }) => {
@@ -19,6 +20,7 @@ export const MobileHeader = ({ showBurger = false }) => {
   const profileRef = useRef(null);
 
   const currentUser = user?.data || user;
+  const logoUrl = getLogoByUser(currentUser);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -90,7 +92,7 @@ export const MobileHeader = ({ showBurger = false }) => {
 
         {/* CENTRO: Logo */}
         <div className="absolute left-1/2 transform -translate-x-1/2">
-          <img src="/img/01_Cuadra_Diseño.webp" alt="Cuadra — Diseño e Imagen" className="h-8 w-auto object-contain drop-shadow-sm" />
+          <img src={logoUrl} alt="Cuadra" className="h-8 w-auto object-contain drop-shadow-sm" />
         </div>
 
         {/* DERECHA: Campana + Menú Condicional */}

@@ -8,6 +8,8 @@ import { UserMenu } from './user-menu';
 import { NotifyDropdown } from '@/features/notificaciones/components/notify-dropdown';
 import { NotifyBadge } from '@/features/notificaciones/components/notify-badge';
 import { useNotifyStore } from '@/stores/notify-store';
+import { useAuthStore } from '@/stores/auth-store';
+import { getLogoByUser } from '@/utils/resolve-logo';
 
 const SYSTEM_ROUTES = [
   { route: '/perfil', name: 'Mi Perfil', icon: 'person' },
@@ -19,8 +21,11 @@ export const Navbar = () => {
   const isDesktop = useIsDesktop();
   const { toggleMobileMenu, sidebarExpanded } = useUIStore();
   const { noLeidas } = useNotifyStore();
+  const { user } = useAuthStore();
   const navRef = useRef(null);
   const bellRef = useRef(null);
+
+  const logoUrl = getLogoByUser(user);
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -93,8 +98,8 @@ export const Navbar = () => {
         {/* CENTER — logo */}
         <div className="flex items-center justify-center">
           <img
-            src="/img/01_Cuadra_Diseño.webp"
-            alt="Cuadra — Diseño e Imagen"
+            src={logoUrl}
+            alt="Cuadra"
             className="h-8 sm:h-10 w-auto object-contain"
           />
         </div>
