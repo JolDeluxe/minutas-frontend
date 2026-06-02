@@ -20,11 +20,10 @@ export const ProfileSummaryCard = ({
 
   const formatRol = (rol) => {
     const rolesMap = {
-      'SUPER_ADMIN': 'Super Admin',
-      'JEFE_MTTO': 'Jefe Mtto',
-      'COORDINADOR_MTTO': 'Coordinador',
-      'TECNICO': 'Técnico',
-      'CLIENTE_INTERNO': 'Cliente Interno'
+      'ADMIN': 'Administrador',
+      'GERENCIA': 'Gerencia',
+      'JEFE': 'Jefe de Departamento',
+      'COORDINADOR': 'Coordinador'
     };
     return rolesMap[rol] || rol;
   };
@@ -46,21 +45,21 @@ export const ProfileSummaryCard = ({
               {profile.nombre}
             </h2>
             <p className="text-xs sm:text-sm text-gray-500 break-words mt-1">
-              {profile.username}
+              @{profile.username}
             </p>
           </div>
 
           <div className="flex justify-center w-full">
-            <Badge className="bg-marca-primario text-white text-center whitespace-normal break-words">
+            <Badge className="bg-marca-primario text-white text-center whitespace-normal break-words font-bold">
               {formatRol(profile.rol)}
             </Badge>
           </div>
 
           {profile.departamento && (
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-700 w-full px-2">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-700 w-full px-2 font-bold uppercase tracking-wider">
               <Icon name="business" size="sm" className="shrink-0 text-gray-400" />
               <span className="break-words text-center text-balance">
-                {profile.departamento.nombre}
+                Departamento: {profile.departamento}
               </span>
             </div>
           )}
@@ -69,23 +68,6 @@ export const ProfileSummaryCard = ({
             <Badge className={getEstadoBadgeColor(profile.estado)}>
               {profile.estado}
             </Badge>
-          </div>
-        </div>
-
-        <div className="w-full h-px bg-gray-200" />
-
-        <div className="w-full grid grid-cols-2 gap-3 text-center">
-          <div className="bg-gray-50 rounded-lg p-3 border border-gray-100 flex flex-col items-center justify-center w-full">
-            <p className="text-[10px] uppercase tracking-wider font-extrabold text-gray-400 mb-1">Cargo</p>
-            <p className="text-xs sm:text-sm font-medium text-gray-900 w-full wrap-break-words text-balance">
-              {profile.cargo || '—'}
-            </p>
-          </div>
-          <div className="bg-gray-50 rounded-lg p-3 border border-gray-100 flex flex-col items-center justify-center w-full">
-            <p className="text-[10px] uppercase tracking-wider font-extrabold text-gray-400 mb-1">Teléfono</p>
-            <p className="text-xs sm:text-sm font-medium text-gray-900 w-full wrap-break-words text-balance">
-              {profile.telefono || '—'}
-            </p>
           </div>
         </div>
       </CardBody>

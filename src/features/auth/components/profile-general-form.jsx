@@ -10,9 +10,9 @@ export const ProfileGeneralForm = ({
   error,
   clearError
 }) => {
-  const [formData, setFormData] = useState({ nombre: '', username: '', email: '', telefono: '' });
-  // 🔥 ESTADO ORIGINAL: Guardamos la foto intacta de los datos para saber si hubo cambios
-  const [initialData, setInitialData] = useState({ nombre: '', username: '', email: '', telefono: '' });
+  const [formData, setFormData] = useState({ nombre: '', username: '', email: '' });
+  // 🔥 ESTADO ORIGINAL: Guardamos los datos intactos para saber si hubo cambios
+  const [initialData, setInitialData] = useState({ nombre: '', username: '', email: '' });
   const [formErrors, setFormErrors] = useState({});
 
   // Regla de negocio derivada del Backend para UX:
@@ -23,11 +23,10 @@ export const ProfileGeneralForm = ({
       const data = {
         nombre: profile.nombre || '',
         username: profile.username || '',
-        email: profile.email || '',
-        telefono: profile.telefono || ''
+        email: profile.email || ''
       };
       setFormData(data);
-      setInitialData(data); // Establecemos la foto original al cargar
+      setInitialData(data); 
     }
   }, [profile]);
 
@@ -84,25 +83,13 @@ export const ProfileGeneralForm = ({
       }
     }
 
-    if (formData.telefono && formData.telefono.trim() !== '') {
-      if (formData.telefono.length < 10) {
-        errors.telefono = 'Faltan dígitos (requiere 10)';
-      } else if (formData.telefono.length > 10) {
-        errors.telefono = 'Sobran dígitos (máx 10)';
-      }
-    }
-
     return errors;
   };
 
   const handleChange = (field, value) => {
     let finalValue = value;
 
-    if (field === 'telefono') {
-      finalValue = value.replace(/\D/g, '');
-      if (finalValue.length > 11) finalValue = finalValue.substring(0, 11);
-    }
-    else if (field === 'username') {
+    if (field === 'username') {
       finalValue = value.replace(/\s/g, '');
       if (finalValue.length > 51) finalValue = finalValue.substring(0, 51);
     }
@@ -124,7 +111,15 @@ export const ProfileGeneralForm = ({
   const handleSubmit = () => {
     const errors = validateForm();
     if (Object.keys(errors).length > 0) return setFormErrors(errors);
-    onSave(formData);
+    
+    // Limpiar campos críticos antes de enviar
+    const finalData = {
+      ...formData,
+      email: formData.email ? formData.email.trim().replace(/\s/g, '') : formData.email,
+      username: formData.username ? formData.username.trim().replace(/\s/g, '') : formData.username,
+    };
+    
+    onSave(finalData);
   };
 
   // 🔥 LÓGICA DE BLOQUEO AVANZADA ("DIRTY STATE") ACTUALIZADA CON EXCEPCIÓN DE ROL
@@ -193,27 +188,7 @@ export const ProfileGeneralForm = ({
           />
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <div className="flex justify-between items-center">
-            <Label htmlFor="telefono" error={!!formErrors.telefono || formData.telefono.length > 10}>Teléfono de Contacto</Label>
-            <span className={`text-[10px] font-bold tracking-wider ${formData.telefono.length > 10 ? 'text-red-500' : 'text-gray-400'}`}>
-              {formData.telefono.length}/10
-            </span>
-          </div>
-          <Input
-            id="telefono"
-            type="tel"
-            value={formData.telefono}
-            onChange={(e) => handleChange('telefono', e.target.value)}
-            error={!!formErrors.telefono || formData.telefono.length > 10}
-            helperText={formErrors.telefono}
-            disabled={updating}
-            placeholder="10 dígitos"
-            maxLength={11}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5 md:col-span-2">
           <div className="flex justify-between items-center">
             <Label htmlFor="email" error={!!formErrors.email || formData.email.length > 100}>
               Correo Electrónico del Sistema {!requiereEmail && <span className="text-gray-400 font-normal italic ml-1">(Opcional)</span>}

@@ -52,15 +52,11 @@ export const ProfileDesktop = ({
             <div className="mt-5 flex flex-wrap gap-6 text-sm text-gray-600 font-medium min-w-0">
               <span className="flex items-center gap-2 min-w-0">
                 <Icon name="business" size="sm" className="text-gray-400 shrink-0" />
-                <span className="truncate">{profile.departamento?.nombre || 'Sin Departamento'}</span>
-              </span>
-              <span className="flex items-center gap-2 min-w-0">
-                <Icon name="work" size="sm" className="text-gray-400 shrink-0" />
-                <span className="truncate">{profile.cargo || 'Sin Cargo Asignado'}</span>
+                <span className="truncate uppercase tracking-wider">{profile.departamento || 'Sin Departamento Asignado'}</span>
               </span>
               <span className="flex items-center gap-2 min-w-0">
                 <Icon name="mail" size="sm" className="text-gray-400 shrink-0" />
-                <span className="truncate">{profile.email}</span>
+                <span className="truncate">{profile.email || 'Sin correo registrado'}</span>
               </span>
             </div>
           </div>

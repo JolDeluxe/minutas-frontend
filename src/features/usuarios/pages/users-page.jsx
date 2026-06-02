@@ -8,7 +8,7 @@ import { UsersDesktop } from '../views/users-desktop';
 import { UsersMobile } from '../views/users-mobile';
 import { UserFormModal } from '../components/user-form-modal';
 
-const LIMIT = 10;
+const LIMIT = 30;
 
 const UsersPage = () => {
     const isDesktop = useIsDesktop();
