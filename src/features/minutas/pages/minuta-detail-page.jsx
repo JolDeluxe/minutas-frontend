@@ -521,7 +521,12 @@ export default function MinutaDetailPage() {
           if (pA !== pB) return pA - pB;
         }
 
-        // Orden secundario: fecha de creación (más reciente arriba)
+        // Orden cronológico (más antiguo primero) para Borradores y SIN_ORGANIZAR
+        if (rankA === 0) {
+          return new Date(a.createdAt) - new Date(b.createdAt);
+        }
+
+        // Orden secundario para el resto: fecha de creación (más reciente arriba)
         return new Date(b.createdAt) - new Date(a.createdAt);
       });
   }, [allEntries, activeFilter, departamento]);

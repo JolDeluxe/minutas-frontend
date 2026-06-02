@@ -335,7 +335,7 @@ export const MobileQuickComposer = ({
               <button type="button" onClick={() => fileInputRef.current?.click()} disabled={localImages.length >= 3} className="flex items-center gap-2 px-4 py-3 bg-slate-50 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-slate-100 disabled:opacity-40 touch-manipulation"><Camera size={20} /> FOTO</button>
               <button type="button" onClick={handleSubmit} disabled={!isValid || submitting} className={cn("px-8 py-3 rounded-2xl flex items-center gap-2 transition-all active:scale-95 font-black uppercase text-[10px] tracking-widest shadow-2xl touch-manipulation", isValid ? "bg-emerald-600 text-white shadow-emerald-600/30" : "bg-slate-100 text-slate-300 shadow-none border border-slate-100")}>
                 {submitting ? <Icon name="progress_activity" className="animate-spin" size="20px" /> : <Send size={18} />}
-                {submitting ? 'GUARDANDO...' : 'GUARDAR ENTRADA'}
+                {submitting ? 'GUARDANDO...' : 'GUARDAR TAREA'}
               </button>
             </div>
           </div>

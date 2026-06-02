@@ -245,7 +245,7 @@ export const QuickComposer = ({
            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Captura</span>
            {descripcion.trim() && <span className="text-[11px] font-bold text-slate-900 truncate max-w-md italic opacity-60">"{descripcion.substring(0, 60)}..."</span>}
-           <button onClick={() => setIsCollapsed(false)} className="ml-2 flex items-center gap-1.5 px-3 py-1 bg-slate-900 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg"><Plus size={12} /> Nueva Entrada</button>
+           <button onClick={() => setIsCollapsed(false)} className="ml-2 flex items-center gap-1.5 px-3 py-1 bg-slate-900 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg"><Plus size={12} /> Nueva Tarea</button>
         </div>
       ) : (
         <div className="flex flex-col h-full w-full gap-2 animate-in fade-in zoom-in-95 duration-300 min-h-0 max-w-5xl mx-auto">
@@ -391,7 +391,7 @@ export const QuickComposer = ({
                 )}
               >
                 {submitting ? <Icon name="progress_activity" size="20px" className="animate-spin" /> : <Save size={20} />}
-                {submitting ? 'Guardando...' : 'Registrar Entrada'}
+                {submitting ? 'Guardando...' : 'Registrar Tarea'}
               </button>
               
               <div className="flex justify-center items-center gap-2">

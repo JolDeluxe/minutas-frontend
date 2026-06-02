@@ -70,7 +70,7 @@ export const useMinutaDraftStore = create((set, get) => ({
     };
 
     set((state) => ({
-      draftEntries: [newEntry, ...state.draftEntries],
+      draftEntries: [...state.draftEntries, newEntry],
     }));
     get().persist();
     return newEntry;
@@ -116,7 +116,7 @@ export const useMinutaDraftStore = create((set, get) => ({
       return {
         remoteDraftEntries: exists
           ? state.remoteDraftEntries.map((e) => (e.tempId === normalized.tempId ? normalized : e))
-          : [normalized, ...state.remoteDraftEntries],
+          : [...state.remoteDraftEntries, normalized],
       };
     });
   },
