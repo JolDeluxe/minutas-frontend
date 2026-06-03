@@ -62,6 +62,7 @@ export const EntryCard = ({
       isGeneratingPdf={isGeneratingPdf}
       isDraft={Boolean(entry.tempId)}
       onToggleNotificado={onToggleNotificado}
+      users={users}
     />
   );
 };

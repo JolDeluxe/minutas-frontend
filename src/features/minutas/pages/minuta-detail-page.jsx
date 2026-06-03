@@ -545,35 +545,55 @@ export default function MinutaDetailPage() {
     let totalTareas = 0, pendientes = 0, enRevision = 0, cerradas = 0, atrasadas = 0;
     let totalPoliticas = 0, totalRecordatorios = 0;
     let totalValidas = 0;
+    let externas = 0;
+    let sinClasificar = 0;
 
     for (const t of allEntries) {
-      if (t.tipo !== 'DESCARTADA' && t.estado !== 'DESCARTADA' && t.estado !== 'CANCELADA') {
-        totalValidas++;
+      if (t.tipo === 'DESCARTADA' || t.estado === 'DESCARTADA' || t.estado === 'CANCELADA') {
+        continue;
       }
-      const isExterna = t.area && t.area !== departamento;
-      if (t.tipo === 'POLITICA') totalPoliticas++;
-      else if (t.tipo === 'RECORDATORIO') totalRecordatorios++;
-      else if (t.tipo === 'TAREA' && !isExterna) {
-        const estadoUpper = t.estado?.toUpperCase();
-        if (estadoUpper === 'PENDIENTE') {
-          totalTareas++;
-          pendientes++;
-        } else if (estadoUpper === 'EN_REVISION') {
-          totalTareas++;
-          enRevision++;
-        } else if (estadoUpper === 'CERRADA') {
-          totalTareas++;
-          cerradas++;
-        }
-        
-        const isCompletada = estadoUpper === 'CERRADA' || estadoUpper === 'EN_REVISION';
-        if (t.fechaVencimiento && new Date(t.fechaVencimiento) < now && !isCompletada && estadoUpper !== 'CANCELADA') {
-          atrasadas++;
+      totalValidas++;
+      
+      const isExterna = t.area && (
+        ((departamento === 'DISENO' || departamento === 'DISEÑO') && t.area !== 'DISENO') ||
+        (departamento === 'MARKETING' && t.area !== 'MARKETING')
+      );
+
+      if (isExterna) {
+        externas++;
+      } else {
+        if (t.tipo === 'POLITICA') {
+          totalPoliticas++;
+        } else if (t.tipo === 'RECORDATORIO') {
+          totalRecordatorios++;
+        } else if (t.tipo === 'TAREA') {
+          const estadoUpper = t.estado?.toUpperCase() || 'PENDIENTE';
+          if (estadoUpper === 'PENDIENTE') {
+            totalTareas++;
+            pendientes++;
+          } else if (estadoUpper === 'EN_REVISION') {
+            totalTareas++;
+            enRevision++;
+          } else if (estadoUpper === 'CERRADA') {
+            totalTareas++;
+            cerradas++;
+          }
+          
+          const isCompletada = estadoUpper === 'CERRADA' || estadoUpper === 'EN_REVISION';
+          if (t.fechaVencimiento && new Date(t.fechaVencimiento) < now && !isCompletada) {
+            atrasadas++;
+          }
+        } else if (t.tipo === 'SIN_ORGANIZAR' || !t.tipo) {
+          sinClasificar++;
         }
       }
     }
     const porcentaje = totalTareas > 0 ? Math.round((cerradas / totalTareas) * 100) : 0;
-    return { totalTareas, pendientes, enRevision, cerradas, atrasadas, porcentaje, totalPoliticas, totalRecordatorios, totalEntradas: allEntries.length, totalValidas };
+    return { 
+      totalTareas, pendientes, enRevision, cerradas, atrasadas, porcentaje, 
+      totalPoliticas, totalRecordatorios, totalEntradas: allEntries.length, totalValidas,
+      externas, sinClasificar
+    };
   }, [allEntries, departamento]);
 
   const handleUpdateDraftEntry = useCallback((tempId, updates) => {
@@ -646,9 +666,41 @@ export default function MinutaDetailPage() {
         if (validEntries.length > 0) {
           const toSend = validEntries.map((e) => {
             const entry = { ...e };
+            
+            // Eliminar propiedades internas/locales que no pertenecen al esquema
             delete entry.tempId;
             delete entry.estadoConceptual;
             delete entry.formalizada;
+            delete entry._isRemoteDraft;
+            delete entry.readOnly;
+            delete entry.createdAt;
+            delete entry.updatedAt;
+            delete entry.fecha; // El composer móvil añade "fecha", pero el backend espera "fechaVencimiento"
+            delete entry.asignaciones; // Evitar conflictos con responsables
+
+            // Normalizar responsables para que sea siempre un arreglo de números (IDs de usuario)
+            if (entry.responsables) {
+              if (Array.isArray(entry.responsables)) {
+                entry.responsables = entry.responsables
+                  .map(r => (typeof r === 'object' && r !== null) ? (r.usuarioId || r.id) : r)
+                  .map(Number)
+                  .filter(id => !isNaN(id) && id > 0);
+              } else {
+                delete entry.responsables;
+              }
+            }
+
+            // Normalizar notas
+            if (entry.notas && Array.isArray(entry.notas)) {
+              entry.notas = entry.notas
+                .map(n => {
+                  if (typeof n === 'string') return { contenido: n.trim() };
+                  if (typeof n === 'object' && n !== null && n.contenido) return { contenido: String(n.contenido).trim() };
+                  return null;
+                })
+                .filter(n => n && n.contenido.length > 0);
+            }
+
             return entry;
           });
           await createTareaApi({ tareas: toSend });
@@ -668,8 +720,15 @@ export default function MinutaDetailPage() {
       const res = await getMinutaById(id);
       setMinuta(res.data?.data || res.data);
       refreshEntries();
-    } catch {
-      notify.error('Error al sincronizar');
+    } catch (err) {
+      console.error("❌ Error al sincronizar la minuta:", err);
+      const apiErrors = err.response?.data?.errors;
+      if (apiErrors && Array.isArray(apiErrors)) {
+        const errorMsg = apiErrors.map(e => `${e.field}: ${e.message}`).join(' | ');
+        notify.error(`Error de validación: ${errorMsg}`);
+      } else {
+        notify.error(err.response?.data?.error || err.response?.data?.message || 'Error al sincronizar');
+      }
     } finally {
       setIsSubmittingFinal(false);
     }

@@ -251,7 +251,7 @@ const TableImagePreview = ({ images, remoteImageCount, onClick }) => {
 };
 
 export const EntryTable = ({ 
-  entries, departamento, isDraftSection, onOrganize, onRemove, onEdit, 
+  entries, departamento, onOrganize, onRemove, onEdit, 
   onCreateNote, onUpdateNote, onDeleteNote, onChangeStatus, users,
   onDownloadPdf, isGeneratingPdf, onViewDetail, onToggleNotificado
 }) => {
@@ -279,6 +279,19 @@ export const EntryTable = ({
     if (!activeNotesEntryId) return null;
     return entries.find(e => (e.id || e.tempId) === activeNotesEntryId);
   }, [activeNotesEntryId, entries]);
+
+  const hasOrganizedEntries = useMemo(() => entries.some(e => {
+    const isDraft = Boolean(e.tempId);
+    const tipo = e.tipo || (isDraft ? 'SIN_ORGANIZAR' : 'TAREA');
+    return tipo !== 'SIN_ORGANIZAR';
+  }), [entries]);
+
+  const hasResponsibles = useMemo(() => entries.some(e => 
+    (e.asignaciones && e.asignaciones.length > 0) || 
+    (e.responsables && e.responsables.length > 0)
+  ), [entries]);
+  const hasPriority = useMemo(() => entries.some(e => e.prioridad), [entries]);
+  const hasDueDate = useMemo(() => entries.some(e => e.fechaVencimiento), [entries]);
 
   // Verificar si todas las entradas de la tabla actual son externas
   const isAllExternal = useMemo(() => {
@@ -338,8 +351,10 @@ export const EntryTable = ({
       cell: (row) => {
         const isDraft = Boolean(row.tempId);
         const isRemoteDraft = Boolean(row._isRemoteDraft);
-        const isOrganized = row.tipo !== 'SIN_ORGANIZAR';
-        const isTarea = row.tipo === 'TAREA';
+        const tipo = row.tipo || (isDraft ? 'SIN_ORGANIZAR' : 'TAREA');
+        const isOrganized = tipo !== 'SIN_ORGANIZAR';
+        const isTarea = tipo === 'TAREA';
+        const isExternal = (departamento === 'DISENO' && row.area !== 'DISENO') || (departamento === 'MARKETING' && row.area !== 'MARKETING');
         
         const handleClick = () => {
           if (isRemoteDraft) {
@@ -355,25 +370,49 @@ export const EntryTable = ({
         const isClickable = !isRemoteDraft && (isDraft || !isOrganized || isTarea);
 
         return (
-          <span 
-            onClick={handleClick}
-            className={cn(
-              "block text-[13px] font-semibold leading-relaxed line-clamp-3 transition-colors",
-              isClickable ? "cursor-pointer text-slate-800 hover:text-marca-primario" : "text-slate-600"
-            )}
-            title={
-              isRemoteDraft ? `Borrador en vivo de ${row.author?.nombre || 'otro usuario'}` :
-              isDraft || !isOrganized ? "Hacer clic para organizar esta entrada" :
-              isTarea ? "Hacer clic para ver detalles de la tarea" :
-              row.descripcion
-            }
-          >
-            {row.descripcion || 'Sin descripción'}
-          </span>
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center gap-1.5">
+              {tipo === 'TAREA' && (
+                <span className="inline-flex items-center gap-1 rounded-lg bg-rose-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-rose-600 border border-rose-100">
+                  <Icon name="task_alt" size="10px" className="shrink-0 text-rose-500" /> Tarea
+                </span>
+              )}
+              {tipo === 'RECORDATORIO' && (
+                <span className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-indigo-600 border border-indigo-100">
+                  <Icon name="notifications" size="10px" className="shrink-0 text-indigo-500" /> Recordatorio
+                </span>
+              )}
+              {tipo === 'POLITICA' && (
+                <span className="inline-flex items-center gap-1 rounded-lg bg-slate-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-slate-700 border border-slate-200">
+                  <Icon name="policy" size="10px" className="shrink-0 text-slate-500" /> Política
+                </span>
+              )}
+              {tipo === 'SIN_ORGANIZAR' && !isExternal && (
+                <span className="inline-flex items-center gap-1 rounded-lg bg-amber-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-amber-900 border border-amber-300 shadow-sm animate-pulse">
+                  <Icon name="warning" size="10px" className="shrink-0 text-amber-600" /> Falta Clasificar
+                </span>
+              )}
+            </div>
+            <span 
+              onClick={handleClick}
+              className={cn(
+                "block text-[13px] font-semibold leading-relaxed line-clamp-3 transition-colors",
+                isClickable ? "cursor-pointer text-slate-800 hover:text-marca-primario" : "text-slate-600"
+              )}
+              title={
+                isRemoteDraft ? `Borrador en vivo de ${row.author?.nombre || 'otro usuario'}` :
+                isDraft || !isOrganized ? "Hacer clic para organizar esta entrada" :
+                isTarea ? "Hacer clic para ver detalles de la tarea" :
+                row.descripcion
+              }
+            >
+              {row.descripcion || 'Sin descripción'}
+            </span>
+          </div>
         );
       }
     },
-    ...(isDraftSection ? [] : [
+    ...(!(hasOrganizedEntries || hasResponsibles) ? [] : [
       {
         header: "Responsables",
         accessorKey: "asignaciones",
@@ -382,26 +421,24 @@ export const EntryTable = ({
         cell: (row) => {
           const isExternal = (departamento === 'DISENO' && row.area !== 'DISENO') || (departamento === 'MARKETING' && row.area !== 'MARKETING');
           if (isExternal) return <span className="text-[10px] font-black text-marca-primario uppercase bg-marca-primario/5 px-2 py-1 rounded-md">{AREA_MAP[row.area] || row.area}</span>;
-          
-          const isDraft = Boolean(row.tempId);
-          const isRemoteDraft = Boolean(row._isRemoteDraft);
-          const isOrganized = row.tipo !== 'SIN_ORGANIZAR';
-          if (isDraft || isRemoteDraft || !isOrganized) return <span className="text-[11px] text-slate-300">—</span>;
 
-          if (!row.asignaciones || row.asignaciones.length === 0) return <span className="text-[11px] text-slate-300">—</span>;
+          const responsablesRaw = row.responsables || (row.asignaciones?.map(a => ({ ...a.usuario, id: a.usuarioId ?? a.usuario?.id })) || []);
+          const responsables = responsablesRaw.map(r => typeof r === 'object' && r !== null ? r : (users?.find(u => u.id === r) || { id: r, nombre: 'Cargando...' }));
+
+          if (responsables.length === 0) return <span className="text-[11px] text-slate-300">—</span>;
           
-          const tooltipText = row.asignaciones.map(a => a.usuario?.nombre).join('\n');
+          const tooltipText = responsables.map(r => r.nombre).join('\n');
 
           return (
             <div className="flex justify-center">
               <Tooltip text={tooltipText} position="top" className="whitespace-pre-line text-left">
                 <div className="flex -space-x-3 cursor-help py-1">
-                  {row.asignaciones.map((asig) => (
-                    <div key={asig.id} className="h-10 w-10 rounded-full border-2 border-white overflow-hidden bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 shadow-md shrink-0 ring-1 ring-slate-200 transition-all hover:scale-110 hover:z-30">
-                      {asig.usuario?.imagen ? (
-                        <img src={asig.usuario.imagen} alt={asig.usuario.nombre} className="h-full w-full object-cover" />
+                  {responsables.map((r) => (
+                    <div key={r.id} className="h-10 w-10 rounded-full border-2 border-white overflow-hidden bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 shadow-md shrink-0 ring-1 ring-slate-200 transition-all hover:scale-110 hover:z-30">
+                      {r.imagen ? (
+                        <img src={r.imagen} alt={r.nombre} className="h-full w-full object-cover" />
                       ) : (
-                        asig.usuario?.nombre?.charAt(0)
+                        r.nombre?.charAt(0)
                       )}
                     </div>
                   ))}
@@ -471,33 +508,35 @@ export const EntryTable = ({
         headerClassName: "w-[12%] min-w-[110px]",
         cell: (row) => {
           const isDraft = Boolean(row.tempId);
-          const isRemoteDraft = Boolean(row._isRemoteDraft);
+          const isExternal = (departamento === 'DISENO' && row.area !== 'DISENO') || (departamento === 'MARKETING' && row.area !== 'MARKETING');
+          const isOtherArea = row.area !== 'DISENO' && row.area !== 'MARKETING';
           
-          if (row.tipo === 'SIN_ORGANIZAR' || isDraft || isRemoteDraft) {
+          if (isOtherArea) {
+            return <span className="text-slate-300">—</span>;
+          }
+          const tipo = row.tipo || (isDraft ? 'SIN_ORGANIZAR' : 'TAREA');
+          const isOrganized = tipo !== 'SIN_ORGANIZAR';
+          if (!isOrganized && !isExternal) {
             return (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold border uppercase tracking-wide whitespace-nowrap bg-amber-50 text-amber-600 border-amber-200">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold border border-amber-300 uppercase tracking-wide whitespace-nowrap bg-amber-100 text-amber-800 animate-pulse shadow-sm">
                 Sin Clasificar
               </span>
             );
           }
-          const estadoActual = row.estado || (row.tipo === 'TAREA' || row.tipo === 'RECORDATORIO' ? 'PENDIENTE' : null);
+          const estadoActual = row.estado || (tipo === 'TAREA' || tipo === 'RECORDATORIO' || isExternal ? 'PENDIENTE' : null);
           if (!estadoActual) return <span className="text-[11px] text-slate-300">—</span>;
           return <EtiquetaEstadoTarea status={estadoActual} />;
         }
       }
     ]),
-    ...(isDraftSection || isAllExternal ? [] : [
+    ...(!(hasOrganizedEntries || hasPriority || hasDueDate) || isAllExternal ? [] : [
       {
         header: "Prioridad",
         accessorKey: "prioridad",
         align: "center",
         headerClassName: "w-[10%] min-w-[90px]",
         cell: (row) => {
-          const isDraft = Boolean(row.tempId);
-          const isRemoteDraft = Boolean(row._isRemoteDraft);
-          const isOrganized = row.tipo !== 'SIN_ORGANIZAR';
-
-          if (!row.prioridad || isDraft || isRemoteDraft || !isOrganized) return <span className="text-[11px] text-slate-300">—</span>;
+          if (!row.prioridad) return <span className="text-[11px] text-slate-300">—</span>;
           return <EtiquetaPrioridadTarea priority={row.prioridad} />;
         }
       },
@@ -509,9 +548,10 @@ export const EntryTable = ({
         cell: (row) => {
           const isDraft = Boolean(row.tempId);
           const isRemoteDraft = Boolean(row._isRemoteDraft);
-          const isOrganized = row.tipo !== 'SIN_ORGANIZAR';
+          const tipo = row.tipo || (isDraft ? 'SIN_ORGANIZAR' : 'TAREA');
+          const isOrganized = tipo !== 'SIN_ORGANIZAR';
           
-          if (isDraft || isRemoteDraft || !isOrganized) return <span className="text-[11px] text-slate-300">—</span>;
+          if (!row.fechaVencimiento && (isDraft || isRemoteDraft || !isOrganized)) return <span className="text-[11px] text-slate-300">—</span>;
 
           const isResolvedOrClosed = row.estado === 'EN_REVISION' || row.estado === 'CERRADA';
 
@@ -564,12 +604,13 @@ export const EntryTable = ({
       headerClassName: "w-[15%] min-w-[180px]",
       cell: (row) => {
         const isClosed = row.estado === 'CERRADA';
-        const isOrganized = row.tipo !== 'SIN_ORGANIZAR';
-        const entryNotes = row.notas || [];
         const isDraft = Boolean(row.tempId);
         const isRemoteDraft = Boolean(row._isRemoteDraft);
+        const tipo = row.tipo || (isDraft ? 'SIN_ORGANIZAR' : 'TAREA');
+        const isOrganized = tipo !== 'SIN_ORGANIZAR';
+        const entryNotes = row.notas || [];
         const isExternal = (departamento === 'DISENO' && row.area !== 'DISENO') || (departamento === 'MARKETING' && row.area !== 'MARKETING');
-        const isFormalizada = row.tipo === 'TAREA';
+        const isFormalizada = tipo === 'TAREA';
         const isAsignado = row.asignaciones?.some(asig => asig.usuarioId === currentUserId);
         const estadoActual = row.estado || 'PENDIENTE';
         
@@ -621,14 +662,14 @@ export const EntryTable = ({
                     { key: 'entregar', enabled: isFormalizada && !isDraft && !isClosed && !isExternal && estadoActual === 'PENDIENTE' && isAsignado, onClick: (r) => { setSelectedTareaForEntrega(r); setIsEntregaModalOpen(true); } },
                     { key: 'aprobar', enabled: isFormalizada && !isDraft && !isClosed && !isExternal && estadoActual === 'EN_REVISION' && puedeAprobar, onClick: (r) => { setApproveTarget(r); } },
                     { key: 'forzar_cierre_tarea', enabled: canForceClose && !isClosed && !isRemoteDraft, onClick: (r) => { setForceCloseTarget(r); } },
-                    { key: 'ver_detalle', enabled: row.tipo === 'TAREA' && !isRemoteDraft, onClick: (r) => { onViewDetail?.(r); } },
-                    { key: 'editar', enabled: !isClosed && !isRemoteDraft && (isOrganized || isExternal), onClick: (r) => { onEdit(r); } },
+                    { key: 'ver_detalle', enabled: row.tipo === 'TAREA' && !isRemoteDraft && !isDraft, onClick: (r) => { onViewDetail?.(r); } },
+                    { key: 'editar', enabled: !isClosed && !isRemoteDraft, onClick: (r) => { onEdit(r); } },
                     { key: 'borrar', enabled: !isClosed && !isRemoteDraft, onClick: (r) => { setDeleteTarget(r); } }
                 ]} 
             />
 
-            {/* Organizar: Solo si NO está cerrada, NO está organizada (es SIN_ORGANIZAR) y NO es externa */}
-            {!isClosed && !isOrganized && !isExternal && !isRemoteDraft && (
+            {/* Organizar: Solo si NO está cerrada, NO está organizada (es SIN_ORGANIZAR), NO es externa y NO es borrador */}
+            {!isClosed && !isOrganized && !isExternal && !isRemoteDraft && !isDraft && (
               <button onClick={() => onOrganize(row)} className="h-9 w-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-slate-900 bg-white shadow-sm active:scale-90 transition-all" title="Organizar">
                 <Settings2 size={18} />
               </button>
@@ -652,9 +693,16 @@ export const EntryTable = ({
             const isDraft = Boolean(row.tempId);
             const isRemoteDraft = Boolean(row._isRemoteDraft);
             const isClosed = row.estado === 'CERRADA';
+            const tipo = row.tipo || (isDraft ? 'SIN_ORGANIZAR' : 'TAREA');
+            const isOrganized = tipo !== 'SIN_ORGANIZAR';
+            const isExternal = (departamento === 'DISENO' && row.area !== 'DISENO') || (departamento === 'MARKETING' && row.area !== 'MARKETING');
+            const isOtherArea = row.area !== 'DISENO' && row.area !== 'MARKETING';
             if (isRemoteDraft) return 'bg-cyan-50/30 hover:bg-cyan-50/50 border-l-4 border-l-cyan-400';
             if (isDraft) return 'bg-emerald-50/20 hover:bg-emerald-50/40 border-l-4 border-l-emerald-400';
             if (isClosed) return 'opacity-70 grayscale bg-slate-50/50';
+            if (isOtherArea) return 'hover:bg-slate-50 transition-colors';
+            if (!isOrganized && !isExternal) return 'bg-amber-50/35 hover:bg-amber-100/50 border-l-4 border-l-amber-500 border-dashed';
+            if (isExternal) return 'bg-marca-primario/5 border-l-4 border-l-marca-primario';
             return 'hover:bg-slate-50 transition-colors';
           }}
         />

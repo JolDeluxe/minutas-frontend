@@ -330,6 +330,7 @@ export const TareaCard = ({
     isGeneratingPdf,
     isPorAprobar = false,
     onToggleNotificado,
+    users = [],
 }) => {
 
     const [isEntregaModalOpen, setIsEntregaModalOpen] = useState(false);
@@ -344,8 +345,8 @@ export const TareaCard = ({
 
     // ── Normalización de datos ──────────────────────────────────────────────
     // Soporta tanto tarea.responsables (módulo Tareas) como tarea.asignaciones (módulo Minutas)
-    const responsables = tarea.responsables
-        || (tarea.asignaciones?.map(a => ({ ...a.usuario, id: a.usuarioId ?? a.usuario?.id })) || []);
+    const responsablesRaw = tarea.responsables || (tarea.asignaciones?.map(a => ({ ...a.usuario, id: a.usuarioId ?? a.usuario?.id })) || []);
+    const responsables = responsablesRaw.map(r => typeof r === 'object' && r !== null ? r : (users.find(u => u.id === r) || { id: r, nombre: 'Cargando...' }));
 
     // Soporta tanto tarea.imagenes (Tareas) como tarea.images (Minutas)
     const imagenesRaw = [
@@ -376,15 +377,15 @@ export const TareaCard = ({
     const isCerrado = ESTADOS_FINALES.includes(estado);
 
     // Soporte para entradas de Minutas: tipo y organización
-    const tipo = tarea.tipo || 'TAREA';
+    const tipo = tarea.tipo || (isDraft ? 'SIN_ORGANIZAR' : 'TAREA');
     const isOrganized = tipo !== 'SIN_ORGANIZAR';
     const isFormalizada = tipo === 'TAREA';
     const isExternal = (currentUser?.departamento === 'DISEÑO' && tarea.area !== 'DISENO')
         || (currentUser?.departamento === 'MARKETING' && tarea.area !== 'MARKETING')
-        // También soporta la lógica de entry-card (comparación directa con departamento del contexto)
         || (tarea._isExternal === true);
-
+    const isOtherArea = tarea.area !== 'DISENO' && tarea.area !== 'MARKETING';
     const vencida = isVencida(tarea);
+
     const isMarketing = tarea.departamento === 'MARKETING';
 
     const esAsignadoDirecto = responsables.some(r => r.id == currentUserId)
@@ -438,8 +439,10 @@ export const TareaCard = ({
     const getCardStyles = () => {
         if (isRemoteDraft) return 'bg-cyan-50/40 hover:bg-cyan-100/60 ring-1 ring-cyan-500/10';
         if (isDraft) return 'bg-emerald-50/40 hover:bg-emerald-100/60 ring-1 ring-emerald-500/10';
-        if (vencida) return 'bg-red-50/40 hover:bg-red-100/60 ring-1 ring-red-500/20';
         if (isCerrado) return 'opacity-70 grayscale bg-slate-50/50 hover:bg-slate-100/60 border-slate-200/50';
+        if (isOtherArea) return 'bg-white hover:bg-slate-50/30 border-slate-200'; // Clean and neutral for other areas
+        if (vencida) return 'bg-red-50/40 hover:bg-red-100/60 ring-1 ring-red-500/20';
+        if (!isOrganized && !isExternal) return 'bg-amber-50/20 hover:bg-amber-100/30 border-l-4 border-l-amber-500 border-dashed';
         if (isExternal) return 'bg-marca-primario/5 border-l-4 border-l-marca-primario';
         switch (estado) {
             case 'PENDIENTE': return 'bg-white hover:bg-amber-50/30';
@@ -533,25 +536,35 @@ export const TareaCard = ({
                         {/* Header: Status + Fechas */}
                         <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                             <div className="flex items-center gap-1.5 min-[360px]:gap-2 flex-wrap scale-[0.82] min-[360px]:scale-90 sm:scale-100 origin-left transition-transform">
+                                {/* Badge de Borrador */}
+                                {isDraft && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border bg-emerald-50 text-emerald-600 border-emerald-200/60 shadow-xs">
+                                        Borrador
+                                    </span>
+                                )}
                                 {/* Badge de tipo */}
-                                {isOrganized && tipo !== 'DESCARTADA' && !isDraft && !isRemoteDraft && (
+                                {tipo && tipo !== 'DESCARTADA' && !(isOtherArea && tipo === 'SIN_ORGANIZAR') && (
                                     <span className={cn(
                                         "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border text-white shadow-sm transition-all",
                                         tipo === 'TAREA'
                                             ? (isExternal ? "bg-marca-primario border-marca-primario-hover" : "bg-rose-600 border-rose-500")
-                                            : tipo === 'RECORDATORIO' ? "bg-indigo-600 border-indigo-500" : "bg-slate-600 border-slate-500"
+                                            : tipo === 'RECORDATORIO' ? "bg-indigo-600 border-indigo-500" :
+                                              tipo === 'POLITICA' ? "bg-slate-600 border-slate-500" :
+                                              (isExternal ? "bg-amber-500 border-amber-400" : "bg-amber-600 border-amber-500 animate-pulse")
                                     )}>
-                                        <Icon name={tipo === 'TAREA' ? "task_alt" : "notifications"} size="10px" className="shrink-0" />
-                                        {isExternal ? 'EXTERNA' : tipo}
+                                        <Icon name={tipo === 'TAREA' ? "task_alt" : tipo === 'RECORDATORIO' ? "notifications" : tipo === 'POLITICA' ? "policy" : (isExternal ? "pending_actions" : "warning")} size="10px" className="shrink-0" />
+                                        {tipo === 'SIN_ORGANIZAR' ? (isExternal ? 'Sin Organizar' : 'Falta Clasificar') : (isExternal && tipo === 'TAREA' ? 'EXTERNA' : tipo)}
                                     </span>
                                 )}
-                                {(isDraft || isRemoteDraft || !isOrganized) ? (
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[7px] sm:text-[8px] font-bold border uppercase tracking-wide whitespace-nowrap bg-amber-50 text-amber-600 border-amber-200">
-                                        Sin Clasificar
-                                    </span>
-                                ) : (
-                                    (isFormalizada || tipo === 'RECORDATORIO') && !isExternal && (
-                                        <EtiquetaEstadoTarea status={estado} className="scale-90 origin-left" />
+                                {!isOtherArea && (
+                                    (!isOrganized && !isExternal) ? (
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[7px] sm:text-[8px] font-black border uppercase tracking-wider whitespace-nowrap bg-amber-100 text-amber-800 border-amber-300 shadow-sm animate-pulse">
+                                            <Icon name="warning" size="9px" className="shrink-0 text-amber-600 mr-0.5" /> Sin Clasificar
+                                        </span>
+                                    ) : (
+                                        (isFormalizada || tipo === 'RECORDATORIO' || isExternal) && (
+                                            <EtiquetaEstadoTarea status={estado} className="scale-90 origin-left" />
+                                        )
                                     )
                                 )}
                                 {isExternal && !isDraft && !isRemoteDraft && (
@@ -566,7 +579,7 @@ export const TareaCard = ({
                                         {clasif.label}
                                     </span>
                                 )}
-                                {!isDraft && !isRemoteDraft && isOrganized && tarea.prioridad && !isExternal && <EtiquetaPrioridadTarea priority={tarea.prioridad} className="scale-90 origin-left" />}
+                                {tarea.prioridad && !isExternal && <EtiquetaPrioridadTarea priority={tarea.prioridad} className="scale-90 origin-left" />}
                             </div>
                             <div className="flex items-center gap-1.5 shrink-0">
                                 {!isCerrado && !isRemoteDraft && !!onDelete && (
@@ -621,7 +634,7 @@ export const TareaCard = ({
                                     <span className="text-[10px]">{notas.length}</span>
                                 </button>
 
-                                {!isDraft && !isRemoteDraft && isOrganized && responsables.length > 0 && (
+                                {responsables.length > 0 && (
                                     <div className="flex -space-x-2 ml-1">
                                         {responsables.map((r) => (
                                             <Tooltip key={r.id} text={r.nombre} position="top">
@@ -697,7 +710,7 @@ export const TareaCard = ({
                                         )}
 
                                         {/* Botón de organizar para entradas SIN_ORGANIZAR (Minutas) */}
-                                        {!isCerrado && !isOrganized && !isExternal && !isRemoteDraft && onOrganize && (
+                                        {!isCerrado && !isOrganized && !isExternal && !isRemoteDraft && !isDraft && onOrganize && (
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); onOrganize(tarea); }}
                                                 className="h-6 min-[360px]:h-7 w-6 min-[360px]:w-7 rounded-lg border border-marca-primario/20 bg-marca-primario/5 text-marca-primario flex items-center justify-center transition-all active:scale-90 shadow-xs"
@@ -714,8 +727,8 @@ export const TareaCard = ({
                                                     { key: 'entregar', enabled: isFormalizada && !isDraft && !isCerrado && !isExternal && isPendiente && esAsignadoDirecto, onClick: () => { setIsEntregaModalOpen(true); } },
                                                     { key: 'aprobar', enabled: isFormalizada && !isDraft && !isCerrado && !isExternal && isEnRevision && puedeAprobar, onClick: (r) => { if (onReview) onReview(r); else setIsConfirmAprobarOpen(true); } },
                                                     { key: 'forzar_cierre_tarea', enabled: canForceClose && !isCerrado && !isRemoteDraft, onClick: (r) => { setForceCloseTarget(r); } },
-                                                    { key: 'ver_detalle', enabled: isFormalizada && !isRemoteDraft, onClick: (r) => { onViewDetail?.(r); } },
-                                                    { key: 'editar', enabled: !isCerrado && !isRemoteDraft && (isOrganized || isExternal) && !!onEdit, onClick: (r) => { onEdit(r); } },
+                                                    { key: 'ver_detalle', enabled: isFormalizada && !isRemoteDraft && !isDraft, onClick: (r) => { onViewDetail?.(r); } },
+                                                    { key: 'editar', enabled: !isCerrado && !isRemoteDraft && !!onEdit, onClick: (r) => { onEdit(r); } },
                                                 ]}
                                             />
                                         </div>

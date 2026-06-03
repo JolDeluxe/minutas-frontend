@@ -13,6 +13,7 @@ import { OrganizeDrawer } from '../components/organization/organize-drawer';
 import { Link } from 'react-router-dom';
 import { canAccessModule } from '@/config/modules-config';
 import { useAuthStore } from '@/stores/auth-store';
+import { glassBase, GlassSheen } from '@/components/ui/liquid-glass-mobile';
 import { AREA_MAP } from '../constants';
 import { PanelDetalleTarea } from '../../tareas/components/comun/panel-detalle-tarea';
 
@@ -69,7 +70,6 @@ export const MinutaDetailMobileView = ({
   finalizando,
   minutaEstado,
   handleDeleteEntry,
-  clearDrafts,
   handleDownloadPdf,
   isGeneratingPdf,
   handleToggleNotificado
@@ -92,8 +92,9 @@ export const MinutaDetailMobileView = ({
           minuta={minuta} 
           resumen={resumen} 
           entries={filteredEntries} 
-          onFilterByStatus={(status) => setActiveFilter(prev => ({ ...prev, estado: prev.estado === status ? null : status, tipo: 'TODAS' }))}
-          onFilterByTipo={(tipo) => setActiveFilter(prev => ({ ...prev, tipo: prev.tipo === tipo ? 'TODAS' : tipo, estado: null }))}
+          onFilterByStatus={(status) => setActiveFilter(prev => ({ ...prev, estado: prev.estado === status ? null : status, tipo: 'TODAS', onlyExternal: false }))}
+          onFilterByTipo={(tipo) => setActiveFilter(prev => ({ ...prev, tipo: prev.tipo === tipo ? 'TODAS' : tipo, estado: null, onlyExternal: false }))}
+          onToggleExternal={() => setActiveFilter(prev => ({ ...prev, onlyExternal: !prev.onlyExternal, tipo: 'TODAS', estado: null }))}
           onResetFilter={() => setActiveFilter({ tipo: 'TODAS', estado: null, clasificacion: null, area: null, linea: null, search: '', onlyExternal: false })}
           activeFilter={activeFilter}
           onIniciar={handleIniciar}
@@ -115,8 +116,9 @@ export const MinutaDetailMobileView = ({
         <div className="mb-5 space-y-2">
           <MinutaExecutiveSummary 
             resumen={resumen} 
-            onFilterByStatus={(status) => setActiveFilter(prev => ({ ...prev, estado: prev.estado === status ? null : status, tipo: 'TODAS' }))}
-            onFilterByTipo={(tipo) => setActiveFilter(prev => ({ ...prev, tipo: prev.tipo === tipo ? 'TODAS' : tipo, estado: null }))}
+            onFilterByStatus={(status) => setActiveFilter(prev => ({ ...prev, estado: prev.estado === status ? null : status, tipo: 'TODAS', onlyExternal: false }))}
+            onFilterByTipo={(tipo) => setActiveFilter(prev => ({ ...prev, tipo: prev.tipo === tipo ? 'TODAS' : tipo, estado: null, onlyExternal: false }))}
+            onToggleExternal={() => setActiveFilter(prev => ({ ...prev, onlyExternal: !prev.onlyExternal, tipo: 'TODAS', estado: null }))}
             onResetFilter={() => setActiveFilter({ tipo: 'TODAS', estado: null, clasificacion: null, area: null, linea: null, search: '', onlyExternal: false })}
             activeFilter={activeFilter}
           />
@@ -274,10 +276,12 @@ export const MinutaDetailMobileView = ({
           {draftEntries.length > 0 && (
             <button
               onClick={() => setShowReviewModal(true)}
-              className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-2xl active:scale-90 transition-all relative"
+              style={{ ...glassBase('success'), width: 52, height: 52, borderRadius: 16 }}
+              className="flex items-center justify-center text-white active:scale-90 transition-all relative shadow-xl"
             >
-              <Icon name="cloud_upload" size="32px" />
-              <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-lg animate-in zoom-in">
+              <GlassSheen />
+              <Icon name="cloud_upload" size="26px" className="relative z-10" />
+              <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-lg animate-in zoom-in z-20">
                 {draftEntries.length}
               </div>
             </button>
@@ -285,11 +289,22 @@ export const MinutaDetailMobileView = ({
 
           <button
             onClick={() => setShowNotes(true)}
-            className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-2xl active:scale-90 transition-all relative group"
+            style={{ 
+              background: 'rgba(245, 158, 11, 0.82)',
+              backdropFilter: 'blur(20px) saturate(160%)',
+              WebkitBackdropFilter: 'blur(20px) saturate(160%)',
+              border: '1px solid rgba(255,255,255,0.32)',
+              boxShadow: '0 10px 30px rgba(245,158,11,0.35), 0 2px 6px rgba(245,158,11,0.18), 0 1px 0 rgba(255,255,255,0.48) inset',
+              width: 52, 
+              height: 52, 
+              borderRadius: 16 
+            }}
+            className="flex items-center justify-center text-white active:scale-90 transition-all relative group shadow-xl"
           >
-            <Icon name="sticky_note_2" size="32px" />
+            <GlassSheen />
+            <Icon name="sticky_note_2" size="26px" className="relative z-10" />
             {(draftNotes.length + (minuta.notasGenerales?.length || 0)) > 0 && (
-              <div className="absolute -top-2 -right-2 w-7 h-7 bg-amber-950 text-white text-[11px] font-black rounded-full flex items-center justify-center border-2 border-amber-500 shadow-lg">
+              <div className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-amber-950 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-amber-500 shadow-lg z-20">
                  {draftNotes.length + (minuta.notasGenerales?.length || 0)}
               </div>
             )}
@@ -320,7 +335,7 @@ export const MinutaDetailMobileView = ({
         submitting={isSubmittingFinal}
         minutaEstado={minutaEstado}
         onRemoveEntry={removeDraftEntry}
-        onClearAll={clearDrafts}
+        users={users}
       />
 
       {organizeEntry && (

@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Icon, Modal, ModalHeader, ModalBody, ModalFooter, Button as UIButton } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
-import { getCatalogos, LINEAS_POR_AREA } from '../../constants';
+import { getCatalogos, LINEAS_POR_AREA, PRIORIDAD_MAP } from '../../constants';
+import { useUsers } from '../../../usuarios/hooks/use-users';
 import { LineIconSelector } from '../icons/line-icons';
-import { Camera, X, Plus, AlertCircle, Save, StickyNote, Trash2 } from 'lucide-react';
+import { Camera, X, Plus, AlertCircle, Save, StickyNote, Trash2, Calendar, UserPlus, Check } from 'lucide-react';
 
 /**
  * AllNotesModal — Modal para gestionar todas las notas rápidas cuando exceden el límite visual.
@@ -75,11 +76,36 @@ export const QuickComposer = ({
   const [linea, setLinea] = useState(tieneLineas ? (lineaDefault || lineasDisponibles[0]?.value) : null);
   const [imagenes, setImagenes] = useState([]);
   const [showLimitError, setShowLimitError] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [showAllNotes, setShowAllNotes] = useState(false);
+
+  // Estados Operativos (Modo Tarea)
+  const [esTarea, setEsTarea] = useState(false);
+  const [prioridad, setPrioridad] = useState('MEDIA');
+  const [responsables, setResponsables] = useState([]);
+  const [fechaVencimiento, setFechaVencimiento] = useState('');
+
+  const { users: allUsers, fetchUsers } = useUsers();
+  
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const filteredUsers = useMemo(() => {
+    return allUsers.filter(u => u.estado === 'ACTIVO' && (u.rol === 'ADMIN' || u.departamento === departamento));
+  }, [allUsers, departamento]);
 
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  const normalizedArea = String(area || '').trim().toUpperCase();
+  const allowTarea = normalizedArea === 'MARKETING' || normalizedArea === 'DISEÑO' || normalizedArea === 'DISENO';
+
+  useEffect(() => {
+    if (!allowTarea && esTarea) {
+      setEsTarea(false);
+    }
+  }, [allowTarea, esTarea]);
 
   // Validación personalizada solicitada por el usuario
   const isValid = useMemo(() => {
@@ -90,12 +116,16 @@ export const QuickComposer = ({
     if (isOperationalArea) {
       const hasLinea = tieneLineas ? !!linea : true;
       const hasClasif = !!clasificacion;
-      return hasLinea && hasClasif;
+      if (!(hasLinea && hasClasif)) return false;
+    }
+    
+    if (esTarea) {
+      if (!fechaVencimiento) return false;
     }
     
     // Para otras áreas, solo se requiere la descripción
     return true;
-  }, [descripcion, area, linea, clasificacion, tieneLineas]);
+  }, [descripcion, area, linea, clasificacion, tieneLineas, esTarea, fechaVencimiento]);
 
   useEffect(() => {
     onCollapseChange?.(isCollapsed);
@@ -172,17 +202,31 @@ export const QuickComposer = ({
   const handleSubmit = useCallback(() => {
     if (!isValid || submitting) return;
     const esPolitica = clasificacion === 'POLITICAS';
+    
+    // Si NO esTarea, los campos operativos (prioridad, responsables, fechaVencimiento) 
+    // se envían vacíos o con valores que el backend ignore/defaults.
+    // Pero en este caso, se envían en el payload solo si esTarea es true.
+    const tareaData = {
+      descripcion: descripcion.trim(),
+      area,
+      linea: tieneLineas ? linea : null,
+      clasificacion: clasificacion || 'OTROS',
+      tipo: esPolitica ? 'POLITICA' : (esTarea ? 'TAREA' : undefined),
+      minutaId: Number(minutaId),
+      _localImages: imagenes,
+      notas: notasRapidas.filter(n => n.trim()).map(n => ({ contenido: n.trim() })),
+    };
+
+    if (esTarea) {
+      tareaData.prioridad = prioridad;
+      tareaData.fechaVencimiento = fechaVencimiento ? new Date(fechaVencimiento).toISOString() : null;
+      if (responsables.length > 0) {
+        tareaData.responsables = responsables;
+      }
+    }
+
     const payload = {
-      tareas: [{
-        descripcion: descripcion.trim(),
-        area,
-        linea: tieneLineas ? linea : null,
-        clasificacion: clasificacion || 'OTROS',
-        tipo: esPolitica ? 'POLITICA' : undefined,
-        minutaId: Number(minutaId),
-        _localImages: imagenes,
-        notas: notasRapidas.filter(n => n.trim()).map(n => ({ contenido: n.trim() })),
-      }],
+      tareas: [tareaData],
     };
     onSubmit(payload);
     setDescripcion('');
@@ -195,6 +239,11 @@ export const QuickComposer = ({
     setArea(defaultArea);
     setLinea(defaultLineas.length > 0 ? (lineaDefault || defaultLineas[0]?.value) : null);
     setClasificacion('');
+    
+    setEsTarea(false);
+    setPrioridad('MEDIA');
+    setResponsables([]);
+    setFechaVencimiento('');
 
     if (isDesktop) textareaRef.current?.focus();
   }, [
@@ -212,7 +261,11 @@ export const QuickComposer = ({
     tieneLineas,
     catalogos,
     departamento,
-    lineaDefault
+    lineaDefault,
+    esTarea,
+    prioridad,
+    responsables,
+    fechaVencimiento
   ]);
 
   const handleKeyDown = (e) => {
@@ -257,16 +310,16 @@ export const QuickComposer = ({
             <button onClick={() => setIsCollapsed(true)} className="flex items-center gap-1.5 px-6 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-[11px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-md border border-slate-700 cursor-pointer"><X size={16} /> Cerrar Captura</button>
           </div>
 
-          <div className="flex-1 bg-white border border-slate-200/60 rounded-[1.5rem] p-4 lg:p-6 shadow-2xl flex flex-col gap-4 min-h-0 overflow-hidden">
+          <div className="flex-1 bg-white border border-slate-200/60 rounded-[1.5rem] p-3 lg:p-4 shadow-2xl flex flex-col gap-2.5 min-h-0 overflow-y-auto custom-scrollbar">
             {/* 1. INPUT DESCRIPCION (GRANDE) */}
-            <div className="relative flex-1 min-h-0 group">
+            <div className={cn("relative group transition-all duration-300 flex-1 flex flex-col", esTarea ? "min-h-[50px] max-h-[80px]" : "min-h-[80px]")}>
               <textarea
                 ref={textareaRef}
                 value={descripcion}
                 onChange={(e) => setDescripcion(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Escribe la idea, acuerdo o tarea aquí..."
-                className="w-full h-full bg-slate-50/50 border border-slate-100 rounded-2xl px-4 py-3 text-sm lg:text-xl font-bold text-slate-800 focus:outline-none focus:ring-4 focus:ring-marca-primario/5 transition-all resize-none placeholder:text-slate-300 shadow-inner custom-scrollbar"
+                className={cn("w-full flex-1 bg-slate-50/50 border border-slate-100 rounded-2xl px-4 py-2 text-sm lg:text-lg font-bold text-slate-800 focus:outline-none focus:ring-4 focus:ring-marca-primario/5 transition-all resize-none placeholder:text-slate-300 shadow-inner custom-scrollbar", esTarea && "lg:text-sm py-1.5")}
               />
               <div className="absolute right-3 bottom-3 flex items-center gap-2">
                 {showLimitError && <div className="flex items-center gap-1 px-2 py-1 bg-rose-50 text-rose-600 rounded-lg text-[8px] font-black uppercase animate-in fade-in slide-in-from-right-2 duration-300 border border-rose-100"><AlertCircle size={10} /> Máximo 3 fotos</div>}
@@ -274,7 +327,7 @@ export const QuickComposer = ({
             </div>
 
             {/* 2. NOTAS | IMAGENES (SIDE BY SIDE) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0 bg-slate-50/40 p-3 rounded-[1.5rem] border border-slate-100/60 shadow-inner">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 shrink-0 bg-slate-50/40 p-2 rounded-[1rem] border border-slate-100/60 shadow-inner">
               {/* Notas */}
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between px-1">
@@ -347,7 +400,7 @@ export const QuickComposer = ({
             </div>
 
             {/* 3. AREA | LINEA | CLASIFICACION (ROW) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 shrink-0">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 shrink-0">
                <div className="flex flex-col gap-1">
                   <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Área</label>
                   <select value={area} onChange={(e) => {
@@ -379,8 +432,85 @@ export const QuickComposer = ({
                </div>
             </div>
 
+            {/* SWITCH ¿ES TAREA? */}
+            {allowTarea && (
+              <div className="flex items-center gap-3 mt-2">
+                 <button
+                    type="button"
+                    onClick={() => setEsTarea(!esTarea)}
+                    className={cn(
+                      "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-marca-primario focus:ring-offset-2",
+                      esTarea ? "bg-emerald-500" : "bg-slate-200"
+                    )}
+                    role="switch"
+                    aria-checked={esTarea}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                        esTarea ? "translate-x-4" : "translate-x-0"
+                      )}
+                    />
+                 </button>
+                 <span className="text-xs font-black text-slate-700 uppercase tracking-wider">
+                   ¿Es una Tarea?
+                 </span>
+              </div>
+            )}
+
+            {/* CAMPOS OPERATIVOS (RENDER CONDICIONAL) */}
+            {allowTarea && esTarea && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 shrink-0 animate-in fade-in slide-in-from-top-2 duration-300 border-t border-slate-100 pt-2 mt-0.5">
+                 {/* Fecha Vencimiento */}
+                 <div className="flex flex-col gap-1">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1">
+                       <Calendar size={10} /> Fecha Límite
+                    </label>
+                    <input 
+                      type="date" 
+                      value={fechaVencimiento} 
+                      onChange={(e) => setFechaVencimiento(e.target.value)} 
+                      min={new Date().toISOString().split('T')[0]}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-marca-primario/10 transition-all shadow-sm"
+                    />
+                 </div>
+
+                 {/* Prioridad */}
+                 <div className="flex flex-col gap-1">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Prioridad</label>
+                    <select 
+                      value={prioridad} 
+                      onChange={(e) => setPrioridad(e.target.value)} 
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-marca-primario/10 transition-all shadow-sm"
+                    >
+                      {Object.entries(PRIORIDAD_MAP).map(([key, config]) => (
+                        <option key={key} value={key}>{config.label}</option>
+                      ))}
+                    </select>
+                 </div>
+
+                 {/* Responsable Principal */}
+                 <div className="flex flex-col gap-1">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1">
+                       <UserPlus size={10} /> Responsable
+                    </label>
+                    <select 
+                      value={responsables[0] || ''} 
+                      onChange={(e) => setResponsables(e.target.value ? [Number(e.target.value)] : [])} 
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-marca-primario/10 transition-all shadow-sm"
+                    >
+                      <option value="">— Sin Asignar —</option>
+                      {filteredUsers.map((u) => (
+                        <option key={u.id} value={u.id}>{u.nombre} {u.apellidos}</option>
+                      ))}
+                    </select>
+                 </div>
+              </div>
+            )}
+
             {/* 4. BOTÓN GUARDAR (PROMINENTE) */}
-            <div className="flex flex-col gap-2 mt-2 shrink-0">
+            <div className="flex flex-col gap-1 mt-1 shrink-0">
                <button
                 type="button"
                 onClick={handleSubmit}

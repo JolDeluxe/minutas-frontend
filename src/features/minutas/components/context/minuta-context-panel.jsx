@@ -12,7 +12,7 @@ import { MinutaJuntaComparison } from '../minuta-junta-comparison';
  * Ahora incluye el resumen ejecutivo visual y comparación con junta anterior.
  */
 export const MinutaContextPanel = ({ 
-  minuta, resumen, onFilterByStatus, onFilterByTipo, onResetFilter, activeFilter,
+  minuta, resumen, onFilterByStatus, onFilterByTipo, onToggleExternal, onResetFilter, activeFilter,
   onIniciar, onCancelar, onCerrar, onReabrir, onFinalizar,
   iniciando, cancelando, cerrando, reabriendo, finalizando,
   composerCollapsed = true,
@@ -49,6 +49,7 @@ export const MinutaContextPanel = ({
           resumen={resumen} 
           onFilterByStatus={onFilterByStatus}
           onFilterByTipo={onFilterByTipo}
+          onToggleExternal={onToggleExternal}
           onResetFilter={onResetFilter}
           activeFilter={activeFilter}
         />

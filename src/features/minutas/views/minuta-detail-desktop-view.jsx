@@ -67,7 +67,6 @@ export const MinutaDetailDesktopView = ({
   finalizando,
   minutaEstado,
   handleDeleteEntry,
-  clearDrafts,
   handleDownloadPdf,
   isGeneratingPdf,
   handleToggleNotificado
@@ -88,8 +87,9 @@ export const MinutaDetailDesktopView = ({
         minuta={minuta} 
         resumen={resumen} 
         entries={filteredEntries}
-        onFilterByStatus={(status) => setActiveFilter(prev => ({ ...prev, estado: prev.estado === status ? null : status, tipo: 'TODAS' }))}
-        onFilterByTipo={(tipo) => setActiveFilter(prev => ({ ...prev, tipo: prev.tipo === tipo ? 'TODAS' : tipo, estado: null }))}
+        onFilterByStatus={(status) => setActiveFilter(prev => ({ ...prev, estado: prev.estado === status ? null : status, tipo: 'TODAS', onlyExternal: false }))}
+        onFilterByTipo={(tipo) => setActiveFilter(prev => ({ ...prev, tipo: prev.tipo === tipo ? 'TODAS' : tipo, estado: null, onlyExternal: false }))}
+        onToggleExternal={() => setActiveFilter(prev => ({ ...prev, onlyExternal: !prev.onlyExternal, tipo: 'TODAS', estado: null }))}
         onResetFilter={() => setActiveFilter({ tipo: 'TODAS', estado: null, clasificacion: null, area: null, linea: null, search: '', onlyExternal: false })}
         activeFilter={activeFilter}
         onIniciar={handleIniciar}
@@ -272,7 +272,7 @@ export const MinutaDetailDesktopView = ({
               className="absolute inset-0 z-[90] bg-slate-900/10 backdrop-blur-[1px] animate-in fade-in duration-200"
               onClick={() => setShowNotes(false)}
             />
-            <div className="absolute right-5 top-5 bottom-5 z-[100] w-[min(430px,calc(100%-2.5rem))] overflow-hidden rounded-4xl border border-amber-100 bg-white shadow-2xl shadow-slate-900/20 animate-in slide-in-from-right-4 fade-in duration-300">
+            <div className="absolute right-0 top-0 bottom-0 z-[100] w-[min(430px,calc(100%-2.5rem))] overflow-hidden rounded-l-[2rem] border-l border-amber-100 bg-white shadow-2xl shadow-slate-900/20 animate-in slide-in-from-right-4 fade-in duration-300">
               <StickyNotesBoard
                 notas={[...draftNotes, ...(minuta.notasGenerales || [])]}
                 minutaId={minuta.id}
@@ -287,7 +287,7 @@ export const MinutaDetailDesktopView = ({
         )}
 
         {composerCollapsed && (
-          <div className="fixed bottom-10 right-10 z-[60] flex gap-4">
+          <div className="fixed bottom-24 right-10 z-[60] flex gap-4">
             {draftEntries.length > 0 && (
               <button
                 onClick={() => setShowReviewModal(true)}
@@ -327,7 +327,7 @@ export const MinutaDetailDesktopView = ({
         submitting={isSubmittingFinal}
         minutaEstado={minutaEstado}
         onRemoveEntry={removeDraftEntry}
-        onClearAll={clearDrafts}
+        users={users}
       />
 
       {organizeEntry && (

@@ -63,7 +63,6 @@ export const EntryFormModal = ({
   departamento = 'DISENO',
 }) => {
   const isDesktop = useIsDesktop();
-  const isMobile = useIsMobile();
   const { users, fetchUsers } = useUsers();
   const fileInputRef = useRef(null);
 
@@ -88,18 +87,18 @@ export const EntryFormModal = ({
     if (isOpen) {
       fetchUsers();
       if (entry) {
+        const isDraft = typeof entry.id === 'string' || entry.tempId;
         setEditForm({
           descripcion: entry.descripcion || '',
           area: entry.area || 'DISENO',
           linea: entry.linea || 'CALZADO',
           clasificacion: entry.clasificacion || 'OTROS',
-          tipo: entry.tipo || 'TAREA', 
+          tipo: entry.tipo || (isDraft ? 'SIN_ORGANIZAR' : 'TAREA'), 
           prioridad: entry.prioridad || 'MEDIA',
-          responsables: entry.asignaciones?.map(a => a.usuarioId) || [],
+          responsables: entry.asignaciones?.map(a => a.usuarioId) || entry.responsables || [],
           fechaVencimiento: entry.fechaVencimiento ? new Date(entry.fechaVencimiento).toISOString().split('T')[0] : '',
           alcanceRecordatorio: entry.alcanceRecordatorio || 'DEPARTAMENTO',
         });
-        const isDraft = typeof entry.id === 'string' || entry.tempId;
         if (isDraft) {
           setExistingImages([]);
           setLocalImages(entry._localImages || []);
@@ -211,7 +210,11 @@ export const EntryFormModal = ({
 
     const payload = {
       ...form,
-      ...(form.tipo !== 'TAREA' && { prioridad: null, fechaVencimiento: null, responsables: form.tipo === 'RECORDATORIO' && form.alcanceRecordatorio === 'PERSONAL' ? form.responsables : [] }),
+      ...(form.tipo !== 'TAREA' && form.tipo !== 'SIN_ORGANIZAR' && { 
+        prioridad: null, 
+        fechaVencimiento: null, 
+        responsables: form.tipo === 'RECORDATORIO' && form.alcanceRecordatorio === 'PERSONAL' ? form.responsables : [] 
+      }),
     };
     const isDraft = typeof entry.id === 'string' || entry.tempId;
     if (isDraft) {
@@ -360,8 +363,9 @@ export const EntryFormModal = ({
 
   const renderFormContent = () => {
     const isDraft = typeof entry.id === 'string' || entry.tempId;
+    const isSimpleDraft = isDraft && form.tipo === 'SIN_ORGANIZAR';
 
-    if (isDraft) {
+    if (isSimpleDraft) {
       return (
         <div className="space-y-6">
           <div className="space-y-2">
@@ -408,6 +412,25 @@ export const EntryFormModal = ({
                   {catalogos.clasificaciones.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                 </select>
              </div>
+             
+             {!isExternal && (
+               <div className="flex flex-col gap-1.5 sm:col-span-2 pt-2">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1">
+                    <Icon name="info" size="12px" className="text-slate-400" />
+                    Convertir Entrada
+                  </label>
+                  <select
+                    value={form.tipo}
+                    onChange={(e) => handleFieldChange('tipo', e.target.value)}
+                    className="w-full bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 text-xs font-black uppercase tracking-wider text-amber-900 shadow-sm focus:outline-none focus:ring-4 focus:ring-amber-500/10 cursor-pointer"
+                  >
+                    <option value="SIN_ORGANIZAR">Mantener como Borrador (Sin Clasificar)</option>
+                    <option value="TAREA">Convertir a Tarea</option>
+                    <option value="RECORDATORIO">Convertir a Recordatorio</option>
+                    <option value="POLITICA">Convertir a Política</option>
+                  </select>
+               </div>
+             )}
           </div>
 
           <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 shadow-sm">

@@ -60,7 +60,11 @@ export const useTareas = () => {
             const res = await createTarea(data);
             return res.data;
         } catch (err) {
-            console.error("💥 Fallo en handleCreate Tarea:", err.response?.data || err.message);
+            const errorData = err.response?.data;
+            console.error("💥 Fallo en handleCreate Tarea:", errorData || err.message);
+            if (errorData?.errors) {
+                console.error("📋 Detalles de validación fallida:", JSON.stringify(errorData.errors, null, 2));
+            }
             throw err; // Re-lanzar para que el componente que llama sepa del error
         } finally { 
             setSubmitting(false); 
