@@ -134,6 +134,7 @@ export const EntryFeed = ({
               section.entries.map((entry) => (
                 <div key={`ent-${entry.id || entry.tempId}`} className="animate-in fade-in slide-in-from-bottom-6 duration-500 ease-out h-full">
                   <EntryCard
+                    className="h-full"
                     entry={entry}
                     departamento={departamento}
                     onOrganize={onOrganize}

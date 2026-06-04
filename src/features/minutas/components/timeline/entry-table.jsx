@@ -9,9 +9,11 @@ import { LineIconSelector, MarketingIcon } from '../icons/line-icons';
 import { ImageViewer } from '../../../tareas/components/comun/tarjeta-tarea';
 import { useAuthStore } from '@/stores/auth-store';
 import { ModalEntregarTarea } from '../../../tareas/components/comun/modal-entregar-tarea';
+import { ModalRevisionTarea } from '../../../tareas/components/comun/modal-revision-tarea';
 import { EtiquetaEstadoTarea } from "../../../tareas/components/comun/etiqueta-estado-tarea";
 import { EtiquetaPrioridadTarea } from "../../../tareas/components/comun/etiqueta-prioridad-tarea";
 import { useIsDesktop } from '@/hooks/useMediaQuery';
+import { notify } from '@/components/notification/adaptive-notify';
 
 const ESTADO_STYLES = {
   PENDIENTE: 'bg-amber-50 text-amber-700 border-amber-200',
@@ -269,6 +271,40 @@ export const EntryTable = ({
   const [forceCloseTarget, setForceCloseTarget] = useState(null);
   const [isEntregaModalOpen, setIsEntregaModalOpen] = useState(false);
   const [selectedTareaForEntrega, setSelectedTareaForEntrega] = useState(null);
+  const [expandedGroupIds, setExpandedGroupIds] = useState(new Set());
+
+  const toggleGroup = (groupId) => {
+    setExpandedGroupIds(prev => {
+      const next = new Set(prev);
+      if (next.has(groupId)) {
+        next.delete(groupId);
+      } else {
+        next.add(groupId);
+      }
+      return next;
+    });
+  };
+
+  const tableData = useMemo(() => {
+    const result = [];
+    for (const entry of entries) {
+      result.push({
+        ...entry,
+        key: entry.id || entry.tempId
+      });
+      if (entry.isGrouped && expandedGroupIds.has(entry.id)) {
+        for (const sub of entry.subTareas) {
+          result.push({
+            ...sub,
+            key: `sub_${sub.id}`,
+            _isSubTask: true,
+            parentGroupId: entry.id
+          });
+        }
+      }
+    }
+    return result;
+  }, [entries, expandedGroupIds]);
 
   const openViewer = (images) => {
     setActiveEntryImages(images);
@@ -277,7 +313,15 @@ export const EntryTable = ({
 
   const activeEntryForNotes = useMemo(() => {
     if (!activeNotesEntryId) return null;
-    return entries.find(e => (e.id || e.tempId) === activeNotesEntryId);
+    const found = entries.find(e => (e.id || e.tempId) === activeNotesEntryId);
+    if (found) return found;
+    for (const entry of entries) {
+      if (entry.subTareas) {
+        const subFound = entry.subTareas.find(sub => sub.id === activeNotesEntryId);
+        if (subFound) return subFound;
+      }
+    }
+    return null;
   }, [activeNotesEntryId, entries]);
 
   const hasOrganizedEntries = useMemo(() => entries.some(e => {
@@ -307,6 +351,24 @@ export const EntryTable = ({
       accessorKey: "index",
       headerClassName: "w-[4%] min-w-[50px]",
       cell: (row) => {
+        if (row._isSubTask) {
+          return (
+            <div className="flex justify-end pr-2 text-slate-400">
+              <Icon name="subdirectory_arrow_right" size="16px" />
+            </div>
+          );
+        }
+        if (row.isGrouped) {
+          const isExpanded = expandedGroupIds.has(row.id);
+          return (
+            <button
+              onClick={(e) => { e.stopPropagation(); toggleGroup(row.id); }}
+              className="flex h-6 w-6 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 hover:text-slate-900 transition-all hover:bg-slate-100 shadow-xs"
+            >
+              <Icon name={isExpanded ? 'remove' : 'add'} size="14px" />
+            </button>
+          );
+        }
         const isDraft = Boolean(row.tempId);
         const isRemoteDraft = Boolean(row._isRemoteDraft);
         const isExternal = (departamento === 'DISENO' && row.area !== 'DISENO') || (departamento === 'MARKETING' && row.area !== 'MARKETING');
@@ -322,7 +384,8 @@ export const EntryTable = ({
           </div>
         );
         if (isExternal) return <span className="inline-flex items-center gap-1 rounded-lg bg-marca-primario/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-widest text-marca-primario whitespace-nowrap">EXT</span>;
-        return <span className="text-slate-400 font-mono text-xs">#{entries.indexOf(row) + 1}</span>;
+        const entryIdx = entries.findIndex(e => (e.id && e.id === row.id) || (e.tempId && e.tempId === row.tempId));
+        return <span className="text-slate-400 font-mono text-xs">#{entryIdx !== -1 ? entryIdx + 1 : 1}</span>;
       }
     },
     {
@@ -331,6 +394,10 @@ export const EntryTable = ({
       align: "center",
       headerClassName: "w-[10%] min-w-[150px]",
       cell: (row) => {
+        if (row._isSubTask) {
+          const evidenceImages = (row.imagenes || []).filter(img => img.tipo === 'EVIDENCIA');
+          return <TableImagePreview images={evidenceImages} onClick={() => openViewer(evidenceImages)} />;
+        }
         const allImages = [
           ...(row._localImages || []),
           ...(row._remoteImageThumbnails || []).map((b64, idx) => ({
@@ -349,6 +416,13 @@ export const EntryTable = ({
       accessorKey: "descripcion",
       headerClassName: "w-[25%] min-w-[200px]",
       cell: (row) => {
+        if (row._isSubTask) {
+          return (
+            <div className="pl-4 text-[12px] text-slate-500 font-medium italic">
+              Tarea individual asignada
+            </div>
+          );
+        }
         const isDraft = Boolean(row.tempId);
         const isRemoteDraft = Boolean(row._isRemoteDraft);
         const tipo = row.tipo || (isDraft ? 'SIN_ORGANIZAR' : 'TAREA');
@@ -356,14 +430,19 @@ export const EntryTable = ({
         const isTarea = tipo === 'TAREA';
         const isExternal = (departamento === 'DISENO' && row.area !== 'DISENO') || (departamento === 'MARKETING' && row.area !== 'MARKETING');
         
-        const handleClick = () => {
+        const handleClick = (e) => {
+          e.stopPropagation();
           if (isRemoteDraft) {
             return;
           }
           if (isDraft || !isOrganized) {
             onOrganize?.(row);
           } else if (isTarea) {
-            onViewDetail?.(row);
+            if (row.isGrouped) {
+              toggleGroup(row.id);
+            } else {
+              onViewDetail?.(row);
+            }
           }
         };
 
@@ -419,11 +498,29 @@ export const EntryTable = ({
         align: "center",
         headerClassName: "w-[10%] min-w-[120px]",
         cell: (row) => {
+          if (row._isSubTask) {
+            const asig = row.asignaciones?.[0];
+            const r = asig?.usuario || users?.find(u => u.id === asig?.usuarioId) || { nombre: 'Cargando...' };
+            return (
+              <div className="flex items-center gap-2 pl-4 justify-center">
+                <div className="h-7 w-7 rounded-full border border-slate-200 overflow-hidden bg-slate-100 flex items-center justify-center text-[9px] font-bold text-slate-500 shrink-0">
+                  {r.imagen ? <img src={r.imagen} alt={r.nombre} className="h-full w-full object-cover" /> : r.nombre?.charAt(0)}
+                </div>
+                <span className="text-xs font-bold text-slate-700">{r.nombre}</span>
+              </div>
+            );
+          }
           const isExternal = (departamento === 'DISENO' && row.area !== 'DISENO') || (departamento === 'MARKETING' && row.area !== 'MARKETING');
           if (isExternal) return <span className="text-[10px] font-black text-marca-primario uppercase bg-marca-primario/5 px-2 py-1 rounded-md">{AREA_MAP[row.area] || row.area}</span>;
 
           const responsablesRaw = row.responsables || (row.asignaciones?.map(a => ({ ...a.usuario, id: a.usuarioId ?? a.usuario?.id })) || []);
-          const responsables = responsablesRaw.map(r => typeof r === 'object' && r !== null ? r : (users?.find(u => u.id === r) || { id: r, nombre: 'Cargando...' }));
+          const responsables = responsablesRaw.map(r => {
+            const isObj = typeof r === 'object' && r !== null;
+            const id = isObj ? r.id : r;
+            const fullUser = users?.find(u => u.id === id);
+            if (fullUser) return { ...fullUser, ...(isObj ? r : {}) };
+            return isObj ? r : { id: r, nombre: 'Cargando...' };
+          });
 
           if (responsables.length === 0) return <span className="text-[11px] text-slate-300">—</span>;
           
@@ -456,6 +553,7 @@ export const EntryTable = ({
         align: "center",
         headerClassName: "w-[10%] min-w-[100px]",
         cell: (row) => {
+          if (row._isSubTask) return <span className="text-slate-300">—</span>;
           const isMarketing = departamento === 'MARKETING';
           const lineInfo = isMarketing ? { label: 'Marketing', color: '#7c3aed' } : (LINEA_MAP[row.linea] || { label: row.linea || '—', color: '#64748b' });
 
@@ -490,6 +588,7 @@ export const EntryTable = ({
       align: "center",
       headerClassName: "w-[10%] min-w-[120px]",
       cell: (row) => {
+        if (row._isSubTask) return <span className="text-slate-300">—</span>;
         const clasif = CLASIFICACION_MAP[row.clasificacion];
         if (!clasif) return <span className="text-[11px] text-slate-300">—</span>;
         return (
@@ -507,6 +606,9 @@ export const EntryTable = ({
         align: "center",
         headerClassName: "w-[12%] min-w-[110px]",
         cell: (row) => {
+          if (row._isSubTask) {
+            return <EtiquetaEstadoTarea status={row.estado} />;
+          }
           const isDraft = Boolean(row.tempId);
           const isExternal = (departamento === 'DISENO' && row.area !== 'DISENO') || (departamento === 'MARKETING' && row.area !== 'MARKETING');
           const isOtherArea = row.area !== 'DISENO' && row.area !== 'MARKETING';
@@ -536,6 +638,7 @@ export const EntryTable = ({
         align: "center",
         headerClassName: "w-[10%] min-w-[90px]",
         cell: (row) => {
+          if (row._isSubTask) return <span className="text-slate-300">—</span>;
           if (!row.prioridad) return <span className="text-[11px] text-slate-300">—</span>;
           return <EtiquetaPrioridadTarea priority={row.prioridad} />;
         }
@@ -617,15 +720,52 @@ export const EntryTable = ({
         const tieneJefeAsignado = row.asignaciones?.some(a => a.usuario?.rol === 'JEFE');
         const puedeAprobar = userRole === 'ADMIN' || userRole === 'GERENCIA' || (userRole === 'JEFE' && !tieneJefeAsignado);
         
-        const canForceClose = isJefe && !isAsignado && estadoActual === 'PENDIENTE' && row.tipo === 'TAREA' && !isDraft && !isRemoteDraft;
+        let mySubTask = row;
+        if (row.isGrouped && row.subTareas) {
+            const found = row.subTareas.find(sub => sub.asignaciones?.some(asig => asig.usuarioId === currentUserId));
+            if (found) mySubTask = found;
+        }
+        const myTaskIsPendiente = mySubTask.estado?.toUpperCase() === 'PENDIENTE';
         
+        const canForceClose = isJefe && (!isAsignado || !myTaskIsPendiente) && estadoActual === 'PENDIENTE' && row.tipo === 'TAREA' && !isDraft && !isRemoteDraft;
+        
+        if (row._isSubTask) {
+          const subNotes = row.notas || [];
+          return (
+            <div className="flex items-center gap-2 justify-center">
+              {/* Notas para sub-tarea */}
+              <button 
+                onClick={(e) => { e.stopPropagation(); setActiveNotesEntryId(row.id); }} 
+                className={cn(
+                  "h-9 flex items-center gap-1.5 px-2.5 rounded-xl border transition-all active:scale-95 shadow-sm bg-white", 
+                  subNotes.length > 0 ? "border-amber-300 text-amber-700 bg-amber-200" : "border-yellow-400 text-yellow-500 hover:text-amber-600 bg-amber-50"
+                )} 
+                title="Notas de la tarea individual"
+              >
+                <StickyNote size={16} />
+                <span className="text-[11px] font-black">{subNotes.length}</span>
+              </button>
+              <TableActions 
+                row={row} 
+                actions={[
+                  { key: 'entregar', enabled: !isClosed && estadoActual === 'PENDIENTE' && isAsignado, onClick: (r) => { setSelectedTareaForEntrega(r); setIsEntregaModalOpen(true); } },
+                  { key: 'aprobar', enabled: !isClosed && estadoActual === 'EN_REVISION' && puedeAprobar, onClick: (r) => { setApproveTarget(r); } },
+                  { key: 'ver_detalle', enabled: true, onClick: (r) => { onViewDetail?.(r); } }
+                ]} 
+              />
+            </div>
+          );
+        }
+
         return (
           <div className="flex items-center gap-2 justify-center">
-            {/* Notas: Siempre visible */}
-            <button onClick={(e) => { e.stopPropagation(); setActiveNotesEntryId(row.id || row.tempId); }} className={cn("h-9 flex items-center gap-1.5 px-2.5 rounded-xl border transition-all active:scale-95 shadow-sm bg-white", entryNotes.length > 0 ? "border-amber-300 text-amber-700 bg-amber-200" : "border-yellow-400 text-yellow-500 hover:text-amber-600 bg-amber-50")} title="Notas de la tarea">
-              <StickyNote size={16} />
-              <span className="text-[11px] font-black">{entryNotes.length}</span>
-            </button>
+            {/* Notas: Solo si no es un grupo consolidado */}
+            {!row.isGrouped && (
+              <button onClick={(e) => { e.stopPropagation(); setActiveNotesEntryId(row.id || row.tempId); }} className={cn("h-9 flex items-center gap-1.5 px-2.5 rounded-xl border transition-all active:scale-95 shadow-sm bg-white", entryNotes.length > 0 ? "border-amber-300 text-amber-700 bg-amber-200" : "border-yellow-400 text-yellow-500 hover:text-amber-600 bg-amber-50")} title="Notas de la tarea">
+                <StickyNote size={16} />
+                <span className="text-[11px] font-black">{entryNotes.length}</span>
+              </button>
+            )}
             
             {/* PDF Button for External */}
             {!isClosed && isExternal && !isDraft && onDownloadPdf && (
@@ -659,12 +799,27 @@ export const EntryTable = ({
             <TableActions 
                 row={row} 
                 actions={[
-                    { key: 'entregar', enabled: isFormalizada && !isDraft && !isClosed && !isExternal && estadoActual === 'PENDIENTE' && isAsignado, onClick: (r) => { setSelectedTareaForEntrega(r); setIsEntregaModalOpen(true); } },
+                    { key: 'entregar', enabled: isFormalizada && !isDraft && !isClosed && !isExternal && myTaskIsPendiente && isAsignado, onClick: (r) => { setSelectedTareaForEntrega(row.isGrouped ? mySubTask : r); setIsEntregaModalOpen(true); } },
                     { key: 'aprobar', enabled: isFormalizada && !isDraft && !isClosed && !isExternal && estadoActual === 'EN_REVISION' && puedeAprobar, onClick: (r) => { setApproveTarget(r); } },
                     { key: 'forzar_cierre_tarea', enabled: canForceClose && !isClosed && !isRemoteDraft, onClick: (r) => { setForceCloseTarget(r); } },
-                    { key: 'ver_detalle', enabled: row.tipo === 'TAREA' && !isRemoteDraft && !isDraft, onClick: (r) => { onViewDetail?.(r); } },
-                    { key: 'editar', enabled: !isClosed && !isRemoteDraft, onClick: (r) => { onEdit(r); } },
-                    { key: 'borrar', enabled: !isClosed && !isRemoteDraft, onClick: (r) => { setDeleteTarget(r); } }
+                    { key: 'ver_detalle', enabled: row.tipo === 'TAREA' && !isRemoteDraft && !isDraft && !row.isGrouped, onClick: (r) => { onViewDetail?.(r); } },
+                    { key: 'editar', enabled: !isClosed && !isRemoteDraft, onClick: (r) => { 
+                        const tareaToEdit = { ...r };
+                        if (r.isGrouped && r.subTareas) {
+                            const ids = r.subTareas.flatMap(s => s.responsables?.map(u => typeof u === 'object' ? u.id : u) || s.asignaciones?.map(a => a.usuarioId) || []);
+                            tareaToEdit.responsables = [...new Set(ids)].filter(Boolean);
+                        } else if (r.responsables) {
+                            tareaToEdit.responsables = r.responsables.map(x => typeof x === 'object' ? x.id : x).filter(Boolean);
+                        }
+                        onEdit(tareaToEdit); 
+                    } },
+                    { key: 'borrar', enabled: !isClosed && !isRemoteDraft, onClick: (r) => { 
+                        if (r.isGrouped) {
+                            setDeleteTarget({ ...r, _deleteAll: true }); 
+                        } else {
+                            setDeleteTarget(r);
+                        }
+                    } }
                 ]} 
             />
 
@@ -685,11 +840,18 @@ export const EntryTable = ({
       <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
         <Table
           columns={columns}
-          data={entries}
-          keyField={(row) => row.id || row.tempId}
+          data={tableData}
+          keyField="key"
           loading={false}
           emptyMessage="No hay tareas registradas aún."
+          onRowClick={(row) => {
+            if (row._isSubTask) return;
+            if (row.isGrouped) {
+              toggleGroup(row.id);
+            }
+          }}
           rowClassName={(row) => {
+            if (row._isSubTask) return 'bg-slate-50/50 hover:bg-slate-100/50 border-l-4 border-l-slate-300';
             const isDraft = Boolean(row.tempId);
             const isRemoteDraft = Boolean(row._isRemoteDraft);
             const isClosed = row.estado === 'CERRADA';
@@ -738,7 +900,7 @@ export const EntryTable = ({
           onConfirm={async () => {
             const isAsignado = selectedTareaForEntrega.asignaciones?.some(asig => asig.usuarioId === currentUserId);
             const nextStatus = (userRole === 'ADMIN' || userRole === 'GERENCIA' || (userRole === 'JEFE' && !isAsignado)) ? 'CERRADA' : 'EN_REVISION';
-            if (onChangeStatus) await onChangeStatus(selectedTareaForEntrega.id, { estado: nextStatus });
+            if (onChangeStatus) await onChangeStatus(selectedTareaForEntrega.id, { estado: nextStatus }, true);
             setIsEntregaModalOpen(false);
             setSelectedTareaForEntrega(null);
           }}
@@ -750,11 +912,11 @@ export const EntryTable = ({
           isOpen={Boolean(deleteTarget)}
           onClose={() => setDeleteTarget(null)}
           onConfirm={async () => {
-            if (onRemove) await onRemove(deleteTarget.id || deleteTarget.tempId);
+            if (onRemove) await onRemove(deleteTarget.id || deleteTarget.tempId, deleteTarget._deleteAll);
             setDeleteTarget(null);
           }}
           title="Descartar Tarea"
-          message="¿Estás seguro de que deseas descartar esta tarea? Esta acción eliminará permanentemente los datos."
+          message={deleteTarget._deleteAll ? "¿Confirmas que deseas descartar este grupo de tareas por completo? Esta acción es irreversible." : "¿Estás seguro de que deseas descartar esta tarea? Esta acción eliminará permanentemente los datos."}
           confirmText="Descartar"
           cancelText="Cancelar"
           variant="danger"
@@ -762,18 +924,23 @@ export const EntryTable = ({
       )}
 
       {approveTarget && (
-        <ConfirmModal
+        <ModalRevisionTarea
           isOpen={Boolean(approveTarget)}
           onClose={() => setApproveTarget(null)}
+          tarea={approveTarget}
           onConfirm={async () => {
-            if (onChangeStatus) await onChangeStatus(approveTarget.id, { estado: 'CERRADA' });
+            if (onChangeStatus) {
+                if (approveTarget.isGrouped && approveTarget.subTareas) {
+                    await Promise.all(approveTarget.subTareas.map(sub => onChangeStatus(sub.id, { estado: 'CERRADA' }, true)));
+                    notify.success('Tareas aprobadas correctamente.');
+                } else {
+                    await onChangeStatus(approveTarget.id, { estado: 'CERRADA' }, true);
+                    notify.success('Tarea aprobada correctamente.');
+                }
+            }
             setApproveTarget(null);
           }}
-          title="Aprobar Tarea"
-          message="¿Estás seguro de que deseas aprobar y cerrar esta tarea de forma definitiva?"
-          confirmText="Aprobar"
-          cancelText="Cancelar"
-          variant="success"
+          submitting={false}
         />
       )}
 
@@ -782,7 +949,15 @@ export const EntryTable = ({
           isOpen={Boolean(forceCloseTarget)}
           onClose={() => setForceCloseTarget(null)}
           onConfirm={async () => {
-            if (onChangeStatus) await onChangeStatus(forceCloseTarget.id, { estado: 'CERRADA' });
+            if (onChangeStatus) {
+                if (forceCloseTarget.isGrouped && forceCloseTarget.subTareas) {
+                    await Promise.all(forceCloseTarget.subTareas.map(sub => onChangeStatus(sub.id, { estado: 'CERRADA' }, true)));
+                    notify.success('Tareas cerradas correctamente.');
+                } else {
+                    await onChangeStatus(forceCloseTarget.id, { estado: 'CERRADA' }, true);
+                    notify.success('Tarea cerrada correctamente.');
+                }
+            }
             setForceCloseTarget(null);
           }}
           title="Forzar Cierre de Tarea"

@@ -55,8 +55,14 @@ export const AccionesTablaTarea = ({
                     { key: 'aprobar', enabled: isEnRevision && puedeAprobar && !isCerrada, onClick: (r) => { if (onReview) onReview(r); else setApproveTarget(r); } },
                     { key: 'forzar_cierre_tarea', enabled: canForceClose && !isCerrada, onClick: (r) => { setForceCloseTarget(r); } },
                     { key: 'ver_detalle', enabled: true, onClick: (r) => { onViewDetail?.(r); } },
-                    { key: 'editar', enabled: (isPendiente && (esJefe || (userId && tarea.creadoPorId === userId))), onClick: (r) => { onEdit?.(r); } },
-                    { key: 'borrar', enabled: isPendiente && (esJefe || (userId && tarea.creadoPorId === userId)), onClick: (r) => { setDeleteTarget(r); } }
+                    { key: 'editar', enabled: (isPendiente && (esJefe || (userId && tarea.creadoPorId === userId))), onClick: (r) => { 
+                        const tareaToEdit = { ...r };
+                        if (r.responsables) {
+                            tareaToEdit.responsables = r.responsables.map(x => typeof x === 'object' ? x.id : x).filter(Boolean);
+                        }
+                        onEdit?.(tareaToEdit); 
+                    } },
+                    { key: 'borrar', enabled: isPendiente && (esJefe || (userId && tarea.creadoPorId === userId)), onClick: (r) => { setDeleteTarget({ ...r, _deleteAll: Boolean(r.isGrouped) }); } }
                 ]} 
             />
 
@@ -77,11 +83,11 @@ export const AccionesTablaTarea = ({
                     isOpen={Boolean(deleteTarget)}
                     onClose={() => setDeleteTarget(null)}
                     onConfirm={async () => {
-                        if (onDelete) await onDelete(deleteTarget.id);
+                        if (onDelete) await onDelete(deleteTarget.id, deleteTarget._deleteAll);
                         setDeleteTarget(null);
                     }}
                     title="Eliminar Tarea"
-                    message="¿Estás seguro de que deseas eliminar esta tarea? Esta acción la descartará del listado."
+                    message={deleteTarget._deleteAll ? "¿Confirmas que deseas eliminar este grupo de tareas por completo? Esta acción la descartará del listado." : "¿Estás seguro de que deseas eliminar esta tarea individual? Esta acción la descartará del listado."}
                     confirmText="Eliminar"
                     cancelText="Cancelar"
                     variant="danger"

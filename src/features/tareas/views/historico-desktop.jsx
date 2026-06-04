@@ -121,6 +121,7 @@ export const HistoricoDesktop = ({
                             {tareas.map((tarea) => (
                                 <TareaCard 
                                     key={tarea.id} 
+                                    className="h-full"
                                     tarea={tarea} 
                                     currentUser={currentUser} 
                                     onViewDetail={onViewDetail} 

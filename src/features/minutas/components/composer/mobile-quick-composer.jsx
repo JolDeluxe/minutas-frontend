@@ -261,7 +261,7 @@ export const MobileQuickComposer = ({
           </div>
 
           <div className={cn("flex-1 flex flex-col min-h-0 transition-all duration-500", expanded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none")}>
-            <div className="flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar space-y-6 py-4">
+            <div className={cn("flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar space-y-6 pt-4 transition-all duration-300", "pb-4")}>
               
               {/* NOTAS */}
               <div>
@@ -324,7 +324,13 @@ export const MobileQuickComposer = ({
                   <div className="relative">
                     <select 
                       value={clasificacion} 
-                      onChange={(e) => setClasificacion(e.target.value)}
+                      onChange={(e) => {
+                        const newClasificacion = e.target.value;
+                        setClasificacion(newClasificacion);
+                        if (newClasificacion === 'POLITICAS') {
+                          setEsTarea(false);
+                        }
+                      }}
                       className="w-full bg-white border-2 border-slate-100 rounded-xl pl-2 pr-7 py-2.5 text-[9px] font-bold text-slate-700 focus:outline-none focus:border-marca-primario/40 transition-all appearance-none shadow-sm h-11 truncate"
                     >
                       <option value="">— Tipo —</option>
@@ -374,7 +380,7 @@ export const MobileQuickComposer = ({
               )}
 
               {/* SWITCH ¿ES TAREA? */}
-              {allowTarea && (
+              {allowTarea && clasificacion !== 'POLITICAS' && (
                 <div className="flex items-center gap-3 px-2 pt-2 border-t border-slate-100">
                    <button
                       type="button"

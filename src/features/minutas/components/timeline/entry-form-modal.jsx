@@ -7,6 +7,7 @@ import { useIsDesktop, useIsMobile } from '@/hooks/useMediaQuery';
 import { useUsers } from '@/features/usuarios/hooks/use-users';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Camera, X, Plus, Save, Trash2, Calendar, UserPlus, Info, Pencil, Check } from 'lucide-react';
+import { notify } from '@/components/notification/adaptive-notify';
 
 const generateCompressedThumbnail = (file, maxWidth = 300, maxHeight = 300, quality = 0.5) => {
   return new Promise((resolve) => {
@@ -95,7 +96,7 @@ export const EntryFormModal = ({
           clasificacion: entry.clasificacion || 'OTROS',
           tipo: entry.tipo || (isDraft ? 'SIN_ORGANIZAR' : 'TAREA'), 
           prioridad: entry.prioridad || 'MEDIA',
-          responsables: entry.asignaciones?.map(a => a.usuarioId) || entry.responsables || [],
+          responsables: entry.responsables?.length > 0 ? entry.responsables : (entry.asignaciones?.map(a => a.usuarioId) || []),
           fechaVencimiento: entry.fechaVencimiento ? new Date(entry.fechaVencimiento).toISOString().split('T')[0] : '',
           alcanceRecordatorio: entry.alcanceRecordatorio || 'DEPARTAMENTO',
         });
@@ -141,7 +142,21 @@ export const EntryFormModal = ({
     }
   };
 
+  const isResponsableDisabled = (userId) => {
+    if (!entry || !entry.subTareas || entry.subTareas.length === 0) return false;
+    const sub = entry.subTareas.find(s => 
+      s.responsables?.some(r => (typeof r === 'object' ? r.id : r) === userId) ||
+      s.asignaciones?.some(a => a.usuarioId === userId)
+    );
+    if (!sub) return false;
+    return ['CERRADA', 'CANCELADA', 'EN_REVISION'].includes(sub.estado?.toUpperCase());
+  };
+
   const toggleResponsable = (userId) => {
+    if (isResponsableDisabled(userId)) {
+      notify.warning("No puedes quitar a este responsable porque su tarea ya está en revisión o concluida.");
+      return;
+    }
     setEditForm(prev => ({
       ...prev,
       responsables: prev.responsables.includes(userId) 
@@ -210,12 +225,20 @@ export const EntryFormModal = ({
 
     const payload = {
       ...form,
-      ...(form.tipo !== 'TAREA' && form.tipo !== 'SIN_ORGANIZAR' && { 
-        prioridad: null, 
-        fechaVencimiento: null, 
-        responsables: form.tipo === 'RECORDATORIO' && form.alcanceRecordatorio === 'PERSONAL' ? form.responsables : [] 
-      }),
     };
+    
+    // Si es TAREA o SIN_ORGANIZAR, solo enviamos responsables si cambiaron
+    if (form.tipo === 'TAREA' || form.tipo === 'SIN_ORGANIZAR') {
+      const originalIds = (entry?.responsables || []).map(r => typeof r === 'object' ? r.id : r).sort().join(',');
+      const currentIds = [...(form.responsables || [])].sort().join(',');
+      if (originalIds === currentIds) {
+        delete payload.responsables;
+      }
+    } else {
+      payload.prioridad = null;
+      payload.fechaVencimiento = null;
+      payload.responsables = form.tipo === 'RECORDATORIO' && form.alcanceRecordatorio === 'PERSONAL' ? form.responsables : [];
+    }
     const isDraft = typeof entry.id === 'string' || entry.tempId;
     if (isDraft) {
       await onSave(entry.id || entry.tempId, payload, {
@@ -288,6 +311,7 @@ export const EntryFormModal = ({
             ) : (
               filteredUsers.map(u => {
                 const isSelected = form.responsables.includes(u.id);
+                const isDisabled = isResponsableDisabled(u.id);
                 return (
                   <button
                     type="button"
@@ -295,14 +319,15 @@ export const EntryFormModal = ({
                     onClick={() => toggleResponsable(u.id)}
                     className={cn(
                       "flex flex-col items-center gap-1 shrink-0 transition-all select-none cursor-pointer focus:outline-none",
-                      isSelected ? "scale-105 font-bold" : "hover:scale-102"
+                      isSelected ? "scale-105 font-bold" : "hover:scale-102",
+                      isDisabled && "cursor-not-allowed opacity-80"
                     )}
-                    title={u.nombre}
+                    title={isDisabled ? `${u.nombre} (No se puede remover - Tarea en revisión o concluida)` : u.nombre}
                   >
                     <div className={cn(
                       "w-11 h-11 rounded-full border-2 flex items-center justify-center overflow-hidden transition-all bg-slate-50 relative shadow-xs",
                       isSelected 
-                        ? "border-emerald-500 ring-4 ring-emerald-100 shadow-md opacity-100" 
+                        ? (isDisabled ? "border-amber-400 ring-4 ring-amber-100 shadow-sm" : "border-emerald-500 ring-4 ring-emerald-100 shadow-md opacity-100") 
                         : "border-slate-200 opacity-50 hover:opacity-85"
                     )}>
                       {u.imagen ? (
@@ -311,18 +336,20 @@ export const EntryFormModal = ({
                         <span className="text-[10px] font-black uppercase text-slate-600">{u.nombre.charAt(0)}</span>
                       )}
                       
-                      {/* Check overlay en el avatar */}
+                      {/* Check/Lock overlay en el avatar */}
                       {isSelected && (
-                        <div className="absolute inset-0 bg-emerald-500/10 flex items-center justify-center">
-                          <div className="bg-emerald-500 text-white rounded-full p-0.5 shadow-sm">
-                            <Check size={8} strokeWidth={4} />
+                        <div className={cn("absolute inset-0 flex items-center justify-center", isDisabled ? "bg-amber-500/10" : "bg-emerald-500/10")}>
+                          <div className={cn("text-white rounded-full p-0.5 shadow-sm flex items-center justify-center", isDisabled ? "bg-amber-500 w-4 h-4" : "bg-emerald-500")}>
+                            {isDisabled ? <Icon name="lock" className="!text-[8px]" /> : <Check size={8} strokeWidth={4} />}
                           </div>
                         </div>
                       )}
                     </div>
                     <span className={cn(
                       "text-[8.5px] uppercase tracking-wider text-center truncate w-12 leading-tight transition-colors",
-                      isSelected ? "text-emerald-800 font-extrabold" : "text-slate-500 font-bold"
+                      isSelected 
+                        ? (isDisabled ? "text-amber-800 font-extrabold" : "text-emerald-800 font-extrabold") 
+                        : "text-slate-500 font-bold"
                     )}>
                       {u.nombre.split(' ')[0]}
                     </span>

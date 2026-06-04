@@ -36,6 +36,7 @@ export const EntryCard = ({
   onViewDetail,
   meetingMode,
   onToggleNotificado,
+  className
 }) => {
   const { user } = useAuthStore();
   const currentUser = user?.data || user;
@@ -54,7 +55,7 @@ export const EntryCard = ({
       tarea={entryEnriquecida}
       currentUser={currentUser}
       onViewDetail={onViewDetail}
-      onChangeStatus={(id, status) => onChangeStatus?.(id, { estado: status })}
+      onChangeStatus={(id, status, silent) => onChangeStatus?.(id, { estado: status }, silent)}
       onEdit={isRemoteDraft ? undefined : onEdit}
       onDelete={isRemoteDraft ? undefined : onRemove}
       onOrganize={isRemoteDraft ? undefined : onOrganize}
@@ -63,6 +64,7 @@ export const EntryCard = ({
       isDraft={Boolean(entry.tempId)}
       onToggleNotificado={onToggleNotificado}
       users={users}
+      className={className}
     />
   );
 };

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Skeleton, Icon, GlassViewToggle } from '@/components/ui/z_index';
+import { Skeleton, Icon, GlassViewToggle, GlassPaginationPill } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
 import { TareaCard } from '../components/comun/tarjeta-tarea';
 import { ResumenTareasActivas } from '../components/comun/resumen-tareas-activas';
@@ -66,6 +66,8 @@ export const MisTareasDesktop = ({
     onDelete,
     viewMode,
     onViewChange,
+    page,
+    totalPages,
 }) => {
     const navigate = useNavigate();
     const [editTarget, setEditTarget] = useState(null);
@@ -160,19 +162,34 @@ export const MisTareasDesktop = ({
                             </div>
                         )
                         : viewMode === 'cards' ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                                {tareas.map((tarea) => (
-                                    <TareaCard 
-                                        key={tarea.id} 
-                                        tarea={tarea} 
-                                        currentUser={currentUser} 
-                                        onViewDetail={onViewDetail} 
-                                        onEdit={setEditTarget}
-                                        onChangeStatus={onChangeStatus}
-                                        onDelete={onDelete}
-                                        isMisTareas={true}
-                                    />
-                                ))}
+                            <div className="flex flex-col gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                                    {tareas.map((tarea) => (
+                                        <TareaCard 
+                                            key={tarea.id} 
+                                            className="h-full"
+                                            tarea={tarea} 
+                                            currentUser={currentUser} 
+                                            onViewDetail={onViewDetail} 
+                                            onEdit={setEditTarget}
+                                            onChangeStatus={onChangeStatus}
+                                            onDelete={onDelete}
+                                            isMisTareas={true}
+                                        />
+                                    ))}
+                                </div>
+                                {totalPages > 1 && (
+                                    <div className="flex justify-center mt-4">
+                                        <GlassPaginationPill 
+                                            page={page} 
+                                            totalPages={totalPages} 
+                                            totalItems={totalParaSummary} 
+                                            onPageChange={(p) => onFilterChange({ page: p })} 
+                                            loading={loading}
+                                            bottom="24px"
+                                        />
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -184,7 +201,11 @@ export const MisTareasDesktop = ({
                                     onViewDetail={onViewDetail}
                                     onEdit={setEditTarget}
                                     onDelete={onDelete}
-                                    hidePagination={true}
+                                    page={page}
+                                    totalPages={totalPages}
+                                    totalItems={totalParaSummary}
+                                    onPageChange={(p) => onFilterChange({ page: p })}
+                                    hidePagination={false}
                                     hideResponsables={true}
                                 />
                             </div>

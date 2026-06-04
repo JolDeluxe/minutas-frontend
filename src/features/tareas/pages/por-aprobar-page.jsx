@@ -54,10 +54,12 @@ export default function PorAprobarPage() {
         setIsDrawerOpen(true);
     };
 
-    const handleApprove = async (id, status) => {
+    const handleApprove = async (id, status, silent = false) => {
         try {
             await changeStatus(id, { estado: status });
-            notify.success(`Tarea ${status === 'CERRADA' ? 'aprobada' : 'rechazada'} con éxito.`);
+            if (!silent) {
+                notify.success(`Tarea ${status === 'CERRADA' ? 'aprobada' : 'rechazada'} con éxito.`);
+            }
             setIsDrawerOpen(false);
             loadTareas();
         } catch {
@@ -65,11 +67,15 @@ export default function PorAprobarPage() {
         }
     };
 
-    const handleDeleteTarea = async (tareaId) => {
+    const handleDeleteTarea = async (tareaId, all = false) => {
         if (!tareaId) return;
         try {
-            await deleteTarea(tareaId);
-            notify.success('Tarea eliminada correctamente.');
+            const res = await deleteTarea(tareaId, all);
+            if (res && res.hermanasAfectadas > 0) {
+                notify.success(`¡(${res.hermanasAfectadas + 1}) tareas descartadas del grupo!`);
+            } else {
+                notify.success('Tarea eliminada correctamente.');
+            }
             if (isDrawerOpen && selectedTarea?.id === tareaId) {
                 setIsDrawerOpen(false);
             }

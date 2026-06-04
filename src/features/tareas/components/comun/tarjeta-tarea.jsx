@@ -5,6 +5,7 @@ import { StickyNote, X, Plus, Settings2 } from 'lucide-react';
 import { EtiquetaEstadoTarea } from './etiqueta-estado-tarea';
 import { EtiquetaPrioridadTarea } from './etiqueta-prioridad-tarea';
 import { ModalEntregarTarea } from './modal-entregar-tarea';
+import { ModalRevisionTarea } from './modal-revision-tarea';
 import { isPastDate } from '@/lib/date';
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
@@ -13,6 +14,7 @@ import { LINEA_MAP, CLASIFICACION_MAP, AREA_MAP } from '../../../minutas/constan
 import { LineIconSelector, MarketingIcon } from '../../../minutas/components/icons/line-icons';
 import { createTareaNota, updateTareaNota, deleteTareaNota } from '../../api/tareas-api';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
+import { notify } from '@/components/notification/adaptive-notify';
 
 const ESTADOS_FINALES = ['CERRADA', 'CANCELADA', 'DESCARTADA'];
 const ROLES_ADMIN = ['GERENCIA', 'JEFE', 'ADMIN'];
@@ -81,6 +83,86 @@ export const ImageViewer = ({ images, initialIndex, onClose }) => {
     </div>,
     document.body
   );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// getGroupColorConfig — Configuración determinista de colores para tareas clonadas
+// ─────────────────────────────────────────────────────────────────────────────
+export const getGroupColorConfig = (minutaId, organizadoAt) => {
+  if (!organizadoAt) return null;
+  const time = new Date(organizadoAt).getTime();
+  if (isNaN(time)) return null;
+  
+  const hash = (minutaId ? (minutaId * 13) : 0) + Math.floor(time / 1000);
+  
+  const palettes = [
+    {
+      // Violet/Purple
+      cardBg: 'bg-violet-50/40 hover:bg-violet-100/30',
+      cardBorder: 'border-violet-200/80',
+      leftBorder: 'border-l-4 border-l-violet-500',
+      badge: 'bg-violet-100 text-violet-700 border-violet-200',
+      tableRow: 'bg-violet-50/30 hover:bg-violet-100/50 text-slate-800 border-b border-violet-100/70',
+      tableBorder: '[&>td:first-child]:border-l-4 [&>td:first-child]:border-l-violet-500',
+    },
+    {
+      // Sky/Light Blue
+      cardBg: 'bg-sky-50/40 hover:bg-sky-100/30',
+      cardBorder: 'border-sky-200/80',
+      leftBorder: 'border-l-4 border-l-sky-500',
+      badge: 'bg-sky-100 text-sky-700 border-sky-200',
+      tableRow: 'bg-sky-50/30 hover:bg-sky-100/50 text-slate-800 border-b border-sky-100/70',
+      tableBorder: '[&>td:first-child]:border-l-4 [&>td:first-child]:border-l-sky-500',
+    },
+    {
+      // Emerald/Mint
+      cardBg: 'bg-emerald-50/30 hover:bg-emerald-100/20',
+      cardBorder: 'border-emerald-200/80',
+      leftBorder: 'border-l-4 border-l-emerald-500',
+      badge: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+      tableRow: 'bg-emerald-50/20 hover:bg-emerald-100/40 text-slate-800 border-b border-emerald-100/70',
+      tableBorder: '[&>td:first-child]:border-l-4 [&>td:first-child]:border-l-emerald-500',
+    },
+    {
+      // Rose/Pink
+      cardBg: 'bg-rose-50/40 hover:bg-rose-100/30',
+      cardBorder: 'border-rose-200/80',
+      leftBorder: 'border-l-4 border-l-rose-400',
+      badge: 'bg-rose-100 text-rose-700 border-rose-200',
+      tableRow: 'bg-rose-50/30 hover:bg-rose-100/50 text-slate-800 border-b border-rose-100/70',
+      tableBorder: '[&>td:first-child]:border-l-4 [&>td:first-child]:border-l-rose-400',
+    },
+    {
+      // Amber/Honey
+      cardBg: 'bg-amber-50/35 hover:bg-amber-100/25',
+      cardBorder: 'border-amber-200/80',
+      leftBorder: 'border-l-4 border-l-amber-500',
+      badge: 'bg-amber-100 text-amber-800 border-amber-200',
+      tableRow: 'bg-amber-50/25 hover:bg-amber-100/45 text-slate-800 border-b border-amber-100/70',
+      tableBorder: '[&>td:first-child]:border-l-4 [&>td:first-child]:border-l-amber-500',
+    },
+    {
+      // Indigo/Deep Blue
+      cardBg: 'bg-indigo-50/40 hover:bg-indigo-100/30',
+      cardBorder: 'border-indigo-200/80',
+      leftBorder: 'border-l-4 border-l-indigo-500',
+      badge: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+      tableRow: 'bg-indigo-50/30 hover:bg-indigo-100/50 text-slate-800 border-b border-indigo-100/70',
+      tableBorder: '[&>td:first-child]:border-l-4 [&>td:first-child]:border-l-indigo-500',
+    },
+    {
+      // Teal/Cyan-Green
+      cardBg: 'bg-teal-50/30 hover:bg-teal-100/20',
+      cardBorder: 'border-teal-200/80',
+      leftBorder: 'border-l-4 border-l-teal-500',
+      badge: 'bg-teal-100 text-teal-700 border-teal-200',
+      tableRow: 'bg-teal-50/20 hover:bg-teal-100/40 text-slate-800 border-b border-teal-100/70',
+      tableBorder: '[&>td:first-child]:border-l-4 [&>td:first-child]:border-l-teal-500',
+    }
+  ];
+  
+  const index = Math.abs(hash) % palettes.length;
+  return palettes[index];
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -313,6 +395,257 @@ const EntryNotesPostIt = ({ entry, notes, onClose, onAddNote, onUpdateNote, onDe
 //   onDownloadPdf   — Callback para generar PDF de entradas externas
 //   isGeneratingPdf — Estado de carga del PDF (string con el area)
 // ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// GrupoSubTareasPanel — Panel expandible de sub-tareas individuales
+// ─────────────────────────────────────────────────────────────────────────────
+const EstadoBadgeInline = ({ estado }) => {
+  const cfg = {
+    PENDIENTE:   { label: 'Pendiente',   cls: 'bg-amber-50 text-amber-700 border-amber-200' },
+    EN_REVISION: { label: 'En Revisión', cls: 'bg-blue-50 text-blue-700 border-blue-200' },
+    CERRADA:     { label: 'Cerrada',     cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    CANCELADA:   { label: 'Cancelada',   cls: 'bg-slate-100 text-slate-500 border-slate-200' },
+  };
+  const e = estado?.toUpperCase() || 'PENDIENTE';
+  const { label, cls } = cfg[e] || cfg.PENDIENTE;
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${cls}`}>
+      {label}
+    </span>
+  );
+};
+
+const GrupoSubTareasPanel = ({ subTareas, currentUser, onChangeStatus, onViewDetail }) => {
+  const [confirmTarget, setConfirmTarget] = useState(null);
+  const [confirmAction, setConfirmAction] = useState(null);
+  const { rol, id: currentUserId } = currentUser || {};
+  const puedeAprobar = rol === 'ADMIN' || rol === 'GERENCIA' || rol === 'JEFE';
+
+  const [localSubTareas, setLocalSubTareas] = useState(subTareas);
+  const [activeNotesSub, setActiveNotesSub] = useState(null);
+
+  useEffect(() => {
+    setLocalSubTareas(subTareas);
+  }, [subTareas]);
+
+  const handleAddNote = async (subId, contenido) => {
+    try {
+      const res = await createTareaNota({ tareaId: subId, contenido });
+      if (res.data?.status === 'success' || res.data?.data) {
+        const newNote = res.data.data;
+        setLocalSubTareas(prev => prev.map(s => s.id === subId ? { ...s, notas: [newNote, ...(s.notas || [])] } : s));
+        return newNote;
+      }
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  };
+
+  const handleUpdateNote = async (subId, noteId, contenido) => {
+    try {
+      const res = await updateTareaNota(noteId, { contenido });
+      if (res.data?.status === 'success' || res.data?.data) {
+        const updated = res.data.data;
+        setLocalSubTareas(prev => prev.map(s => s.id === subId ? { ...s, notas: (s.notas || []).map(n => n.id === noteId ? updated : n) } : s));
+        return updated;
+      }
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  };
+
+  const handleDeleteNote = async (subId, noteId) => {
+    try {
+      const res = await deleteTareaNota(noteId);
+      if (res.data?.status === 'success' || res.status === 200) {
+        setLocalSubTareas(prev => prev.map(s => s.id === subId ? { ...s, notas: (s.notas || []).filter(n => n.id !== noteId) } : s));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  };
+
+  return (
+    <div className="border-t border-slate-100 bg-slate-50/60 px-3 pb-3 pt-2 space-y-2 animate-in slide-in-from-top-2 fade-in duration-300">
+      <p className="text-[8px] font-black uppercase tracking-widest text-slate-400 pb-1">
+        Responsables individuales
+      </p>
+      {localSubTareas.map((sub) => {
+        const asig = sub.asignaciones?.[0];
+        const usuario = asig?.usuario;
+        const esMio = asig?.usuarioId === currentUserId || usuario?.id === currentUserId;
+        const estado = sub.estado?.toUpperCase() || 'PENDIENTE';
+        const isPendiente = estado === 'PENDIENTE';
+        const isEnRevision = estado === 'EN_REVISION';
+        const isCerrada = estado === 'CERRADA' || estado === 'CANCELADA';
+        const evidencias = (sub.imagenes || []).filter(img => img.tipo === 'EVIDENCIA');
+        const subNotesCount = sub.notas?.length || 0;
+
+        return (
+          <div key={sub.id} className="flex items-center gap-2 bg-white rounded-xl border border-slate-100 p-2 shadow-xs">
+            {/* Avatar */}
+            <div className="h-7 w-7 rounded-full border border-slate-200 overflow-hidden bg-slate-100 flex items-center justify-center text-[9px] font-bold text-slate-500 shrink-0">
+              {usuario?.imagen
+                ? <img src={usuario.imagen} alt={usuario.nombre} className="h-full w-full object-cover" />
+                : <span>{usuario?.nombre?.charAt(0) || '?'}</span>
+              }
+            </div>
+
+            {/* Nombre + estado */}
+            <div className="flex-1 min-w-0 flex flex-col">
+              <p className="text-[10px] font-bold text-slate-700 truncate">{usuario?.nombre || `Tarea #${sub.id}`}</p>
+              <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                <EstadoBadgeInline estado={sub.estado} />
+                {isCerrada || isEnRevision ? (
+                  (() => {
+                    const fechaFin = sub.completadoAt || sub.cerradoAt || sub.updatedAt;
+                    if (!fechaFin) return null;
+                    const isLate = sub.isLate ?? (sub.fechaVencimiento && new Date(fechaFin) > new Date(sub.fechaVencimiento));
+                    return (
+                      <span className={cn("text-[9px] font-bold", isLate ? "text-red-500" : "text-emerald-600")}>
+                        Concl: {new Date(fechaFin).toLocaleDateString('es-MX')}
+                      </span>
+                    );
+                  })()
+                ) : (
+                  sub.fechaVencimiento && (
+                    <span className={cn("text-[9px] font-medium", isPastDate(sub.fechaVencimiento) ? "text-red-500 font-bold" : "text-slate-500")}>
+                      Vence: {new Date(sub.fechaVencimiento).toLocaleDateString('es-MX')}
+                    </span>
+                  )
+                )}
+              </div>
+            </div>
+
+            {/* Evidencias (miniatura) */}
+            {evidencias.length > 0 && (
+              <div className="flex -space-x-1.5 shrink-0">
+                {evidencias.slice(0, 3).map((img, i) => (
+                  <img key={i} src={img.url} alt="evidencia" className="h-6 w-6 rounded-md border border-white object-cover shadow-sm" />
+                ))}
+                {evidencias.length > 3 && (
+                  <div className="h-6 w-6 rounded-md border border-white bg-slate-200 flex items-center justify-center text-[7px] font-black text-slate-500">
+                    +{evidencias.length - 3}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Acciones contextuales */}
+            <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+              {/* Botón de ver detalle */}
+              <button
+                onClick={(e) => { e.stopPropagation(); e.preventDefault(); onViewDetail?.(sub); }}
+                className="h-6 w-6 rounded-lg border border-slate-200 bg-white text-slate-400 hover:text-slate-700 flex items-center justify-center transition-all active:scale-90 shadow-xs cursor-pointer"
+                title="Ver Detalles"
+              >
+                <Icon name="visibility" className="!text-[12px]" />
+              </button>
+
+              {/* Botón de notas */}
+              <button
+                onClick={(e) => { e.stopPropagation(); e.preventDefault(); setActiveNotesSub(sub); }}
+                className={cn(
+                  "flex h-6 px-1.5 items-center justify-center gap-1 rounded-lg border transition-all active:scale-95 shadow-xs cursor-pointer",
+                  subNotesCount > 0 ? "border-amber-300 bg-amber-400 text-white font-black" : "border-amber-200 bg-amber-50 text-amber-600"
+                )}
+                title="Notas de la tarea"
+              >
+                <StickyNote size={12} />
+                <span className="text-[9px]">{subNotesCount}</span>
+              </button>
+
+              {esMio && isPendiente && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); setConfirmTarget(sub); setConfirmAction('entregar'); }}
+                  className="h-6 px-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-[8px] font-black uppercase tracking-widest shadow-sm active:scale-95 transition-all flex items-center gap-1"
+                >
+                  <Icon name="check" className="!text-[10px]" /> Entregar
+                </button>
+              )}
+              {!esMio && puedeAprobar && isEnRevision && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); setConfirmTarget(sub); setConfirmAction('aprobar'); }}
+                  className="h-6 px-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-[8px] font-black uppercase tracking-widest shadow-sm active:scale-95 transition-all flex items-center gap-1"
+                >
+                  <Icon name="thumb_up" className="!text-[10px]" /> Aprobar
+                </button>
+              )}
+              {isCerrada && (
+                <Icon name="check_circle" size="16px" className="text-emerald-500" />
+              )}
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Confirm modal for deliver/approve */}
+      <div onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+        {confirmTarget && confirmAction === 'entregar' && (
+          <ConfirmModal
+            isOpen={true}
+            onClose={() => setConfirmTarget(null)}
+            onConfirm={async () => {
+              const nextStatus = (rol === 'ADMIN' || rol === 'GERENCIA') ? 'CERRADA' : 'EN_REVISION';
+              if (onChangeStatus) await onChangeStatus(confirmTarget.id, nextStatus);
+              setConfirmTarget(null);
+            }}
+            title="Entregar Tarea"
+            message="¿Confirmas que deseas marcar esta tarea como entregada?"
+            confirmText="Entregar"
+            cancelText="Cancelar"
+            variant="success"
+          />
+        )}
+        {confirmTarget && confirmAction === 'aprobar' && (
+          <ModalRevisionTarea
+            isOpen={true}
+            onClose={() => setConfirmTarget(null)}
+            tarea={confirmTarget}
+            onConfirm={async () => {
+              if (onChangeStatus) await onChangeStatus(confirmTarget.id, 'CERRADA');
+              setConfirmTarget(null);
+            }}
+            submitting={false}
+          />
+        )}
+      </div>
+
+      {activeNotesSub && (
+        <EntryNotesPostIt
+          entry={{ ...activeNotesSub, readOnly: activeNotesSub.estado === 'CERRADA' || rol === 'COORDINADOR' }}
+          notes={activeNotesSub.notas || []}
+          onClose={() => setActiveNotesSub(null)}
+          onAddNote={async (subId, content) => {
+            const added = await handleAddNote(subId, content);
+            if (added) {
+              setActiveNotesSub(prev => ({ ...prev, notas: [added, ...(prev.notas || [])] }));
+            }
+            return added;
+          }}
+          onUpdateNote={async (subId, noteId, content) => {
+            const updated = await handleUpdateNote(subId, noteId, content);
+            if (updated) {
+              setActiveNotesSub(prev => ({ ...prev, notas: (prev.notas || []).map(n => n.id === noteId ? updated : n) }));
+            }
+            return updated;
+          }}
+          onDeleteNote={async (subId, noteId) => {
+            const deleted = await handleDeleteNote(subId, noteId);
+            if (deleted) {
+              setActiveNotesSub(prev => ({ ...prev, notas: (prev.notas || []).filter(n => n.id !== noteId) }));
+            }
+            return deleted;
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
 export const TareaCard = ({
     tarea,
     currentUser,
@@ -340,8 +673,14 @@ export const TareaCard = ({
     const [notas, setNotas] = useState(tarea.notas || []);
     const [viewerIndex, setViewerIndex] = useState(null);
     const [forceCloseTarget, setForceCloseTarget] = useState(null);
+    const [grupoExpanded, setGrupoExpanded] = useState(false);
     const isExpanded = false;
     const isRemoteDraft = Boolean(tarea._isRemoteDraft);
+
+    // ── Datos de grupo (multi-responsable) ──────────────────────────────────
+    const isGrouped = Boolean(tarea.isGrouped);
+    const subTareas = tarea.subTareas || [];
+    const grupoStats = tarea._grupoStats || null;
 
     // ── Normalización de datos ──────────────────────────────────────────────
     // Soporta tanto tarea.responsables (módulo Tareas) como tarea.asignaciones (módulo Minutas)
@@ -391,7 +730,22 @@ export const TareaCard = ({
     const esAsignadoDirecto = responsables.some(r => r.id == currentUserId)
         || tarea.asignaciones?.some(a => a.usuarioId == currentUserId);
 
-    const canForceClose = esJefe && !esAsignadoDirecto && isPendiente && !isPorAprobar && tipo === 'TAREA' && !isDraft && !isRemoteDraft;
+    // Contexto de grupo para mostrar avatares extra o badges (Fase 2)
+    const grupoContext = tarea._grupoContext || null;
+    const esCompartida = Boolean(grupoContext && grupoContext.total > 1);
+    const colorCfg = esCompartida ? getGroupColorConfig(tarea.minutaId, tarea.organizadoAt) : null;
+
+    let mySubTask = tarea;
+    if (isGrouped && subTareas) {
+        const found = subTareas.find(sub => 
+            sub.responsables?.some(r => r.id == currentUserId) || 
+            sub.asignaciones?.some(a => a.usuarioId == currentUserId)
+        );
+        if (found) mySubTask = found;
+    }
+    const myTaskIsPendiente = mySubTask.estado?.toUpperCase() === 'PENDIENTE';
+
+    const canForceClose = esJefe && (!esAsignadoDirecto || !myTaskIsPendiente) && isPendiente && !isPorAprobar && tipo === 'TAREA' && !isDraft && !isRemoteDraft;
 
     // ── Handlers de notas ───────────────────────────────────────────────────
     const handleAddNote = async (tareaId, contenido) => {
@@ -439,7 +793,15 @@ export const TareaCard = ({
     const getCardStyles = () => {
         if (isRemoteDraft) return 'bg-cyan-50/40 hover:bg-cyan-100/60 ring-1 ring-cyan-500/10';
         if (isDraft) return 'bg-emerald-50/40 hover:bg-emerald-100/60 ring-1 ring-emerald-500/10';
-        if (isCerrado) return 'opacity-70 grayscale bg-slate-50/50 hover:bg-slate-100/60 border-slate-200/50';
+        if (isCerrado) {
+            if (esCompartida && colorCfg) {
+                return cn('opacity-70 grayscale bg-slate-50/50 hover:bg-slate-100/60 border-slate-200/50', colorCfg.leftBorder);
+            }
+            return 'opacity-70 grayscale bg-slate-50/50 hover:bg-slate-100/60 border-slate-200/50';
+        }
+        if (esCompartida && colorCfg) {
+            return cn(colorCfg.cardBg, colorCfg.cardBorder, colorCfg.leftBorder);
+        }
         if (isOtherArea) return 'bg-white hover:bg-slate-50/30 border-slate-200'; // Clean and neutral for other areas
         if (vencida) return 'bg-red-50/40 hover:bg-red-100/60 ring-1 ring-red-500/20';
         if (!isOrganized && !isExternal) return 'bg-amber-50/20 hover:bg-amber-100/30 border-l-4 border-l-amber-500 border-dashed';
@@ -463,13 +825,21 @@ export const TareaCard = ({
     const handleCardClick = () => {
         if (isRemoteDraft) return;
         if (isExternal && !isDraft) {
-            onViewDetail?.(tarea);
+            if (isGrouped) {
+                setGrupoExpanded(prev => !prev);
+            } else {
+                onViewDetail?.(tarea);
+            }
             return;
         }
         if (isDraft || !isOrganized) {
             onOrganize?.(tarea);
         } else if (isFormalizada) {
-            onViewDetail?.(tarea);
+            if (isGrouped) {
+                setGrupoExpanded(prev => !prev);
+            } else {
+                onViewDetail?.(tarea);
+            }
         }
     };
 
@@ -542,6 +912,23 @@ export const TareaCard = ({
                                         Borrador
                                     </span>
                                 )}
+                                {/* Badge de grupo multi-responsable */}
+                                {isGrouped && grupoStats && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border bg-violet-50 text-violet-700 border-violet-200 shadow-xs">
+                                        <Icon name="group" size="10px" />
+                                        {grupoStats.total} Responsables
+                                    </span>
+                                )}
+                                {/* Badge de Tarea Compartida en Vistas Planas */}
+                                {!isGrouped && esCompartida && colorCfg && (
+                                    <span className={cn(
+                                        "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border shadow-xs transition-all",
+                                        colorCfg.badge
+                                    )}>
+                                        <Icon name="group" size="10px" className="shrink-0" />
+                                        Instrucción Compartida
+                                    </span>
+                                )}
                                 {/* Badge de tipo */}
                                 {tipo && tipo !== 'DESCARTADA' && !(isOtherArea && tipo === 'SIN_ORGANIZAR') && (
                                     <span className={cn(
@@ -554,6 +941,12 @@ export const TareaCard = ({
                                     )}>
                                         <Icon name={tipo === 'TAREA' ? "task_alt" : tipo === 'RECORDATORIO' ? "notifications" : tipo === 'POLITICA' ? "policy" : (isExternal ? "pending_actions" : "warning")} size="10px" className="shrink-0" />
                                         {tipo === 'SIN_ORGANIZAR' ? (isExternal ? 'Sin Organizar' : 'Falta Clasificar') : (isExternal && tipo === 'TAREA' ? 'EXTERNA' : tipo)}
+                                    </span>
+                                )}
+                                {clasif && !isOtherArea && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border" style={{ backgroundColor: `${clasif.color}08`, color: clasif.color, borderColor: `${clasif.color}15` }}>
+                                        <Icon name={clasif.icon} size="10px" />
+                                        {clasif.label}
                                     </span>
                                 )}
                                 {!isOtherArea && (
@@ -573,12 +966,6 @@ export const TareaCard = ({
                                         {AREA_MAP[tarea.area] || tarea.area}
                                     </span>
                                 )}
-                                {clasif && (
-                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border" style={{ backgroundColor: `${clasif.color}08`, color: clasif.color, borderColor: `${clasif.color}15` }}>
-                                        <Icon name={clasif.icon} size="10px" />
-                                        {clasif.label}
-                                    </span>
-                                )}
                                 {tarea.prioridad && !isExternal && <EtiquetaPrioridadTarea priority={tarea.prioridad} className="scale-90 origin-left" />}
                             </div>
                             <div className="flex items-center gap-1.5 shrink-0">
@@ -586,7 +973,7 @@ export const TareaCard = ({
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            setDeleteTarget(tarea);
+                                            setDeleteTarget({ ...tarea, _deleteAll: isGrouped });
                                         }}
                                         className="h-6 w-6 rounded-lg text-rose-500 hover:bg-rose-50 flex items-center justify-center transition-all active:scale-90"
                                         title="Eliminar Tarea"
@@ -626,17 +1013,19 @@ export const TareaCard = ({
                         {/* Footer: Notas + Avatares + Acciones */}
                         <div className="mt-2 min-[360px]:mt-3 pt-2 min-[360px]:pt-2.5 border-t border-slate-50 flex items-center justify-between gap-1.5 min-[360px]:gap-2" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center gap-1 min-[360px]:gap-1.5">
-                                <button onClick={(e) => { e.stopPropagation(); setShowNotesPanel(true); }} className={cn(
-                                    "flex h-6 min-[360px]:h-7 px-1.5 min-[360px]:px-2 items-center justify-center gap-1 min-[360px]:gap-1.5 rounded-lg border transition-all active:scale-95 shadow-xs",
-                                    notas.length > 0 ? "border-amber-300 bg-amber-400 text-white font-black" : "border-amber-200 bg-amber-50 text-amber-600"
-                                )}>
-                                    <StickyNote size={14} />
-                                    <span className="text-[10px]">{notas.length}</span>
-                                </button>
+                                {!isGrouped && (
+                                    <button onClick={(e) => { e.stopPropagation(); setShowNotesPanel(true); }} className={cn(
+                                        "flex h-6 min-[360px]:h-7 px-1.5 min-[360px]:px-2 items-center justify-center gap-1 min-[360px]:gap-1.5 rounded-lg border transition-all active:scale-95 shadow-xs",
+                                        notas.length > 0 ? "border-amber-300 bg-amber-400 text-white font-black" : "border-amber-200 bg-amber-50 text-amber-600"
+                                    )}>
+                                        <StickyNote size={14} />
+                                        <span className="text-[10px]">{notas.length}</span>
+                                    </button>
+                                )}
 
                                 {responsables.length > 0 && (
-                                    <div className="flex -space-x-2 ml-1">
-                                        {responsables.map((r) => (
+                                    <div className="flex -space-x-2 ml-1 items-center">
+                                        {responsables.slice(0, 4).map((r) => (
                                             <Tooltip key={r.id} text={r.nombre} position="top">
                                                 <div className="h-5 w-5 min-[360px]:h-6 min-[360px]:w-6 rounded-full border border-white overflow-hidden bg-slate-100 flex items-center justify-center text-[7px] min-[360px]:text-[8px] font-bold text-slate-500 shadow-xs shrink-0 ring-1 ring-slate-200 transition-all hover:scale-110 hover:z-10 cursor-help">
                                                     {r.imagen ? (
@@ -647,6 +1036,13 @@ export const TareaCard = ({
                                                 </div>
                                             </Tooltip>
                                         ))}
+                                        {responsables.length > 4 && (
+                                            <Tooltip text={responsables.slice(4).map(r => r.nombre).join('\n')} position="top" className="whitespace-pre-line text-left">
+                                                <div className="h-5 w-5 min-[360px]:h-6 min-[360px]:w-6 rounded-full border border-white bg-slate-200 text-slate-600 flex items-center justify-center text-[8px] font-bold shadow-xs shrink-0 ring-1 ring-slate-200 cursor-help z-10">
+                                                    +{responsables.length - 4}
+                                                </div>
+                                            </Tooltip>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -654,20 +1050,23 @@ export const TareaCard = ({
                             <div className="flex items-center gap-1.5">
                                 {isMisTareas ? (
                                     <>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); onViewDetail?.(tarea); }}
-                                            className="h-6 w-6 min-[360px]:h-7 min-[360px]:w-7 rounded-lg border border-slate-200 bg-white text-slate-400 hover:text-slate-700 flex items-center justify-center transition-all active:scale-90 shadow-xs"
-                                            title="Ver Detalles"
-                                        >
-                                            <Icon name="visibility" className="!text-[12px] min-[360px]:!text-[14px]" />
-                                        </button>
-                                        {isPendiente && esAsignadoDirecto && (
+                                        {!isGrouped && (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); onViewDetail?.(tarea); }}
+                                                className="h-6 w-6 min-[360px]:h-7 min-[360px]:w-7 rounded-lg border border-slate-200 bg-white text-slate-400 hover:text-slate-700 flex items-center justify-center transition-all active:scale-90 shadow-xs"
+                                                title="Ver Detalles"
+                                            >
+                                                <Icon name="visibility" className="!text-[12px] min-[360px]:!text-[14px]" />
+                                            </button>
+                                        )}
+                                        {myTaskIsPendiente && esAsignadoDirecto && (
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     setIsEntregaModalOpen(true);
                                                 }}
                                                 className="h-6 min-[360px]:h-7 px-2 min-[360px]:px-3 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-[8.5px] min-[360px]:text-[9px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20 active:scale-95 transition-all flex items-center gap-1 cursor-pointer"
+                                                title="Entregar"
                                             >
                                                 <Icon name="check" className="!text-[10px] min-[360px]:!text-[12px]" /> Entregar
                                             </button>
@@ -720,17 +1119,24 @@ export const TareaCard = ({
                                             </button>
                                         )}
 
+
                                         <div className="scale-[0.8] min-[360px]:scale-100 origin-right transition-transform">
                                             <TableActions
                                                 row={tarea}
                                                 actions={[
-                                                    { key: 'entregar', enabled: isFormalizada && !isDraft && !isCerrado && !isExternal && isPendiente && esAsignadoDirecto, onClick: () => { setIsEntregaModalOpen(true); } },
+                                                    { key: 'entregar', enabled: isFormalizada && !isDraft && !isCerrado && !isExternal && myTaskIsPendiente && esAsignadoDirecto, onClick: () => { setIsEntregaModalOpen(true); } },
                                                     { key: 'aprobar', enabled: isFormalizada && !isDraft && !isCerrado && !isExternal && isEnRevision && puedeAprobar, onClick: (r) => { if (onReview) onReview(r); else setIsConfirmAprobarOpen(true); } },
                                                     { key: 'forzar_cierre_tarea', enabled: canForceClose && !isCerrado && !isRemoteDraft, onClick: (r) => { setForceCloseTarget(r); } },
-                                                    { key: 'ver_detalle', enabled: isFormalizada && !isRemoteDraft && !isDraft, onClick: (r) => { onViewDetail?.(r); } },
-                                                    { key: 'editar', enabled: !isCerrado && !isRemoteDraft && !!onEdit, onClick: (r) => { onEdit(r); } },
-                                                ]}
-                                            />
+                                                    { key: 'ver_detalle', enabled: isFormalizada && !isRemoteDraft && !isDraft && !isGrouped, onClick: (r) => { onViewDetail?.(r); } },
+                                                    { key: 'editar', enabled: !isCerrado && !isRemoteDraft && !!onEdit, onClick: (r) => { 
+                                                        const tareaToEdit = { ...r };
+                                                        if (r.responsables) {
+                                                            tareaToEdit.responsables = r.responsables.map(x => typeof x === 'object' ? x.id : x).filter(Boolean);
+                                                        }
+                                                        onEdit(tareaToEdit); 
+                                                    } },
+                                                 ]}
+                                             />
                                         </div>
                                     </>
                                 )}
@@ -738,6 +1144,27 @@ export const TareaCard = ({
                         </div>
                     </div>
                 </div>
+
+                {/* Botón de acordeón para grupos */}
+                {isGrouped && !isDraft && !isRemoteDraft && (
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setGrupoExpanded(prev => !prev); }}
+                        className="mt-2 w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-500 transition-all text-[9px] font-black uppercase tracking-widest active:scale-[0.98]"
+                    >
+                        <Icon name={grupoExpanded ? 'keyboard_arrow_up' : 'keyboard_arrow_down'} size="14px" />
+                        {grupoExpanded ? 'Ocultar responsables' : `Ver ${subTareas.length} responsables`}
+                    </button>
+                )}
+
+                {/* Panel de sub-tareas expandible */}
+                {isGrouped && grupoExpanded && (
+                    <GrupoSubTareasPanel
+                        subTareas={subTareas}
+                        currentUser={currentUser}
+                        onChangeStatus={onChangeStatus}
+                        onViewDetail={onViewDetail}
+                    />
+                )}
             </div>
 
             {/* Visor de imágenes a pantalla completa */}
@@ -745,75 +1172,93 @@ export const TareaCard = ({
                 <ImageViewer images={imagenesCaptura} initialIndex={viewerIndex} onClose={() => setViewerIndex(null)} />
             )}
 
-            {isEntregaModalOpen && (
-                <ModalEntregarTarea
-                    isOpen={isEntregaModalOpen}
-                    onClose={() => setIsEntregaModalOpen(false)}
-                    tareaId={tarea.id}
-                    onConfirm={async () => {
-                        const nextStatus = (rol === 'ADMIN' || rol === 'GERENCIA' || (rol === 'JEFE' && !esAsignadoDirecto)) ? 'CERRADA' : 'EN_REVISION';
-                        if (onChangeStatus) await onChangeStatus(tarea.id, nextStatus);
-                    }}
-                />
-            )}
+            {(isEntregaModalOpen || isConfirmAprobarOpen || deleteTarget || showNotesPanel || forceCloseTarget) && (
+                <div onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+                    {isEntregaModalOpen && (
+                        <ModalEntregarTarea
+                            isOpen={isEntregaModalOpen}
+                            onClose={() => setIsEntregaModalOpen(false)}
+                            tareaId={isGrouped ? mySubTask.id : tarea.id}
+                            onConfirm={async () => {
+                                const targetId = isGrouped ? mySubTask.id : tarea.id;
+                                const nextStatus = (rol === 'ADMIN' || rol === 'GERENCIA' || (rol === 'JEFE' && !esAsignadoDirecto)) ? 'CERRADA' : 'EN_REVISION';
+                                if (onChangeStatus) await onChangeStatus(targetId, nextStatus, true);
+                            }}
+                        />
+                    )}
 
-            {isConfirmAprobarOpen && (
-                <ConfirmModal
-                    isOpen={isConfirmAprobarOpen}
-                    onClose={() => setIsConfirmAprobarOpen(false)}
-                    onConfirm={async () => {
-                        if (onChangeStatus) await onChangeStatus(tarea.id, 'CERRADA');
-                        setIsConfirmAprobarOpen(false);
-                    }}
-                    title="Aprobar Tarea"
-                    message="¿Estás seguro de que deseas aprobar y cerrar esta tarea de forma definitiva?"
-                    confirmText="Aprobar"
-                    cancelText="Cancelar"
-                    variant="success"
-                />
-            )}
+                    {isConfirmAprobarOpen && (
+                        <ModalRevisionTarea
+                            isOpen={isConfirmAprobarOpen}
+                            onClose={() => setIsConfirmAprobarOpen(false)}
+                            tarea={tarea}
+                            onConfirm={async () => {
+                                if (onChangeStatus) {
+                                    if (isGrouped && subTareas) {
+                                        await Promise.all(subTareas.map(sub => onChangeStatus(sub.id, 'CERRADA', true)));
+                                        notify.success('Tareas aprobadas correctamente.');
+                                    } else {
+                                        await onChangeStatus(tarea.id, 'CERRADA', true);
+                                        notify.success('Tarea aprobada correctamente.');
+                                    }
+                                }
+                                setIsConfirmAprobarOpen(false);
+                            }}
+                            submitting={false}
+                        />
+                    )}
 
-            {deleteTarget && (
-                <ConfirmModal
-                    isOpen={Boolean(deleteTarget)}
-                    onClose={() => setDeleteTarget(null)}
-                    onConfirm={async () => {
-                        if (onDelete) await onDelete(deleteTarget.id || deleteTarget.tempId);
-                        setDeleteTarget(null);
-                    }}
-                    title="Descartar Tarea"
-                    message="¿Estás seguro de que deseas descartar esta tarea? Esta acción eliminará permanentemente los datos."
-                    confirmText="Descartar"
-                    cancelText="Cancelar"
-                    variant="danger"
-                />
-            )}
+                    {deleteTarget && (
+                        <ConfirmModal
+                            isOpen={Boolean(deleteTarget)}
+                            onClose={() => setDeleteTarget(null)}
+                            onConfirm={async () => {
+                                if (onDelete) await onDelete(deleteTarget.id || deleteTarget.tempId, deleteTarget._deleteAll);
+                                setDeleteTarget(null);
+                            }}
+                            title="Descartar Tarea"
+                            message={deleteTarget._deleteAll ? "¿Confirmas que deseas descartar este grupo de tareas por completo? Esta acción eliminará permanentemente los datos del grupo." : "¿Estás seguro de que deseas descartar esta tarea? Esta acción eliminará permanentemente los datos."}
+                            confirmText="Descartar"
+                            cancelText="Cancelar"
+                            variant="danger"
+                        />
+                    )}
 
-            {showNotesPanel && (
-                <EntryNotesPostIt
-                    entry={{ ...tarea, readOnly: isCerrado || rol === 'COORDINADOR' || isRemoteDraft }}
-                    notes={notas}
-                    onClose={() => setShowNotesPanel(false)}
-                    onAddNote={handleAddNote}
-                    onUpdateNote={handleUpdateNote}
-                    onDeleteNote={handleDeleteNote}
-                />
-            )}
+                    {showNotesPanel && (
+                        <EntryNotesPostIt
+                            entry={{ ...tarea, readOnly: isCerrado || rol === 'COORDINADOR' || isRemoteDraft }}
+                            notes={notas}
+                            onClose={() => setShowNotesPanel(false)}
+                            onAddNote={handleAddNote}
+                            onUpdateNote={handleUpdateNote}
+                            onDeleteNote={handleDeleteNote}
+                        />
+                    )}
 
-            {forceCloseTarget && (
-                <ConfirmModal
-                    isOpen={Boolean(forceCloseTarget)}
-                    onClose={() => setForceCloseTarget(null)}
-                    onConfirm={async () => {
-                        if (onChangeStatus) await onChangeStatus(forceCloseTarget.id, 'CERRADA');
-                        setForceCloseTarget(null);
-                    }}
-                    title="Forzar Cierre de Tarea"
-                    message="¿Estás seguro de que deseas cerrar esta tarea sin pasar por revisión? Advertencia: no hubo entrega registrada para esta tarea."
-                    confirmText="Cerrar Tarea"
-                    cancelText="Cancelar"
-                    variant="danger"
-                />
+                    {forceCloseTarget && (
+                        <ConfirmModal
+                            isOpen={Boolean(forceCloseTarget)}
+                            onClose={() => setForceCloseTarget(null)}
+                            onConfirm={async () => {
+                                if (onChangeStatus) {
+                                    if (forceCloseTarget.isGrouped && forceCloseTarget.subTareas) {
+                                        await Promise.all(forceCloseTarget.subTareas.map(sub => onChangeStatus(sub.id, 'CERRADA', true)));
+                                        notify.success('Tareas cerradas correctamente.');
+                                    } else {
+                                        await onChangeStatus(forceCloseTarget.id, 'CERRADA', true);
+                                        notify.success('Tarea cerrada correctamente.');
+                                    }
+                                }
+                                setForceCloseTarget(null);
+                            }}
+                            title="Forzar Cierre de Tarea"
+                            message="¿Estás seguro de que deseas cerrar esta tarea sin pasar por revisión? Advertencia: no hubo entrega registrada para esta tarea."
+                            confirmText="Cerrar Tarea"
+                            cancelText="Cancelar"
+                            variant="danger"
+                        />
+                    )}
+                </div>
             )}
         </>
     );

@@ -3,6 +3,7 @@ import {
     getTareas,
     createTarea,
     updateTarea,
+    organizarTarea,
     changeTareaStatus,
     deleteTarea,
     createNotaGeneral,
@@ -81,6 +82,16 @@ export const useTareas = () => {
         }
     }, []);
 
+    const handleOrganizar = useCallback(async (id, data) => {
+        setSubmitting(true);
+        try {
+            const res = await organizarTarea(id, data);
+            return res.data;
+        } finally {
+            setSubmitting(false);
+        }
+    }, []);
+
     const handleChangeStatus = useCallback(async (id, data) => {
         setSubmitting(true);
         try { 
@@ -93,10 +104,10 @@ export const useTareas = () => {
         }
     }, []);
     
-    const handleDelete = useCallback(async (id) => {
+    const handleDelete = useCallback(async (id, all = false) => {
         setSubmitting(true);
         try { 
-            const res = await deleteTarea(id);
+            const res = await deleteTarea(id, all);
             return res.data;
         } catch (err) {
             console.error("💥 Fallo en handleDelete Tarea:", err.response?.data || err.message);
@@ -204,6 +215,7 @@ export const useTareas = () => {
         fetchTareas,
         createTarea: handleCreate,
         updateTarea: handleUpdate,
+        organizarTarea: handleOrganizar,
         changeStatus: handleChangeStatus,
         deleteTarea: handleDelete,
         createNotaGeneral: handleCreateNotaGeneral,

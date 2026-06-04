@@ -261,7 +261,7 @@ export default function MinutaDetailPage() {
 
   const { 
     tareas, fetchTareas, loadingTareas, deleteTarea,
-    createTarea: createTareaApi, updateTarea, changeStatus: changeTareaStatus, createNotaGeneral, 
+    createTarea: createTareaApi, updateTarea, organizarTarea, changeStatus: changeTareaStatus, createNotaGeneral, 
     createTareaNota, updateTareaNota, deleteTareaNota,
     addTareaImagen, deleteTareaImagen, generarPdfTarea, toggleNotificado: toggleNotificadoTarea
   } = useTareas();
@@ -466,69 +466,137 @@ export default function MinutaDetailPage() {
   const allEntries = useMemo(() => [...draftEntries, ...remoteDraftEntries, ...tareas], [draftEntries, remoteDraftEntries, tareas]);
   const departamento = minuta?.departamento || 'DISENO';
 
+  // ─────────────────────────────────────────────────────────────────────
+  // Agrupa tareas que comparten minutaId + organizadoAt en un único objeto
+  // representativo con isGrouped:true y subTareas:[...] para el acordeón.
+  // Las entradas que no tienen "hermanas" se pasan tal cual (isGrouped:false).
+  // ─────────────────────────────────────────────────────────────────────
+  const groupTareas = (entries) => {
+    const grupos = new Map(); // clave → [tarea, ...]
+
+    for (const entry of entries) {
+      // Solo agrupamos tareas persistidas (no borradores) de tipo TAREA
+      if (!entry.tempId && entry.tipo === 'TAREA' && entry.organizadoAt) {
+        // Clave: minutaId + marca exacta de organizadoAt (ISO string)
+        const clave = `${entry.minutaId}_${new Date(entry.organizadoAt).toISOString()}`;
+        if (!grupos.has(clave)) grupos.set(clave, []);
+        grupos.get(clave).push(entry);
+      } else {
+        // Borradores, SIN_ORGANIZAR, POLITICA, RECORDATORIO → sin agrupar
+        const clave = `single_${entry.id || entry.tempId}`;
+        grupos.set(clave, [entry]);
+      }
+    }
+
+    const resultado = [];
+    for (const [, grupo] of grupos) {
+      if (grupo.length <= 1) {
+        resultado.push({ ...grupo[0], isGrouped: false });
+        continue;
+      }
+
+      // Calcular estado consolidado
+      const subtareas = grupo;
+      const totalSub = subtareas.length;
+      const cerradas = subtareas.filter(t => t.estado === 'CERRADA').length;
+      const enRevision = subtareas.filter(t => t.estado === 'EN_REVISION').length;
+      const pendientes = subtareas.filter(t => t.estado === 'PENDIENTE').length;
+
+      let estadoConsolidado;
+      if (cerradas === totalSub) {
+        estadoConsolidado = 'CERRADA';
+      } else if (enRevision + cerradas === totalSub) {
+        estadoConsolidado = 'EN_REVISION';
+      } else {
+        estadoConsolidado = 'PENDIENTE';
+      }
+
+      // Tomar la primera tarea como representante (descripción, área, línea, etc.)
+      const base = subtareas[0];
+
+      // Consolidar responsables (uno por sub-tarea)
+      const asignacionesConsolidadas = subtareas.flatMap(t =>
+        t.asignaciones || []
+      );
+
+      resultado.push({
+        ...base,
+        responsables: undefined,
+        asignaciones: asignacionesConsolidadas,
+        estado: estadoConsolidado,
+        isGrouped: true,
+        subTareas: subtareas,
+        _grupoStats: { total: totalSub, cerradas, enRevision, pendientes },
+      });
+    }
+    return resultado;
+  };
+
   const filteredEntries = useMemo(() => {
     const priorityWeight = { 'CRITICA': 0, 'ALTA': 1, 'MEDIA': 2, 'BAJA': 3 };
 
-    return allEntries
-      .filter(entry => {
-        if (entry.estado === 'CANCELADA') return false;
-        if (activeFilter.onlyExternal) {
-          const isExterna = entry.area && (
-            ((departamento === 'DISENO' || departamento === 'DISEÑO') && entry.area !== 'DISENO') ||
-            (departamento === 'MARKETING' && entry.area !== 'MARKETING')
-          );
-          if (!isExterna) return false;
+    // 1. Aplicar filtros sobre el array plano
+    const planas = allEntries.filter(entry => {
+      if (entry.estado === 'CANCELADA') return false;
+      if (activeFilter.onlyExternal) {
+        const isExterna = entry.area && (
+          ((departamento === 'DISENO' || departamento === 'DISEÑO') && entry.area !== 'DISENO') ||
+          (departamento === 'MARKETING' && entry.area !== 'MARKETING')
+        );
+        if (!isExterna) return false;
+      }
+      if (activeFilter.tipo && activeFilter.tipo !== 'TODAS' && entry.tipo !== activeFilter.tipo) {
+        if (entry.tempId && (activeFilter.tipo === 'TAREA' || activeFilter.tipo === 'SIN_ORGANIZAR')) {}
+        else { return false; }
+      }
+      if (activeFilter.estado) {
+        if (activeFilter.estado === 'ATRASADA') {
+          const ahora = new Date();
+          const vence = entry.fechaVencimiento ? new Date(entry.fechaVencimiento) : null;
+          if (!vence || vence >= ahora || entry.estado === 'CERRADA' || entry.estado === 'EN_REVISION') return false;
+        } else if (entry.estado !== activeFilter.estado) {
+          return false;
         }
-        if (activeFilter.tipo && activeFilter.tipo !== 'TODAS' && entry.tipo !== activeFilter.tipo) {
-          if (entry.tempId && (activeFilter.tipo === 'TAREA' || activeFilter.tipo === 'SIN_ORGANIZAR')) {} 
-          else { return false; }
-        }
-        if (activeFilter.estado) {
-          if (activeFilter.estado === 'ATRASADA') {
-            const ahora = new Date();
-            const vence = entry.fechaVencimiento ? new Date(entry.fechaVencimiento) : null;
-            if (!vence || vence >= ahora || entry.estado === 'CERRADA' || entry.estado === 'EN_REVISION') return false;
-          } else if (entry.estado !== activeFilter.estado) {
-            return false;
-          }
-        }
-        if (activeFilter.clasificacion && entry.clasificacion !== activeFilter.clasificacion) return false;
-        if (activeFilter.area && entry.area !== activeFilter.area) return false;
-        if (activeFilter.linea && entry.linea !== activeFilter.linea) return false;
-        if (activeFilter.search) {
-          const s = activeFilter.search.toLowerCase();
-          if (!entry.descripcion?.toLowerCase().includes(s)) return false;
-        }
-        return true;
-      })
-      .sort((a, b) => {
-        const getRank = (e) => {
-          if (e.tipo === 'SIN_ORGANIZAR' || e.tempId) return 0;
-          if (e.estado === 'EN_REVISION') return 1;
-          if (e.estado === 'CERRADA') return 3;
-          return 2; // Organizadas PENDIENTES o Recordatorios/Politicas
-        };
+      }
+      if (activeFilter.clasificacion && entry.clasificacion !== activeFilter.clasificacion) return false;
+      if (activeFilter.area && entry.area !== activeFilter.area) return false;
+      if (activeFilter.linea && entry.linea !== activeFilter.linea) return false;
+      if (activeFilter.search) {
+        const s = activeFilter.search.toLowerCase();
+        if (!entry.descripcion?.toLowerCase().includes(s)) return false;
+      }
+      return true;
+    });
 
-        const rankA = getRank(a);
-        const rankB = getRank(b);
+    // 2. Agrupar las tareas TAREA con múltiples responsables
+    const agrupadas = groupTareas(planas);
 
-        if (rankA !== rankB) return rankA - rankB;
+    // 3. Ordenar el resultado agrupado
+    return agrupadas.sort((a, b) => {
+      const getRank = (e) => {
+        if (e.tipo === 'SIN_ORGANIZAR' || e.tempId) return 0;
+        if (e.estado === 'EN_REVISION') return 1;
+        if (e.estado === 'CERRADA') return 3;
+        return 2;
+      };
 
-        // Si ambos son de Rank 2 (Organizados), ordenar por prioridad
-        if (rankA === 2) {
-          const pA = priorityWeight[a.prioridad] ?? 4;
-          const pB = priorityWeight[b.prioridad] ?? 4;
-          if (pA !== pB) return pA - pB;
-        }
+      const rankA = getRank(a);
+      const rankB = getRank(b);
 
-        // Orden cronológico (más antiguo primero) para Borradores y SIN_ORGANIZAR
-        if (rankA === 0) {
-          return new Date(a.createdAt) - new Date(b.createdAt);
-        }
+      if (rankA !== rankB) return rankA - rankB;
 
-        // Orden secundario para el resto: fecha de creación (más reciente arriba)
-        return new Date(b.createdAt) - new Date(a.createdAt);
-      });
+      if (rankA === 2) {
+        const pA = priorityWeight[a.prioridad] ?? 4;
+        const pB = priorityWeight[b.prioridad] ?? 4;
+        if (pA !== pB) return pA - pB;
+      }
+
+      if (rankA === 0) {
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      }
+
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
   }, [allEntries, activeFilter, departamento]);
 
   const handleFilterByStatus = (estado) =>
@@ -756,7 +824,9 @@ export default function MinutaDetailPage() {
         handleUpdateDraftEntry(entryId, payload);
         notify.success('Organizado (Borrador)');
       } else {
-        await updateTarea(entryId, payload);
+        // Usar el endpoint correcto: PATCH /:id/organizar
+        // Este es el que contiene la lógica de división por responsable
+        await organizarTarea(entryId, payload);
         await refreshEntries();
         notify.success('Entrada organizada');
       }
@@ -766,12 +836,14 @@ export default function MinutaDetailPage() {
     }
   };
 
-  const handleStatusChange = async (entryId, payload) => {
+  const handleStatusChange = async (entryId, payload, silent = false) => {
     try {
       const data = typeof payload === 'string' ? { estado: payload } : payload;
       await changeTareaStatus(entryId, data);
       await refreshEntries();
-      notify.success('Estado actualizado');
+      if (!silent) {
+        notify.success('Estado actualizado');
+      }
       return true;
     } catch {
       notify.error('Error al cambiar estado');

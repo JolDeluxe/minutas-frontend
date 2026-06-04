@@ -10,6 +10,7 @@ import { EtiquetaEstadoTarea } from './etiqueta-estado-tarea';
 import { EtiquetaPrioridadTarea } from './etiqueta-prioridad-tarea';
 import { ModalEntregarTarea } from './modal-entregar-tarea';
 import { formatFecha, formatFechaHora } from '@/lib/date';
+import { ImageViewer } from './tarjeta-tarea';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Sub-componentes internos
@@ -49,73 +50,7 @@ const MetaCard = ({ label, children, className }) => (
     </div>
 );
 
-/** Visor de imágenes a pantalla completa */
-const ImageViewer = ({ images, initialIndex, onClose }) => {
-    const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
-    useEffect(() => {
-        document.body.style.overflow = 'hidden';
-        return () => { document.body.style.overflow = 'unset'; };
-    }, []);
-
-    if (!images || images.length === 0) return null;
-    const currentImg = images[currentIndex];
-
-    return createPortal(
-        <div className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center animate-in fade-in duration-200 pointer-events-auto">
-            <button
-                onClick={onClose}
-                className="absolute top-6 right-6 w-12 h-12 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-rose-600 transition-all z-[100001] shadow-lg active:scale-95"
-            >
-                <Icon name="close" size="24px" />
-            </button>
-
-            <div className="relative w-full h-full flex items-center justify-center p-4 sm:p-12">
-                {images.length > 1 && (
-                    <button
-                        onClick={(e) => { e.stopPropagation(); setCurrentIndex((p) => (p === 0 ? images.length - 1 : p - 1)); }}
-                        className="absolute left-4 sm:left-8 w-14 h-14 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-all z-[100001] backdrop-blur-sm active:scale-95"
-                    >
-                        <Icon name="chevron_left" size="32px" />
-                    </button>
-                )}
-
-                <div className="relative max-w-[90vw] max-h-[85vh] flex items-center justify-center">
-                    <img
-                        src={currentImg.url}
-                        className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl animate-in zoom-in-95 duration-300"
-                        alt="Evidencia ampliada"
-                    />
-                </div>
-
-                {images.length > 1 && (
-                    <button
-                        onClick={(e) => { e.stopPropagation(); setCurrentIndex((p) => (p === images.length - 1 ? 0 : p + 1)); }}
-                        className="absolute right-4 sm:right-8 w-14 h-14 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-all z-[100001] backdrop-blur-sm active:scale-95"
-                    >
-                        <Icon name="chevron_right" size="32px" />
-                    </button>
-                )}
-            </div>
-
-            {images.length > 1 && (
-                <div className="absolute bottom-8 flex gap-2 z-[100001]">
-                    {images.map((_, i) => (
-                        <button
-                            key={i}
-                            onClick={() => setCurrentIndex(i)}
-                            className={cn(
-                                'h-2 rounded-full transition-all duration-300',
-                                i === currentIndex ? 'bg-white w-8 shadow-md' : 'bg-white/30 w-2 hover:bg-white/50'
-                            )}
-                        />
-                    ))}
-                </div>
-            )}
-        </div>,
-        document.body
-    );
-};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Componente principal
@@ -130,6 +65,7 @@ export const PanelDetalleTarea = ({
     onDelete,
     submitting = false,
     currentUser,
+    users = [],
 }) => {
     const isDesktop = useIsDesktop();
     const [isEntregaModalOpen, setIsEntregaModalOpen] = useState(false);
@@ -140,9 +76,20 @@ export const PanelDetalleTarea = ({
     if (!isOpen || !tarea) return null;
 
     const { rol, id: userId } = currentUser ?? {};
-    const tieneJefeAsignado = tarea.responsables?.some((r) => r.rol === 'JEFE');
+
+    // Normalizar responsables para que funcione tanto en Tareas (responsables) como en Minutas (asignaciones)
+    const responsablesRaw = tarea.responsables || (tarea.asignaciones?.map(a => ({ ...a.usuario, id: a.usuarioId ?? a.usuario?.id })) || []);
+    const responsables = responsablesRaw.map(r => {
+        const isObj = typeof r === 'object' && r !== null;
+        const id = isObj ? (r.id ?? r.usuarioId) : r;
+        const fullUser = users?.find(u => u.id === id);
+        if (fullUser) return { ...fullUser, ...(isObj ? r : {}) };
+        return isObj ? (r.nombre ? r : { ...r, nombre: 'Cargando...' }) : { id: r, nombre: 'Cargando...' };
+    }).filter(r => r && r.nombre);
+
+    const tieneJefeAsignado = responsables.some((r) => r.rol === 'JEFE');
     const esJefe            = rol === 'ADMIN' || rol === 'GERENCIA' || (rol === 'JEFE' && !tieneJefeAsignado);
-    const esAsignado        = tarea.responsables?.some((r) => r.id == userId);
+    const esAsignado        = responsables.some((r) => r.id == userId);
     const esResponsable     = esAsignado || ['ADMIN', 'JEFE', 'GERENCIA'].includes(rol);
 
     const estado      = tarea.estado?.toUpperCase();
@@ -173,7 +120,7 @@ export const PanelDetalleTarea = ({
                         )}
                     >
                         <img
-                            src={img.url}
+                            src={img.preview || img.url || img.base64Thumb}
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                             alt={esEvidencia ? 'Evidencia' : 'Captura'}
                         />
@@ -262,8 +209,8 @@ export const PanelDetalleTarea = ({
                         Responsable:
                     </span>
                     <div className="flex items-center gap-1.5 flex-wrap">
-                        {tarea.responsables?.length > 0
-                            ? tarea.responsables.map((r) => (
+                        {responsables.length > 0
+                            ? responsables.map((r) => (
                                 <div
                                     key={r.id}
                                     className="inline-flex items-center gap-1.5 py-1 px-2.5 bg-white border border-slate-200/80 rounded-full shadow-sm text-xs font-bold text-slate-700"
@@ -442,7 +389,7 @@ export const PanelDetalleTarea = ({
                     : 'p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]'
             )}>
                 {/* 1. Responsable: entregar */}
-                {isPendiente && esResponsable && (
+                {isPendiente && esAsignado && (
                     <div className="flex items-center gap-3 w-full">
                         {!isCerrado && (esJefe || (userId && tarea.creadoPorId === userId)) && onDelete && (
                             <Button
@@ -507,7 +454,7 @@ export const PanelDetalleTarea = ({
                 )}
 
                 {/* 5. Caso alternativo: No es Pendiente ni En Revisión, pero se puede eliminar */}
-                {!isCerrado && !isEnRevision && !((isPendiente && esResponsable) || (isEnRevision && esJefe)) && (esJefe || (userId && tarea.creadoPorId === userId)) && onDelete && (
+                {!isCerrado && !isEnRevision && !((isPendiente && esAsignado) || (isEnRevision && esJefe)) && (esJefe || (userId && tarea.creadoPorId === userId)) && onDelete && (
                     <Button
                         onClick={() => setIsConfirmDeleteOpen(true)}
                         className="w-full py-3.5 rounded-xl border border-red-200 bg-white text-red-500 hover:bg-red-50 hover:text-red-600 shadow-md font-black uppercase text-[11px] tracking-widest transition-all h-[48px]"

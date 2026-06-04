@@ -361,9 +361,9 @@ export const MinutaDetailDesktopView = ({
             setSelectedTareaForDetail(null);
           }}
           tarea={selectedTareaForDetail}
-          onChangeStatus={async (id, payload) => {
+          onChangeStatus={async (id, payload, silent) => {
             const statusPayload = typeof payload === 'string' ? { estado: payload } : payload;
-            await changeTareaStatus(id, statusPayload);
+            await changeTareaStatus(id, statusPayload, silent);
             setSelectedTareaForDetail(prev => prev && prev.id === id ? { ...prev, estado: statusPayload.estado } : prev);
           }}
           onDelete={async (id) => {
@@ -372,6 +372,7 @@ export const MinutaDetailDesktopView = ({
             setSelectedTareaForDetail(null);
           }}
           currentUser={user?.data || user}
+          users={users}
         />
       )}
     </div>

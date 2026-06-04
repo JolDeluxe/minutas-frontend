@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Skeleton, Icon, GlassViewToggle } from '@/components/ui/z_index';
+import { Skeleton, Icon, GlassViewToggle, GlassPaginationPill } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
 import { TareaCard } from '../components/comun/tarjeta-tarea';
 import { TablaTareas } from '../components/comun/tabla-tareas';
@@ -93,17 +93,34 @@ export const PorAprobarDesktop = ({
                     <button onClick={onRefresh} className="mt-4 text-marca-primario hover:underline font-bold">Refrescar</button>
                 </div>
             ) : viewMode === 'cards' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {tareas.map((tarea) => (
-                        <TareaCard 
-                            key={tarea.id} 
-                            tarea={tarea} 
-                            currentUser={currentUser} 
-                            onViewDetail={onViewDetail} 
-                            onReview={onReview}
-                            isPorAprobar={true}
-                        />
-                    ))}
+                <div className="flex flex-col gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {tareas.map((tarea) => (
+                            <TareaCard 
+                                key={tarea.id} 
+                                className="h-full"
+                                tarea={tarea} 
+                                currentUser={currentUser} 
+                                onViewDetail={onViewDetail} 
+                                onReview={onReview}
+                                onChangeStatus={handleApprove}
+                                onEdit={setEditTarget}
+                                isPorAprobar={true}
+                            />
+                        ))}
+                    </div>
+                    {meta?.totalPages > 1 && (
+                        <div className="flex justify-center mt-4">
+                            <GlassPaginationPill 
+                                page={page} 
+                                totalPages={meta.totalPages} 
+                                totalItems={meta?.totalParaPaginador || 0} 
+                                onPageChange={setPage} 
+                                loading={loading}
+                                bottom="24px"
+                            />
+                        </div>
+                    )}
                 </div>
             ) : (
                 <div className="bg-white rounded-3xl border border-slate-200/60 shadow-sm overflow-hidden">

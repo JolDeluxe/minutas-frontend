@@ -7,9 +7,9 @@ import { AccionesTablaTarea } from './acciones-tabla-tarea';
 import { formatFecha, formatFechaRelativa } from '@/lib/date';
 import { cn } from '@/utils/cn';
 import { LineIconSelector, MarketingIcon } from '../../../minutas/components/icons/line-icons';
-import { LINEA_MAP, AREA_MAP } from '../../../minutas/constants';
+import { LINEA_MAP, AREA_MAP, CLASIFICACION_MAP } from '../../../minutas/constants';
 import { Tooltip } from '@/components/ui/z_index';
-import { ImageViewer } from './tarjeta-tarea';
+import { ImageViewer, getGroupColorConfig } from './tarjeta-tarea';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 
 const TableImagePreview = ({ images, onClick }) => {
@@ -241,6 +241,18 @@ export const TablaTareas = ({
                                     <Icon name="warning" size="xs" /> ATRASADA
                                 </span>
                             )}
+                            {row._grupoContext && row._grupoContext.total > 1 && (() => {
+                                const colorCfg = getGroupColorConfig(row.minutaId, row.organizadoAt);
+                                return colorCfg ? (
+                                    <span className={cn(
+                                        "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest border shadow-xs transition-all shrink-0",
+                                        colorCfg.badge
+                                    )}>
+                                        <Icon name="group" size="10px" className="shrink-0" />
+                                        Instrucción Compartida
+                                    </span>
+                                ) : null;
+                            })()}
                         </div>
                         {row.minuta && (
                             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
@@ -310,6 +322,24 @@ export const TablaTareas = ({
                 return <ResponsablesCell lista={row.responsables} />;
             },
         }]),
+        {
+            header: 'Clasificación',
+            accessorKey: 'clasificacion',
+            sortable: true,
+            align: 'center',
+            headerClassName: 'w-[10%] min-w-[120px]',
+            cell: (row) => {
+                if (row.isSkeleton) return <Skeleton className="h-5 w-16 mx-auto rounded-md" />;
+                const clasif = CLASIFICACION_MAP[row.clasificacion];
+                if (!clasif) return <span className="text-[11px] text-slate-300">—</span>;
+                return (
+                    <span className="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-[9px] font-black uppercase tracking-widest whitespace-nowrap border" style={{ backgroundColor: `${clasif.color}08`, color: clasif.color, borderColor: `${clasif.color}20` }}>
+                        <Icon name={clasif.icon} size="12px" />
+                        {clasif.label}
+                    </span>
+                );
+            },
+        },
         {
             header: 'Estado',
             accessorKey: 'estado',
@@ -430,8 +460,22 @@ export const TablaTareas = ({
                 hidePagination={hidePagination}
                 rowClassName={(row) => {
                     if (row.isSkeleton) return 'bg-white';
+                    
                     const estadoFinal = ['CERRADA', 'CANCELADA', 'DESCARTADA'].includes(row.estado?.toUpperCase());
-                    if (estadoFinal) return 'opacity-70 grayscale bg-slate-50/50';
+                    const esCompartida = Boolean(row._grupoContext && row._grupoContext.total > 1);
+                    const colorCfg = esCompartida ? getGroupColorConfig(row.minutaId, row.organizadoAt) : null;
+
+                    if (estadoFinal) {
+                        if (esCompartida && colorCfg) {
+                            return cn('opacity-70 grayscale bg-slate-50/50', colorCfg.tableBorder);
+                        }
+                        return 'opacity-70 grayscale bg-slate-50/50';
+                    }
+
+                    if (esCompartida && colorCfg) {
+                        return cn(colorCfg.tableRow, colorCfg.tableBorder);
+                    }
+
                     const isAdmin = ['ADMIN', 'GERENCIA', 'JEFE'].includes(currentUser?.rol);
                     if (!isAdmin) {
                         return row.isOverdue

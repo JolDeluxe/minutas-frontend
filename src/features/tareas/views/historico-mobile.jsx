@@ -167,7 +167,7 @@ export const HistoricoMobile = ({
                 }
             </div>
 
-            {viewMode === 'cards' && (
+            {totalPages > 1 && (
                 <GlassPaginationPill
                     page={page}
                     totalPages={totalPages}

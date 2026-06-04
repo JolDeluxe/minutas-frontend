@@ -83,11 +83,13 @@ export default function ActivasPage() {
     };
 
     // Fix API Call: Extraer ID y pasar payload correcto
-    const handleDirectStatusChange = async (tareaId, nuevoEstado) => {
+    const handleDirectStatusChange = async (tareaId, nuevoEstado, silent = false) => {
         if (!tareaId) return;
         try {
             await changeStatus(tareaId, { estado: nuevoEstado });
-            notify.success('Estado actualizado.');
+            if (!silent) {
+                notify.success('Estado actualizado.');
+            }
             if (isDrawerOpen && selectedTarea?.id === tareaId) {
                 setIsDrawerOpen(false);
             }
@@ -97,11 +99,15 @@ export default function ActivasPage() {
         }
     };
 
-    const handleDeleteTarea = async (tareaId) => {
+    const handleDeleteTarea = async (tareaId, all = false) => {
         if (!tareaId) return;
         try {
-            await deleteTarea(tareaId);
-            notify.success('Tarea eliminada correctamente.');
+            const res = await deleteTarea(tareaId, all);
+            if (res && res.hermanasAfectadas > 0) {
+                notify.success(`¡(${res.hermanasAfectadas + 1}) tareas descartadas del grupo!`);
+            } else {
+                notify.success('Tarea eliminada correctamente.');
+            }
             if (isDrawerOpen && selectedTarea?.id === tareaId) {
                 setIsDrawerOpen(false);
             }

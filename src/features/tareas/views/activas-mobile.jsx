@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Skeleton, Button, Icon, GlassViewToggle } from '@/components/ui/z_index';
+import { Skeleton, Button, Icon, GlassViewToggle, GlassPaginationPill } from '@/components/ui/z_index';
 import { TareaCard } from '../components/comun/tarjeta-tarea';
 import { ResumenTareasActivas } from '../components/comun/resumen-tareas-activas';
 import { BarraFiltrosTareas } from '../components/comun/barra-filtros-tareas';
@@ -173,15 +173,15 @@ export const ActivasMobile = ({
                 }
             </div>
 
-            {viewMode === 'cards' && page < totalPages && (
-                <Button 
-                    variant="outline" 
-                    className="w-full py-4 rounded-3xl font-black uppercase text-[11px] tracking-widest border-2"
-                    onClick={() => onFilterChange({ page: page + 1 })}
-                    isLoading={loading}
-                >
-                    Ver más tareas
-                </Button>
+            {totalPages > 1 && (
+                <GlassPaginationPill
+                    page={page}
+                    totalPages={totalPages}
+                    totalItems={totalParaSummary}
+                    onPageChange={(p) => onFilterChange({ page: p })}
+                    loading={loading}
+                    bottom="88px"
+                />
             )}
 
             <ModalEditarTarea 

@@ -8,7 +8,7 @@ export const ModalEditarTarea = ({ isOpen, onClose, tarea, onSuccess, currentUse
     const handleSave = async (id, payload, imagesData) => {
         try {
             // 1. Actualizar datos base
-            await updateTarea(id, payload);
+            const res = await updateTarea(id, payload);
 
             // 2. Eliminar imágenes marcadas
             if (imagesData?.deleteImageIds?.length > 0) {
@@ -24,7 +24,11 @@ export const ModalEditarTarea = ({ isOpen, onClose, tarea, onSuccess, currentUse
                 }
             }
 
-            notify.success('Tarea actualizada correctamente.');
+            if (res && res.hermanasSincronizadas > 0) {
+                notify.success(`¡(${res.hermanasSincronizadas + 1}) tareas del grupo sincronizadas!`);
+            } else {
+                notify.success('Tarea actualizada correctamente.');
+            }
             if (onSuccess) onSuccess();
         } catch (error) {
             console.error('Error al actualizar tarea:', error);

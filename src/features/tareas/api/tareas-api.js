@@ -84,12 +84,16 @@ export const updateTarea = async (id, data) => {
     return await api.put(`/api/tareas/${id}`, data);
 };
 
+export const organizarTarea = async (id, data) => {
+    return await api.patch(`/api/tareas/${id}/organizar`, data);
+};
+
 export const changeTareaStatus = async (id, data) => {
     return await api.patch(`/api/tareas/${id}/estado`, data);
 };
 
-export const deleteTarea = async (id) => {
-    return await api.delete(`/api/tareas/${id}`);
+export const deleteTarea = async (id, all = false) => {
+    return await api.delete(`/api/tareas/${id}${all ? '?all=true' : ''}`);
 };
 
 export const createNotaGeneral = async (data) => {

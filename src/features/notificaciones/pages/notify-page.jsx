@@ -214,11 +214,13 @@ export default function NotifyPage() {
         }
     }, [markRead, navigate, decrementNotifyStore, markActioned]);
 
-    const handleChangeStatus = useCallback(async (id, payload) => {
+    const handleChangeStatus = useCallback(async (id, payload, silent = false) => {
         setChangeSubmit(true);
         try {
             await changeTareaStatus(id, payload);
-            notify.success('Estado actualizado correctamente.');
+            if (!silent) {
+                notify.success('Estado actualizado correctamente.');
+            }
 
             if (activeNotif?.id) {
                 markActioned(activeNotif.id);

@@ -84,6 +84,20 @@ export const QuickComposer = ({
   const [prioridad, setPrioridad] = useState('MEDIA');
   const [responsables, setResponsables] = useState([]);
   const [fechaVencimiento, setFechaVencimiento] = useState('');
+  const [showResponsiblesDropdown, setShowResponsiblesDropdown] = useState(false);
+  const responsiblesRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (responsiblesRef.current && !responsiblesRef.current.contains(event.target)) {
+        setShowResponsiblesDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const { users: allUsers, fetchUsers } = useUsers();
   
@@ -310,7 +324,7 @@ export const QuickComposer = ({
             <button onClick={() => setIsCollapsed(true)} className="flex items-center gap-1.5 px-6 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-[11px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-md border border-slate-700 cursor-pointer"><X size={16} /> Cerrar Captura</button>
           </div>
 
-          <div className="flex-1 bg-white border border-slate-200/60 rounded-[1.5rem] p-3 lg:p-4 shadow-2xl flex flex-col gap-2.5 min-h-0 overflow-y-auto custom-scrollbar">
+          <div className={cn("flex-1 bg-white border border-slate-200/60 rounded-[1.5rem] p-3 lg:p-4 shadow-2xl flex flex-col gap-2.5 min-h-0 overflow-y-auto custom-scrollbar transition-all duration-300", showResponsiblesDropdown ? "pb-56" : "")}>
             {/* 1. INPUT DESCRIPCION (GRANDE) */}
             <div className={cn("relative group transition-all duration-300 flex-1 flex flex-col", esTarea ? "min-h-[50px] max-h-[80px]" : "min-h-[80px]")}>
               <textarea
@@ -425,7 +439,17 @@ export const QuickComposer = ({
 
                <div className="flex flex-col gap-1">
                   <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Clasificación</label>
-                  <select value={clasificacion} onChange={(e) => setClasificacion(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-marca-primario/10 transition-all shadow-sm">
+                  <select 
+                    value={clasificacion} 
+                    onChange={(e) => {
+                      const newClasificacion = e.target.value;
+                      setClasificacion(newClasificacion);
+                      if (newClasificacion === 'POLITICAS') {
+                        setEsTarea(false);
+                      }
+                    }} 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-marca-primario/10 transition-all shadow-sm"
+                  >
                     <option value="">— Seleccionar Tipo —</option>
                     {catalogos.clasificaciones.map(({ value, label }) => (<option key={value} value={value}>{label}</option>))}
                   </select>
@@ -433,7 +457,7 @@ export const QuickComposer = ({
             </div>
 
             {/* SWITCH ¿ES TAREA? */}
-            {allowTarea && (
+            {allowTarea && clasificacion !== 'POLITICAS' && (
               <div className="flex items-center gap-3 mt-2">
                  <button
                     type="button"
@@ -476,6 +500,94 @@ export const QuickComposer = ({
                     />
                  </div>
 
+                 {/* Responsables */}
+                 <div className="flex flex-col gap-1 relative" ref={responsiblesRef}>
+                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1">
+                        <UserPlus size={10} /> Responsables
+                     </label>
+                     <button
+                       type="button"
+                       onClick={() => {
+                         const nextState = !showResponsiblesDropdown;
+                         setShowResponsiblesDropdown(nextState);
+                         if (nextState) {
+                           setTimeout(() => {
+                             responsiblesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                           }, 150);
+                         }
+                       }}
+                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-marca-primario/10 transition-all shadow-sm text-left flex items-center justify-between min-h-[38px] hover:bg-slate-100/50"
+                     >
+                       <div className="flex flex-wrap gap-1 max-w-[90%]">
+                         {responsables.length === 0 ? (
+                           <span className="text-slate-400">— Sin Asignar —</span>
+                         ) : (
+                           responsables.map((id) => {
+                             const user = filteredUsers.find(u => u.id === id);
+                             if (!user) return null;
+                             return (
+                               <span 
+                                 key={id} 
+                                 className="inline-flex items-center gap-1 bg-slate-200 text-slate-800 px-1.5 py-0.5 rounded-lg text-[10px] font-bold animate-in zoom-in-95 duration-100"
+                                 onClick={(e) => {
+                                   e.stopPropagation();
+                                   setResponsables(prev => prev.filter(rId => rId !== id));
+                                 }}
+                               >
+                                 {user.nombre.split(' ')[0]}
+                                 <X size={10} className="hover:text-red-500 cursor-pointer" />
+                               </span>
+                             );
+                           })
+                         )}
+                       </div>
+                       <Icon 
+                         name="expand_more" 
+                         size="sm" 
+                         className={cn(
+                           "text-slate-400 transition-transform flex-shrink-0",
+                           showResponsiblesDropdown ? "rotate-180" : ""
+                         )} 
+                       />
+                     </button>
+
+                     {showResponsiblesDropdown && (
+                       <div className="absolute bottom-[102%] left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl z-[70] max-h-48 overflow-y-auto custom-scrollbar p-1 flex flex-col gap-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                         {filteredUsers.length === 0 ? (
+                           <p className="text-[10px] text-slate-400 italic p-2 text-center">No hay responsables disponibles</p>
+                         ) : (
+                           filteredUsers.map((user) => {
+                             const isSelected = responsables.includes(user.id);
+                             return (
+                               <button
+                                 type="button"
+                                 key={user.id}
+                                 onClick={() => {
+                                   setResponsables(prev => 
+                                     prev.includes(user.id) 
+                                       ? prev.filter(id => id !== user.id) 
+                                       : [...prev, user.id]
+                                   );
+                                 }}
+                                 className={cn(
+                                   "w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-between hover:bg-slate-50 cursor-pointer",
+                                   isSelected ? "bg-slate-50 text-slate-900" : "text-slate-600"
+                                 )}
+                               >
+                                 <span className="truncate">{user.nombre} {user.apellidos}</span>
+                                 {isSelected && (
+                                   <div className="bg-emerald-500 text-white rounded-full p-0.5 shadow-sm flex items-center justify-center">
+                                     <Check size={8} strokeWidth={4} />
+                                   </div>
+                                 )}
+                               </button>
+                             );
+                           })
+                         )}
+                       </div>
+                     )}
+                  </div>
+
                  {/* Prioridad */}
                  <div className="flex flex-col gap-1">
                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Prioridad</label>
@@ -490,22 +602,7 @@ export const QuickComposer = ({
                     </select>
                  </div>
 
-                 {/* Responsable Principal */}
-                 <div className="flex flex-col gap-1">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1">
-                       <UserPlus size={10} /> Responsable
-                    </label>
-                    <select 
-                      value={responsables[0] || ''} 
-                      onChange={(e) => setResponsables(e.target.value ? [Number(e.target.value)] : [])} 
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-marca-primario/10 transition-all shadow-sm"
-                    >
-                      <option value="">— Sin Asignar —</option>
-                      {filteredUsers.map((u) => (
-                        <option key={u.id} value={u.id}>{u.nombre} {u.apellidos}</option>
-                      ))}
-                    </select>
-                 </div>
+
               </div>
             )}
 

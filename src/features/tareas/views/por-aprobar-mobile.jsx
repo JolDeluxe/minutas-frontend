@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Skeleton, Button, Icon, GlassViewToggle } from '@/components/ui/z_index';
+import { Skeleton, Button, Icon, GlassViewToggle, GlassPaginationPill } from '@/components/ui/z_index';
 import { TareaCard } from '../components/comun/tarjeta-tarea';
 import { ModalEditarTarea } from '../components/comun/modal-editar-tarea';
 import { TablaTareas } from '../components/comun/tabla-tareas';
@@ -105,15 +105,15 @@ export const PorAprobarMobile = ({
                 }
             </div>
 
-            {viewMode === 'cards' && page < (meta.totalPages || 1) && (
-                <Button 
-                    variant="outline" 
-                    className="w-full py-4 rounded-3xl font-black uppercase text-[11px] tracking-widest border-2"
-                    onClick={() => setPage(page + 1)}
-                    isLoading={loading}
-                >
-                    Ver más tareas
-                </Button>
+            {meta?.totalPages > 1 && (
+                <GlassPaginationPill
+                    page={page}
+                    totalPages={meta.totalPages}
+                    totalItems={meta?.totalParaPaginador || 0}
+                    onPageChange={setPage}
+                    loading={loading}
+                    bottom="88px"
+                />
             )}
 
             <ModalEditarTarea 
