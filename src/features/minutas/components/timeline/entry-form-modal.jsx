@@ -104,7 +104,8 @@ export const EntryFormModal = ({
           setExistingImages([]);
           setLocalImages(entry._localImages || []);
         } else {
-          setExistingImages(entry.imagenes || entry.images || []);
+          const imgs = entry.imagenes || entry.images || [];
+          setExistingImages(imgs.filter(img => !img.tipo || img.tipo === 'CAPTURA'));
           setLocalImages([]);
         }
         setExistingImagesToDelete([]);
@@ -259,7 +260,7 @@ export const EntryFormModal = ({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-          <Camera size={14} className="text-slate-400" /> Evidencia Visual ({totalImagesCount}/3)
+          <Camera size={14} className="text-slate-400" /> Imagenes de Referencia ({totalImagesCount}/3)
         </label>
         {totalImagesCount < 3 && (
           <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-wider">
