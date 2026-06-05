@@ -667,10 +667,11 @@ export default function MinutaDetailPage() {
       }
     }
     const porcentaje = totalTareas > 0 ? Math.round((cerradas / totalTareas) * 100) : 0;
+    const hasActiveTasks = pendientes > 0 || enRevision > 0;
     return { 
       totalTareas, pendientes, enRevision, cerradas, atrasadas, porcentaje, 
       totalPoliticas, totalRecordatorios, totalEntradas: allEntries.length, totalValidas,
-      externas, sinClasificar
+      externas, sinClasificar, hasActiveTasks
     };
   }, [allEntries, departamento]);
 
