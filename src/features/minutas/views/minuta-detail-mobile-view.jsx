@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Icon, Tooltip } from '@/components/ui/z_index';
 import { MinutaContextPanel } from '../components/context/minuta-context-panel';
 import { MinutaExecutiveSummary } from '../components/minuta-executive-summary';
@@ -81,6 +81,12 @@ export const MinutaDetailMobileView = ({
   const [isTareaDrawerOpen, setIsTareaDrawerOpen] = useState(false);
   const { user } = useAuthStore();
   const userRole = user?.data?.rol || user?.rol;
+
+  useEffect(() => {
+    if (minuta?.estado !== 'EN_CURSO' && minuta?.estado !== 'PROGRAMADA') {
+      setComposerExpanded(false);
+    }
+  }, [minuta?.estado]);
 
   if (!minuta) return null;
 
@@ -273,7 +279,7 @@ export const MinutaDetailMobileView = ({
 
       {!composerExpanded && (
         <div className="fixed bottom-48 right-6 z-[60] flex flex-col gap-4">
-          {draftEntries.length > 0 && (
+          {(draftEntries.length > 0 || draftNotes.length > 0) && (
             <button
               onClick={() => setShowReviewModal(true)}
               style={{ ...glassBase('success'), width: 52, height: 52, borderRadius: 16 }}
@@ -282,7 +288,7 @@ export const MinutaDetailMobileView = ({
               <GlassSheen />
               <Icon name="cloud_upload" size="26px" className="relative z-10" />
               <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-lg animate-in zoom-in z-20">
-                {draftEntries.length}
+                {draftEntries.length + draftNotes.length}
               </div>
             </button>
           )}

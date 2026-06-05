@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon, Tooltip } from '@/components/ui/z_index';
 import { MinutaContextPanel } from '../components/context/minuta-context-panel';
@@ -78,6 +78,12 @@ export const MinutaDetailDesktopView = ({
   const [isTareaDrawerOpen, setIsTareaDrawerOpen] = useState(false);
   const { user } = useAuthStore();
   const userRole = user?.data?.rol || user?.rol;
+
+  useEffect(() => {
+    if (minuta?.estado !== 'EN_CURSO' && minuta?.estado !== 'PROGRAMADA') {
+      setComposerCollapsed(true);
+    }
+  }, [minuta?.estado]);
 
   if (!minuta) return null;
 
@@ -288,16 +294,18 @@ export const MinutaDetailDesktopView = ({
 
         {composerCollapsed && (
           <div className="fixed bottom-24 right-10 z-[60] flex gap-4">
-            {draftEntries.length > 0 && (
+            {(draftEntries.length > 0 || draftNotes.length > 0) && (
               <button
                 onClick={() => setShowReviewModal(true)}
                 className="flex h-16 px-6 items-center gap-3 rounded-2xl bg-emerald-600 text-white shadow-2xl shadow-emerald-600/40 hover:bg-emerald-500 hover:scale-105 active:scale-95 transition-all group relative"
               >
                 <Icon name="cloud_upload" size="28px" className="group-hover:animate-bounce" />
                 <span className="text-xs font-black uppercase tracking-widest pr-2">Guardar</span>
-                <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-lg animate-in zoom-in">
-                  {draftEntries.length}
-                </div>
+                {(draftEntries.length + draftNotes.length) > 0 && (
+                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-lg animate-in zoom-in">
+                    {draftEntries.length + draftNotes.length}
+                  </div>
+                )}
               </button>
             )}
 
