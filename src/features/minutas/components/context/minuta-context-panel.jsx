@@ -131,7 +131,7 @@ export const MinutaContextPanel = ({
               </div>
             )}
 
-            {minuta.estado !== 'CANCELADA' && resumen?.totalEntradas === 0 && (
+            {minuta.estado !== 'CANCELADA' && !resumen?.hasActiveTasks && (
               <button onClick={onCancelar} disabled={cancelando} className="w-7 h-7 flex items-center justify-center rounded-lg text-rose-400 hover:bg-rose-50 active:scale-90 transition-all">
                  <Icon name="delete" size="16px" />
               </button>
@@ -167,7 +167,7 @@ export const MinutaContextPanel = ({
             </div>
           )}
 
-          {minuta.estado !== 'CANCELADA' && resumen?.totalEntradas === 0 && (
+          {minuta.estado !== 'CANCELADA' && !resumen?.hasActiveTasks && (
             <button onClick={onCancelar} disabled={cancelando} className="w-7 h-7 flex items-center justify-center rounded-lg text-rose-400 hover:bg-rose-50 active:scale-90 transition-all">
                <Icon name="delete" size="16px" />
             </button>

@@ -252,8 +252,7 @@ export const MinutasTable = ({
             headerClassName: "w-[10%] min-w-[100px]",
             cell: (row) => {
                 if (row.isSkeleton) return <Skeleton className="h-8 w-16 mx-auto rounded-md" />;
-                const canCancel = (row.estado === 'PROGRAMADA' || row.estado === 'EN_CURSO') && 
-                                 (row.resumenOperativo?.totalEntradas === 0 || row._count?.tareas === 0);
+                const canCancel = row.estado !== 'CANCELADA' && !row.resumenOperativo?.hasActiveTasks;
                 
                 return (
                     <TableActions 

@@ -35,8 +35,7 @@ export const MinutaCard = ({ minuta, onViewDetail, onCancel, badge = null, isAdm
     const atrasadas = resumen.atrasadas || 0;
     const completadas = resumen.cerradas || 0;
 
-    const canCancel = (minuta.estado === 'PROGRAMADA' || minuta.estado === 'EN_CURSO') && 
-                     (resumen.totalEntradas === 0);
+    const canCancel = minuta.estado !== 'CANCELADA' && !resumen.hasActiveTasks;
     
     // Fecha REAL — lo que el jefe necesita para "la minuta del 28 de marzo"
     const fechaReal = formatFechaReal(minuta.fechaRealizada || minuta.fechaProgramada || minuta.createdAt);
