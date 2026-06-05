@@ -956,7 +956,14 @@ export const TareaCard = ({
                                         </span>
                                     ) : (
                                         (isFormalizada || tipo === 'RECORDATORIO' || isExternal) && (
-                                            <EtiquetaEstadoTarea status={estado} className="scale-90 origin-left" />
+                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                <EtiquetaEstadoTarea status={estado} className="scale-90 origin-left" />
+                                                {vencida && !isDraft && !isRemoteDraft && isOrganized && (
+                                                    <span className="inline-flex items-center gap-0.5 text-[9px] font-extrabold text-estado-rechazado bg-estado-rechazado/10 border border-estado-rechazado/20 px-1.5 py-0.5 rounded-md uppercase shrink-0 scale-90 origin-left">
+                                                        <Icon name="warning" size="xs" /> ATRASADA
+                                                    </span>
+                                                )}
+                                            </div>
                                         )
                                     )
                                 )}
@@ -991,7 +998,7 @@ export const TareaCard = ({
                                     <span className="text-[7px] sm:text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
                                         #{tarea.id}
                                     </span>
-                                    {vencida && !isDraft && !isRemoteDraft && isOrganized && !isExternal && <span className="text-[7px] font-black text-rose-500 animate-pulse uppercase">¡Vencida!</span>}
+                                    {vencida && !isDraft && !isRemoteDraft && isOrganized && <span className="text-[7px] font-black text-rose-500 animate-pulse uppercase">¡Vencida!</span>}
                                 </div>
                             </div>
                         </div>

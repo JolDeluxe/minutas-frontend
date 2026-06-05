@@ -429,6 +429,8 @@ export const EntryTable = ({
         const isOrganized = tipo !== 'SIN_ORGANIZAR';
         const isTarea = tipo === 'TAREA';
         const isExternal = (departamento === 'DISENO' && row.area !== 'DISENO') || (departamento === 'MARKETING' && row.area !== 'MARKETING');
+
+        const overdue = !isDraft && !isRemoteDraft && isOrganized && isTarea && row.fechaVencimiento && !['CERRADA', 'CANCELADA', 'DESCARTADA', 'EN_REVISION'].includes(row.estado) && isPastDate(row.fechaVencimiento);
         
         const handleClick = (e) => {
           e.stopPropagation();
@@ -450,7 +452,7 @@ export const EntryTable = ({
 
         return (
           <div className="flex flex-col gap-1.5">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 flex-wrap">
               {tipo === 'TAREA' && (
                 <span className="inline-flex items-center gap-1 rounded-lg bg-rose-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-rose-600 border border-rose-100">
                   <Icon name="task_alt" size="10px" className="shrink-0 text-rose-500" /> Tarea
@@ -469,6 +471,11 @@ export const EntryTable = ({
               {tipo === 'SIN_ORGANIZAR' && !isExternal && (
                 <span className="inline-flex items-center gap-1 rounded-lg bg-amber-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-amber-900 border border-amber-300 shadow-sm animate-pulse">
                   <Icon name="warning" size="10px" className="shrink-0 text-amber-600" /> Falta Clasificar
+                </span>
+              )}
+              {overdue && (
+                <span className="flex items-center gap-0.5 text-[9px] font-extrabold text-estado-rechazado bg-estado-rechazado/10 border border-estado-rechazado/20 px-1.5 py-0.5 rounded-md uppercase shrink-0">
+                  <Icon name="warning" size="10px" className="shrink-0" /> ATRASADA
                 </span>
               )}
             </div>
@@ -627,6 +634,16 @@ export const EntryTable = ({
           }
           const estadoActual = row.estado || (tipo === 'TAREA' || tipo === 'RECORDATORIO' || isExternal ? 'PENDIENTE' : null);
           if (!estadoActual) return <span className="text-[11px] text-slate-300">—</span>;
+
+          const overdue = !isDraft && row.fechaVencimiento && !['CERRADA', 'CANCELADA', 'DESCARTADA', 'EN_REVISION'].includes(estadoActual) && isPastDate(row.fechaVencimiento);
+          if (overdue) {
+            return (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold border border-estado-rechazado/20 uppercase tracking-wide whitespace-nowrap bg-estado-rechazado/10 text-estado-rechazado">
+                Atrasada
+              </span>
+            );
+          }
+
           return <EtiquetaEstadoTarea status={estadoActual} />;
         }
       }
