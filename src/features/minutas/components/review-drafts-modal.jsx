@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal, ModalHeader, ModalBody, ModalFooter, Button, Icon, Tooltip } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
 import { CLASIFICACION_MAP, AREA_MAP, LINEA_MAP } from '../constants';
@@ -20,8 +20,12 @@ export const ReviewDraftsModal = ({
   onRemoveEntry,
   users = [],
 }) => {
-  const [closeAfterSave, setCloseAfterSave] = useState(true);
   const isEnCurso = minutaEstado === 'EN_REVISION' || minutaEstado === 'EN_CURSO';
+  const [closeAfterSave, setCloseAfterSave] = useState(isEnCurso);
+
+  useEffect(() => {
+    setCloseAfterSave(minutaEstado === 'EN_REVISION' || minutaEstado === 'EN_CURSO');
+  }, [minutaEstado]);
 
   return (
     <Modal 

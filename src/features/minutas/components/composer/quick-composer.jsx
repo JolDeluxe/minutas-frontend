@@ -68,7 +68,7 @@ export const QuickComposer = ({
   const [descripcion, setDescripcion] = useState('');
   const [notasRapidas, setNotasRapidas] = useState([]);
   const [clasificacion, setClasificacion] = useState('');
-  const [area, setArea] = useState(catalogos.areas[0]?.value || 'DISENO');
+  const [area, setArea] = useState(departamento || catalogos.areas[0]?.value || 'DISENO');
   
   const lineasDisponibles = useMemo(() => LINEAS_POR_AREA[area] || [], [area]);
   const tieneLineas = lineasDisponibles.length > 0;
@@ -104,6 +104,12 @@ export const QuickComposer = ({
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  useEffect(() => {
+    if (departamento && area === 'DISENO' && departamento !== 'DISENO') {
+      setArea(departamento);
+    }
+  }, [departamento]);
 
   const filteredUsers = useMemo(() => {
     return allUsers.filter(u => u.estado === 'ACTIVO' && (u.rol === 'ADMIN' || u.departamento === departamento));

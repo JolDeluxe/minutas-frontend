@@ -349,7 +349,7 @@ export const MinutaDetailDesktopView = ({
           entry={editEntry}
           onSave={handleEditEntrySave}
           submitting={isSavingEntry}
-          departamento={departamento}
+          departamento={minuta?.departamento || 'DISENO'}
         />
       )}
 

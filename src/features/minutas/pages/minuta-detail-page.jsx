@@ -412,10 +412,19 @@ export default function MinutaDetailPage() {
       removeRemoteDraftEntries(payload.tempIds || []);
     };
 
+    const handleEstadoActualizado = (payload) => {
+      if (Number(payload?.minutaId) !== minutaId) return;
+      if (payload?.minuta) {
+        setMinuta(payload.minuta);
+        refreshEntries();
+      }
+    };
+
     socket.on('minuta:drafts_snapshot', handleSnapshot);
     socket.on('minuta:draft_entry_upsert', handleRemoteUpsert);
     socket.on('minuta:draft_entry_remove', handleRemoteRemove);
     socket.on('minuta:draft_entries_remove', handleRemoteBulkRemove);
+    socket.on('minuta:estado_actualizado', handleEstadoActualizado);
 
     const handleEntriesSaved = (payload) => {
       if (Number(payload?.minutaId) !== minutaId) return;
@@ -441,6 +450,7 @@ export default function MinutaDetailPage() {
       socket.off('minuta:draft_entry_upsert', handleRemoteUpsert);
       socket.off('minuta:draft_entry_remove', handleRemoteRemove);
       socket.off('minuta:draft_entries_remove', handleRemoteBulkRemove);
+      socket.off('minuta:estado_actualizado', handleEstadoActualizado);
       socket.off('minuta:entries_saved', handleEntriesSaved);
       clearRemoteDrafts();
     };

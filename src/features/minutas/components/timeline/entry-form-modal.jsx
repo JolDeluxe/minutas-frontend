@@ -69,7 +69,7 @@ export const EntryFormModal = ({
 
   const [form, setEditForm] = useState({
     descripcion: '',
-    area: 'DISENO',
+    area: departamento || 'DISENO',
     linea: 'CALZADO',
     clasificacion: 'OTROS',
     tipo: 'TAREA',
@@ -91,7 +91,7 @@ export const EntryFormModal = ({
         const isDraft = typeof entry.id === 'string' || entry.tempId;
         setEditForm({
           descripcion: entry.descripcion || '',
-          area: entry.area || 'DISENO',
+          area: entry.area || departamento || 'DISENO',
           linea: entry.linea || 'CALZADO',
           clasificacion: entry.clasificacion || 'OTROS',
           tipo: entry.tipo || (isDraft ? 'SIN_ORGANIZAR' : 'TAREA'), 

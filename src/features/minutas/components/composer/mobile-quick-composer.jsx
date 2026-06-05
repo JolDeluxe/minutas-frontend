@@ -79,8 +79,14 @@ export const MobileQuickComposer = ({
   const [expanded, setExpanded] = useState(false);
   const [texto, setTexto] = useState('');
   const [notasRapidas, setNotasRapidas] = useState([]);
-  const [area, setArea] = useState(catalogos.areas[0]?.value || 'DISENO');
+  const [area, setArea] = useState(departamento || catalogos.areas[0]?.value || 'DISENO');
   
+  useEffect(() => {
+    if (departamento && area === 'DISENO' && departamento !== 'DISENO') {
+      setArea(departamento);
+    }
+  }, [departamento]);
+
   const lineasDisponibles = useMemo(() => LINEAS_POR_AREA[area] || [], [area]);
   const tieneLineas = lineasDisponibles.length > 0;
 
@@ -307,7 +313,7 @@ export const MobileQuickComposer = ({
                         const newLineas = LINEAS_POR_AREA[newArea] || [];
                         setLinea(newLineas.length > 0 ? newLineas[0].value : null);
                       }}
-                      className="w-full bg-white border-2 border-slate-100 rounded-xl pl-2 pr-7 py-2.5 text-[2px] font-bold text-slate-700 focus:outline-none focus:border-marca-primario/40 transition-all appearance-none shadow-sm h-11 truncate"
+                      className="w-full bg-white border-2 border-slate-100 rounded-xl pl-2 pr-7 py-2.5 text-[11px] font-bold text-slate-700 focus:outline-none focus:border-marca-primario/40 transition-all appearance-none shadow-sm h-11 truncate"
                     >
                       {catalogos.areas.map(({ value, label }) => (
                         <option key={value} value={value}>{label}</option>
@@ -331,7 +337,7 @@ export const MobileQuickComposer = ({
                           setEsTarea(false);
                         }
                       }}
-                      className="w-full bg-white border-2 border-slate-100 rounded-xl pl-2 pr-7 py-2.5 text-[9px] font-bold text-slate-700 focus:outline-none focus:border-marca-primario/40 transition-all appearance-none shadow-sm h-11 truncate"
+                      className="w-full bg-white border-2 border-slate-100 rounded-xl pl-2 pr-7 py-2.5 text-[11px] font-bold text-slate-700 focus:outline-none focus:border-marca-primario/40 transition-all appearance-none shadow-sm h-11 truncate"
                     >
                       <option value="">— Tipo —</option>
                       {catalogos.clasificaciones.map(({ value, label }) => (
