@@ -1034,7 +1034,7 @@ export default function MinutaDetailPage() {
     try {
       const res = await finalizarMinuta(id);
       setMinuta(res.data?.data || res.data);
-      notify.success("Junta finalizada");
+      notify.success(res.data?.message || "Junta finalizada");
     } catch {
       notify.error("Error al finalizar la junta");
     } finally { setFinalizando(false); }
