@@ -288,6 +288,33 @@ export const EntryFormModal = ({
     </div>
   );
 
+  // ─── Helper: campo de fecha reutilizable (mismo diseño original) ────────────
+  const renderDateField = () => (
+    <div className="space-y-1.5 bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-inner">
+      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+        <Calendar size={12} /> Fecha de Vencimiento
+      </label>
+      <input 
+        type="date" 
+        value={form.fechaVencimiento} 
+        min={minDate}
+        onChange={(e) => {
+          handleFieldChange('fechaVencimiento', e.target.value);
+          setError('');
+        }} 
+        className={cn(
+          "w-full bg-white border rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-4 focus:ring-marca-primario/5",
+          error && error.includes('fecha') ? "border-rose-300 text-rose-950 focus:ring-rose-100 animate-shake" : "border-slate-200 text-slate-700"
+        )} 
+      />
+      {error && error.includes('fecha') && (
+        <p className="mt-1.5 text-[10px] font-bold text-rose-600 uppercase tracking-wider flex items-center gap-1 ml-1 animate-in fade-in slide-in-from-top-1">
+          <Icon name="error" size="14px" className="text-rose-500" /> {error}
+        </p>
+      )}
+    </div>
+  );
+
   const isExternal = entry ? ((departamento === 'DISENO' && entry.area !== 'DISENO') || (departamento === 'MARKETING' && entry.area !== 'MARKETING')) : false;
 
   const renderOperativePanel = () => {
@@ -301,7 +328,7 @@ export const EntryFormModal = ({
           <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
             <UserPlus size={18} />
           </div>
-          <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-700">Configuración Operativa</h4>
+          <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-700">Configuración</h4>
         </div>
         <div className="space-y-3">
           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Responsables Asignados</label>
@@ -359,29 +386,11 @@ export const EntryFormModal = ({
             )}
           </div>
         </div>
-        {form.tipo === 'TAREA' && (
+
+        {/* Fecha de vencimiento: solo en mobile. En desktop se muestra en la columna derecha */}
+        {form.tipo === 'TAREA' && !isDesktop && (
           <div className="pt-2">
-            <div className="space-y-1.5 bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-inner">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5"><Calendar size={12} /> Fecha de Vencimiento</label>
-              <input 
-                type="date" 
-                value={form.fechaVencimiento} 
-                min={minDate}
-                onChange={(e) => {
-                  handleFieldChange('fechaVencimiento', e.target.value);
-                  setError('');
-                }} 
-                className={cn(
-                  "w-full bg-white border rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-4 focus:ring-marca-primario/5",
-                  error && error.includes('fecha') ? "border-rose-300 text-rose-950 focus:ring-rose-100 animate-shake" : "border-slate-200 text-slate-700"
-                )} 
-              />
-              {error && error.includes('fecha') && (
-                <p className="mt-1.5 text-[10px] font-bold text-rose-600 uppercase tracking-wider flex items-center gap-1 ml-1 animate-in fade-in slide-in-from-top-1">
-                  <Icon name="error" size="14px" className="text-rose-500" /> {error}
-                </p>
-              )}
-            </div>
+            {renderDateField()}
           </div>
         )}
       </div>
@@ -552,6 +561,13 @@ export const EntryFormModal = ({
                     )
                   })}
                </div>
+            </div>
+          )}
+
+          {/* Fecha de Vencimiento en desktop: visible en la columna derecha sin necesidad de scroll */}
+          {form.tipo === 'TAREA' && !isExternal && isDesktop && (
+            <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 shadow-sm">
+              {renderDateField()}
             </div>
           )}
 
