@@ -5,9 +5,10 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useCatalogosStore } from '@/stores/catalogos-store';
 import { useTareas } from '@/features/tareas/hooks/use-tareas';
 import { notify } from '@/components/notification/adaptive-notify';
-import { GlassViewToggle, Icon, Table, Modal, ModalHeader, ModalBody, ModalFooter, Button, TableActions, ConfirmModal } from '@/components/ui/z_index';
+import { GlassViewToggle, Icon, Table, Modal, ModalHeader, ModalBody, ModalFooter, Button, TableActions, ConfirmModal, Tooltip } from '@/components/ui/z_index';
 import { Label, Select } from '@/components/form/z_index';
-import { LINEA_MAP, formatRelative } from '@/features/minutas/constants';
+import { formatRelative, AREA_MAP, getCatalogos } from '@/features/minutas/constants';
+import { formatFecha } from '@/lib/date';
 import { LineIconSelector, MarketingIcon, DisenoIcon } from '@/features/minutas/components/icons/line-icons';
 import { useUIStore } from '@/stores/ui-store';
 import { ImageViewer } from '@/features/minutas/components/timeline/entry-card';
@@ -21,39 +22,20 @@ const getTareasPayload = (response) => {
   return null;
 };
 
-const getLineInfo = (politica) => {
-  const isMarketing =
-    politica.departamento === 'MARKETING' ||
-    politica.linea === 'MARKETING' ||
-    politica.area === 'MARKETING';
-
-  if (isMarketing) {
-    return { value: 'MARKETING', label: 'Marketing', color: '#7c3aed', isMarketing: true };
-  }
-
-  const fallback = politica.linea || 'DISENO';
-  return {
-    value: fallback,
-    label: LINEA_MAP[fallback]?.label || fallback || 'General',
-    color: LINEA_MAP[fallback]?.color || '#64748b',
-    isMarketing: false,
-  };
-};
-
 const PoliticaMedia = ({ politica, size = 'card', onOpenImages }) => {
   const images = politica.imagenes || [];
-  const mediaSize = size === 'table' ? 'h-24 w-24 min-w-[6rem]' : 'h-24 w-24 sm:h-28 sm:w-28';
+  const mediaSize = size === 'table' ? 'h-28 w-28 min-w-[7rem]' : 'h-24 w-24 min-[360px]:h-28 min-[360px]:w-28';
 
   if (images.length > 0) {
     return (
       <button
         type="button"
-        onClick={() => onOpenImages(politica, 0)}
+        onClick={(e) => { e.stopPropagation(); onOpenImages(politica, 0); }}
         className={cn(
           'group relative shrink-0 overflow-hidden rounded-2xl border-2 border-slate-100 bg-white p-1 shadow-sm transition-all hover:border-marca-primario/30 active:scale-95',
           mediaSize
         )}
-        title="Ver imagenes"
+        title="Ver imágenes"
       >
         <div className="relative h-full w-full overflow-hidden rounded-xl bg-slate-50">
           <img
@@ -74,70 +56,92 @@ const PoliticaMedia = ({ politica, size = 'card', onOpenImages }) => {
     );
   }
 
-  // Sin foto, mostrar placeholder simple (el usuario indicó "si no tiene foto no le pongas el icono de la linea no es necesario", así que mostramos algo genérico y sutil)
-  return (
-    <div className={cn('flex shrink-0 items-center justify-center rounded-2xl border border-slate-100 bg-slate-50/70 shadow-inner', mediaSize)}>
-      <Icon name="gavel" size="32px" className="text-slate-300" />
-    </div>
-  );
+  return null;
 };
 
-const LineBadge = ({ politica, compact = false }) => {
-  const lineInfo = getLineInfo(politica);
+const AreaBadge = ({ politica, compact = false }) => {
+  const label = AREA_MAP[politica.area] || politica.area || 'General';
+  // El diseño de TareaCard para áreas externas: bg-marca-primario/10 text-marca-primario border-marca-primario/20 con icon "output"
+  // Pero aquí usamos LineIconSelector para los iconos ya definidos
   return (
-    <div className={cn('flex items-center gap-1.5', compact ? 'justify-center' : '')}>
-      {lineInfo.isMarketing ? (
-        <MarketingIcon size={compact ? 28 : 16} style={{ color: lineInfo.color }} />
-      ) : (
-        <LineIconSelector type={lineInfo.value} size={compact ? 32 : 18} style={{ color: lineInfo.color }} />
-      )}
-      <span className="text-[8px] font-black uppercase tracking-widest" style={{ color: lineInfo.color }}>
-        {lineInfo.label}
+    <div className={cn(
+      'inline-flex items-center gap-1.5 rounded-lg border px-2 py-0.5 transition-all shadow-xs',
+      compact ? 'border-slate-100 bg-slate-50/50' : 'bg-white border-slate-200 text-slate-700'
+    )}>
+      <div className="shrink-0 scale-90 opacity-70">
+        <LineIconSelector type={politica.area} size={16} />
+      </div>
+      <span className="text-[9px] min-[360px]:text-[10px] font-black uppercase tracking-tight leading-none whitespace-nowrap">
+        {label}
       </span>
     </div>
   );
 };
 
-const PoliticaCard = ({ politica, onDelete, onEdit, onOpenImages }) => {
+const MinutaBadge = ({ minuta, compact = false }) => {
+  if (!minuta) return null;
+  // Diseño exacto de TareaCard/entry-table: Icon description 10px, text-slate-400 font-bold, wrap sin clamp
   return (
-    <article className="group relative flex min-h-full overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:bg-slate-50/30 hover:shadow-md">
-      <div className="flex w-full shrink-0 items-center justify-center border-r border-slate-100/70 bg-slate-50/50 p-2 sm:w-[125px] sm:p-3">
-        <PoliticaMedia politica={politica} onOpenImages={onOpenImages} />
-      </div>
+    <div className="flex items-center gap-1.5 mt-1 flex-wrap" title={minuta.titulo}>
+        <Icon name="description" size="10px" className="text-slate-300 shrink-0" />
+        <span className="text-[10px] text-slate-400 font-bold break-words whitespace-normal leading-tight max-w-[320px]">
+            {minuta.titulo || `Minuta #${minuta.id}`}
+        </span>
+    </div>
+  );
+};
 
-      <div className="flex min-w-0 flex-1 flex-col p-3 sm:p-4">
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <span className="shrink-0 text-[8px] font-bold uppercase tracking-tighter text-slate-400">
-            {politica.createdAt ? formatRelative(politica.createdAt) : ''}
-          </span>
+const PoliticaCard = ({ politica, onDelete, onEdit, onOpenImages, currentUser }) => {
+  const hasImages = (politica.imagenes || []).length > 0;
+
+  return (
+    <article className={cn(
+      "group relative flex flex-col min-h-full overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:shadow-md hover:border-slate-300/50",
+      hasImages ? "sm:flex-row" : ""
+    )}>
+      {hasImages && (
+        <div className="flex shrink-0 items-center justify-center border-b sm:border-b-0 sm:border-r border-slate-100 bg-slate-50/50 p-3 sm:w-[135px]">
+          <PoliticaMedia politica={politica} onOpenImages={onOpenImages} />
+        </div>
+      )}
+
+      <div className="flex min-w-0 flex-1 flex-col p-4 min-[360px]:p-5 sm:p-6">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[8px] font-black uppercase tracking-[0.15em] text-slate-400 leading-none">
+              {politica.createdAt ? formatRelative(politica.createdAt) : ''}
+            </span>
+            <span className="text-[8px] font-bold font-mono text-slate-300 uppercase leading-none mt-1">
+              {politica.createdAt ? formatFecha(politica.createdAt) : ''}
+            </span>
+          </div>
+          <AreaBadge politica={politica} />
         </div>
 
-        <p className="line-clamp-3 whitespace-pre-wrap break-words px-0.5 text-[13px] font-semibold leading-relaxed text-slate-800 flex-1">
-          {politica.descripcion || 'Sin descripción'}
-        </p>
+        <div className="flex-1 min-h-0">
+          <p className="whitespace-pre-wrap break-words text-[13px] min-[360px]:text-[14px] font-semibold leading-relaxed text-slate-800">
+            {politica.descripcion || 'Sin descripción'}
+          </p>
+        </div>
 
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-slate-50 pt-3">
-          <div className="flex min-w-0 flex-wrap items-center gap-3">
-            <LineBadge politica={politica} />
-          </div>
+        <div className="mt-4 pt-3 border-t border-slate-50 flex flex-col gap-3">
+          {politica.minuta ? (
+            <MinutaBadge minuta={politica.minuta} />
+          ) : (
+            <div className="flex items-center gap-1.5 opacity-30">
+               <Icon name="link_off" size="10px" className="text-slate-400" />
+               <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Sin Minuta de Origen</span>
+            </div>
+          )}
 
-          <div className="flex items-center gap-1.5 ml-auto">
-            <button
-              type="button"
-              onClick={() => onEdit(politica)}
-              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 opacity-100 shadow-xs transition-all hover:bg-slate-900 hover:text-white sm:opacity-0 sm:group-hover:opacity-100"
-              title="Editar política"
-            >
-              <Icon name="edit" size="14px" />
-            </button>
-            <button
-              type="button"
-              onClick={() => onDelete(politica.id)}
-              className="flex h-7 w-7 items-center justify-center rounded-lg border border-rose-100 bg-rose-50 text-rose-400 opacity-100 shadow-xs transition-all hover:bg-rose-500 hover:text-white sm:opacity-0 sm:group-hover:opacity-100"
-              title="Eliminar política"
-            >
-              <Icon name="delete" size="14px" />
-            </button>
+          <div className="flex items-center justify-end scale-90 sm:scale-100 origin-right transition-transform" onClick={e => e.stopPropagation()}>
+             <TableActions 
+                row={politica} 
+                actions={[
+                  { key: 'editar', enabled: true, onClick: (r) => onEdit(r) },
+                  { key: 'borrar', enabled: true, onClick: (r) => onDelete(r.id), tooltip: 'Eliminar política' }
+                ]} 
+             />
           </div>
         </div>
       </div>
@@ -145,21 +149,23 @@ const PoliticaCard = ({ politica, onDelete, onEdit, onOpenImages }) => {
   );
 };
 
-const ModalEditarPolitica = ({ isOpen, onClose, policy, onSave, submitting, lineasDisponibles }) => {
+const ModalEditarPolitica = ({ isOpen, onClose, policy, onSave, submitting, lineasDisponibles, areasDisponibles }) => {
   const [descripcion, setDescripcion] = useState('');
   const [linea, setLinea] = useState('');
+  const [area, setArea] = useState('');
 
   useEffect(() => {
     if (policy) {
       setDescripcion(policy.descripcion || '');
       setLinea(policy.linea || 'CALZADO');
+      setArea(policy.area || 'DISENO');
     }
   }, [policy, isOpen]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!descripcion.trim()) return;
-    onSave(policy.id, { descripcion, linea });
+    onSave(policy.id, { descripcion, linea, area });
   };
 
   return (
@@ -179,13 +185,23 @@ const ModalEditarPolitica = ({ isOpen, onClose, policy, onSave, submitting, line
                 required
               />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="p-linea">Línea *</Label>
-              <Select id="p-linea" value={linea} onChange={(e) => setLinea(e.target.value)}>
-                {lineasDisponibles.map((l) => (
-                  <option key={l.value} value={l.value}>{l.label}</option>
-                ))}
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="p-area">Área *</Label>
+                <Select id="p-area" value={area} onChange={(e) => setArea(e.target.value)}>
+                  {areasDisponibles.map((a) => (
+                    <option key={a.value} value={a.value}>{a.label}</option>
+                  ))}
+                </Select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="p-linea">Línea *</Label>
+                <Select id="p-linea" value={linea} onChange={(e) => setLinea(e.target.value)}>
+                  {lineasDisponibles.map((l) => (
+                    <option key={l.value} value={l.value}>{l.label}</option>
+                  ))}
+                </Select>
+              </div>
             </div>
           </div>
         </ModalBody>
@@ -222,6 +238,7 @@ export default function PoliticasPage() {
   const activeDept = isAdmin ? (departamentoGlobal === 'DISEÑO' ? 'DISENO' : 'MARKETING') : (currentUser?.departamento || 'DISENO');
 
   const lineasDisponibles = useMemo(() => getLineasPorDepartamento(activeDept), [getLineasPorDepartamento, activeDept]);
+  const areasDisponibles = useMemo(() => getCatalogos(activeDept).areas, [activeDept]);
 
   useEffect(() => {
     fetchCatalogos();
@@ -320,7 +337,7 @@ export default function PoliticasPage() {
           </p>
         </div>
 
-        {/* Switcher de Departamento centralizado (exacto a tareas) */}
+        {/* Switcher de Departamento centralizado */}
         {isAdmin && (
             <div className="flex-shrink-0 flex justify-center py-1 animate-in fade-in duration-300">
                 <div className="flex items-center bg-slate-100/90 p-0.5 rounded-xl border border-slate-200/50 shadow-inner max-w-xs backdrop-blur-md">
@@ -376,7 +393,14 @@ export default function PoliticasPage() {
       ) : viewMode === 'cards' ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {politicas.map((p) => (
-            <PoliticaCard key={p.id} politica={p} onDelete={setDeleteTarget} onEdit={handleEditPolicy} onOpenImages={openImages} />
+            <PoliticaCard 
+              key={p.id} 
+              politica={p} 
+              onDelete={setDeleteTarget} 
+              onEdit={handleEditPolicy} 
+              onOpenImages={openImages}
+              currentUser={currentUser}
+            />
           ))}
         </div>
       ) : (
@@ -388,7 +412,7 @@ export default function PoliticasPage() {
                 accessorKey: 'imagenes',
                 align: 'center',
                 headerClassName: 'w-[10%] min-w-[130px]',
-                cell: (row) => (row.imagenes?.length > 0) ? (
+                cell: (row) => (row.imagenes?.filter(img => img.tipo !== 'EVIDENCIA').length > 0) ? (
                   <PoliticaMedia politica={row} size="table" onOpenImages={openImages} />
                 ) : (
                   <span className="text-slate-300">-</span>
@@ -397,24 +421,44 @@ export default function PoliticasPage() {
               {
                 header: 'Política',
                 accessorKey: 'descripcion',
+                headerClassName: 'w-[45%]',
                 cell: (row) => (
-                  <p className="line-clamp-3 text-[13px] font-semibold leading-relaxed text-slate-800" title={row.descripcion}>
+                  <p className="whitespace-pre-wrap text-[13px] font-semibold leading-relaxed text-slate-800" title={row.descripcion}>
                     {row.descripcion}
                   </p>
                 )
               },
               {
-                header: 'Línea',
-                accessorKey: 'linea',
+                header: 'Área',
+                accessorKey: 'area',
+                align: 'center',
+                headerClassName: 'w-[12%] min-w-[130px]',
+                cell: (row) => <AreaBadge politica={row} compact />,
+              },
+              {
+                header: 'Minuta Origen',
+                accessorKey: 'minuta',
+                align: 'center',
+                headerClassName: 'w-[15%] min-w-[160px]',
+                cell: (row) => row.minuta ? <MinutaBadge minuta={row.minuta} compact /> : <span className="text-slate-300 text-[10px] font-black uppercase">Sin Origen</span>,
+              },
+              {
+                header: 'Fecha',
+                accessorKey: 'createdAt',
                 align: 'center',
                 headerClassName: 'w-[10%] min-w-[110px]',
-                cell: (row) => <LineBadge politica={row} compact />,
+                cell: (row) => (
+                  <div className="flex flex-col items-center">
+                    <span className="text-[10px] font-black text-slate-700">{formatFecha(row.createdAt)}</span>
+                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">{formatRelative(row.createdAt)}</span>
+                  </div>
+                ),
               },
               {
                 header: 'Acciones',
                 accessorKey: 'acciones',
                 align: 'center',
-                headerClassName: 'w-[12%] min-w-[110px]',
+                headerClassName: 'w-[8%] min-w-[100px]',
                 cell: (row) => (
                   <TableActions 
                     row={row} 
@@ -447,7 +491,7 @@ export default function PoliticasPage() {
       )}
 
       {viewer && <ImageViewer images={viewer.images} initialIndex={viewer.index} onClose={() => setViewer(null)} />}
-      {isEditModalOpen && <ModalEditarPolitica isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} policy={editingPolicy} onSave={handleSavePolicy} lineasDisponibles={lineasDisponibles} submitting={false} />}
+      {isEditModalOpen && <ModalEditarPolitica isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} policy={editingPolicy} onSave={handleSavePolicy} lineasDisponibles={lineasDisponibles} areasDisponibles={areasDisponibles} submitting={false} />}
       {deleteTarget && (
         <ConfirmModal
           isOpen={Boolean(deleteTarget)}
