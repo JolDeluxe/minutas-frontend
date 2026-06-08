@@ -239,3 +239,53 @@
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────
+   ESTILOS DE SELECTORES DE FECHA (INPUT TYPE="DATE") PARA MÓVILES
+───────────────────────────────────────────────────────────────────── */
+input[type="date"] {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  box-sizing: border-box;
+}
+
+/* Centrar verticalmente el valor en navegadores basados en WebKit (iOS/Android) */
+input[type="date"]::-webkit-datetime-edit {
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+  padding: 0;
+}
+
+input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+}
+
+/* Ajustes específicos para móviles */
+@media screen and (max-width: 768px) {
+  input[type="date"] {
+    font-size: 13px !important; /* Evita que el texto de la fecha se desborde o se rompa en contenedores pequeños */
+    padding-left: 0.5rem !important;
+    padding-right: 2rem !important; /* Deja espacio reservado para el indicador nativo */
+    height: 2.75rem !important;
+  }
+
+  /* Coloca el indicador de calendario nativo absoluto a la derecha para evitar que empuje el texto */
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    margin: 0;
+    padding: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+    cursor: pointer;
+    opacity: 0.6;
+    background-color: transparent;
+  }
+}

@@ -24,7 +24,7 @@ const formatFechaReal = (dateStr) => {
     });
 };
 
-export const MinutaCard = ({ minuta, onViewDetail, onCancel, badge = null, isAdmin = false }) => {
+export const MinutaCard = ({ minuta, onViewDetail, onEdit, onCancel, badge = null, isAdmin = false }) => {
     const estadoLabel = ESTADO_MINUTA_MAP[minuta.estado]?.label || minuta.estado.replace(/_/g, ' ');
     const estadoColor = ESTADO_COLORS[minuta.estado] || 'bg-slate-50 text-slate-600 border-slate-200';
     
@@ -36,6 +36,7 @@ export const MinutaCard = ({ minuta, onViewDetail, onCancel, badge = null, isAdm
     const completadas = resumen.cerradas || 0;
 
     const canCancel = minuta.estado !== 'CANCELADA' && !resumen.hasActiveTasks;
+    const canEdit = minuta.estado !== 'CANCELADA' && minuta.estado !== 'CERRADA';
     
     // Fecha REAL — lo que el jefe necesita para "la minuta del 28 de marzo"
     const fechaReal = formatFechaReal(minuta.fechaRealizada || minuta.fechaProgramada || minuta.createdAt);
@@ -133,6 +134,18 @@ export const MinutaCard = ({ minuta, onViewDetail, onCancel, badge = null, isAdm
                             )}
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
+                            {canEdit && !!onEdit && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onEdit(minuta);
+                                    }}
+                                    className="h-6 w-6 rounded-lg text-slate-500 hover:bg-slate-100 flex items-center justify-center transition-all active:scale-90"
+                                    title="Editar Minuta"
+                                >
+                                    <Icon name="edit" className="!text-[14px]" />
+                                </button>
+                            )}
                             {canCancel && !!onCancel && (
                                 <button
                                     onClick={(e) => {
