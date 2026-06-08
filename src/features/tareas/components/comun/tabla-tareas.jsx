@@ -207,7 +207,7 @@ export const TablaTareas = ({
         },
         {
             header: 'Descripción de la Tarea',
-            accessorKey: 'titulo',
+            accessorKey: 'descripcion',
             sortable: true,
             headerClassName: 'w-[30%] min-w-[200px]',
             cell: (row) => {
@@ -488,9 +488,11 @@ export const TablaTareas = ({
                         : 'bg-blue-50/40 hover:bg-blue-100/60 border-b border-blue-200/50 text-slate-800';
                 }}
                 onSortChange={(key) => {
-                    const direction =
-                        sortConfig?.key === key && sortConfig?.direction === 'asc' ? 'desc' : 'asc';
-                    onSortChange(key, direction);
+                    if (typeof onSortChange === 'function') {
+                        const direction =
+                            sortConfig?.key === key && sortConfig?.direction === 'asc' ? 'desc' : 'asc';
+                        onSortChange(key, direction);
+                    }
                 }}
             />
             {viewerIndex !== null && (

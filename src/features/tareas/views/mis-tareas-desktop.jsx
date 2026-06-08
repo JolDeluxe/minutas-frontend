@@ -68,6 +68,8 @@ export const MisTareasDesktop = ({
     onViewChange,
     page,
     totalPages,
+    sortConfig,
+    onSortChange,
 }) => {
     const navigate = useNavigate();
     const [editTarget, setEditTarget] = useState(null);
@@ -207,6 +209,8 @@ export const MisTareasDesktop = ({
                                     onPageChange={(p) => onFilterChange({ page: p })}
                                     hidePagination={false}
                                     hideResponsables={true}
+                                    sortConfig={sortConfig}
+                                    onSortChange={onSortChange}
                                 />
                             </div>
                         )

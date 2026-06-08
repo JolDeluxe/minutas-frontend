@@ -42,6 +42,7 @@ export default function MisTareasPage() {
     });
     
     const [page, setPage] = useState(1);
+    const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' });
     const [selectedTarea, setSelectedTarea] = useState(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -49,7 +50,7 @@ export default function MisTareasPage() {
         const params = { 
             page, 
             limit: LIMIT,
-            sort: JSON.stringify([{ createdAt: 'desc' }]),
+            sort: JSON.stringify([{ [sortConfig.key]: sortConfig.direction }]),
             tipo: 'TAREA',
             responsableId: currentUser?.id
         };
@@ -65,7 +66,7 @@ export default function MisTareasPage() {
         }
 
         fetchTareas(params).catch(() => notify.error('Error al cargar tus tareas.'));
-    }, [page, filters, currentUser?.id, fetchTareas, departamento, currentUser?.rol]);
+    }, [page, filters, sortConfig, currentUser?.id, fetchTareas, departamento, currentUser?.rol]);
 
     useEffect(() => { loadTareas(); }, [loadTareas]);
 
@@ -74,6 +75,11 @@ export default function MisTareasPage() {
         if (newFilters.page === undefined) setPage(1);
         else setPage(newFilters.page);
     };
+
+    const handleSortChange = useCallback((key, direction) => {
+        setSortConfig({ key, direction });
+        setPage(1);
+    }, []);
 
     const handleViewDetail = (tarea) => {
         setSelectedTarea(tarea);
@@ -134,6 +140,9 @@ export default function MisTareasPage() {
     }, [loadTareas]);
 
     const tareasSorted = useMemo(() => {
+        if (sortConfig && (sortConfig.key !== 'createdAt' || sortConfig.direction !== 'desc')) {
+            return tareas;
+        }
         return [...tareas].sort((a, b) => {
             // 1. PENDIENTE va antes que EN_REVISION (o cualquier otro estado)
             const estadoA = a.estado === 'PENDIENTE' ? 0 : a.estado === 'EN_REVISION' ? 1 : 2;
@@ -153,7 +162,7 @@ export default function MisTareasPage() {
             // 4. Por fecha de creación (más reciente primero)
             return new Date(b.createdAt) - new Date(a.createdAt);
         });
-    }, [tareas]);
+    }, [tareas, sortConfig]);
 
     const sharedProps = {
         tareas: tareasSorted,
@@ -186,6 +195,8 @@ export default function MisTareasPage() {
         onDelete: handleDeleteTarea,
         viewMode,
         onViewChange: setViewMode,
+        sortConfig,
+        onSortChange: handleSortChange,
     };
 
     return (

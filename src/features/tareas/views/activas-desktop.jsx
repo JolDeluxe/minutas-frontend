@@ -69,6 +69,8 @@ export const ActivasDesktop = ({
     onViewChange,
     page,
     totalPages,
+    sortConfig,
+    onSortChange,
 }) => {
     const navigate = useNavigate();
     const [editTarget, setEditTarget] = useState(null);
@@ -209,6 +211,8 @@ export const ActivasDesktop = ({
                                     totalItems={totalParaSummary}
                                     onPageChange={(p) => onFilterChange({ page: p })}
                                     hidePagination={false}
+                                    sortConfig={sortConfig}
+                                    onSortChange={onSortChange}
                                 />
                             </div>
                         )

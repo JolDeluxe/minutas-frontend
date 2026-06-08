@@ -47,6 +47,8 @@ export const HistoricoDesktop = ({
     onViewChange,
     statusActual,
     filtroDepartamento,
+    sortConfig,
+    onSortChange,
 }) => {
     const [editTarget, setEditTarget] = useState(null);
 
@@ -159,6 +161,8 @@ export const HistoricoDesktop = ({
                         onChangeStatus={onChangeStatus}
                         onDelete={onDelete}
                         onReview={onReview}
+                        sortConfig={sortConfig}
+                        onSortChange={onSortChange}
                     />
                 )}
             </div>

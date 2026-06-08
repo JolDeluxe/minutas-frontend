@@ -26,6 +26,7 @@ export default function PorAprobarPage() {
     } = useTareas();
 
     const [page, setPage] = useState(1);
+    const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' });
     const [selectedTarea, setSelectedTarea] = useState(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [revisionTarget, setRevisionTarget] = useState(null);
@@ -38,16 +39,21 @@ export default function PorAprobarPage() {
             estado: 'EN_REVISION',
             page,
             limit: 20,
-            sort: JSON.stringify([{ createdAt: 'desc' }])
+            sort: JSON.stringify([{ [sortConfig.key]: sortConfig.direction }])
         };
         if (activeDept) params.departamento = activeDept;
 
         fetchTareas(params).catch(() => notify.error('Error al cargar tareas por aprobar.'));
-    }, [page, activeDept, fetchTareas]);
+    }, [page, activeDept, sortConfig, fetchTareas]);
 
     useEffect(() => {
         loadTareas();
     }, [loadTareas]);
+
+    const handleSortChange = useCallback((key, direction) => {
+        setSortConfig({ key, direction });
+        setPage(1);
+    }, []);
 
     const handleViewDetail = (tarea) => {
         setSelectedTarea(tarea);
@@ -99,7 +105,9 @@ export default function PorAprobarPage() {
         handleApprove,
         handleDeleteTarea,
         onRefresh: loadTareas,
-        filtroDepartamento: activeDept
+        filtroDepartamento: activeDept,
+        sortConfig,
+        onSortChange: handleSortChange,
     };
 
     return (

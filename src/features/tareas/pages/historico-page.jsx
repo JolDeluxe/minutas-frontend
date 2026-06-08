@@ -45,6 +45,7 @@ export default function HistoricoPage() {
     });
     
     const [page, setPage] = useState(1);
+    const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' });
     const [selectedTarea, setSelectedTarea] = useState(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [revisionTarget, setRevisionTarget] = useState(null);
@@ -56,7 +57,7 @@ export default function HistoricoPage() {
         const params = { 
             page, 
             limit: LIMIT,
-            sort: JSON.stringify([{ createdAt: 'desc' }]),
+            sort: JSON.stringify([{ [sortConfig.key]: sortConfig.direction }]),
             tipo: 'TAREA',
             todo: true
         };
@@ -74,7 +75,7 @@ export default function HistoricoPage() {
         if (month > 0) params.month = month;
 
         fetchTareas(params).catch(() => notify.error('Error al cargar el histórico.'));
-    }, [page, filters, year, month, fetchTareas, activeDept]);
+    }, [page, filters, sortConfig, year, month, fetchTareas, activeDept]);
 
     useEffect(() => { loadTareas(); }, [loadTareas]);
 
@@ -95,6 +96,11 @@ export default function HistoricoPage() {
         if (newFilters.page === undefined) setPage(1);
         else setPage(newFilters.page);
     };
+
+    const handleSortChange = useCallback((key, direction) => {
+        setSortConfig({ key, direction });
+        setPage(1);
+    }, []);
 
     const handleUpdateTarea = async (id, payload) => {
         try {
@@ -151,6 +157,9 @@ export default function HistoricoPage() {
     }, [loadTareas]);
 
     const tareasSorted = useMemo(() => {
+        if (sortConfig && (sortConfig.key !== 'createdAt' || sortConfig.direction !== 'desc')) {
+            return tareas;
+        }
         return [...tareas].sort((a, b) => {
             // 1. PENDIENTE va antes que EN_REVISION (o cualquier otro estado)
             const estadoA = a.estado === 'PENDIENTE' ? 0 : a.estado === 'EN_REVISION' ? 1 : a.estado === 'CERRADA' ? 2 : 3;
@@ -165,7 +174,7 @@ export default function HistoricoPage() {
             // 3. Por fecha de creación (más reciente primero)
             return new Date(b.createdAt) - new Date(a.createdAt);
         });
-    }, [tareas]);
+    }, [tareas, sortConfig]);
 
     const totalResumenHistorico = useMemo(() => {
         return ['PENDIENTE', 'EN_REVISION', 'CERRADA']
@@ -209,6 +218,8 @@ export default function HistoricoPage() {
         onViewChange: setViewMode,
         statusActual: filters.status,
         filtroDepartamento: activeDept,
+        sortConfig,
+        onSortChange: handleSortChange,
     };
 
     return (

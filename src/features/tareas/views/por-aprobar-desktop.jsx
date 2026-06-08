@@ -45,7 +45,9 @@ export const PorAprobarDesktop = ({
     handleApprove,
     handleDeleteTarea,
     onRefresh,
-    filtroDepartamento
+    filtroDepartamento,
+    sortConfig,
+    onSortChange,
 }) => {
     const [editTarget, setEditTarget] = useState(null);
 
@@ -137,6 +139,8 @@ export const PorAprobarDesktop = ({
                         onChangeStatus={handleApprove}
                         onReview={onReview}
                         isPorAprobar={true}
+                        sortConfig={sortConfig}
+                        onSortChange={onSortChange}
                     />
                 </div>
             )}
