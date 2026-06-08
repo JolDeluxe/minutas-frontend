@@ -244,48 +244,61 @@
    ESTILOS DE SELECTORES DE FECHA (INPUT TYPE="DATE") PARA MÓVILES
 ───────────────────────────────────────────────────────────────────── */
 input[type="date"] {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  min-height: 2.75rem;
-  box-sizing: border-box;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  min-height: 2.75rem !important; /* Altura estándar h-11 */
+  box-sizing: border-box !important;
+  background-color: #ffffff !important;
 }
 
-/* Centrar verticalmente el valor en navegadores basados en WebKit (iOS/Android) */
-input[type="date"]::-webkit-datetime-edit {
-  display: inline-flex;
-  align-items: center;
-  height: 100%;
-  padding: 0;
+/* Forzar reset en elementos internos de Safari iOS */
+input[type="date"]::-webkit-datetime-edit,
+input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  height: 100% !important;
+  line-height: normal !important;
 }
 
+/* Eliminar espaciados nativos del wrapper interno */
 input[type="date"]::-webkit-datetime-edit-fields-wrapper {
-  display: inline-flex;
-  align-items: center;
-  height: 100%;
+  gap: 1px !important;
 }
 
 /* Ajustes específicos para móviles */
 @media screen and (max-width: 768px) {
   input[type="date"] {
     font-size: 13px !important; /* Evita que el texto de la fecha se desborde o se rompa en contenedores pequeños */
-    padding-left: 0.5rem !important;
-    padding-right: 2rem !important; /* Deja espacio reservado para el indicador nativo */
+    padding-left: 0.75rem !important;
+    padding-right: 2.25rem !important; /* Deja espacio reservado para el indicador nativo */
     height: 2.75rem !important;
   }
 
-  /* Coloca el indicador de calendario nativo absoluto a la derecha para evitar que empuje el texto */
+  /* Coloca el indicador de calendario nativo absoluto a la derecha para evitar que empuje el texto en iOS/Chrome */
   input[type="date"]::-webkit-calendar-picker-indicator {
-    position: absolute;
-    right: 0.5rem;
-    top: 50%;
-    transform: translateY(-50%);
-    margin: 0;
-    padding: 0;
-    width: 1.25rem;
-    height: 1.25rem;
-    cursor: pointer;
-    opacity: 0.6;
-    background-color: transparent;
+    position: absolute !important;
+    right: 0.75rem !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 1.2rem !important;
+    height: 1.2rem !important;
+    cursor: pointer !important;
+    opacity: 0.55 !important;
+    background-color: transparent !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
   }
 }
