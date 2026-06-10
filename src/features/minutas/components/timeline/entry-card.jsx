@@ -36,6 +36,7 @@ export const EntryCard = ({
   onViewDetail,
   meetingMode,
   onToggleNotificado,
+  hideStatus,
   className
 }) => {
   const { user } = useAuthStore();
@@ -64,6 +65,7 @@ export const EntryCard = ({
       isDraft={Boolean(entry.tempId)}
       onToggleNotificado={onToggleNotificado}
       users={users}
+      hideStatus={hideStatus}
       className={className}
     />
   );

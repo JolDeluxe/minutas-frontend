@@ -22,6 +22,8 @@ import HistoricoPage from '@/features/tareas/pages/historico-page';
 import PorAprobarPage from '@/features/tareas/pages/por-aprobar-page';
 
 import NotifyPage from '@/features/notificaciones/pages/notify-page';
+import TareasGeneralesPage from '@/features/tareas_generales/pages/tareas-generales-page';
+
 
 import { DashboardLayout } from '@/layouts/dashboard-layout';
 import WelcomePage from '@/pages/welcome-page';
@@ -40,6 +42,7 @@ const ROLES = {
   historicoTareas: MODULES_CONFIG.find(m => m.id === 'tareas')?.children?.find(c => c.id === 'historico-tareas')?.allowedRoles || [],
   porAprobar: MODULES_CONFIG.find(m => m.id === 'tareas')?.children?.find(c => c.id === 'por-aprobar')?.allowedRoles || [],
   notificaciones: MODULES_CONFIG.find(m => m.id === 'notificaciones')?.allowedRoles || [],
+  tareasGenerales: MODULES_CONFIG.find(m => m.id === 'tareas-generales')?.allowedRoles || [],
 };
 
 export const AppRoutes = () => {
@@ -81,6 +84,11 @@ export const AppRoutes = () => {
           {/* Módulo: Notificaciones */}
           <Route element={<RoleGuard allowedRoles={ROLES.notificaciones} />}>
             <Route path="/notificaciones" element={<NotifyPage />} />
+          </Route>
+
+          {/* Módulo: Tareas Generales (solo ADMIN) */}
+          <Route element={<RoleGuard allowedRoles={ROLES.tareasGenerales} />}>
+            <Route path="/tareas-generales" element={<TareasGeneralesPage />} />
           </Route>
 
           {/* Módulo: Tareas */}

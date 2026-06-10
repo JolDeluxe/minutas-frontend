@@ -66,14 +66,36 @@ export const PanelDetalleTarea = ({
     submitting = false,
     currentUser,
     users = [],
+    hideMinutaInfo = false,
+    onCreateNota,
+    onDeleteNota,
 }) => {
     const isDesktop = useIsDesktop();
     const [isEntregaModalOpen, setIsEntregaModalOpen] = useState(false);
     const [isConfirmAprobarOpen, setIsConfirmAprobarOpen] = useState(false);
     const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
     const [viewerState, setViewerState] = useState(null);
+    const [nuevaNota, setNuevaNota] = useState('');
 
     if (!isOpen || !tarea) return null;
+
+    const tipo = tarea.tipo || 'TAREA';
+
+    const handleCreateNota = async () => {
+        if (!nuevaNota.trim() || !onCreateNota) return;
+        try {
+            await onCreateNota(tarea.id, nuevaNota.trim());
+            setNuevaNota('');
+        } catch {}
+    };
+
+    const isExternal = (currentUser?.departamento === 'DISEÑO' && tarea.area !== 'DISENO')
+        || (currentUser?.departamento === 'MARKETING' && tarea.area !== 'MARKETING')
+        || (tarea._isExternal === true);
+
+    const allNotes = tarea.notas || [];
+    const notasEntrega = allNotes.filter(n => n.esEntrega === true);
+    const notasNormales = allNotes.filter(n => n.esEntrega !== true);
 
     const { rol, id: userId } = currentUser ?? {};
 
@@ -189,7 +211,7 @@ export const PanelDetalleTarea = ({
                         #{tarea.id}
                     </span>
                     <EtiquetaEstadoTarea status={tarea.estado} size="xs" />
-                    <EtiquetaPrioridadTarea priority={tarea.prioridad} />
+                    {tipo === 'TAREA' && tarea.prioridad && <EtiquetaPrioridadTarea priority={tarea.prioridad} />}
                 </div>
 
                 {/* Título principal */}
@@ -275,7 +297,7 @@ export const PanelDetalleTarea = ({
                         </section>
 
                         {/* Sección: Minuta de Origen (condicional) */}
-                        {tarea.minuta && (
+                        {!hideMinutaInfo && tarea.minuta && (
                             <section>
                                 <SectionHeader icon="description" label="Origen: Minuta" color="blue" />
                                 <div className="flex gap-3.5 items-start p-4 bg-blue-50/70 border border-blue-100 rounded-2xl">
@@ -305,12 +327,92 @@ export const PanelDetalleTarea = ({
                         )}
 
                         {/* Estado vacío si no hay minuta */}
-                        {!tarea.minuta && (
+                        {!hideMinutaInfo && !tarea.minuta && (
                             <div className="flex flex-col items-center justify-center py-8 gap-2 opacity-40">
                                 <Icon name="inbox" size="28px" className="text-slate-300" />
                                 <p className="text-xs text-slate-400 font-semibold">Sin minuta de origen</p>
                             </div>
                         )}
+
+                        {/* Sección: Notas de la tarea */}
+                        <section className="space-y-4 pt-6 border-t border-slate-100 text-left">
+                            <SectionHeader icon="sticky_note" label="Notas de la tarea" count={notasNormales.length} color="amber" />
+                            
+                            {/* Input para agregar nota */}
+                            {onCreateNota && !isCerrado && (
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder="Agregar una nota en Post-it..."
+                                        value={nuevaNota}
+                                        onChange={(e) => setNuevaNota(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && nuevaNota.trim()) {
+                                                handleCreateNota();
+                                            }
+                                        }}
+                                        className="flex-1 bg-amber-50/35 border border-amber-200/60 rounded-xl px-3.5 py-2 text-xs font-semibold focus:outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-200/20 text-amber-950 placeholder:text-amber-300"
+                                    />
+                                    <button
+                                        onClick={handleCreateNota}
+                                        disabled={!nuevaNota.trim()}
+                                        className="h-9 w-9 bg-amber-500 hover:bg-amber-600 text-white rounded-xl flex items-center justify-center disabled:opacity-40 active:scale-95 transition-all shadow-md shadow-amber-500/15 shrink-0 cursor-pointer border border-amber-400/20"
+                                    >
+                                        <Icon name="add" size="18px" />
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Listado de notas normales */}
+                            {notasNormales.length === 0 ? (
+                                <div className="text-center py-4 bg-slate-50/50 border border-dashed border-slate-100 rounded-xl">
+                                    <p className="text-[11px] font-bold text-slate-400">Sin notas registradas</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3 max-h-[280px] overflow-y-auto custom-scrollbar pr-1">
+                                    {notasNormales.map((note) => {
+                                        const creador = note.creadoPor || {};
+                                        const isMine = creador.id === userId || note.creadoPorId === userId;
+                                        return (
+                                            <div key={note.id} className="group relative flex gap-3.5 p-4 bg-[#fffdf0] border border-amber-100 border-l-4 border-l-amber-400 rounded-xl shadow-md shadow-amber-500/5 transition-all duration-300 hover:shadow-lg hover:scale-[1.01] hover:rotate-0 odd:rotate-[0.5deg] even:rotate-[-0.5deg] hover:bg-[#fffdf6]">
+                                                {/* Avatar */}
+                                                <div className="w-7 h-7 rounded-full bg-amber-100 flex items-center justify-center text-amber-800 font-bold text-[10px] shrink-0 border border-amber-200/50 shadow-inner">
+                                                    {creador.imagen ? (
+                                                        <img src={creador.imagen} className="w-full h-full object-cover rounded-full" alt={creador.nombre} />
+                                                    ) : (
+                                                        creador.nombre?.charAt(0) || 'U'
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-baseline justify-between mb-1">
+                                                        <p className="text-[10px] font-black text-amber-900 truncate">{creador.nombre || 'Usuario'}</p>
+                                                        <span className="text-[8px] text-amber-700/60 font-black uppercase tracking-wider">{formatFechaHora(note.createdAt)}</span>
+                                                    </div>
+                                                    <p className="text-xs font-semibold text-amber-950 leading-relaxed whitespace-pre-wrap pr-6">{note.contenido}</p>
+                                                </div>
+                                                {/* Pin indicator / Close button */}
+                                                <div className="absolute right-2.5 top-2.5 flex items-center justify-center">
+                                                    {isMine && onDeleteNota ? (
+                                                        <button
+                                                            onClick={() => onDeleteNota(note.id)}
+                                                            className="h-6.5 w-6.5 rounded-full bg-white text-amber-700 hover:bg-rose-500 hover:text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-md border border-amber-100 cursor-pointer z-10"
+                                                            title="Eliminar nota"
+                                                        >
+                                                            <Icon name="close" size="14px" />
+                                                        </button>
+                                                    ) : null}
+                                                    {(!isMine || !onDeleteNota) ? (
+                                                        <Icon name="push_pin" size="12px" className="text-amber-600/30 rotate-45 shrink-0" />
+                                                    ) : (
+                                                        <Icon name="push_pin" size="12px" className="text-amber-600/30 rotate-45 group-hover:opacity-0 transition-opacity shrink-0" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </section>
                     </div>
 
                     {/* ── COLUMNA DERECHA: imágenes ──────────────────────── */}
@@ -333,8 +435,8 @@ export const PanelDetalleTarea = ({
                         )}
 
                         {/* Evidencias de Entrega */}
-                        {imagenesEvidencia.length > 0 && (
-                            <section>
+                        {!isExternal && imagenesEvidencia.length > 0 && (
+                            <section className="text-left">
                                 <SectionHeader
                                     icon="verified"
                                     label="Evidencias de entrega"
@@ -354,26 +456,28 @@ export const PanelDetalleTarea = ({
                         )}
 
                         {/* Notas de Entrega — van junto a las evidencias */}
-                        {tarea.notas?.length > 0 && (
-                            <section>
-                                <SectionHeader icon="chat_bubble" label="Notas de entrega" count={tarea.notas.length} color="emerald" />
+                        {!isExternal && notasEntrega.length > 0 && (
+                            <section className="text-left">
+                                <SectionHeader icon="chat_bubble" label="Notas de entrega" count={notasEntrega.length} color="emerald" />
                                 <div className="space-y-2.5">
-                                    {tarea.notas.map(renderNota)}
+                                    {notasEntrega.map(renderNota)}
                                 </div>
                             </section>
                         )}
 
                         {/* Estado vacío si no hay imágenes ni notas */}
-                        {!tieneImagenes && !tarea.notas?.length && (
+                        {((!isExternal && !tieneImagenes && !notasEntrega.length) || (isExternal && imagenesCaptura.length === 0)) && (
                             <div className="flex flex-col items-center justify-center py-12 gap-3">
                                 <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center">
                                     <Icon name="hide_image" size="26px" className="text-slate-300" />
                                 </div>
                                 <div className="text-center">
                                     <p className="text-xs font-bold text-slate-400">Sin imágenes adjuntas</p>
-                                    <p className="text-[10px] text-slate-300 font-medium mt-0.5">
-                                        Se añadirán al entregar
-                                    </p>
+                                    {!isExternal && (
+                                        <p className="text-[10px] text-slate-300 font-medium mt-0.5">
+                                            Se añadirán al entregar
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         )}

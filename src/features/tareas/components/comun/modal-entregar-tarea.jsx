@@ -51,7 +51,7 @@ export const ModalEntregarTarea = ({ isOpen, onClose, tareaId, onConfirm, submit
             
             // 1. Agregar comentario si existe
             if (comentario.trim()) {
-                await createTareaNota({ tareaId, contenido: comentario.trim() });
+                await createTareaNota({ tareaId, contenido: comentario.trim(), esEntrega: true });
             }
 
             // 2. Subir imagen si existe

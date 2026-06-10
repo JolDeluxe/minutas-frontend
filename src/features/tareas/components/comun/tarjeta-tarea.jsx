@@ -6,7 +6,7 @@ import { EtiquetaEstadoTarea } from './etiqueta-estado-tarea';
 import { EtiquetaPrioridadTarea } from './etiqueta-prioridad-tarea';
 import { ModalEntregarTarea } from './modal-entregar-tarea';
 import { ModalRevisionTarea } from './modal-revision-tarea';
-import { isPastDate } from '@/lib/date';
+import { isPastDate, formatFecha } from '@/lib/date';
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/utils/cn';
@@ -288,14 +288,21 @@ const EditableNote = ({ note, onUpdate, onDelete, readOnly }) => {
   };
 
   return (
-    <div className="group relative rounded-2xl border-l-4 border-amber-400 bg-white/70 p-4 shadow-sm transition-all hover:bg-white">
-      {!readOnly && onDelete && (
-        <button
-          onClick={() => onDelete(note.id)}
-          className="absolute -top-1.5 -right-1.5 h-6 w-6 rounded-full bg-white shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500 hover:text-white z-10 border border-slate-100"
-        >
-          <X size={12} />
-        </button>
+    <div className="group relative rounded-xl border border-amber-100/50 border-l-4 border-l-amber-400 bg-[#fffdf0] p-4 shadow-md shadow-amber-500/5 transition-all duration-300 hover:shadow-lg hover:scale-[1.01] hover:rotate-0 odd:rotate-[0.5deg] even:rotate-[-0.5deg] hover:bg-[#fffdf6]">
+      {!readOnly && onDelete ? (
+        <div className="absolute right-2 top-2 flex items-center justify-center z-10">
+          <button
+            onClick={() => onDelete(note.id)}
+            className="h-6 w-6 rounded-full bg-white shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500 hover:text-white border border-slate-100 cursor-pointer"
+          >
+            <X size={12} />
+          </button>
+          <Icon name="push_pin" size="12px" className="text-amber-600/30 rotate-45 group-hover:opacity-0 transition-opacity shrink-0" />
+        </div>
+      ) : (
+        <div className="absolute right-2 top-2 z-10">
+          <Icon name="push_pin" size="12px" className="text-amber-600/30 rotate-45 shrink-0" />
+        </div>
       )}
       <textarea
         ref={textareaRef}
@@ -303,11 +310,10 @@ const EditableNote = ({ note, onUpdate, onDelete, readOnly }) => {
         onChange={handleChange}
         onBlur={handleBlur}
         readOnly={readOnly}
-        className="w-full bg-transparent resize-none text-[13px] font-medium leading-relaxed text-amber-950 focus:outline-none p-0 border-none placeholder:text-amber-200 overflow-hidden"
+        className="w-full bg-transparent resize-none text-[13px] font-semibold leading-relaxed text-amber-950 focus:outline-none p-0 border-none placeholder:text-amber-200 overflow-hidden"
       />
       {note.createdAt && (
-        <div className="mt-3 flex items-center justify-between opacity-30">
-          <Icon name="push_pin" size="10px" className="text-amber-600 rotate-12" />
+        <div className="mt-2 flex items-center justify-end opacity-40">
           <p className="text-[8px] font-black uppercase tracking-widest text-amber-700">
             {new Date(note.createdAt).toLocaleString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
           </p>
@@ -664,6 +670,7 @@ export const TareaCard = ({
     isPorAprobar = false,
     onToggleNotificado,
     users = [],
+    hideStatus = false,
 }) => {
 
     const [isEntregaModalOpen, setIsEntregaModalOpen] = useState(false);
@@ -930,7 +937,7 @@ export const TareaCard = ({
                                     </span>
                                 )}
                                 {/* Badge de tipo */}
-                                {tipo && tipo !== 'DESCARTADA' && !(isOtherArea && tipo === 'SIN_ORGANIZAR') && (
+                                {tipo && tipo !== 'DESCARTADA' && !((isOtherArea || hideStatus) && tipo === 'SIN_ORGANIZAR') && (
                                     <span className={cn(
                                         "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border text-white shadow-sm transition-all",
                                         tipo === 'TAREA'
@@ -955,7 +962,7 @@ export const TareaCard = ({
                                             <Icon name="warning" size="9px" className="shrink-0 text-amber-600 mr-0.5" /> Sin Clasificar
                                         </span>
                                     ) : (
-                                        (isFormalizada || tipo === 'RECORDATORIO' || isExternal) && (
+                                        (isFormalizada || tipo === 'RECORDATORIO' || isExternal) && !hideStatus && (
                                             <div className="flex items-center gap-1.5 flex-wrap">
                                                 <EtiquetaEstadoTarea status={estado} className="scale-90 origin-left" />
                                                 {vencida && !isDraft && !isRemoteDraft && isOrganized && (
@@ -968,12 +975,20 @@ export const TareaCard = ({
                                     )
                                 )}
                                 {isExternal && !isDraft && !isRemoteDraft && (
-                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border bg-marca-primario/10 text-marca-primario border-marca-primario/20">
-                                        <Icon name="output" size="10px" />
-                                        {AREA_MAP[tarea.area] || tarea.area}
-                                    </span>
+                                    <>
+                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border bg-marca-primario/10 text-marca-primario border-marca-primario/20">
+                                            <Icon name="output" size="10px" />
+                                            {AREA_MAP[tarea.area] || tarea.area}
+                                        </span>
+                                        {tarea.createdAt && (
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border bg-slate-100 text-slate-600 border-slate-200">
+                                                <Icon name="event" size="10px" />
+                                                Creada: {formatFecha(tarea.createdAt)}
+                                            </span>
+                                        )}
+                                    </>
                                 )}
-                                {tarea.prioridad && !isExternal && <EtiquetaPrioridadTarea priority={tarea.prioridad} className="scale-90 origin-left" />}
+                                {isFormalizada && tarea.prioridad && !isExternal && <EtiquetaPrioridadTarea priority={tarea.prioridad} className="scale-90 origin-left" />}
                             </div>
                             <div className="flex items-center gap-1.5 shrink-0">
                                 {!isCerrado && !isRemoteDraft && !!onDelete && (

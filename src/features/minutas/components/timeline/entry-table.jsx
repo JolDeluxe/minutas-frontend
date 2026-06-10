@@ -46,14 +46,21 @@ const EditableNote = ({ note, onUpdate, onDelete, readOnly }) => {
   };
 
   return (
-    <div className="group relative rounded-2xl border-l-4 border-amber-400 bg-white/70 p-4 shadow-sm transition-all hover:bg-white">
-      {!readOnly && onDelete && (
-        <button
-          onClick={() => onDelete(note.id)}
-          className="absolute -top-1.5 -right-1.5 h-6 w-6 rounded-full bg-white shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500 hover:text-white z-10 border border-slate-100"
-        >
-          <X size={12} />
-        </button>
+    <div className="group relative rounded-xl border border-amber-100/50 border-l-4 border-l-amber-400 bg-[#fffdf0] p-4 shadow-md shadow-amber-500/5 transition-all duration-300 hover:shadow-lg hover:scale-[1.01] hover:rotate-0 odd:rotate-[0.5deg] even:rotate-[-0.5deg] hover:bg-[#fffdf6]">
+      {!readOnly && onDelete ? (
+        <div className="absolute right-2 top-2 flex items-center justify-center z-10">
+          <button
+            onClick={() => onDelete(note.id)}
+            className="h-6 w-6 rounded-full bg-white shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500 hover:text-white border border-slate-100 cursor-pointer"
+          >
+            <X size={12} />
+          </button>
+          <Icon name="push_pin" size="12px" className="text-amber-600/30 rotate-45 group-hover:opacity-0 transition-opacity shrink-0" />
+        </div>
+      ) : (
+        <div className="absolute right-2 top-2 z-10">
+          <Icon name="push_pin" size="12px" className="text-amber-600/30 rotate-45 shrink-0" />
+        </div>
       )}
       <textarea
         ref={textareaRef}
@@ -61,8 +68,15 @@ const EditableNote = ({ note, onUpdate, onDelete, readOnly }) => {
         onChange={handleChange}
         onBlur={handleBlur}
         readOnly={readOnly}
-        className="w-full bg-transparent resize-none text-[13px] font-medium leading-relaxed text-amber-950 focus:outline-none p-0 border-none placeholder:text-amber-200 overflow-hidden"
+        className="w-full bg-transparent resize-none text-[13px] font-semibold leading-relaxed text-amber-950 focus:outline-none p-0 border-none placeholder:text-amber-200 overflow-hidden"
       />
+      {note.createdAt && (
+        <div className="mt-2 flex items-center justify-end opacity-40">
+          <p className="text-[8px] font-black uppercase tracking-widest text-amber-700">
+            {new Date(note.createdAt).toLocaleString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+          </p>
+        </div>
+      )}
     </div>
   );
 };
@@ -437,6 +451,14 @@ export const EntryTable = ({
           if (isRemoteDraft) {
             return;
           }
+          if (isExternal && !isDraft) {
+            if (row.isGrouped) {
+              toggleGroup(row.id);
+            } else {
+              onViewDetail?.(row);
+            }
+            return;
+          }
           if (isDraft || !isOrganized) {
             onOrganize?.(row);
           } else if (isTarea) {
@@ -448,7 +470,7 @@ export const EntryTable = ({
           }
         };
 
-        const isClickable = !isRemoteDraft && (isDraft || !isOrganized || isTarea);
+        const isClickable = !isRemoteDraft && (isDraft || !isOrganized || isTarea || (isExternal && !isDraft));
 
         return (
           <div className="flex flex-col gap-1.5">
@@ -478,6 +500,11 @@ export const EntryTable = ({
                   <Icon name="warning" size="10px" className="shrink-0" /> ATRASADA
                 </span>
               )}
+              {isExternal && row.createdAt && (
+                <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-slate-600 border border-slate-200 shadow-xs whitespace-nowrap">
+                  <Icon name="event" size="10px" className="shrink-0 text-slate-500" /> Creada: {formatFecha(row.createdAt)}
+                </span>
+              )}
             </div>
             <span 
               onClick={handleClick}
@@ -487,6 +514,7 @@ export const EntryTable = ({
               )}
               title={
                 isRemoteDraft ? `Borrador en vivo de ${row.author?.nombre || 'otro usuario'}` :
+                isExternal && !isDraft ? "Hacer clic para ver detalles de la tarea" :
                 isDraft || !isOrganized ? "Hacer clic para organizar esta entrada" :
                 isTarea ? "Hacer clic para ver detalles de la tarea" :
                 row.descripcion
@@ -656,7 +684,9 @@ export const EntryTable = ({
         headerClassName: "w-[10%] min-w-[90px]",
         cell: (row) => {
           if (row._isSubTask) return <span className="text-slate-300">—</span>;
-          if (!row.prioridad) return <span className="text-[11px] text-slate-300">—</span>;
+          const isDraft = Boolean(row.tempId);
+          const tipo = row.tipo || (isDraft ? 'SIN_ORGANIZAR' : 'TAREA');
+          if (tipo !== 'TAREA' || !row.prioridad) return <span className="text-[11px] text-slate-300">—</span>;
           return <EtiquetaPrioridadTarea priority={row.prioridad} />;
         }
       },
@@ -819,7 +849,7 @@ export const EntryTable = ({
                     { key: 'entregar', enabled: isFormalizada && !isDraft && !isClosed && !isExternal && myTaskIsPendiente && isAsignado, onClick: (r) => { setSelectedTareaForEntrega(row.isGrouped ? mySubTask : r); setIsEntregaModalOpen(true); } },
                     { key: 'aprobar', enabled: isFormalizada && !isDraft && !isClosed && !isExternal && estadoActual === 'EN_REVISION' && puedeAprobar, onClick: (r) => { setApproveTarget(r); } },
                     { key: 'forzar_cierre_tarea', enabled: canForceClose && !isClosed && !isRemoteDraft, onClick: (r) => { setForceCloseTarget(r); } },
-                    { key: 'ver_detalle', enabled: row.tipo === 'TAREA' && !isRemoteDraft && !isDraft && !row.isGrouped, onClick: (r) => { onViewDetail?.(r); } },
+                    { key: 'ver_detalle', enabled: (row.tipo === 'TAREA' || isExternal) && !isRemoteDraft && !isDraft && !row.isGrouped, onClick: (r) => { onViewDetail?.(r); } },
                     { key: 'editar', enabled: !isClosed && !isRemoteDraft, onClick: (r) => { 
                         const tareaToEdit = { ...r };
                         if (r.isGrouped && r.subTareas) {

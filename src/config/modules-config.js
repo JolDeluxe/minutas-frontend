@@ -49,6 +49,13 @@ export const MODULES_CONFIG = [
     ]
   },
   {
+    id: 'tareas-generales',
+    name: 'Tareas Externas (General)',
+    icon: 'assignment',
+    route: '/tareas-generales',
+    allowedRoles: ['ADMIN'],
+  },
+  {
     id: 'recordatorios',
     name: 'Recordatorios',
     icon: 'notification_important',

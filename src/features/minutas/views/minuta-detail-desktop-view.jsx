@@ -381,6 +381,35 @@ export const MinutaDetailDesktopView = ({
           }}
           currentUser={user?.data || user}
           users={users}
+          onCreateNota={async (id, content) => {
+            const success = await handleCreateEntryNote(id, content);
+            if (success) {
+              const currentUserData = user?.data || user;
+              setSelectedTareaForDetail(prev => {
+                if (!prev) return prev;
+                const newNotes = [...(prev.notas || [])];
+                newNotes.unshift({
+                  id: Date.now(),
+                  contenido: content,
+                  creadoPorId: currentUserData?.id,
+                  creadoPor: currentUserData,
+                  createdAt: new Date().toISOString(),
+                  esEntrega: false
+                });
+                return { ...prev, notas: newNotes };
+              });
+            }
+          }}
+          onDeleteNota={async (id) => {
+            const success = await handleDeleteEntryNote(selectedTareaForDetail.id, id);
+            if (success) {
+              setSelectedTareaForDetail(prev => {
+                if (!prev) return prev;
+                const oldNotes = prev.notas || [];
+                return { ...prev, notas: oldNotes.filter(n => n.id !== id) };
+              });
+            }
+          }}
         />
       )}
     </div>
