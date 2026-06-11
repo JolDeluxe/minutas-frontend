@@ -48,3 +48,7 @@ export const generarPdfPorArea = async (id, area) => {
   return await api.get(`/api/minutas/${id}/pdf-area/${area}`);
 };
 
+// ── Resumen de Minuta ──────────────────────────────────────────────────
+export const guardarResumenMinuta = async (id, data) => {
+  return await api.put(`/api/minutas/${id}/resumen`, data);
+};

@@ -16,6 +16,8 @@ export const MinutaContextPanel = ({
   onIniciar, onCancelar, onCerrar, onReabrir, onFinalizar,
   iniciando, cancelando, cerrando, reabriendo, finalizando,
   composerCollapsed = true,
+  VistaSwitcher,
+  vistaResumen = false,
 }) => {
   const navigate = useNavigate();
   const isDesktop = useIsDesktop();
@@ -43,17 +45,19 @@ export const MinutaContextPanel = ({
   return (
     <div className="w-full bg-white border-b border-slate-200/60 shrink-0 relative shadow-sm">
 
-      {/* Resumen Ejecutivo - Visible en Tablets y Desktop (Se oculta en móvil para evitar duplicidad) */}
-      <div className="hidden md:block px-3 md:px-6 pt-3 pb-1 relative z-30 border-b border-slate-50">
-        <MinutaExecutiveSummary 
-          resumen={resumen} 
-          onFilterByStatus={onFilterByStatus}
-          onFilterByTipo={onFilterByTipo}
-          onToggleExternal={onToggleExternal}
-          onResetFilter={onResetFilter}
-          activeFilter={activeFilter}
-        />
-      </div>
+      {/* Resumen Ejecutivo - Visible en Tablets y Desktop (Se oculta en móvil o si estamos en la vista de resumen) */}
+      {!vistaResumen && (
+        <div className="hidden md:block px-3 md:px-6 pt-3 pb-1 relative z-30 border-b border-slate-50">
+          <MinutaExecutiveSummary 
+            resumen={resumen} 
+            onFilterByStatus={onFilterByStatus}
+            onFilterByTipo={onFilterByTipo}
+            onToggleExternal={onToggleExternal}
+            onResetFilter={onResetFilter}
+            activeFilter={activeFilter}
+          />
+        </div>
+      )}
 
       {/* Header Unificado y Legible */}
       <header className="px-3 md:px-6 py-2.5 md:py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 md:gap-4 relative z-20">
@@ -90,7 +94,20 @@ export const MinutaContextPanel = ({
                </div>
             </div>
           </div>
+          {/* En móvil, renderizamos el Switcher al lado derecho del título para que quepa en la primera fila */}
+          {VistaSwitcher && (
+            <div className="flex md:hidden items-center shrink-0 ml-1.5">
+              <VistaSwitcher />
+            </div>
+          )}
         </div>
+
+        {/* Switch Tareas / Resumen — visible en el header en desktop */}
+        {VistaSwitcher && (
+          <div className="hidden md:flex items-center shrink-0">
+            <VistaSwitcher />
+          </div>
+        )}
 
         {/* FILA 2 (Solo Móvil) - Contiene metadatos y botones de acción lado a lado */}
         <div className="flex md:hidden items-center justify-between gap-2 border-t border-slate-100 pt-2 mt-0.5">
@@ -175,8 +192,8 @@ export const MinutaContextPanel = ({
         </div>
       </header>
 
-      {/* Comparación (Solo Desktop) */}
-      {isDesktop && (
+      {/* Comparación (Solo Desktop y si no estamos en vista de resumen) */}
+      {isDesktop && !vistaResumen && (
         <div className="px-4 md:px-6 pb-2 relative z-10">
           <MinutaJuntaComparison minutaId={minuta.id} />
         </div>

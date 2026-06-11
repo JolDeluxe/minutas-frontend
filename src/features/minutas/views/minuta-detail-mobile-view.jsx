@@ -72,7 +72,9 @@ export const MinutaDetailMobileView = ({
   handleDeleteEntry,
   handleDownloadPdf,
   isGeneratingPdf,
-  handleToggleNotificado
+  handleToggleNotificado,
+  VistaSwitcher,
+  vistaResumen,
 }) => {
   const [showPoliticas, setShowPoliticas] = useState(false);
   const [showRecordatorios, setShowRecordatorios] = useState(false);
@@ -114,6 +116,8 @@ export const MinutaDetailMobileView = ({
           reabriendo={reabriendo}
           finalizando={finalizando}
           composerCollapsed={!composerExpanded}
+          VistaSwitcher={VistaSwitcher}
+          vistaResumen={vistaResumen}
         />
       </div>
 
@@ -218,7 +222,7 @@ export const MinutaDetailMobileView = ({
           </div>
         )}
 
-        <div className="sticky top-0 z-20 bg-white/40 backdrop-blur-lg px-1 py-2 mb-3 rounded-2xl border border-white/40 shadow-sm flex flex-col gap-2 transition-all duration-300"> 
+        <div className="sticky top-0 z-20 bg-white/40 backdrop-blur-lg px-1 py-2 mb-3 rounded-2xl border border-white/40 shadow-sm flex flex-col gap-2 transition-all duration-300">
           <EntryFiltersBar 
             activeFilter={activeFilter} 
             onChange={setActiveFilter}

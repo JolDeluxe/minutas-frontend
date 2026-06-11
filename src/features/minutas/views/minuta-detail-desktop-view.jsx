@@ -69,7 +69,9 @@ export const MinutaDetailDesktopView = ({
   handleDeleteEntry,
   handleDownloadPdf,
   isGeneratingPdf,
-  handleToggleNotificado
+  handleToggleNotificado,
+  VistaSwitcher,
+  vistaResumen,
 }) => {
   const [showPoliticas, setShowPoliticas] = useState(false);
   const [showRecordatorios, setShowRecordatorios] = useState(false);
@@ -109,6 +111,8 @@ export const MinutaDetailDesktopView = ({
         reabriendo={reabriendo}
         finalizando={finalizando}
         composerCollapsed={composerCollapsed}
+        VistaSwitcher={VistaSwitcher}
+        vistaResumen={vistaResumen}
       />
 
       <div className="flex flex-1 overflow-hidden relative">

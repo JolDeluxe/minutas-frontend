@@ -13,6 +13,8 @@ import { ENV } from '@/config/env';
 import { Icon, ConfirmModal, Modal, ModalHeader, ModalBody } from '@/components/ui/z_index';
 import { MinutaDetailDesktopView } from '../views/minuta-detail-desktop-view';
 import { MinutaDetailMobileView } from '../views/minuta-detail-mobile-view';
+import { MinutaContextPanel } from '../components/context/minuta-context-panel';
+import { MinutaResumen } from './minuta-resumen';
 
 const getClientId = () => {
   const key = 'minutas_live_client_id';
@@ -286,6 +288,8 @@ export default function MinutaDetailPage() {
   const [showCloseModal, setShowCloseModal] = useState(false);
   const [showFinalizarModal, setShowFinalizarModal] = useState(false);
   const [sharePdfData, setSharePdfData] = useState(null);
+  // ─── Vista Tareas / Resumen ───
+  const [vistaResumen, setVistaResumen] = useState(false);
 
   const [activeFilter, setActiveFilter] = useState({
     tipo: 'TODAS',
@@ -1113,9 +1117,74 @@ export default function MinutaDetailPage() {
     handleToggleNotificado, currentUser
   };
 
+  // Switch toggle component reutilizable
+  const VistaSwitcher = () => (
+    <div className="flex items-center gap-1 bg-slate-100 rounded-full p-0.5 md:p-1 border border-slate-200 shadow-inner">
+      <button
+        onClick={() => setVistaResumen(false)}
+        className={`flex items-center gap-1 px-2 py-1 md:px-3 md:py-1.5 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-wider transition-all ${
+          !vistaResumen
+            ? 'bg-white text-slate-800 shadow-sm'
+            : 'text-slate-400 hover:text-slate-600'
+        }`}
+      >
+        <Icon name="task_alt" size="11px" />
+        <span>Tareas</span>
+      </button>
+      <button
+        onClick={() => setVistaResumen(true)}
+        className={`flex items-center gap-1 px-2 py-1 md:px-3 md:py-1.5 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-wider transition-all ${
+          vistaResumen
+            ? 'bg-gradient-to-r from-slate-700 to-slate-800 text-white shadow-md'
+            : 'text-slate-400 hover:text-slate-600'
+        }`}
+      >
+        <Icon name="summarize" size="11px" />
+        <span>Resumen</span>
+      </button>
+    </div>
+  );
+
   return (
     <>
-      {isDesktop ? <MinutaDetailDesktopView {...commonProps} /> : <MinutaDetailMobileView {...commonProps} />}
+      {vistaResumen ? (
+        <div className="flex h-full w-full flex-col bg-slate-50/50">
+          {/* Mismo panel de contexto que la vista de tareas — el título y header se mantienen iguales */}
+          <MinutaContextPanel
+            minuta={minuta}
+            resumen={resumen}
+            VistaSwitcher={VistaSwitcher}
+            onIniciar={handleIniciar}
+            onCancelar={handleCancelar}
+            onCerrar={handleCerrar}
+            onReabrir={handleReabrir}
+            onFinalizar={handleFinalizar}
+            iniciando={iniciando}
+            cancelando={cancelando}
+            cerrando={cerrando}
+            reabriendo={reabriendo}
+            finalizando={finalizando}
+            composerCollapsed={true}
+            onFilterByStatus={() => {}}
+            onFilterByTipo={() => {}}
+            onToggleExternal={() => {}}
+            onResetFilter={() => {}}
+            activeFilter={activeFilter}
+          />
+          <div className="flex-1 overflow-y-auto px-4 md:px-8 py-4">
+            <MinutaResumen
+              minuta={minuta}
+              tareas={allEntries}
+              onSwitchToTareas={() => setVistaResumen(false)}
+              onResumenUpdated={(updates) => setMinuta(prev => ({ ...prev, ...updates }))}
+            />
+          </div>
+        </div>
+      ) : (
+        isDesktop
+          ? <MinutaDetailDesktopView {...commonProps} vistaResumen={vistaResumen} VistaSwitcher={VistaSwitcher} />
+          : <MinutaDetailMobileView  {...commonProps} vistaResumen={vistaResumen} VistaSwitcher={VistaSwitcher} />
+      )}
 
       {showForceCloseModal && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm animate-in fade-in duration-200">
