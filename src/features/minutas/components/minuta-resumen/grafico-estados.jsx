@@ -10,8 +10,8 @@ import { cn } from '@/utils/cn';
 const ESTADO_CONFIG = {
   PENDIENTE:   { label: 'Pendiente',   color: '#f59e0b', bg: 'bg-amber-100',   text: 'text-amber-700' },
   EN_REVISION: { label: 'En Revisión', color: '#3b82f6', bg: 'bg-blue-100',    text: 'text-blue-700'  },
-  CERRADA:     { label: 'Cerrada',     color: '#10b981', bg: 'bg-emerald-100',  text: 'text-emerald-700' },
-  CANCELADA:   { label: 'Cancelada',   color: '#ef4444', bg: 'bg-red-100',      text: 'text-red-700'   },
+  CERRADA:     { label: 'Cerrada',     color: '#10b981', bg: 'bg-emerald-100', text: 'text-emerald-700' },
+  CANCELADA:   { label: 'Cancelada',   color: '#ef4444', bg: 'bg-red-100',     text: 'text-red-700'   },
 };
 
 const polarToCartesian = (cx, cy, r, angleDeg) => {
@@ -19,11 +19,21 @@ const polarToCartesian = (cx, cy, r, angleDeg) => {
   return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
 };
 
-const arcPath = (cx, cy, r, startAngle, endAngle) => {
-  const start = polarToCartesian(cx, cy, r, endAngle);
-  const end   = polarToCartesian(cx, cy, r, startAngle);
-  const large = endAngle - startAngle > 180 ? 1 : 0;
-  return `M ${start.x} ${start.y} A ${r} ${r} 0 ${large} 0 ${end.x} ${end.y}`;
+const dibujarSegmento = (cx, cy, rExt, rInt, startAngle, endAngle) => {
+  const startExt = polarToCartesian(cx, cy, rExt, startAngle);
+  const endExt   = polarToCartesian(cx, cy, rExt, endAngle);
+  const startInt = polarToCartesian(cx, cy, rInt, startAngle);
+  const endInt   = polarToCartesian(cx, cy, rInt, endAngle);
+  
+  const largeArc = endAngle - startAngle > 180 ? 1 : 0;
+
+  return [
+    `M ${startExt.x} ${startExt.y}`, // Ir al inicio del arco exterior
+    `A ${rExt} ${rExt} 0 ${largeArc} 1 ${endExt.x} ${endExt.y}`, // Dibujar arco exterior
+    `L ${endInt.x} ${endInt.y}`, // Línea hacia el arco interior
+    `A ${rInt} ${rInt} 0 ${largeArc} 0 ${startInt.x} ${startInt.y}`, // Dibujar arco interior (de regreso)
+    'Z' // Cerrar la figura
+  ].join(' ');
 };
 
 export const GraficoEstados = ({ tareas = [], onVerDetalle, className }) => {
@@ -87,7 +97,7 @@ export const GraficoEstados = ({ tareas = [], onVerDetalle, className }) => {
               return (
                 <path
                   key={i}
-                  d={`${arcPath(cx, cy, rExt, seg.startAngle, seg.endAngle)} L ${polarToCartesian(cx, cy, rInt, seg.endAngle).x} ${polarToCartesian(cx, cy, rInt, seg.endAngle).y} A ${rInt} ${rInt} 0 ${seg.endAngle - seg.startAngle > 180 ? 1 : 0} 1 ${polarToCartesian(cx, cy, rInt, seg.startAngle).x} ${polarToCartesian(cx, cy, rInt, seg.startAngle).y} Z`}
+                  d={dibujarSegmento(cx, cy, rExt, rInt, seg.startAngle, seg.endAngle)}
                   fill={seg.color}
                   opacity={0.9}
                 />
