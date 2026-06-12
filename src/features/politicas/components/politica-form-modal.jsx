@@ -1,0 +1,194 @@
+import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { Icon, Button, Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/z_index';
+import { cn } from '@/utils/cn';
+import { useIsDesktop } from '@/hooks/useMediaQuery';
+import { Camera, X, Plus, Pencil, ShieldAlert } from 'lucide-react';
+
+/**
+ * PoliticaFormModal - Versión simplificada de EntryFormModal.
+ * Mantiene el diseño original del sistema.
+ */
+export const PoliticaFormModal = ({
+  isOpen,
+  onClose,
+  politica,
+  onSave,
+  submitting = false,
+}) => {
+  const isDesktop = useIsDesktop();
+  const fileInputRef = useRef(null);
+
+  const [form, setForm] = useState({
+    descripcion: '',
+  });
+
+  const [localImages, setLocalImages] = useState([]); 
+  const [existingImages, setExistingImages] = useState([]);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      if (politica) {
+        setForm({
+          descripcion: politica.descripcion || '',
+        });
+        setExistingImages(politica.imagenes || []);
+        setLocalImages([]);
+        setError('');
+      } else {
+        setForm({ descripcion: '' });
+        setLocalImages([]);
+        setExistingImages([]);
+        setError('');
+      }
+    }
+  }, [isOpen, politica]);
+
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    const currentTotal = localImages.length + existingImages.length;
+    const availableSlots = 3 - currentTotal;
+    
+    if (availableSlots <= 0) return;
+
+    const filesToAdd = files.slice(0, availableSlots).map(file => ({
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+
+    setLocalImages(prev => [...prev, ...filesToAdd]);
+    
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const removeLocalImage = (previewUrl) => {
+    URL.revokeObjectURL(previewUrl);
+    setLocalImages(prev => prev.filter(img => img.preview !== previewUrl));
+  };
+
+  const removeExistingImage = (id) => {
+    setExistingImages(prev => prev.filter(img => img.id !== id));
+  };
+
+  const handleSubmit = async () => {
+    if (!form.descripcion.trim()) {
+      setError('La descripción es obligatoria.');
+      return;
+    }
+
+    if (localImages.length > 0) {
+      const formData = new FormData();
+      formData.append('tareas[0][descripcion]', form.descripcion);
+      localImages.forEach((img, idx) => {
+        formData.append(`files_0_${idx}`, img.file);
+      });
+      await onSave(formData);
+    } else {
+      const payload = {
+        descripcion: form.descripcion,
+      };
+      await onSave(payload);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  const renderFormContent = () => (
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Descripción de la Política</label>
+        <textarea
+          value={form.descripcion}
+          onChange={(e) => {
+            setForm({ ...form, descripcion: e.target.value });
+            setError('');
+          }}
+          className={cn(
+            "w-full h-40 p-4 bg-slate-50 border rounded-2xl text-sm sm:text-base font-semibold focus:outline-none focus:ring-4 focus:ring-marca-primario/5 resize-none shadow-inner",
+            error ? "border-rose-300 focus:ring-rose-50 animate-shake" : "border-slate-200"
+          )}
+          placeholder="Escribe la política institucional aquí..."
+        />
+        {error && (
+          <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest ml-1 flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1">
+            <ShieldAlert size={14} className="text-rose-500" /> {error}
+          </p>
+        )}
+      </div>
+
+      <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 space-y-4 shadow-sm">
+        <div className="flex items-center justify-between">
+          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <Camera size={14} className="text-slate-400" /> Imágenes de Referencia ({(localImages.length + existingImages.length)}/3)
+          </label>
+          {(localImages.length + existingImages.length) < 3 && (
+            <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all hover:bg-emerald-100 active:scale-95">
+              <Plus size={14} /> Añadir Foto
+            </button>
+          )}
+        </div>
+
+        <div className="flex flex-wrap gap-3">
+          {existingImages.map((img) => (
+            <div key={img.id} className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden border-2 border-slate-100 group shadow-sm">
+              <img src={img.url} className="w-full h-full object-cover" alt="Adjunto" />
+              <button onClick={() => removeExistingImage(img.id)} className="absolute inset-0 bg-rose-600/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X size={20} /></button>
+            </div>
+          ))}
+          {localImages.map((img) => (
+            <div key={img.preview} className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden border-2 border-emerald-200 group shadow-md animate-in zoom-in-90">
+              <img src={img.preview} className="w-full h-full object-cover" alt="Nuevo" />
+              <button onClick={() => removeLocalImage(img.preview)} className="absolute inset-0 bg-slate-900/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X size={20} /></button>
+            </div>
+          ))}
+          {(localImages.length + existingImages.length) < 3 && (
+            <button onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center justify-center w-28 h-28 sm:w-32 sm:h-32 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-500 hover:border-slate-300 transition-colors">
+              <Plus size={24} className="mb-1" />
+              <span className="text-[10px] font-black mt-1 uppercase tracking-widest">Subir</span>
+            </button>
+          )}
+        </div>
+        <input type="file" accept="image/*" multiple className="hidden" ref={fileInputRef} onChange={handleFileChange} />
+      </div>
+    </div>
+  );
+
+  const footerActions = (
+    <div className="flex gap-4 w-full">
+      <Button variant="neutro" onClick={onClose} disabled={submitting} className="flex-1 h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] border-2 border-slate-100 text-slate-400">Cancelar</Button>
+      <Button variant="guardar" icon="check_circle" onClick={handleSubmit} isLoading={submitting} className="flex-[2] h-14 rounded-2xl font-black uppercase tracking-[0.2em] text-[11px] shadow-2xl shadow-emerald-500/20">Guardar Política</Button>
+    </div>
+  );
+
+  if (isDesktop) {
+    return (
+      <Modal isOpen={isOpen} onClose={onClose} size="md" className="max-w-2xl rounded-[2.5rem] overflow-hidden">
+        <ModalHeader title={politica ? 'Editar Política' : 'Nueva Política General'} onClose={onClose} />
+        <ModalBody className="p-8 bg-slate-50/30">{renderFormContent()}</ModalBody>
+        <ModalFooter className="p-6 bg-white border-t border-slate-100">{footerActions}</ModalFooter>
+      </Modal>
+    );
+  }
+
+  return createPortal(
+    <div className="fixed inset-0 z-[110] flex items-end">
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={onClose} />
+      <div className="relative bg-white w-full rounded-t-[2.5rem] shadow-[0_-20px_50px_rgba(0,0,0,0.3)] animate-in slide-in-from-bottom duration-300 ease-out max-h-[90vh] flex flex-col overflow-hidden">
+        <div className="flex justify-center pt-4 pb-2" onClick={onClose}><div className="w-12 h-1.5 rounded-full bg-slate-100" /></div>
+        <div className="px-6 py-4 flex items-center justify-between shrink-0 border-b border-slate-50">
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 rounded-xl bg-marca-primario/10 text-marca-primario flex items-center justify-center"><Pencil size={20} /></div>
+             <h2 className="text-xl font-black text-slate-900 tracking-tight">{politica ? 'Editar' : 'Nueva'}</h2>
+          </div>
+          <button onClick={onClose} className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400"><X size={20} /></button>
+        </div>
+        <div className="flex-1 overflow-y-auto px-6 py-6 pb-20">{renderFormContent()}</div>
+        <div className="p-6 bg-white border-t border-slate-100 shrink-0">{footerActions}</div>
+      </div>
+    </div>,
+    document.body
+  );
+};

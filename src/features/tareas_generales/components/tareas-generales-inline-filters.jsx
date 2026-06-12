@@ -4,7 +4,9 @@ import { Icon } from '@/components/ui/z_index';
 import { Label, Select } from '@/components/form/z_index';
 import { AREA_MAP } from '../../minutas/constants';
 
-const AREA_OPTIONS = Object.entries(AREA_MAP).map(([value, label]) => ({ value, label }));
+const AREA_OPTIONS = Object.entries(AREA_MAP)
+    .filter(([value]) => value !== 'DISENO' && value !== 'MARKETING')
+    .map(([value, label]) => ({ value, label }));
 
 export const TareasGeneralesInlineFilters = ({ 
     isOpen, 

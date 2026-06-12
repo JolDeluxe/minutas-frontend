@@ -1,26 +1,29 @@
 // src/features/tareas_generales/components/modal-nueva-general.jsx
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Plus, Paperclip, Trash2, StickyNote } from 'lucide-react';
+import { X, Plus, Paperclip, Trash2, StickyNote, Camera } from 'lucide-react';
 import { Icon } from '@/components/ui/z_index';
 import { notify } from '@/components/notification/adaptive-notify';
 import { AREA_MAP, CLASIFICACION_MAP, PRIORIDAD_MAP, LINEAS_POR_AREA } from '../../minutas/constants';
 
-const AREAS_OPTIONS = Object.entries(AREA_MAP).map(([value, label]) => ({ value, label }));
+const AREAS_OPTIONS = Object.entries(AREA_MAP)
+    .filter(([value]) => value !== 'DISENO' && value !== 'MARKETING')
+    .map(([value, label]) => ({ value, label }));
 
 const CLASIFICACIONES_GENERAL = [
-    { value: 'IDEA', label: 'Idea', icon: 'emoji_objects', color: '#482b2c' },
-    { value: 'INVESTIGACION', label: 'Investigación', icon: 'travel_explore', color: '#3b82f6' },
-    { value: 'CORRECCION', label: 'Corrección', icon: 'edit_location_alt', color: '#ef4444' },
-    { value: 'ANALISIS', label: 'Análisis', icon: 'search_insights', color: '#f59e0b' },
-    { value: 'MUESTRA', label: 'Muestra', icon: 'design_services', color: '#10b981' },
-    { value: 'BOCETO', label: 'Boceto', icon: 'draw', color: '#f97316' },
-    { value: 'POLITICAS', label: 'Políticas', icon: 'policy', color: '#6366f1' },
-    { value: 'REDES_SOCIALES', label: 'Redes Sociales', icon: 'share', color: '#10b981' },
-    { value: 'DISENO_INSUMOS', label: 'Diseño Insumos', icon: 'brush', color: '#f59e0b' },
-    { value: 'TIENDAS', label: 'Tiendas', icon: 'store', color: '#3b82f6' },
-    { value: 'CATALOGOS', label: 'Catálogos', icon: 'menu_book', color: '#ec4899' },
-    { value: 'OTROS', label: 'Otros', icon: 'more_horiz', color: '#64748b' },
+    { value: 'ADMINISTRATIVO', label: 'Administrativo' },
+    { value: 'OPERATIVO', label: 'Operativo' },
+    { value: 'FINANCIERO', label: 'Financiero' },
+    { value: 'LEGAL', label: 'Legal' },
+    { value: 'ESTRATEGICO', label: 'Estratégico' },
+    { value: 'SUPERVISION', label: 'Supervisión' },
+    { value: 'EVALUACION', label: 'Evaluación' },
+    { value: 'CAPACITACION', label: 'Capacitación' },
+    { value: 'SISTEMAS', label: 'Sistemas' },
+    { value: 'MANTENIMIENTO', label: 'Mantenimiento' },
+    { value: 'PROCESOS', label: 'Procesos' },
+    { value: 'VENTAS', label: 'Ventas' },
+    { value: 'OTROS', label: 'Otros' },
 ];
 
 const emptyForm = () => ({
@@ -165,7 +168,7 @@ export function ModalNuevaGeneral({ isOpen, onClose, onSave, users = [], editDat
                 </div>
 
                 {/* Body */}
-                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-7 space-y-6 custom-scrollbar">
+                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 md:p-7 pb-24 md:pb-7 space-y-6 custom-scrollbar">
 
                     {/* Descripción */}
                     <div>
@@ -213,20 +216,15 @@ export function ModalNuevaGeneral({ isOpen, onClose, onSave, users = [], editDat
                     {/* Clasificación */}
                     <div>
                         <label className="block text-[11px] font-black uppercase tracking-widest text-slate-500 mb-2">Clasificación</label>
-                        <div className="flex flex-wrap gap-2">
+                        <select
+                            value={form.clasificacion}
+                            onChange={e => set('clasificacion', e.target.value)}
+                            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-4 focus:ring-slate-200/50 transition-all"
+                        >
                             {CLASIFICACIONES_GENERAL.map(c => (
-                                <button
-                                    key={c.value}
-                                    type="button"
-                                    onClick={() => set('clasificacion', c.value)}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[10px] font-black uppercase tracking-wider transition-all active:scale-95 ${form.clasificacion === c.value ? 'text-white border-transparent shadow-md' : 'border-slate-200 text-slate-500 bg-white hover:border-slate-300'}`}
-                                    style={form.clasificacion === c.value ? { backgroundColor: c.color } : {}}
-                                >
-                                    <Icon name={c.icon} size="12px" />
-                                    {c.label}
-                                </button>
+                                <option key={c.value} value={c.value}>{c.label}</option>
                             ))}
-                        </div>
+                        </select>
                     </div>
 
                     {/* Fecha Límite */}
@@ -284,45 +282,33 @@ export function ModalNuevaGeneral({ isOpen, onClose, onSave, users = [], editDat
 
                     {/* Imágenes */}
                     {!editData && (
-                        <div>
-                            <label className="block text-[11px] font-black uppercase tracking-widest text-slate-500 mb-2 flex items-center gap-1.5">
-                                <Paperclip size={13} />
-                                Adjuntos ({form._localImages.length}/3)
-                            </label>
-                            {form._localImages.length > 0 && (
-                                <div className="flex gap-3 mb-3 flex-wrap">
-                                    {form._localImages.map((img, idx) => (
-                                        <div key={idx} className="relative group w-20 h-20 rounded-xl overflow-hidden border border-slate-200 shadow-sm">
-                                            <img src={img.preview} alt={img.name} className="w-full h-full object-cover" />
-                                            <button
-                                                type="button"
-                                                onClick={() => handleRemoveImage(idx)}
-                                                className="absolute top-1 right-1 h-6 w-6 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-md"
-                                            >
-                                                <Trash2 size={11} />
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                            {form._localImages.length < 3 && (
-                                <button
-                                    type="button"
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-slate-300 text-slate-400 text-[11px] font-black uppercase tracking-wider hover:border-slate-400 hover:text-slate-600 transition-all active:scale-95"
-                                >
-                                    <Paperclip size={14} />
-                                    Agregar imagen
-                                </button>
-                            )}
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/*"
-                                multiple
-                                className="hidden"
-                                onChange={handleFileChange}
-                            />
+                        <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 space-y-4 shadow-sm">
+                            <div className="flex items-center justify-between">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                    <Camera size={14} className="text-slate-400" /> Imágenes de Referencia ({form._localImages.length}/3)
+                                </label>
+                                {form._localImages.length < 3 && (
+                                    <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all hover:bg-emerald-100 active:scale-95">
+                                        <Plus size={14} /> Añadir Foto
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="flex flex-wrap gap-3">
+                                {form._localImages.map((img, idx) => (
+                                    <div key={idx} className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden border-2 border-emerald-200 group shadow-md animate-in zoom-in-90">
+                                        <img src={img.preview} className="w-full h-full object-cover" alt="Nuevo" />
+                                        <button type="button" onClick={() => handleRemoveImage(idx)} className="absolute inset-0 bg-slate-900/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X size={20} /></button>
+                                    </div>
+                                ))}
+                                {form._localImages.length < 3 && (
+                                    <button type="button" onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center justify-center w-28 h-28 sm:w-32 sm:h-32 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-500 hover:border-slate-300 transition-colors">
+                                        <Plus size={24} className="mb-1" />
+                                        <span className="text-[10px] font-black mt-1 uppercase tracking-widest">Subir</span>
+                                    </button>
+                                )}
+                            </div>
+                            <input type="file" accept="image/*" multiple className="hidden" ref={fileInputRef} onChange={handleFileChange} />
                         </div>
                     )}
                 </form>

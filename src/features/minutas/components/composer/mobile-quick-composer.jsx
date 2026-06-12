@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { Icon, Modal, ModalHeader, ModalBody, ModalFooter, Button as UIButton } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
 import { getCatalogos, LINEAS_POR_AREA, PRIORIDAD_MAP } from '../../constants';
+import { useAuthStore } from '@/stores/auth-store';
+import { getModulesByRole } from '@/config/modules-config';
 import { useUsers } from '../../../usuarios/hooks/use-users';
 import { LineIconSelector } from '../icons/line-icons';
 import { Camera, X, Plus, Send, StickyNote, Calendar, UserPlus, Check } from 'lucide-react';
@@ -69,11 +71,18 @@ export const MobileQuickComposer = ({
   departamento,
   onSubmit,
   submitting,
-  estado,
+  estado = 'ACTIVA',
   onIniciar,
   iniciando = false,
   onExpandedChange
 }) => {
+  const { user } = useAuthStore();
+  const currentUser = user?.data || user;
+  const userRole = currentUser?.rol || 'GERENCIA';
+  const userModules = useMemo(() => getModulesByRole(userRole), [userRole]);
+  const showBottomNav = userModules.length > 0 && userModules.length <= 5;
+  const bottomClass = showBottomNav ? "bottom-20" : "bottom-6";
+
   const catalogos = useMemo(() => getCatalogos(departamento), [departamento]);
 
   const [expanded, setExpanded] = useState(false);
@@ -233,7 +242,7 @@ export const MobileQuickComposer = ({
 
   if (estado === 'PROGRAMADA') {
     return createPortal(
-      <div className="fixed left-3 right-3 bottom-20 z-[99] rounded-2xl bg-white border border-slate-200 p-4 shadow-[0_-10px_50px_rgba(0,0,0,0.15)] flex flex-col items-center gap-3 text-center sm:left-6 sm:right-6 animate-in slide-in-from-bottom duration-300">
+      <div className={cn("fixed left-3 right-3 z-[99] rounded-2xl bg-white border border-slate-200 p-4 shadow-[0_-10px_50px_rgba(0,0,0,0.15)] flex flex-col items-center gap-3 text-center sm:left-6 sm:right-6 animate-in slide-in-from-bottom duration-300", bottomClass)}>
         <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse" /><span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Minuta Programada</span></div>
         <p className="text-[11px] font-bold text-slate-500 max-w-xs leading-relaxed">Debes iniciar la junta para poder capturar acuerdos y tareas.</p>
         <button onClick={onIniciar} disabled={iniciando} className="w-full flex items-center justify-center gap-2 py-3 bg-marca-primario text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition-all active:scale-95 disabled:opacity-50 touch-manipulation cursor-pointer">{iniciando ? <Icon name="progress_activity" size="14px" className="animate-spin" /> : <Icon name="play_arrow" size="14px" />} {iniciando ? 'Iniciando...' : 'Iniciar Junta Ahora'}</button>
@@ -244,7 +253,7 @@ export const MobileQuickComposer = ({
 
   return createPortal(
     <>
-      <div className={cn("fixed bg-white flex flex-col overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]", expanded ? "inset-0 z-[120] rounded-none bg-slate-50" : "left-3 right-3 bottom-20 h-[4.5rem] z-[50] rounded-2xl shadow-[0_-10px_50px_rgba(0,0,0,0.15)] border border-slate-200 sm:left-6 sm:right-6")}>
+      <div className={cn("fixed bg-white flex flex-col overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]", expanded ? "inset-0 z-[120] rounded-none bg-slate-50" : `left-3 right-3 h-[4.5rem] z-[50] rounded-2xl shadow-[0_-10px_50px_rgba(0,0,0,0.15)] border border-slate-200 sm:left-6 sm:right-6 ${bottomClass}`)}>
         {!expanded ? (
           <div className="w-full flex flex-col items-center py-2 shrink-0 cursor-pointer" onClick={() => setExpanded(true)} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEndOpen}><div className="w-12 h-1 bg-slate-100 rounded-full" /></div>
         ) : (
