@@ -954,7 +954,7 @@ export const TareaCard = ({
                                         {tipo === 'SIN_ORGANIZAR' ? (isExternal ? 'Sin Organizar' : 'Falta Clasificar') : (isExternal && tipo === 'TAREA' ? 'EXTERNA' : tipo)}
                                     </span>
                                 )}
-                                {clasif && !isOtherArea && (
+                                {clasif && !isOtherArea && (tarea.area === 'DISENO' || tarea.area === 'MARKETING') && (
                                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border" style={{ backgroundColor: `${clasif.color}08`, color: clasif.color, borderColor: `${clasif.color}15` }}>
                                         <Icon name={clasif.icon} size="10px" />
                                         {clasif.label}
@@ -980,10 +980,16 @@ export const TareaCard = ({
                                 )}
                                 {isExternal && !isDraft && !isRemoteDraft && (
                                     <>
-                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border bg-marca-primario/10 text-marca-primario border-marca-primario/20">
-                                            <Icon name="output" size="10px" />
-                                            {AREA_MAP[tarea.area] || tarea.area}
-                                        </span>
+                                        {!(tarea.area === 'DISENO' || tarea.area === 'MARKETING') ? (
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border bg-slate-100 text-slate-700 border-slate-200">
+                                                {AREA_MAP[tarea.area] || tarea.area}{tarea.linea ? ` - ${tarea.linea}` : ''}
+                                            </span>
+                                        ) : (
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border bg-marca-primario/10 text-marca-primario border-marca-primario/20">
+                                                <Icon name="output" size="10px" />
+                                                {AREA_MAP[tarea.area] || tarea.area}
+                                            </span>
+                                        )}
                                         {tarea.createdAt && (
                                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border bg-slate-100 text-slate-600 border-slate-200">
                                                 <Icon name="event" size="10px" />

@@ -16,8 +16,30 @@ export const CLASIFICACION_MAP = {
   DISENO_INSUMOS:{ label: 'Diseño Insumos',icon: 'brush',             color: '#f59e0b', border: '#fbbf24' },
   TIENDAS:       { label: 'Tiendas',       icon: 'store',             color: '#3b82f6', border: '#60a5fa' },
   CATALOGOS:     { label: 'Catálogos',     icon: 'menu_book',         color: '#ec4899', border: '#f472b6' },
+  // DIRECCION MBC & CFI
+  PRODUCCION_MUESTRAS: { label: 'Desarrollo de Muestras', icon: 'construction', color: '#8b5cf6', border: '#a78bfa' },
+  ORDEN_COMPRA:        { label: 'Órdenes de Compra',     icon: 'shopping_bag', color: '#482b2c', border: '#846768' },
+  MEJORA_PROCESO:      { label: 'Optimización Producción',icon: 'precision_manufacturing', color: '#10b981', border: '#34d399' },
+  CONTROL_CALIDAD:     { label: 'Control de Calidad',     icon: 'verified', color: '#14b8a6', border: '#2dd4bf' },
+  LOGISTICA_DISTRIBUCION:{ label: 'Logística y Distribución', icon: 'local_shipping', color: '#f97316', border: '#fb923c' },
+  // DIRECCION TIENDAS
+  EXHIBICION_VISUAL:   { label: 'Exhibición y Visual',   icon: 'visibility', color: '#ec4899', border: '#f472b6' },
+  KPI_VENTAS:          { label: 'Indicadores de Ventas', icon: 'analytics', color: '#3b82f6', border: '#60a5fa' },
+  INVENTARIOS:         { label: 'Control Inventarios',   icon: 'inventory', color: '#f59e0b', border: '#fbbf24' },
+  ATENCION_CLIENTE:    { label: 'Atención al Cliente',   icon: 'sentiment_satisfied', color: '#10b981', border: '#34d399' },
+  // DIRECCION MKT
+  PAGINA_WEB:          { label: 'Página Web / E-com',    icon: 'language', color: '#06b6d4', border: '#22d3ee' },
+  EVENTOS_PROMOS:      { label: 'Eventos y Promos',      icon: 'event', color: '#db2777', border: '#f472b6' },
+  // DIRECCION ALTA CALIDAD
+  AUDITORIA_CALIDAD:   { label: 'Auditoría de Calidad',  icon: 'fact_check', color: '#2563eb', border: '#60a5fa' },
+  RECHAZOS_DEVOLUCIONES:{ label: 'Rechazos / Devoluciones',icon: 'assignment_return', color: '#ef4444', border: '#f87171' },
+  MEJORA_TECNICA:      { label: 'Fichas Técnicas',       icon: 'engineering', color: '#475569', border: '#94a3b8' },
+  // DIRECCION ADJUNTA
+  ACUERDO_DIRECCION:   { label: 'Acuerdo Dirección',     icon: 'gavel', color: '#482b2c', border: '#846768' },
+  PLANEACION_ESTRATEGICA:{ label: 'Planeación Estratégica', icon: 'insights', color: '#8b5cf6', border: '#a78bfa' },
+  PRESUPUESTOS:        { label: 'Presupuestos y Costos', icon: 'payments', color: '#d97706', border: '#fbbf24' },
   // GENERAL
-  OTROS:         { label: 'Otros',         icon: 'more_horiz',        color: '#64748b', border: '#94a3b8' },
+  OTROS:               { label: 'Otros Asuntos',         icon: 'more_horiz', color: '#64748b', border: '#94a3b8' },
 };
 
 export const TIPO_ENTRADA_MAP = {

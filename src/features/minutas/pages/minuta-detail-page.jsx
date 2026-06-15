@@ -92,7 +92,7 @@ const SharePdfModal = ({ isOpen, onClose, data }) => {
   const { url, area, fechaStr, minutaTitulo } = data;
   
   const subject = `Minuta ${area} - ${fechaStr}`;
-  const body = `Hola, te comparto los puntos y acuerdos asignados al área de ${area} derivados de la minuta "${minutaTitulo}":\n\n${url}`;
+  const body = `Hola, te comparto los puntos y acuerdos asignados al área de ${area} derivados de la minuta "${minutaTitulo}":\n\n${url}\n\n*Nota: Este enlace es seguro y proviene de nuestro sistema interno de gestión de minutas.*`;
 
   const handleCopy = async () => {
     try {

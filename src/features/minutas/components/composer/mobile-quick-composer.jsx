@@ -98,6 +98,7 @@ export const MobileQuickComposer = ({
 
   const lineasDisponibles = useMemo(() => LINEAS_POR_AREA[area] || [], [area]);
   const tieneLineas = lineasDisponibles.length > 0;
+  const isOperationalArea = area === 'DISENO' || area === 'MARKETING';
 
   const [linea, setLinea] = useState(tieneLineas ? (lineaDefault || lineasDisponibles[0]?.value) : null);
   const [clasificacion, setClasificacion] = useState('');
@@ -307,10 +308,8 @@ export const MobileQuickComposer = ({
                     <div key={img.id} className="relative w-16 h-16 shrink-0 rounded-2xl overflow-hidden border border-slate-200 shadow-sm"><img src={img.preview} className="w-full h-full object-cover" /><button onClick={() => removeImage(img.id)} className="absolute inset-0 bg-slate-900/40 text-white flex items-center justify-center opacity-0 active:opacity-100 transition-opacity"><X size={18} /></button></div>
                   ))}
                 </div>
-              </div>
-
-              {/* ÁREA | CLASIFICACIÓN (SELECTS NATIVOS ADAPTABLES) */}
-              <div className="grid grid-cols-2 gap-2.5 px-1">
+                {/* ÁREA / CLASIFICACIÓN (ROW) */}
+              <div className={cn("grid gap-3 mt-4", isOperationalArea ? "grid-cols-2" : "grid-cols-1")}>
                 <div className="flex flex-col gap-1">
                   <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Área</span>
                   <div className="relative">
@@ -321,6 +320,9 @@ export const MobileQuickComposer = ({
                         setArea(newArea);
                         const newLineas = LINEAS_POR_AREA[newArea] || [];
                         setLinea(newLineas.length > 0 ? newLineas[0].value : null);
+                        if (newArea !== 'DISENO' && newArea !== 'MARKETING') {
+                          setClasificacion('');
+                        }
                       }}
                       className="w-full bg-white border-2 border-slate-100 rounded-xl pl-2 pr-7 py-2.5 text-[11px] font-bold text-slate-700 focus:outline-none focus:border-marca-primario/40 transition-all appearance-none shadow-sm h-11 truncate"
                     >
@@ -334,64 +336,88 @@ export const MobileQuickComposer = ({
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-1">
-                  <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Clasificación</span>
-                  <div className="relative">
-                    <select 
-                      value={clasificacion} 
-                      onChange={(e) => {
-                        const newClasificacion = e.target.value;
-                        setClasificacion(newClasificacion);
-                        if (newClasificacion === 'POLITICAS') {
-                          setEsTarea(false);
-                        }
-                      }}
-                      className="w-full bg-white border-2 border-slate-100 rounded-xl pl-2 pr-7 py-2.5 text-[11px] font-bold text-slate-700 focus:outline-none focus:border-marca-primario/40 transition-all appearance-none shadow-sm h-11 truncate"
-                    >
-                      <option value="">— Tipo —</option>
-                      {catalogos.clasificaciones.map(({ value, label }) => (
-                        <option key={value} value={value}>{label}</option>
-                      ))}
-                    </select>
-                    <div className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                      <Icon name="expand_more" size="14px" />
+                {isOperationalArea && (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Clasificación</span>
+                    <div className="relative">
+                      <select 
+                        value={clasificacion} 
+                        onChange={(e) => {
+                          const newClasificacion = e.target.value;
+                          setClasificacion(newClasificacion);
+                          if (newClasificacion === 'POLITICAS') {
+                            setEsTarea(false);
+                          }
+                        }}
+                        className="w-full bg-white border-2 border-slate-100 rounded-xl pl-2 pr-7 py-2.5 text-[11px] font-bold text-slate-700 focus:outline-none focus:border-marca-primario/40 transition-all appearance-none shadow-sm h-11 truncate"
+                      >
+                        <option value="">— Tipo —</option>
+                        {catalogos.clasificaciones.map(({ value, label }) => (
+                          <option key={value} value={value}>{label}</option>
+                        ))}
+                      </select>
+                      <div className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                        <Icon name="expand_more" size="14px" />
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
+              </div>
               </div>
 
-              {/* LÍNEA (CUADROS VISUALES NARANJA) */}
+              {/* LÍNEA (CUADROS VISUALES NARANJA O SELECT DEPENDIENDO DEL ÁREA) */}
               {tieneLineas && (
-                <div>
-                  <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Línea de Producto</span>
-                  <div className="grid grid-cols-5 gap-1.5 px-0.5">
-                    {lineasDisponibles.map(({ value, label }) => (
-                      <button 
-                        key={value} 
-                        onClick={() => setLinea(value)} 
-                        className={cn(
-                          "flex flex-col items-center justify-center p-1.5 rounded-2xl border-2 transition-all active:scale-95 touch-manipulation aspect-square gap-1 relative overflow-hidden", 
-                          linea === value 
-                            ? "bg-emerald-50 border-emerald-500 shadow-md scale-[1.02]" 
-                            : "bg-white border-slate-100 opacity-60"
-                        )}
-                      >
-                        {linea === value && (
-                          <div className="absolute top-1 right-1 bg-emerald-500 text-white rounded-full flex items-center justify-center w-3 h-3 shadow-sm">
-                            <Icon name="check" size="8px" weight={900} />
-                          </div>
-                        )}
-                        <LineIconSelector type={value} size={28} />
-                        <span className={cn(
-                          "text-[6.5px] font-black uppercase tracking-tighter truncate w-full text-center leading-none",
-                          linea === value ? "text-emerald-600" : "text-slate-400"
-                        )}>
-                          {label}
-                        </span>
-                      </button>
-                    ))}
+                isOperationalArea ? (
+                  <div>
+                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Línea de Producto</span>
+                    <div className="grid grid-cols-5 gap-1.5 px-0.5">
+                      {lineasDisponibles.map(({ value, label }) => (
+                        <button 
+                          key={value} 
+                          onClick={() => setLinea(value)} 
+                          className={cn(
+                            "flex flex-col items-center justify-center p-1.5 rounded-2xl border-2 transition-all active:scale-95 touch-manipulation aspect-square gap-1 relative overflow-hidden", 
+                            linea === value 
+                              ? "bg-emerald-50 border-emerald-500 shadow-md scale-[1.02]" 
+                              : "bg-white border-slate-100 opacity-60"
+                          )}
+                        >
+                          {linea === value && (
+                            <div className="absolute top-1 right-1 bg-emerald-500 text-white rounded-full flex items-center justify-center w-3 h-3 shadow-sm">
+                              <Icon name="check" size="8px" weight={900} />
+                            </div>
+                          )}
+                          <LineIconSelector type={value} size={28} />
+                          <span className={cn(
+                            "text-[6.5px] font-black uppercase tracking-tighter truncate w-full text-center leading-none",
+                            linea === value ? "text-emerald-600" : "text-slate-400"
+                          )}>
+                            {label}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Línea / Departamento</span>
+                    <div className="relative">
+                      <select 
+                        value={linea || ''} 
+                        onChange={(e) => setLinea(e.target.value)}
+                        className="w-full bg-white border-2 border-slate-100 rounded-xl pl-2 pr-7 py-2.5 text-[11px] font-bold text-slate-700 focus:outline-none focus:border-marca-primario/40 transition-all appearance-none shadow-sm h-11 truncate"
+                      >
+                        <option value="">— Seleccionar Línea —</option>
+                        {lineasDisponibles.map(({ value, label }) => (
+                          <option key={value} value={value}>{label}</option>
+                        ))}
+                      </select>
+                      <div className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                        <Icon name="expand_more" size="14px" />
+                      </div>
+                    </div>
+                  </div>
+                )
               )}
 
               {/* SWITCH ¿ES TAREA? */}

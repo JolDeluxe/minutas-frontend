@@ -72,6 +72,7 @@ export const QuickComposer = ({
   
   const lineasDisponibles = useMemo(() => LINEAS_POR_AREA[area] || [], [area]);
   const tieneLineas = lineasDisponibles.length > 0;
+  const isOperationalArea = area === 'DISENO' || area === 'MARKETING';
 
   const [linea, setLinea] = useState(tieneLineas ? (lineaDefault || lineasDisponibles[0]?.value) : null);
   const [imagenes, setImagenes] = useState([]);
@@ -420,7 +421,10 @@ export const QuickComposer = ({
             </div>
 
             {/* 3. AREA | LINEA | CLASIFICACION (ROW) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 shrink-0">
+            <div className={cn(
+                "grid grid-cols-1 gap-2 shrink-0",
+                (tieneLineas && isOperationalArea) ? "md:grid-cols-3" : (tieneLineas || isOperationalArea) ? "md:grid-cols-2" : "md:grid-cols-1"
+            )}>
                <div className="flex flex-col gap-1">
                   <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Área</label>
                   <select value={area} onChange={(e) => {
@@ -428,6 +432,9 @@ export const QuickComposer = ({
                     setArea(newArea);
                     const newLineas = LINEAS_POR_AREA[newArea] || [];
                     setLinea(newLineas.length > 0 ? newLineas[0].value : null);
+                    if (newArea !== 'DISENO' && newArea !== 'MARKETING') {
+                      setClasificacion('');
+                    }
                   }} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-marca-primario/10 transition-all shadow-sm">
                     {catalogos.areas.map(({ value, label }) => (<option key={value} value={value}>{label}</option>))}
                   </select>
@@ -443,23 +450,25 @@ export const QuickComposer = ({
                  </div>
                )}
 
-               <div className="flex flex-col gap-1">
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Clasificación</label>
-                  <select 
-                    value={clasificacion} 
-                    onChange={(e) => {
-                      const newClasificacion = e.target.value;
-                      setClasificacion(newClasificacion);
-                      if (newClasificacion === 'POLITICAS') {
-                        setEsTarea(false);
-                      }
-                    }} 
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-marca-primario/10 transition-all shadow-sm"
-                  >
-                    <option value="">— Seleccionar Tipo —</option>
-                    {catalogos.clasificaciones.map(({ value, label }) => (<option key={value} value={value}>{label}</option>))}
-                  </select>
-               </div>
+               {isOperationalArea && (
+                 <div className="flex flex-col gap-1">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Clasificación</label>
+                    <select 
+                      value={clasificacion} 
+                      onChange={(e) => {
+                        const newClasificacion = e.target.value;
+                        setClasificacion(newClasificacion);
+                        if (newClasificacion === 'POLITICAS') {
+                          setEsTarea(false);
+                        }
+                      }} 
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-marca-primario/10 transition-all shadow-sm"
+                    >
+                      <option value="">— Seleccionar Tipo —</option>
+                      {catalogos.clasificaciones.map(({ value, label }) => (<option key={value} value={value}>{label}</option>))}
+                    </select>
+                 </div>
+               )}
             </div>
 
             {/* SWITCH ¿ES TAREA? */}

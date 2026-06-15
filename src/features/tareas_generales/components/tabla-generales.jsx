@@ -378,6 +378,13 @@ export const TablaGenerales = ({
             align: 'center',
             cell: (row) => {
                 const label = AREA_MAP[row.area] || row.area || '—';
+                if (row.area !== 'DISENO' && row.area !== 'MARKETING') {
+                    return (
+                        <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider whitespace-nowrap">
+                            {label}{row.linea ? ` - ${row.linea}` : ''}
+                        </span>
+                    );
+                }
                 const lineInfo = LINEA_MAP[row.linea];
                 return (
                     <div className="flex flex-col items-center gap-1">
@@ -394,25 +401,7 @@ export const TablaGenerales = ({
                 );
             }
         },
-        {
-            header: 'Clasificación',
-            accessorKey: 'clasificacion',
-            align: 'center',
-            headerClassName: 'w-[10%] min-w-[120px]',
-            cell: (row) => {
-                const clasif = CLASIFICACION_MAP[row.clasificacion];
-                if (!clasif) return <span className="text-[11px] text-slate-300">—</span>;
-                return (
-                    <span
-                        className="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-[9px] font-black uppercase tracking-widest whitespace-nowrap border"
-                        style={{ backgroundColor: `${clasif.color}08`, color: clasif.color, borderColor: `${clasif.color}20` }}
-                    >
-                        <Icon name={clasif.icon} size="12px" />
-                        {clasif.label}
-                    </span>
-                );
-            }
-        },
+
         {
             header: 'Fecha Límite',
             accessorKey: 'fechaVencimiento',

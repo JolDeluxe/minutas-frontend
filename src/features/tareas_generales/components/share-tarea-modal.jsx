@@ -11,7 +11,8 @@ export const ShareTareaModal = ({ isOpen, onClose, data }) => {
   const body = `Hola, te comparto la tarea asignada al área de ${area}:\n\n` +
                `${descripcion || 'Sin descripción'}\n\n` +
                `Puedes descargar o visualizar el documento de la tarea en el siguiente enlace:\n` +
-               `${url}`;
+               `${url}\n\n` +
+               `*Nota: Este enlace es seguro y proviene de nuestro sistema interno de gestión de minutas.*`;
 
   const handleCopy = async () => {
     try {

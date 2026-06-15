@@ -1,5 +1,5 @@
 // src/features/tareas_generales/components/modal-nueva-general.jsx
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Plus, Paperclip, Trash2, StickyNote, Camera } from 'lucide-react';
 import { Icon } from '@/components/ui/z_index';
@@ -10,21 +10,50 @@ const AREAS_OPTIONS = Object.entries(AREA_MAP)
     .filter(([value]) => value !== 'DISENO' && value !== 'MARKETING')
     .map(([value, label]) => ({ value, label }));
 
-const CLASIFICACIONES_GENERAL = [
-    { value: 'ADMINISTRATIVO', label: 'Administrativo' },
-    { value: 'OPERATIVO', label: 'Operativo' },
-    { value: 'FINANCIERO', label: 'Financiero' },
-    { value: 'LEGAL', label: 'Legal' },
-    { value: 'ESTRATEGICO', label: 'Estratégico' },
-    { value: 'SUPERVISION', label: 'Supervisión' },
-    { value: 'EVALUACION', label: 'Evaluación' },
-    { value: 'CAPACITACION', label: 'Capacitación' },
-    { value: 'SISTEMAS', label: 'Sistemas' },
-    { value: 'MANTENIMIENTO', label: 'Mantenimiento' },
-    { value: 'PROCESOS', label: 'Procesos' },
-    { value: 'VENTAS', label: 'Ventas' },
-    { value: 'OTROS', label: 'Otros' },
-];
+const CLASIFICACIONES_POR_AREA = {
+    DIRECCION_MBC: [
+        { value: 'PRODUCCION_MUESTRAS', label: 'Desarrollo de Muestras' },
+        { value: 'ORDEN_COMPRA', label: 'Órdenes de Compra' },
+        { value: 'MEJORA_PROCESO', label: 'Optimización de Producción' },
+        { value: 'CONTROL_CALIDAD', label: 'Control de Calidad' },
+        { value: 'LOGISTICA_DISTRIBUCION', label: 'Logística y Distribución' },
+        { value: 'OTROS', label: 'Otros Asuntos' },
+    ],
+    DIRECCION_CFI: [
+        { value: 'PRODUCCION_MUESTRAS', label: 'Desarrollo de Muestras' },
+        { value: 'ORDEN_COMPRA', label: 'Órdenes de Compra' },
+        { value: 'MEJORA_PROCESO', label: 'Optimización de Producción' },
+        { value: 'CONTROL_CALIDAD', label: 'Control de Calidad' },
+        { value: 'LOGISTICA_DISTRIBUCION', label: 'Logística y Distribución' },
+        { value: 'OTROS', label: 'Otros Asuntos' },
+    ],
+    DIRECCION_TIENDAS: [
+        { value: 'EXHIBICION_VISUAL', label: 'Exhibición y Visual Merchandising' },
+        { value: 'KPI_VENTAS', label: 'Análisis e Indicadores de Ventas' },
+        { value: 'INVENTARIOS', label: 'Control de Inventarios' },
+        { value: 'ATENCION_CLIENTE', label: 'Atención y Servicio al Cliente' },
+        { value: 'OTROS', label: 'Otros Asuntos' },
+    ],
+    DIRECCION_MKT: [
+        { value: 'REDES_SOCIALES', label: 'Redes Sociales y Contenido' },
+        { value: 'PAGINA_WEB', label: 'Página Web y E-commerce' },
+        { value: 'EVENTOS_PROMOS', label: 'Eventos y Activaciones' },
+        { value: 'DISENO_INSUMOS', label: 'Diseño de Insumos' },
+        { value: 'OTROS', label: 'Otros Asuntos' },
+    ],
+    DIRECCION_ALTA_CALIDAD: [
+        { value: 'AUDITORIA_CALIDAD', label: 'Auditoría y Certificación de Calidad' },
+        { value: 'RECHAZOS_DEVOLUCIONES', label: 'Gestión de Rechazos y Devoluciones' },
+        { value: 'MEJORA_TECNICA', label: 'Optimización de Fichas Técnicas' },
+        { value: 'OTROS', label: 'Otros Asuntos' },
+    ],
+    DIRECCION_ADJUNTA: [
+        { value: 'ACUERDO_DIRECCION', label: 'Acuerdo de Dirección Adjunta' },
+        { value: 'PLANEACION_ESTRATEGICA', label: 'Planeación Estratégica' },
+        { value: 'PRESUPUESTOS', label: 'Presupuestos y Costos' },
+        { value: 'OTROS', label: 'Otros Asuntos' },
+    ],
+};
 
 const emptyForm = () => ({
     descripcion: '',
@@ -71,9 +100,17 @@ export function ModalNuevaGeneral({ isOpen, onClose, onSave, users = [], editDat
         setNotaText('');
     }, [isOpen, editData]);
 
-    if (!isOpen) return null;
-
     const lineasDeArea = LINEAS_POR_AREA[form.area] || [];
+    const clasificacionesDeArea = CLASIFICACIONES_POR_AREA[form.area] || CLASIFICACIONES_POR_AREA.DIRECCION_ADJUNTA;
+
+    const isValid = useMemo(() => {
+        if (!form.descripcion.trim()) return false;
+        if (!form.area) return false;
+        if (lineasDeArea.length > 0 && !form.linea) return false;
+        return true;
+    }, [form.descripcion, form.area, form.linea, lineasDeArea]);
+
+    if (!isOpen) return null;
 
     const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
 
@@ -114,6 +151,14 @@ export function ModalNuevaGeneral({ isOpen, onClose, onSave, users = [], editDat
         e.preventDefault();
         if (!form.descripcion.trim()) {
             notify.error('La descripción es requerida.');
+            return;
+        }
+        if (!form.area) {
+            notify.error('El área es requerida.');
+            return;
+        }
+        if (lineasDeArea.length > 0 && !form.linea) {
+            notify.error('La línea es requerida.');
             return;
         }
 
@@ -188,7 +233,15 @@ export function ModalNuevaGeneral({ isOpen, onClose, onSave, users = [], editDat
                             <label className="block text-[11px] font-black uppercase tracking-widest text-slate-500 mb-2">Área Destino</label>
                             <select
                                 value={form.area}
-                                onChange={e => { set('area', e.target.value); set('linea', ''); }}
+                                onChange={e => {
+                                    const a = e.target.value;
+                                    setForm(prev => ({
+                                        ...prev,
+                                        area: a,
+                                        linea: '',
+                                        clasificacion: CLASIFICACIONES_POR_AREA[a]?.[0]?.value || 'OTROS'
+                                    }));
+                                }}
                                 className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-4 focus:ring-slate-200/50 transition-all"
                             >
                                 {AREAS_OPTIONS.map(a => (
@@ -213,19 +266,7 @@ export function ModalNuevaGeneral({ isOpen, onClose, onSave, users = [], editDat
                         )}
                     </div>
 
-                    {/* Clasificación */}
-                    <div>
-                        <label className="block text-[11px] font-black uppercase tracking-widest text-slate-500 mb-2">Clasificación</label>
-                        <select
-                            value={form.clasificacion}
-                            onChange={e => set('clasificacion', e.target.value)}
-                            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-4 focus:ring-slate-200/50 transition-all"
-                        >
-                            {CLASIFICACIONES_GENERAL.map(c => (
-                                <option key={c.value} value={c.value}>{c.label}</option>
-                            ))}
-                        </select>
-                    </div>
+
 
                     {/* Fecha Límite */}
                     <div>
@@ -326,8 +367,8 @@ export function ModalNuevaGeneral({ isOpen, onClose, onSave, users = [], editDat
                         type="submit"
                         form="form-nueva-general"
                         onClick={handleSubmit}
-                        disabled={submitting}
-                        className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-slate-800 to-slate-700 text-white text-[11px] font-black uppercase tracking-widest shadow-lg hover:from-slate-700 hover:to-slate-600 transition-all active:scale-95 disabled:opacity-60"
+                        disabled={submitting || !isValid}
+                        className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-slate-800 to-slate-700 text-white text-[11px] font-black uppercase tracking-widest shadow-lg hover:from-slate-700 hover:to-slate-600 transition-all active:scale-95 disabled:opacity-40"
                     >
                         {submitting ? (
                             <Icon name="progress_activity" size="16px" className="animate-spin" />
