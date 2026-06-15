@@ -32,7 +32,10 @@ const isVencida = (tarea) => {
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export const ImageViewer = ({ images, initialIndex, onClose }) => {
-  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    const idx = typeof initialIndex === 'number' ? initialIndex : parseInt(initialIndex, 10);
+    return isNaN(idx) || idx < 0 || idx >= (images?.length || 0) ? 0 : idx;
+  });
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -41,6 +44,7 @@ export const ImageViewer = ({ images, initialIndex, onClose }) => {
 
   if (!images || images.length === 0) return null;
   const currentImg = images[currentIndex];
+  if (!currentImg) return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[99999] bg-black/98 backdrop-blur-2xl flex flex-col items-center justify-center animate-in fade-in duration-300">
