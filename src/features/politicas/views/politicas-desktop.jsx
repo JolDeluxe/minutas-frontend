@@ -17,7 +17,7 @@ export const PoliticasDesktop = ({
   onViewChange
 }) => {
   return (
-    <div className="flex flex-col gap-4 relative animate-in fade-in slide-in-from-bottom-2 duration-500 p-6 max-w-[1600px] mx-auto w-full">
+    <div className="flex flex-col gap-4 relative animate-in fade-in slide-in-from-bottom-2 duration-500 p-6 max-w-full mx-auto w-full">
       {/* Header Estándar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white/40 backdrop-blur-md px-5 py-4 rounded-2xl border border-white/60 shadow-sm">
         <div className="flex items-center gap-4">
