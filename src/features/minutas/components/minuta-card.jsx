@@ -24,7 +24,7 @@ const formatFechaReal = (dateStr) => {
     });
 };
 
-export const MinutaCard = ({ minuta, onViewDetail, onEdit, onCancel, badge = null, isAdmin = false }) => {
+export const MinutaCard = ({ minuta, onViewDetail, onEdit, onCancel, badge = null, isAdmin = false, onDownloadPdf, isGeneratingPdf }) => {
     const estadoLabel = ESTADO_MINUTA_MAP[minuta.estado]?.label || minuta.estado.replace(/_/g, ' ');
     const estadoColor = ESTADO_COLORS[minuta.estado] || 'bg-slate-50 text-slate-600 border-slate-200';
     
@@ -43,9 +43,15 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, onCancel, badge = nul
     
     const dept = minuta.departamento || minuta.creadoPor?.departamento;
     const isMarketing = dept === 'MARKETING';
+    const isExterna = 'tema' in minuta;
+    
     const lineInfo = isMarketing 
         ? { label: 'Marketing', color: '#7c3aed' } 
+        : isExterna
+        ? { label: minuta.area || 'Externo', color: '#d97706' }
         : (LINEA_MAP[minuta.lineaDefault] || { label: minuta.lineaDefault, color: '#64748b' });
+
+    const title = isExterna ? minuta.tema : minuta.titulo;
 
     const BADGE_CONFIG = {
         current: {
@@ -101,8 +107,8 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, onCancel, badge = nul
 
             <div className={cn("flex flex-row p-4 h-full", !isMarketing && "gap-4")}>
                 
-                {/* COLUMNA 1: IDENTIDAD VISUAL (Icono + Línea) - Oculta en Marketing */}
-                {!isMarketing && (
+                {/* COLUMNA 1: IDENTIDAD VISUAL (Icono + Línea) - Oculta en Marketing y Externas */}
+                {!isMarketing && !isExterna && (
                     <div className="flex flex-col items-center justify-center shrink-0 w-[82px] sm:w-[96px] h-full border-r border-slate-100/50 pr-4">
                         <div className="flex flex-col items-center justify-center w-full aspect-square rounded-[1.25rem] mb-2 transition-transform duration-500 group-hover:scale-105" style={{ backgroundColor: `${lineInfo.color}0f`, border: `1.5px solid ${lineInfo.color}25` }}>
                             <LineIconSelector type={minuta.lineaDefault} size={60} style={{ color: lineInfo.color }} />
@@ -112,6 +118,8 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, onCancel, badge = nul
                         </span>
                     </div>
                 )}
+                
+
 
                 {/* COLUMNA 2: INFORMACIÓN DETALLADA */}
                 <div className="flex flex-col flex-1 min-w-0 h-full">
@@ -122,7 +130,7 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, onCancel, badge = nul
                             <span className="text-[10px] font-mono font-bold text-slate-400 tracking-wide">
                                 MN-{String(minuta.id).padStart(3, '0')}
                             </span>
-                            {isAdmin && (
+                            {isAdmin && !isExterna && (
                                 <span className={cn(
                                     "px-1.5 py-0.5 text-[7px] sm:text-[8px] font-black uppercase tracking-wider rounded border",
                                     isMarketing 
@@ -132,8 +140,24 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, onCancel, badge = nul
                                     {isMarketing ? 'Marketing' : 'Diseño'}
                                 </span>
                             )}
+
+
+
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
+                            {!!onDownloadPdf && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDownloadPdf(minuta);
+                                    }}
+                                    disabled={isGeneratingPdf}
+                                    className="h-6 w-6 rounded-lg text-red-500 hover:bg-red-50 flex items-center justify-center transition-all active:scale-90"
+                                    title="Descargar PDF"
+                                >
+                                    <Icon name={isGeneratingPdf ? "hourglass_empty" : "picture_as_pdf"} className={cn("!text-[14px]", isGeneratingPdf && "animate-spin")} />
+                                </button>
+                            )}
                             {canEdit && !!onEdit && (
                                 <button
                                     onClick={(e) => {
@@ -158,24 +182,26 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, onCancel, badge = nul
                                     <Icon name="delete" className="!text-[14px]" />
                                 </button>
                             )}
-                            <div className={cn(
-                                "flex items-center gap-1 px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider rounded-md border shrink-0",
-                                estadoColor
-                            )}>
-                                {minuta.estado === 'ACTIVA' && (
-                                    <span className="relative flex h-1.5 w-1.5">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
-                                    </span>
-                                )}
-                                {estadoLabel}
-                            </div>
+                            {!isExterna && (
+                                <div className={cn(
+                                    "flex items-center gap-1 px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider rounded-md border shrink-0",
+                                    estadoColor
+                                )}>
+                                    {minuta.estado === 'ACTIVA' && (
+                                        <span className="relative flex h-1.5 w-1.5">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                                        </span>
+                                    )}
+                                    {estadoLabel}
+                                </div>
+                            )}
                         </div>
                     </div>
 
                     {/* Título: Con mejor tipografía */}
-                    <h3 className="font-extrabold text-slate-900 text-[14px] sm:text-base leading-tight line-clamp-2 mb-3 fuente-titulos group-hover:text-marca-primario transition-colors">
-                        {minuta.titulo}
+                    <h3 className="font-extrabold text-slate-900 text-[14px] sm:text-base leading-tight line-clamp-2 mb-3 fuente-titulos group-hover:text-marca-primario transition-colors" title={title}>
+                        {title}
                     </h3>
 
                     {/* Footer Row: Fecha y Progreso */}

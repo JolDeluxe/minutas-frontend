@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Button, Icon } from '@/components/ui/z_index';
 import { notify } from '@/components/notification/adaptive-notify';
 import { addTareaImagen, createTareaNota } from '../../api/tareas-api';
+import { validateImageFile } from '@/utils/validators';
 import { cn } from '@/utils/cn';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 
@@ -19,6 +20,12 @@ export const ModalEntregarTarea = ({ isOpen, onClose, tareaId, onConfirm, submit
     const handleFileSelect = (e) => {
         const selected = e.target.files?.[0];
         if (selected) {
+            const validation = validateImageFile(selected);
+            if (!validation.isValid) {
+                notify.error(validation.error);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+                return;
+            }
             setFile(selected);
             setPreview(URL.createObjectURL(selected));
         }
@@ -27,7 +34,12 @@ export const ModalEntregarTarea = ({ isOpen, onClose, tareaId, onConfirm, submit
     const handleDrop = (e) => {
         e.preventDefault();
         const dropped = e.dataTransfer.files?.[0];
-        if (dropped && dropped.type.startsWith('image/')) {
+        if (dropped) {
+            const validation = validateImageFile(dropped);
+            if (!validation.isValid) {
+                notify.error(validation.error);
+                return;
+            }
             setFile(dropped);
             setPreview(URL.createObjectURL(dropped));
         }
@@ -114,14 +126,22 @@ export const ModalEntregarTarea = ({ isOpen, onClose, tareaId, onConfirm, submit
                 >
                     <input 
                         type="file" 
-                        accept="image/jpeg, image/png, image/webp" 
+                        accept="image/jpeg, image/png, image/webp, image/heic, image/heif" 
                         className="hidden" 
                         ref={fileInputRef} 
                         onChange={handleFileSelect} 
                     />
                     {preview ? (
                         <div className="relative w-full h-full flex justify-center items-center bg-slate-900/5 p-2">
-                            <img src={preview} alt="Vista previa" className="max-h-48 object-contain rounded-xl shadow-md border border-white" />
+                            {file && /\.(heic|heif)$/i.test(file.name) ? (
+                                <div className="flex flex-col items-center justify-center p-6 text-center bg-slate-100/80 rounded-xl border border-slate-200 min-w-[200px] min-h-[120px]">
+                                    <Icon name="image" size="32px" className="text-amber-500 mb-2" />
+                                    <span className="text-xs font-black uppercase tracking-wider text-slate-500">Imagen HEIC</span>
+                                    <span className="text-[10px] text-slate-400 font-bold mt-1 max-w-[180px] truncate">{file.name}</span>
+                                </div>
+                            ) : (
+                                <img src={preview} alt="Vista previa" className="max-h-48 object-contain rounded-xl shadow-md border border-white" />
+                            )}
                             <button
                                 onClick={handleRemoveFile}
                                 className="absolute top-4 right-4 bg-rose-500 text-white rounded-full p-2 hover:bg-rose-600 shadow-lg hover:scale-105 active:scale-95 transition-all z-10"
@@ -137,7 +157,7 @@ export const ModalEntregarTarea = ({ isOpen, onClose, tareaId, onConfirm, submit
                             </div>
                             <div>
                                 <p className="text-xs font-black text-slate-700 uppercase tracking-wide">Arrastra tu imagen o haz clic</p>
-                                <p className="text-[10px] text-slate-400 font-bold tracking-wider mt-1 uppercase">Soporta JPEG, PNG o WEBP (máx. 1)</p>
+                                <p className="text-[10px] text-slate-400 font-bold tracking-wider mt-1 uppercase">Soporta JPEG, PNG, WEBP o HEIC (máx. 1)</p>
                             </div>
                         </div>
                     )}

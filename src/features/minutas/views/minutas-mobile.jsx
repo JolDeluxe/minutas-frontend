@@ -83,6 +83,9 @@ export const MinutasMobile = ({
     navegacionEjecutiva,
     departamentoGlobal,
     setDepartamentoGlobal,
+    isExterna,
+    onDownloadPdf,
+    isGeneratingPdf,
 }) => {
     const { user } = useAuthStore();
     const [viewMode, setViewModeState] = useState(() => {
@@ -131,27 +134,31 @@ export const MinutasMobile = ({
             {/* Elementos Estáticos de Cabecera */}
             <div className="px-1 mb-3">
                 <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight fuente-titulos">
-                    Directorio
+                    {departamentoGlobal === 'EXTERNO' ? 'Minutas Externas' : 'Directorio'}
                 </h1>
                 <p className="text-sm text-slate-500 mt-0.5 font-medium leading-snug">
-                    {estadoFilter === 'ACTIVA' ? 'Minutas activas' : estadoFilter === 'CERRADA' ? 'Cerradas' : 'Todas'}
+                    {departamentoGlobal === 'EXTERNO' 
+                        ? (estadoFilter === 'CERRADA' ? 'Cerradas' : 'Todas')
+                        : (estadoFilter === 'ACTIVA' ? 'Minutas activas' : estadoFilter === 'CERRADA' ? 'Cerradas' : 'Todas')
+                    }
                 </p>
             </div>
 
             {isAdmin && (
                 <div className="flex items-center mx-1 mb-3 bg-slate-100/80 p-1 rounded-xl border border-slate-200/50 shadow-inner">
-                    {['DISEÑO', 'MARKETING'].map(opt => (
+                    {['DISEÑO', 'MARKETING', 'EXTERNO'].map(opt => (
                         <button
                             key={opt}
                             onClick={() => setDepartamentoGlobal(opt)}
                             className={`flex flex-1 items-center justify-center gap-1 py-1.5 text-[10px] font-black tracking-wider uppercase rounded-lg transition-all ${
                                 departamentoGlobal === opt
-                                    ? `bg-white shadow-sm ring-1 ring-slate-200/50 ${opt === 'MARKETING' ? 'text-purple-600' : 'text-blue-600'}`
+                                    ? `bg-white shadow-sm ring-1 ring-slate-200/50 ${opt === 'MARKETING' ? 'text-purple-600' : opt === 'EXTERNO' ? 'text-amber-600' : 'text-blue-600'}`
                                     : 'text-slate-500 hover:text-slate-700'
                             }`}
                         >
                             {opt === 'DISEÑO' && <DisenoIcon size={14} />}
                             {opt === 'MARKETING' && <MarketingIcon size={14} />}
+                            {opt === 'EXTERNO' && <Icon name="domain" size="14px" />}
                             {opt}
                         </button>
                     ))}
@@ -163,6 +170,7 @@ export const MinutasMobile = ({
                     loading={loading} 
                     departamentoGlobal={departamentoGlobal}
                     isAdmin={isAdmin}
+                    isExterna={departamentoGlobal === 'EXTERNO'}
                 />
             </div>
 
@@ -301,6 +309,8 @@ export const MinutasMobile = ({
                                             onEdit={onEdit}
                                             onCancel={onCancel}
                                             isAdmin={isAdmin}
+                                            onDownloadPdf={isExterna ? () => onDownloadPdf(minuta) : undefined}
+                                            isGeneratingPdf={isGeneratingPdf === minuta.id}
                                             badge={
                                                 ultimaJuntaId && (minuta.id === (
                                                     (minuta.departamento || minuta.creadoPor?.departamento) === 'MARKETING'
@@ -342,6 +352,9 @@ export const MinutasMobile = ({
                         ultimaJuntaId={ultimaJuntaId}
                         juntaAnteriorId={juntaAnteriorId}
                         hidePagination={true}
+                        isExterna={isExterna}
+                        onDownloadPdf={isExterna ? onDownloadPdf : undefined}
+                        isGeneratingPdf={isGeneratingPdf}
                     />
                 </div>
             )}

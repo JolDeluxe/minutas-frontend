@@ -636,6 +636,8 @@ export const EntryTable = ({
         headerClassName: "w-[10%] min-w-[120px]",
         cell: (row) => {
           if (row._isSubTask) return <span className="text-slate-300">—</span>;
+          const isExternal = row.area && row.area !== 'DISENO' && row.area !== 'MARKETING';
+          if (isExternal) return <span className="text-[11px] text-slate-300">—</span>;
           const clasif = CLASIFICACION_MAP[row.clasificacion];
           if (!clasif) return <span className="text-[11px] text-slate-300">—</span>;
           return (

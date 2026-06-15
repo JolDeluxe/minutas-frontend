@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Input, Label, Select } from '@/components/form/z_index';
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Icon } from '@/components/ui/z_index';
+import { notify } from '@/components/notification/adaptive-notify';
+import { validateImageFile } from '@/utils/validators';
 import { useCatalogosStore } from '@/stores/catalogos-store';
 import { cn } from '@/utils/cn';
 
@@ -123,6 +125,12 @@ export const UserFormModal = ({
     const handleFotoChange = (e) => {
         const file = e.target.files[0];
         if (file) {
+            const validation = validateImageFile(file);
+            if (!validation.isValid) {
+                notify.error(validation.error);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+                return;
+            }
             setImagenFile(file);
             setImagenPreview(URL.createObjectURL(file));
         }
@@ -213,7 +221,7 @@ export const UserFormModal = ({
                         <div className="flex flex-col items-center gap-2 shrink-0 w-full md:w-auto">
                             <input
                                 type="file"
-                                accept="image/*"
+                                accept="image/jpeg, image/png, image/webp, image/heic, image/heif"
                                 className="hidden"
                                 ref={fileInputRef}
                                 onChange={handleFotoChange}

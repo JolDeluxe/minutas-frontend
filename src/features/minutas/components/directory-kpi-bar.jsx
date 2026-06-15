@@ -6,7 +6,8 @@ import { DisenoIcon, MarketingIcon } from './icons/line-icons';
  * DirectoryKpiBar — Barra de KPIs globales estilo Directory.
  * Muestra de un vistazo: Minutas Activas para el departamento seleccionado.
  */
-export const DirectoryKpiBar = ({ minutas = [], loading = false, departamentoGlobal = 'DISEÑO', isAdmin = false }) => {
+export const DirectoryKpiBar = ({ minutas = [], loading = false, departamentoGlobal = 'DISEÑO', isAdmin = false, isExterna = false }) => {
+  if (isExterna) return null;
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">

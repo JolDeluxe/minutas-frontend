@@ -14,6 +14,7 @@ import PoliticasPage from '@/features/politicas/pages/politicas-page';
 import RecordatoriosPage from '@/features/recordatorios/pages/recordatorios-page';
 import MinutasPage from '@/features/minutas/pages/minutas-page';
 import MinutaDetailPage from '@/features/minutas/pages/minuta-detail-page';
+import MinutaExternaDetailPage from '@/features/minutas/pages/minuta-externa-detail-page';
 
 import TareasPage from '@/features/tareas/pages/tareas-page';
 import MisTareasPage from '@/features/tareas/pages/mis-tareas-page';
@@ -79,6 +80,7 @@ export const AppRoutes = () => {
           <Route element={<RoleGuard allowedRoles={ROLES.minutas} />}>
             <Route path="/minutas" element={<MinutasPage />} />
             <Route path="/minutas/:id" element={<MinutaDetailPage />} />
+            <Route path="/minutas-externas/:id" element={<MinutaExternaDetailPage />} />
           </Route>
 
           {/* Módulo: Notificaciones */}

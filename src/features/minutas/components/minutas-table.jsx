@@ -29,6 +29,9 @@ export const MinutasTable = ({
     juntaAnteriorId,
     isAdmin = false,
     hidePagination = false,
+    isExterna = false,
+    onDownloadPdf,
+    isGeneratingPdf,
 }) => {
     const isAllMarketing = minutas?.length > 0 && minutas.every(m => (m.departamento || m.creadoPor?.departamento) === 'MARKETING');
 
@@ -44,7 +47,7 @@ export const MinutasTable = ({
             },
         },
         {
-            header: "Título",
+            header: minutas?.length > 0 && minutas.every(m => 'tema' in m) ? "Tema" : "Título",
             accessorKey: "titulo",
             sortable: true,
             headerClassName: "w-[30%] min-w-[200px]",
@@ -59,10 +62,13 @@ export const MinutasTable = ({
                 const isPrevious = juntaAnteriorId && (typeof juntaAnteriorId === 'object' 
                     ? row.id === (isMarketing ? juntaAnteriorId.MARKETING : juntaAnteriorId.DISENO)
                     : row.id === juntaAnteriorId);
+                    
+                const isExterna = 'tema' in row;
+                const title = isExterna ? row.tema : row.titulo;
 
                 return (
                     <div className="flex items-center gap-2 flex-wrap">
-                        {isAdmin && (
+                        {isAdmin && !isExterna && (
                             <span className={cn(
                                 "inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border whitespace-nowrap",
                                 isMarketing 
@@ -72,7 +78,8 @@ export const MinutasTable = ({
                                 {isMarketing ? 'Marketing' : 'Diseño'}
                             </span>
                         )}
-                        <span className="font-semibold text-slate-900">{row.titulo}</span>
+
+                        <span className="font-semibold text-slate-900" title={title}>{title}</span>
                         {isCurrent && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-700 border border-emerald-200/40 whitespace-nowrap">
                                 Junta Actual
@@ -89,7 +96,7 @@ export const MinutasTable = ({
         },
         ...(isAllMarketing ? [] : [
             {
-                header: "Línea",
+                header: minutas?.length > 0 && minutas.every(m => 'tema' in m) ? "Área / Depto" : "Línea",
                 accessorKey: "lineaDefault",
                 sortable: true,
                 align: "center",
@@ -98,9 +105,12 @@ export const MinutasTable = ({
                     if (row.isSkeleton) return <Skeleton className="h-4 w-20 mx-auto" />;
 
                     const isRowMarketing = (row.departamento || row.creadoPor?.departamento) === 'MARKETING';
+                    const isExterna = 'tema' in row;
 
                     const lineInfo = isRowMarketing
                         ? { label: 'Marketing', color: '#7c3aed' }
+                        : isExterna
+                        ? { label: row.area || 'Externo', color: '#d97706' }
                         : (LINEA_MAP[row.lineaDefault] || {
                             label: row.lineaDefault,
                             color: '#64748b'
@@ -114,6 +124,13 @@ export const MinutasTable = ({
                                         size={50}
                                         style={{ color: lineInfo.color }}
                                     />
+                                ) : isExterna ? (
+                                    <div className="flex flex-col items-center justify-center gap-0.5 mt-1">
+                                        <span className="font-extrabold text-[11px] text-slate-800 tracking-wide">{row.area || 'Externo'}</span>
+                                        {row.departamento && (
+                                            <span className="text-[9px] font-bold text-slate-500 uppercase">{row.departamento}</span>
+                                        )}
+                                    </div>
                                 ) : (
                                     <LineIconSelector
                                         type={row.lineaDefault}
@@ -123,17 +140,40 @@ export const MinutasTable = ({
                                 )}
                             </div>
 
-                            <span
-                                className="text-[7px] font-black uppercase tracking-widest font-mono leading-none text-center"
-                                style={{ color: lineInfo.color }}
-                            >
-                                {lineInfo.label}
-                            </span>
+                            {!isExterna && (
+                                <span
+                                    className="text-[7px] font-black uppercase tracking-widest font-mono leading-none text-center mt-1"
+                                    style={{ color: lineInfo.color }}
+                                >
+                                    {lineInfo.label}
+                                </span>
+                            )}
                         </div>
                     );
                 },
             }
         ]),
+        {
+            header: "Fecha Programada",
+            accessorKey: "fechaProgramada",
+            sortable: true,
+            align: "center",
+            headerClassName: "w-[12%] min-w-[100px]",
+            cell: (row) => {
+                if (row.isSkeleton) return <Skeleton className="h-4 w-20 mx-auto" />;
+                const dateStr = row.fechaRealizada || row.fechaProgramada || row.createdAt;
+                if (!dateStr) return <span className="text-slate-400">—</span>;
+                const dateObj = new Date(dateStr);
+                return (
+                    <div className="flex items-center justify-center gap-1.5 text-slate-600">
+                        <Icon name="event" size="14px" className="text-slate-400" />
+                        <span className="text-[11px] font-bold">
+                            {dateObj.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                    </div>
+                );
+            }
+        },
         {
             header: "Progreso",
             accessorKey: "progreso",
@@ -221,7 +261,7 @@ export const MinutasTable = ({
                 );
             },
         },
-        {
+        ...(minutas?.length > 0 && minutas.every(m => 'tema' in m) ? [] : [{
             header: "Estado",
             accessorKey: "estado",
             sortable: true,
@@ -243,7 +283,7 @@ export const MinutasTable = ({
                     </span>
                 );
             },
-        },
+        }]),
 
         {
             header: "Acciones",
@@ -258,6 +298,7 @@ export const MinutasTable = ({
                     <TableActions 
                         row={row} 
                         actions={[
+                            { key: 'descargar_pdf', enabled: isExterna && !!onDownloadPdf, isLoading: isGeneratingPdf === row.id, onClick: (r) => { onDownloadPdf?.(r); } },
                             { key: 'ver_detalle', enabled: true, onClick: (r) => { onViewDetail?.(r); } },
                             { key: 'editar', enabled: !!onEdit, onClick: (r) => { onEdit?.(r); } },
                             { key: 'borrar', enabled: canCancel && !!onCancel, onClick: (r) => { onCancel?.(r); }, tooltip: 'Cancelar Minuta' }

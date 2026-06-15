@@ -5,6 +5,7 @@ import { X, Plus, Paperclip, Trash2, StickyNote, Camera } from 'lucide-react';
 import { Icon } from '@/components/ui/z_index';
 import { notify } from '@/components/notification/adaptive-notify';
 import { AREA_MAP, CLASIFICACION_MAP, PRIORIDAD_MAP, LINEAS_POR_AREA } from '../../minutas/constants';
+import { validateImageFile } from '@/utils/validators';
 
 const AREAS_OPTIONS = Object.entries(AREA_MAP)
     .filter(([value]) => value !== 'DISENO' && value !== 'MARKETING')
@@ -73,6 +74,7 @@ const emptyForm = () => ({
 export function ModalNuevaGeneral({ isOpen, onClose, onSave, users = [], editData = null, submitting = false }) {
     const [form, setForm] = useState(emptyForm());
     const [notaText, setNotaText] = useState('');
+    const [formErrors, setFormErrors] = useState({});
     const fileInputRef = useRef(null);
 
     // Cuando abre con datos de edición, rellenar el formulario
@@ -103,12 +105,13 @@ export function ModalNuevaGeneral({ isOpen, onClose, onSave, users = [], editDat
     const lineasDeArea = LINEAS_POR_AREA[form.area] || [];
     const clasificacionesDeArea = CLASIFICACIONES_POR_AREA[form.area] || CLASIFICACIONES_POR_AREA.DIRECCION_ADJUNTA;
 
-    const isValid = useMemo(() => {
-        if (!form.descripcion.trim()) return false;
-        if (!form.area) return false;
-        if (lineasDeArea.length > 0 && !form.linea) return false;
-        return true;
-    }, [form.descripcion, form.area, form.linea, lineasDeArea]);
+    const getErrors = () => {
+        const e = {};
+        if (!form.descripcion.trim()) e.descripcion = 'La descripción es requerida.';
+        if (!form.area) e.area = 'El área es requerida.';
+        if (lineasDeArea.length > 0 && !form.linea) e.linea = 'La línea es requerida.';
+        return e;
+    };
 
     if (!isOpen) return null;
 
@@ -129,7 +132,23 @@ export function ModalNuevaGeneral({ isOpen, onClose, onSave, users = [], editDat
 
     const handleFileChange = (e) => {
         const files = Array.from(e.target.files || []);
-        const withPreviews = files.slice(0, 3 - form._localImages.length).map(file => ({
+        
+        const validFiles = [];
+        for (const file of files) {
+            const validation = validateImageFile(file);
+            if (!validation.isValid) {
+                notify.error(validation.error);
+            } else {
+                validFiles.push(file);
+            }
+        }
+
+        if (validFiles.length === 0) {
+            e.target.value = '';
+            return;
+        }
+
+        const withPreviews = validFiles.slice(0, 3 - form._localImages.length).map(file => ({
             file,
             preview: URL.createObjectURL(file),
             name: file.name,
@@ -149,18 +168,13 @@ export function ModalNuevaGeneral({ isOpen, onClose, onSave, users = [], editDat
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!form.descripcion.trim()) {
-            notify.error('La descripción es requerida.');
+        const errs = getErrors();
+        if (Object.keys(errs).length > 0) {
+            setFormErrors(errs);
+            notify.error('Completa los campos obligatorios.');
             return;
         }
-        if (!form.area) {
-            notify.error('El área es requerida.');
-            return;
-        }
-        if (lineasDeArea.length > 0 && !form.linea) {
-            notify.error('La línea es requerida.');
-            return;
-        }
+        setFormErrors({});
 
         const payload = {
             descripcion: form.descripcion.trim(),
@@ -184,6 +198,8 @@ export function ModalNuevaGeneral({ isOpen, onClose, onSave, users = [], editDat
             // error manejado por el padre
         }
     };
+
+    const isValid = Object.keys(getErrors()).length === 0;
 
     return createPortal(
         <div className="fixed inset-0 z-[99990] flex items-center justify-center bg-slate-950/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -217,20 +233,34 @@ export function ModalNuevaGeneral({ isOpen, onClose, onSave, users = [], editDat
 
                     {/* Descripción */}
                     <div>
-                        <label className="block text-[11px] font-black uppercase tracking-widest text-slate-500 mb-2">Descripción *</label>
+                        <label className={`block text-[11px] font-black uppercase tracking-widest mb-2 ${formErrors.descripcion ? 'text-rose-500' : 'text-slate-500'}`}>
+                            Descripción *
+                        </label>
                         <textarea
                             value={form.descripcion}
-                            onChange={e => set('descripcion', e.target.value)}
+                            onChange={e => {
+                                set('descripcion', e.target.value);
+                                if (formErrors.descripcion) setFormErrors(prev => ({ ...prev, descripcion: null }));
+                            }}
                             rows={3}
                             placeholder="¿Qué necesita hacerse?"
-                            className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800 placeholder:text-slate-300 focus:border-slate-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-slate-200/50 transition-all"
+                            className={`w-full resize-none rounded-2xl border px-4 py-3 text-sm font-medium focus:outline-none focus:ring-4 transition-all ${
+                                formErrors.descripcion 
+                                    ? 'border-rose-300 bg-rose-50 text-rose-900 placeholder:text-rose-300 focus:border-rose-400 focus:ring-rose-200/50' 
+                                    : 'border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-300 focus:border-slate-400 focus:bg-white focus:ring-slate-200/50'
+                            }`}
                         />
+                        {formErrors.descripcion && (
+                            <p className="mt-1.5 text-[11px] font-bold text-rose-500">{formErrors.descripcion}</p>
+                        )}
                     </div>
 
                     {/* Área + Línea */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-[11px] font-black uppercase tracking-widest text-slate-500 mb-2">Área Destino</label>
+                            <label className={`block text-[11px] font-black uppercase tracking-widest mb-2 ${formErrors.area ? 'text-rose-500' : 'text-slate-500'}`}>
+                                Área Destino *
+                            </label>
                             <select
                                 value={form.area}
                                 onChange={e => {
@@ -241,27 +271,49 @@ export function ModalNuevaGeneral({ isOpen, onClose, onSave, users = [], editDat
                                         linea: '',
                                         clasificacion: CLASIFICACIONES_POR_AREA[a]?.[0]?.value || 'OTROS'
                                     }));
+                                    if (formErrors.area || formErrors.linea) {
+                                        setFormErrors(prev => ({ ...prev, area: null, linea: null }));
+                                    }
                                 }}
-                                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-4 focus:ring-slate-200/50 transition-all"
+                                className={`w-full rounded-2xl border px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-4 transition-all ${
+                                    formErrors.area
+                                        ? 'border-rose-300 bg-rose-50 text-rose-900 focus:border-rose-400 focus:ring-rose-200/50'
+                                        : 'border-slate-200 bg-slate-50 text-slate-700 focus:border-slate-400 focus:ring-slate-200/50'
+                                }`}
                             >
                                 {AREAS_OPTIONS.map(a => (
                                     <option key={a.value} value={a.value}>{a.label}</option>
                                 ))}
                             </select>
+                            {formErrors.area && (
+                                <p className="mt-1.5 text-[11px] font-bold text-rose-500">{formErrors.area}</p>
+                            )}
                         </div>
                         {lineasDeArea.length > 0 && (
                             <div>
-                                <label className="block text-[11px] font-black uppercase tracking-widest text-slate-500 mb-2">Línea</label>
+                                <label className={`block text-[11px] font-black uppercase tracking-widest mb-2 ${formErrors.linea ? 'text-rose-500' : 'text-slate-500'}`}>
+                                    Línea / Depto *
+                                </label>
                                 <select
                                     value={form.linea}
-                                    onChange={e => set('linea', e.target.value)}
-                                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-4 focus:ring-slate-200/50 transition-all"
+                                    onChange={e => {
+                                        set('linea', e.target.value);
+                                        if (formErrors.linea) setFormErrors(prev => ({ ...prev, linea: null }));
+                                    }}
+                                    className={`w-full rounded-2xl border px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-4 transition-all ${
+                                        formErrors.linea
+                                            ? 'border-rose-300 bg-rose-50 text-rose-900 focus:border-rose-400 focus:ring-rose-200/50'
+                                            : 'border-slate-200 bg-slate-50 text-slate-700 focus:border-slate-400 focus:ring-slate-200/50'
+                                    }`}
                                 >
-                                    <option value="">— Sin línea —</option>
+                                    <option value="" disabled>Seleccione línea</option>
                                     {lineasDeArea.map(l => (
                                         <option key={l.value} value={l.value}>{l.label}</option>
                                     ))}
                                 </select>
+                                {formErrors.linea && (
+                                    <p className="mt-1.5 text-[11px] font-bold text-rose-500">{formErrors.linea}</p>
+                                )}
                             </div>
                         )}
                     </div>
@@ -336,12 +388,22 @@ export function ModalNuevaGeneral({ isOpen, onClose, onSave, users = [], editDat
                             </div>
 
                             <div className="flex flex-wrap gap-3">
-                                {form._localImages.map((img, idx) => (
-                                    <div key={idx} className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden border-2 border-emerald-200 group shadow-md animate-in zoom-in-90">
-                                        <img src={img.preview} className="w-full h-full object-cover" alt="Nuevo" />
-                                        <button type="button" onClick={() => handleRemoveImage(idx)} className="absolute inset-0 bg-slate-900/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X size={20} /></button>
-                                    </div>
-                                ))}
+                                {form._localImages.map((img, idx) => {
+                                    const isHeic = img.file && /\.(heic|heif)$/i.test(img.file.name);
+                                    return (
+                                        <div key={idx} className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden border-2 border-emerald-200 group shadow-md animate-in zoom-in-90 bg-slate-50 flex items-center justify-center text-slate-400">
+                                            {isHeic ? (
+                                                <div className="flex flex-col items-center justify-center h-full w-full p-2 text-center bg-slate-100 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                                                    <Camera size={24} className="text-amber-500 mb-1" />
+                                                    <span>HEIC</span>
+                                                </div>
+                                            ) : (
+                                                <img src={img.preview} className="w-full h-full object-cover" alt="Nuevo" />
+                                            )}
+                                            <button type="button" onClick={() => handleRemoveImage(idx)} className="absolute inset-0 bg-slate-900/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X size={20} /></button>
+                                        </div>
+                                    );
+                                })}
                                 {form._localImages.length < 3 && (
                                     <button type="button" onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center justify-center w-28 h-28 sm:w-32 sm:h-32 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-500 hover:border-slate-300 transition-colors">
                                         <Plus size={24} className="mb-1" />
@@ -349,7 +411,7 @@ export function ModalNuevaGeneral({ isOpen, onClose, onSave, users = [], editDat
                                     </button>
                                 )}
                             </div>
-                            <input type="file" accept="image/*" multiple className="hidden" ref={fileInputRef} onChange={handleFileChange} />
+                            <input type="file" accept="image/jpeg, image/png, image/webp, image/heic, image/heif" multiple className="hidden" ref={fileInputRef} onChange={handleFileChange} />
                         </div>
                     )}
                 </form>

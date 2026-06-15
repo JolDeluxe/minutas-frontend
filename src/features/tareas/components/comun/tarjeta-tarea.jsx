@@ -675,6 +675,9 @@ export const TareaCard = ({
     onToggleNotificado,
     users = [],
     hideStatus = false,
+    onCreateNote,
+    onUpdateNote,
+    onDeleteNote,
 }) => {
 
     const [isEntregaModalOpen, setIsEntregaModalOpen] = useState(false);
@@ -756,11 +759,20 @@ export const TareaCard = ({
     }
     const myTaskIsPendiente = mySubTask.estado?.toUpperCase() === 'PENDIENTE';
 
-    const canForceClose = esJefe && (!esAsignadoDirecto || !myTaskIsPendiente) && isPendiente && !isPorAprobar && tipo === 'TAREA' && !isDraft && !isRemoteDraft;
+    const canForceClose = esJefe && (!esAsignadoDirecto || !myTaskIsPendiente) && isPendiente && !isPorAprobar && tipo === 'TAREA' && !isDraft && !isRemoteDraft && !isExternal;
 
     // ── Handlers de notas ───────────────────────────────────────────────────
     const handleAddNote = async (tareaId, contenido) => {
         try {
+            if (onCreateNote) {
+                const res = await onCreateNote(tareaId, contenido);
+                if (res) {
+                    const newNote = res.data?.data || res.data || res;
+                    setNotas((prev) => [newNote, ...prev]);
+                    return newNote;
+                }
+                return false;
+            }
             const res = await createTareaNota({ tareaId, contenido });
             if (res.data?.status === 'success' || res.data?.data) {
                 const newNote = res.data.data;
@@ -775,6 +787,15 @@ export const TareaCard = ({
 
     const handleUpdateNote = async (tareaId, noteId, contenido) => {
         try {
+            if (onUpdateNote) {
+                const res = await onUpdateNote(tareaId, noteId, contenido);
+                if (res) {
+                    const updated = res.data?.data || res.data || res;
+                    setNotas((prev) => prev.map((n) => n.id === noteId ? updated : n));
+                    return updated;
+                }
+                return false;
+            }
             const res = await updateTareaNota(noteId, { contenido });
             if (res.data?.status === 'success' || res.data?.data) {
                 const updated = res.data.data;
@@ -789,6 +810,14 @@ export const TareaCard = ({
 
     const handleDeleteNote = async (tareaId, noteId) => {
         try {
+            if (onDeleteNote) {
+                const ok = await onDeleteNote(tareaId, noteId);
+                if (ok) {
+                    setNotas((prev) => prev.filter((n) => n.id !== noteId));
+                    return true;
+                }
+                return false;
+            }
             const res = await deleteTareaNota(noteId);
             if (res.data?.status === 'success' || res.status === 200) {
                 setNotas((prev) => prev.filter((n) => n.id !== noteId));
@@ -816,7 +845,7 @@ export const TareaCard = ({
         if (isOtherArea) return 'bg-white hover:bg-slate-50/30 border-slate-200'; // Clean and neutral for other areas
         if (vencida) return 'bg-red-50/40 hover:bg-red-100/60 ring-1 ring-red-500/20';
         if (!isOrganized && !isExternal) return 'bg-amber-50/20 hover:bg-amber-100/30 border-l-4 border-l-amber-500 border-dashed';
-        if (isExternal) return 'bg-marca-primario/5 border-l-4 border-l-marca-primario';
+        if (isExternal) return 'bg-white hover:bg-slate-50/30 border-slate-200';
         switch (estado) {
             case 'PENDIENTE': return 'bg-white hover:bg-amber-50/30';
             case 'EN_REVISION': return 'bg-blue-50/30 hover:bg-blue-100/50';
@@ -824,10 +853,13 @@ export const TareaCard = ({
         }
     };
 
+    const isMarketingArea = tarea.area === 'MARKETING';
+    const isExternoArea = tarea.area !== 'DISENO' && tarea.area !== 'MARKETING';
+
     const lineInfo = {
-        label: isMarketing ? 'Marketing' : (LINEA_MAP[tarea.linea]?.label || tarea.linea || '—'),
-        color: isMarketing ? '#7c3aed' : (LINEA_MAP[tarea.linea]?.color || '#64748b'),
-        value: tarea.linea
+        label: isExternoArea ? (AREA_MAP[tarea.area] || tarea.area) : (isMarketing ? 'Marketing' : (LINEA_MAP[tarea.linea]?.label || tarea.linea || '—')),
+        color: isExternoArea ? '#0f766e' : (isMarketing ? '#7c3aed' : (LINEA_MAP[tarea.linea]?.color || '#64748b')),
+        value: isExternoArea ? tarea.area : tarea.linea
     };
 
     const clasif = CLASIFICACION_MAP[tarea.clasificacion] || null;
@@ -941,7 +973,7 @@ export const TareaCard = ({
                                     </span>
                                 )}
                                 {/* Badge de tipo */}
-                                {tipo && tipo !== 'DESCARTADA' && !((isOtherArea || hideStatus) && tipo === 'SIN_ORGANIZAR') && (
+                                {tipo && tipo !== 'DESCARTADA' && !((isOtherArea || hideStatus) && tipo === 'SIN_ORGANIZAR') && !(isExternal && tarea.area !== 'DISENO' && tarea.area !== 'MARKETING') && (
                                     <span className={cn(
                                         "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border text-white shadow-sm transition-all",
                                         tipo === 'TAREA'
@@ -980,16 +1012,7 @@ export const TareaCard = ({
                                 )}
                                 {isExternal && !isDraft && !isRemoteDraft && (
                                     <>
-                                        {!(tarea.area === 'DISENO' || tarea.area === 'MARKETING') ? (
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border bg-slate-100 text-slate-700 border-slate-200">
-                                                {AREA_MAP[tarea.area] || tarea.area}{tarea.linea ? ` - ${tarea.linea}` : ''}
-                                            </span>
-                                        ) : (
-                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border bg-marca-primario/10 text-marca-primario border-marca-primario/20">
-                                                <Icon name="output" size="10px" />
-                                                {AREA_MAP[tarea.area] || tarea.area}
-                                            </span>
-                                        )}
+
                                         {tarea.createdAt && (
                                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase tracking-widest border bg-slate-100 text-slate-600 border-slate-200">
                                                 <Icon name="event" size="10px" />
@@ -1124,8 +1147,8 @@ export const TareaCard = ({
                                             </button>
                                         )}
 
-                                        {/* Checkbox Notificado — solo ADMIN, solo externa, solo guardada */}
-                                        {rol === 'ADMIN' && isExternal && !isDraft && !isRemoteDraft && onToggleNotificado && (
+                                        {/* Checkbox Notificado — solo externa, solo guardada */}
+                                        {isExternal && !isDraft && !isRemoteDraft && onToggleNotificado && (
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); onToggleNotificado(tarea.id); }}
                                                 title={tarea.notificadoAt ? `Notificado el ${new Date(tarea.notificadoAt).toLocaleDateString('es-MX')}` : 'Marcar como notificado'}
@@ -1159,7 +1182,7 @@ export const TareaCard = ({
                                                     { key: 'entregar', enabled: isFormalizada && !isDraft && !isCerrado && !isExternal && myTaskIsPendiente && esAsignadoDirecto, onClick: () => { setIsEntregaModalOpen(true); } },
                                                     { key: 'aprobar', enabled: isFormalizada && !isDraft && !isCerrado && !isExternal && isEnRevision && puedeAprobar, onClick: (r) => { if (onReview) onReview(r); else setIsConfirmAprobarOpen(true); } },
                                                     { key: 'forzar_cierre_tarea', enabled: canForceClose && !isCerrado && !isRemoteDraft, onClick: (r) => { setForceCloseTarget(r); } },
-                                                    { key: 'ver_detalle', enabled: isFormalizada && !isRemoteDraft && !isDraft && !isGrouped, onClick: (r) => { onViewDetail?.(r); } },
+                                                    { key: 'ver_detalle', enabled: isFormalizada && !isRemoteDraft && !isDraft && !isGrouped && Boolean(onViewDetail), onClick: (r) => { onViewDetail?.(r); } },
                                                     { key: 'editar', enabled: !isCerrado && !isRemoteDraft && !!onEdit, onClick: (r) => { 
                                                         const tareaToEdit = { ...r };
                                                         if (r.responsables) {

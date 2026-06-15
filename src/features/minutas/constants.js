@@ -248,6 +248,20 @@ export const CATALOGOS_POR_DEPARTAMENTO = {
     ],
     lineas: [], // Marketing no usa líneas
   },
+  EXTERNO: {
+    areas: [
+      { value: 'DIRECCION_MBC',     label: 'Dirección MBC' },
+      { value: 'DIRECCION_CFI',     label: 'Dirección CFI' },
+      { value: 'DIRECCION_ADJUNTA', label: 'Dirección Adjunta' },
+      { value: 'DIRECCION_TIENDAS', label: 'Dirección Tiendas' },
+      { value: 'DIRECCION_MKT',     label: 'Dirección MKT' },
+      { value: 'DIRECCION_ALTA_CALIDAD', label: 'Dirección Alta Calidad' },
+    ],
+    clasificaciones: [
+      { value: 'OTROS',           label: 'Otros',           color: '#64748b', icon: 'more_horiz' },
+    ],
+    lineas: [],
+  },
 };
 
 /** Helper: obtiene catálogos del departamento, con fallback a DISENO */

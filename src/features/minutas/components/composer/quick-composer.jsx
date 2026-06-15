@@ -5,6 +5,7 @@ import { getCatalogos, LINEAS_POR_AREA, PRIORIDAD_MAP } from '../../constants';
 import { useUsers } from '../../../usuarios/hooks/use-users';
 import { LineIconSelector } from '../icons/line-icons';
 import { Camera, X, Plus, AlertCircle, Save, StickyNote, Trash2, Calendar, UserPlus, Check } from 'lucide-react';
+import { validateImageFile } from '@/utils/validators';
 
 /**
  * AllNotesModal — Modal para gestionar todas las notas rápidas cuando exceden el límite visual.
@@ -54,6 +55,7 @@ const AllNotesModal = ({ isOpen, onClose, notas, onUpdate, onRemove, onAdd }) =>
 export const QuickComposer = ({
   minutaId,
   lineaDefault,
+  areaDefault,
   departamento,
   onSubmit,
   submitting = false,
@@ -68,20 +70,35 @@ export const QuickComposer = ({
   const [descripcion, setDescripcion] = useState('');
   const [notasRapidas, setNotasRapidas] = useState([]);
   const [clasificacion, setClasificacion] = useState('');
-  const [area, setArea] = useState(departamento || catalogos.areas[0]?.value || 'DISENO');
+  const [area, setArea] = useState(areaDefault || (departamento !== 'EXTERNO' ? departamento : null) || catalogos.areas[0]?.value || 'DISENO');
   
   const lineasDisponibles = useMemo(() => LINEAS_POR_AREA[area] || [], [area]);
-  const tieneLineas = lineasDisponibles.length > 0;
+  
+  const lineasConDefault = useMemo(() => {
+    let list = [...lineasDisponibles];
+    if (area === areaDefault && lineaDefault) {
+      const exists = list.some(
+        l => l.value?.toUpperCase() === lineaDefault.toUpperCase() || 
+             l.label?.toUpperCase() === lineaDefault.toUpperCase()
+      );
+      if (!exists) {
+        list = [{ value: lineaDefault, label: lineaDefault }, ...list];
+      }
+    }
+    return list;
+  }, [lineasDisponibles, area, areaDefault, lineaDefault]);
+
+  const tieneLineas = lineasConDefault.length > 0;
   const isOperationalArea = area === 'DISENO' || area === 'MARKETING';
 
-  const [linea, setLinea] = useState(tieneLineas ? (lineaDefault || lineasDisponibles[0]?.value) : null);
+  const [linea, setLinea] = useState(tieneLineas ? (lineaDefault || lineasConDefault[0]?.value) : null);
   const [imagenes, setImagenes] = useState([]);
   const [showLimitError, setShowLimitError] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [showAllNotes, setShowAllNotes] = useState(false);
 
   // Estados Operativos (Modo Tarea)
-  const [esTarea, setEsTarea] = useState(false);
+  const [esTarea, setEsTarea] = useState(departamento === 'EXTERNO');
   const [prioridad, setPrioridad] = useState('MEDIA');
   const [responsables, setResponsables] = useState([]);
   const [fechaVencimiento, setFechaVencimiento] = useState('');
@@ -107,7 +124,25 @@ export const QuickComposer = ({
   }, [fetchUsers]);
 
   useEffect(() => {
-    if (departamento && area === 'DISENO' && departamento !== 'DISENO') {
+    if (areaDefault) {
+      setArea(areaDefault);
+    }
+  }, [areaDefault]);
+
+  useEffect(() => {
+    if (lineaDefault !== undefined) {
+      setLinea(lineaDefault);
+    }
+  }, [lineaDefault]);
+
+  useEffect(() => {
+    if (departamento === 'EXTERNO') {
+      setEsTarea(true);
+    }
+  }, [departamento]);
+
+  useEffect(() => {
+    if (departamento && departamento !== 'EXTERNO' && area === 'DISENO' && departamento !== 'DISENO') {
       setArea(departamento);
     }
   }, [departamento]);
@@ -120,13 +155,13 @@ export const QuickComposer = ({
   const fileInputRef = useRef(null);
 
   const normalizedArea = String(area || '').trim().toUpperCase();
-  const allowTarea = normalizedArea === 'MARKETING' || normalizedArea === 'DISEÑO' || normalizedArea === 'DISENO';
+  const allowTarea = normalizedArea === 'MARKETING' || normalizedArea === 'DISEÑO' || normalizedArea === 'DISENO' || normalizedArea === 'EXTERNO';
 
   useEffect(() => {
-    if (!allowTarea && esTarea) {
+    if (!allowTarea && esTarea && departamento !== 'EXTERNO') {
       setEsTarea(false);
     }
-  }, [allowTarea, esTarea]);
+  }, [allowTarea, esTarea, departamento]);
 
   // Validación personalizada solicitada por el usuario
   const isValid = useMemo(() => {
@@ -141,7 +176,7 @@ export const QuickComposer = ({
     }
     
     if (esTarea) {
-      if (!fechaVencimiento) return false;
+      // Fecha límite es opcional (se quitó la validación estricta)
     }
     
     // Para otras áreas, solo se requiere la descripción
@@ -193,7 +228,18 @@ export const QuickComposer = ({
   };
 
   const processFiles = (files) => {
-    const validFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+    const validFiles = [];
+    for (const file of Array.from(files)) {
+      const validation = validateImageFile(file);
+      if (!validation.isValid) {
+        notify.error(validation.error);
+      } else {
+        validFiles.push(file);
+      }
+    }
+
+    if (validFiles.length === 0) return;
+
     const remainingSlots = 3 - imagenes.length;
     if (remainingSlots <= 0) {
       setShowLimitError(true);
@@ -239,11 +285,13 @@ export const QuickComposer = ({
     };
 
     if (esTarea) {
-      tareaData.prioridad = prioridad;
-      tareaData.fechaVencimiento = fechaVencimiento ? new Date(fechaVencimiento).toISOString() : null;
-      if (responsables.length > 0) {
-        tareaData.responsables = responsables;
+      if (departamento !== 'EXTERNO') {
+        tareaData.prioridad = prioridad;
+        if (responsables.length > 0) {
+          tareaData.responsables = responsables;
+        }
       }
+      tareaData.fechaVencimiento = fechaVencimiento ? new Date(fechaVencimiento).toISOString() : null;
     }
 
     const payload = {
@@ -255,13 +303,23 @@ export const QuickComposer = ({
     setImagenes([]);
 
     // --- REINICIAR SELECTORES A SUS VALORES INICIALES ---
-    const defaultArea = catalogos.areas[0]?.value || departamento;
+    const defaultArea = areaDefault || catalogos.areas[0]?.value || departamento;
     const defaultLineas = LINEAS_POR_AREA[defaultArea] || [];
+    let finalLineas = [...defaultLineas];
+    if (defaultArea === areaDefault && lineaDefault) {
+      const exists = finalLineas.some(
+        l => l.value?.toUpperCase() === lineaDefault.toUpperCase() || 
+             l.label?.toUpperCase() === lineaDefault.toUpperCase()
+      );
+      if (!exists) {
+        finalLineas = [{ value: lineaDefault, label: lineaDefault }, ...finalLineas];
+      }
+    }
     setArea(defaultArea);
-    setLinea(defaultLineas.length > 0 ? (lineaDefault || defaultLineas[0]?.value) : null);
+    setLinea(finalLineas.length > 0 ? (lineaDefault || finalLineas[0]?.value) : null);
     setClasificacion('');
     
-    setEsTarea(false);
+    setEsTarea(departamento === 'EXTERNO');
     setPrioridad('MEDIA');
     setResponsables([]);
     setFechaVencimiento('');
@@ -286,7 +344,8 @@ export const QuickComposer = ({
     esTarea,
     prioridad,
     responsables,
-    fechaVencimiento
+    fechaVencimiento,
+    areaDefault
   ]);
 
   const handleKeyDown = (e) => {
@@ -408,14 +467,24 @@ export const QuickComposer = ({
                     <Camera size={16} />
                     <span className="text-[6px] font-black uppercase">Foto</span>
                   </button>
-                  <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" multiple className="hidden" />
+                  <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/jpeg, image/png, image/webp, image/heic, image/heif" multiple className="hidden" />
 
-                  {imagenes.map((img) => (
-                    <div key={img.id} className="relative w-12 h-12 shrink-0 rounded-xl overflow-hidden border border-white shadow-sm group transition-all hover:scale-105">
-                      <img src={img.preview} className="w-full h-full object-cover" />
-                      <button type="button" onClick={() => removeImagen(img.id)} className="absolute inset-0 bg-slate-900/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X size={14} strokeWidth={3} /></button>
-                    </div>
-                  ))}
+                  {imagenes.map((img) => {
+                    const isHeic = img.file && /\.(heic|heif)$/i.test(img.file.name);
+                    return (
+                      <div key={img.id} className="relative w-12 h-12 shrink-0 rounded-xl overflow-hidden border border-white shadow-sm bg-slate-50 flex items-center justify-center text-slate-400 group transition-all hover:scale-105">
+                        {isHeic ? (
+                          <div className="flex flex-col items-center justify-center h-full w-full bg-slate-100 text-[8px] font-black uppercase text-slate-500">
+                            <Camera size={14} className="text-amber-500 mb-0.5" />
+                            <span>HEIC</span>
+                          </div>
+                        ) : (
+                          <img src={img.preview} className="w-full h-full object-cover" />
+                        )}
+                        <button type="button" onClick={() => removeImagen(img.id)} className="absolute inset-0 bg-slate-900/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X size={14} strokeWidth={3} /></button>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -431,7 +500,17 @@ export const QuickComposer = ({
                     const newArea = e.target.value;
                     setArea(newArea);
                     const newLineas = LINEAS_POR_AREA[newArea] || [];
-                    setLinea(newLineas.length > 0 ? newLineas[0].value : null);
+                    let finalLineas = [...newLineas];
+                    if (newArea === areaDefault && lineaDefault) {
+                      const exists = finalLineas.some(
+                        l => l.value?.toUpperCase() === lineaDefault.toUpperCase() || 
+                             l.label?.toUpperCase() === lineaDefault.toUpperCase()
+                      );
+                      if (!exists) {
+                        finalLineas = [{ value: lineaDefault, label: lineaDefault }, ...finalLineas];
+                      }
+                    }
+                    setLinea(finalLineas.length > 0 ? (newArea === areaDefault ? lineaDefault : finalLineas[0].value) : null);
                     if (newArea !== 'DISENO' && newArea !== 'MARKETING') {
                       setClasificacion('');
                     }
@@ -445,7 +524,7 @@ export const QuickComposer = ({
                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Línea</label>
                     <select value={linea || ''} onChange={(e) => setLinea(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-marca-primario/10 transition-all shadow-sm">
                       <option value="">— Seleccionar Línea —</option>
-                      {lineasDisponibles.map(({ value, label }) => (<option key={value} value={value}>{label}</option>))}
+                      {lineasConDefault.map(({ value, label }) => (<option key={value} value={value}>{label}</option>))}
                     </select>
                  </div>
                )}
@@ -472,7 +551,7 @@ export const QuickComposer = ({
             </div>
 
             {/* SWITCH ¿ES TAREA? */}
-            {allowTarea && clasificacion !== 'POLITICAS' && (
+            {allowTarea && clasificacion !== 'POLITICAS' && departamento !== 'EXTERNO' && (
               <div className="flex items-center gap-3 mt-2">
                  <button
                     type="button"
@@ -499,12 +578,15 @@ export const QuickComposer = ({
             )}
 
             {/* CAMPOS OPERATIVOS (RENDER CONDICIONAL) */}
-            {allowTarea && esTarea && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 shrink-0 animate-in fade-in slide-in-from-top-2 duration-300 border-t border-slate-100 pt-2 mt-0.5">
+            {((allowTarea && esTarea) || departamento === 'EXTERNO') && (
+              <div className={cn(
+                "grid gap-2 shrink-0 animate-in fade-in slide-in-from-top-2 duration-300 border-t border-slate-100 pt-2 mt-0.5",
+                departamento === 'EXTERNO' ? "grid-cols-1" : "grid-cols-1 md:grid-cols-3"
+              )}>
                  {/* Fecha Vencimiento */}
                  <div className="flex flex-col gap-1">
                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1">
-                       <Calendar size={10} /> Fecha Límite
+                       <Calendar size={10} /> Fecha Límite (Opcional)
                     </label>
                     <input 
                       type="date" 
@@ -515,109 +597,111 @@ export const QuickComposer = ({
                     />
                  </div>
 
-                 {/* Responsables */}
-                 <div className="flex flex-col gap-1 relative" ref={responsiblesRef}>
-                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1">
-                        <UserPlus size={10} /> Responsables
-                     </label>
-                     <button
-                       type="button"
-                       onClick={() => {
-                         const nextState = !showResponsiblesDropdown;
-                         setShowResponsiblesDropdown(nextState);
-                         if (nextState) {
-                           setTimeout(() => {
-                             responsiblesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                           }, 150);
-                         }
-                       }}
-                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-marca-primario/10 transition-all shadow-sm text-left flex items-center justify-between min-h-[38px] hover:bg-slate-100/50"
-                     >
-                       <div className="flex flex-wrap gap-1 max-w-[90%]">
-                         {responsables.length === 0 ? (
-                           <span className="text-slate-400">— Sin Asignar —</span>
-                         ) : (
-                           responsables.map((id) => {
-                             const user = filteredUsers.find(u => u.id === id);
-                             if (!user) return null;
-                             return (
-                               <span 
-                                 key={id} 
-                                 className="inline-flex items-center gap-1 bg-slate-200 text-slate-800 px-1.5 py-0.5 rounded-lg text-[10px] font-bold animate-in zoom-in-95 duration-100"
-                                 onClick={(e) => {
-                                   e.stopPropagation();
-                                   setResponsables(prev => prev.filter(rId => rId !== id));
-                                 }}
-                               >
-                                 {user.nombre.split(' ')[0]}
-                                 <X size={10} className="hover:text-red-500 cursor-pointer" />
-                               </span>
-                             );
-                           })
+                 {departamento !== 'EXTERNO' && (
+                   <>
+                     {/* Responsables */}
+                     <div className="flex flex-col gap-1 relative" ref={responsiblesRef}>
+                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1">
+                            <UserPlus size={10} /> Responsables
+                         </label>
+                         <button
+                           type="button"
+                           onClick={() => {
+                             const nextState = !showResponsiblesDropdown;
+                             setShowResponsiblesDropdown(nextState);
+                             if (nextState) {
+                               setTimeout(() => {
+                                 responsiblesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                               }, 150);
+                             }
+                           }}
+                           className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-marca-primario/10 transition-all shadow-sm text-left flex items-center justify-between min-h-[38px] hover:bg-slate-100/50"
+                         >
+                           <div className="flex flex-wrap gap-1 max-w-[90%]">
+                             {responsables.length === 0 ? (
+                               <span className="text-slate-400">— Sin Asignar —</span>
+                             ) : (
+                               responsables.map((id) => {
+                                 const user = filteredUsers.find(u => u.id === id);
+                                 if (!user) return null;
+                                 return (
+                                   <span 
+                                     key={id} 
+                                     className="inline-flex items-center gap-1 bg-slate-200 text-slate-800 px-1.5 py-0.5 rounded-lg text-[10px] font-bold animate-in zoom-in-95 duration-100"
+                                     onClick={(e) => {
+                                       e.stopPropagation();
+                                       setResponsables(prev => prev.filter(rId => rId !== id));
+                                     }}
+                                   >
+                                     {user.nombre.split(' ')[0]}
+                                     <X size={10} className="hover:text-red-500 cursor-pointer" />
+                                   </span>
+                                 );
+                               })
+                             )}
+                           </div>
+                           <Icon 
+                             name="expand_more" 
+                             size="sm" 
+                             className={cn(
+                               "text-slate-400 transition-transform flex-shrink-0",
+                               showResponsiblesDropdown ? "rotate-180" : ""
+                             )} 
+                           />
+                         </button>
+
+                         {showResponsiblesDropdown && (
+                           <div className="absolute bottom-[102%] left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl z-[70] max-h-48 overflow-y-auto custom-scrollbar p-1 flex flex-col gap-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                             {filteredUsers.length === 0 ? (
+                               <p className="text-[10px] text-slate-400 italic p-2 text-center">No hay responsables disponibles</p>
+                             ) : (
+                               filteredUsers.map((user) => {
+                                 const isSelected = responsables.includes(user.id);
+                                 return (
+                                   <button
+                                     type="button"
+                                     key={user.id}
+                                     onClick={() => {
+                                       setResponsables(prev => 
+                                         prev.includes(user.id) 
+                                           ? prev.filter(id => id !== user.id) 
+                                           : [...prev, user.id]
+                                       );
+                                     }}
+                                     className={cn(
+                                       "w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-between hover:bg-slate-50 cursor-pointer",
+                                       isSelected ? "bg-slate-50 text-slate-900" : "text-slate-600"
+                                     )}
+                                   >
+                                     <span className="truncate">{user.nombre} {user.apellidos}</span>
+                                     {isSelected && (
+                                       <div className="bg-emerald-500 text-white rounded-full p-0.5 shadow-sm flex items-center justify-center">
+                                         <Check size={8} strokeWidth={4} />
+                                       </div>
+                                     )}
+                                   </button>
+                                 );
+                               })
+                             )}
+                           </div>
                          )}
-                       </div>
-                       <Icon 
-                         name="expand_more" 
-                         size="sm" 
-                         className={cn(
-                           "text-slate-400 transition-transform flex-shrink-0",
-                           showResponsiblesDropdown ? "rotate-180" : ""
-                         )} 
-                       />
-                     </button>
+                      </div>
 
-                     {showResponsiblesDropdown && (
-                       <div className="absolute bottom-[102%] left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl z-[70] max-h-48 overflow-y-auto custom-scrollbar p-1 flex flex-col gap-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
-                         {filteredUsers.length === 0 ? (
-                           <p className="text-[10px] text-slate-400 italic p-2 text-center">No hay responsables disponibles</p>
-                         ) : (
-                           filteredUsers.map((user) => {
-                             const isSelected = responsables.includes(user.id);
-                             return (
-                               <button
-                                 type="button"
-                                 key={user.id}
-                                 onClick={() => {
-                                   setResponsables(prev => 
-                                     prev.includes(user.id) 
-                                       ? prev.filter(id => id !== user.id) 
-                                       : [...prev, user.id]
-                                   );
-                                 }}
-                                 className={cn(
-                                   "w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-between hover:bg-slate-50 cursor-pointer",
-                                   isSelected ? "bg-slate-50 text-slate-900" : "text-slate-600"
-                                 )}
-                               >
-                                 <span className="truncate">{user.nombre} {user.apellidos}</span>
-                                 {isSelected && (
-                                   <div className="bg-emerald-500 text-white rounded-full p-0.5 shadow-sm flex items-center justify-center">
-                                     <Check size={8} strokeWidth={4} />
-                                   </div>
-                                 )}
-                               </button>
-                             );
-                           })
-                         )}
-                       </div>
-                     )}
-                  </div>
-
-                 {/* Prioridad */}
-                 <div className="flex flex-col gap-1">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Prioridad</label>
-                    <select 
-                      value={prioridad} 
-                      onChange={(e) => setPrioridad(e.target.value)} 
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-marca-primario/10 transition-all shadow-sm"
-                    >
-                      {Object.entries(PRIORIDAD_MAP).map(([key, config]) => (
-                        <option key={key} value={key}>{config.label}</option>
-                      ))}
-                    </select>
-                 </div>
-
-
+                      {/* Prioridad */}
+                      <div className="flex flex-col gap-1">
+                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Prioridad</label>
+                         <select 
+                           value={prioridad} 
+                           onChange={(e) => setPrioridad(e.target.value)} 
+                           className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-marca-primario/10 transition-all shadow-sm"
+                         >
+                           {Object.entries(PRIORIDAD_MAP).map(([key, config]) => (
+                             <option key={key} value={key}>{config.label}</option>
+                           ))}
+                         </select>
+                      </div>
+                   </>
+                 )}
               </div>
             )}
 

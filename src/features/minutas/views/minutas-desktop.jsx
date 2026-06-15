@@ -84,6 +84,9 @@ export const MinutasDesktop = ({
     // Global Filter
     departamentoGlobal,
     setDepartamentoGlobal,
+    isExterna,
+    onDownloadPdf,
+    isGeneratingPdf,
 }) => {
     const { user } = useAuthStore();
     const [viewMode, setViewModeState] = useState(() => {
@@ -136,14 +139,16 @@ export const MinutasDesktop = ({
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
                 <div className="flex-1">
                     <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight fuente-titulos">
-                        Minutas
+                        {departamentoGlobal === 'EXTERNO' ? 'Minutas Externas' : 'Minutas'}
                     </h1>
                     <p className="text-sm text-slate-500 mt-1 font-medium">
-                        {estadoFilter === 'ACTIVA' 
-                            ? 'Minutas activas — pendientes de revisión'
-                            : estadoFilter === 'CERRADA'
-                                ? 'Minutas cerradas — historial completado'
-                                : 'Todas las minutas del sistema'
+                        {departamentoGlobal === 'EXTERNO'
+                            ? (estadoFilter === 'CERRADA' ? 'Historial completado' : 'Todas las minutas externas')
+                            : (estadoFilter === 'ACTIVA' 
+                                ? 'Minutas activas — pendientes de revisión'
+                                : estadoFilter === 'CERRADA'
+                                    ? 'Minutas cerradas — historial completado'
+                                    : 'Todas las minutas del sistema')
                         }
                     </p>
                 </div>
@@ -151,19 +156,20 @@ export const MinutasDesktop = ({
                 {isAdmin && (
                     <div className="flex-shrink-0 flex justify-center py-1 animate-in fade-in duration-300">
                         <div className="flex items-center bg-slate-100/90 p-0.5 rounded-xl border border-slate-200/50 shadow-inner max-w-xs backdrop-blur-md">
-                            {['DISEÑO', 'MARKETING'].map(opt => (
+                            {['DISEÑO', 'MARKETING', 'EXTERNO'].map(opt => (
                                 <button
                                     key={opt}
                                     type="button"
                                     onClick={() => setDepartamentoGlobal(opt)}
                                     className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                                         departamentoGlobal === opt 
-                                            ? `bg-white shadow-sm ring-1 ring-slate-200/50 font-bold ${opt === 'MARKETING' ? 'text-purple-600' : 'text-blue-600'}` 
+                                            ? `bg-white shadow-sm ring-1 ring-slate-200/50 font-bold ${opt === 'MARKETING' ? 'text-purple-600' : opt === 'EXTERNO' ? 'text-amber-600' : 'text-blue-600'}` 
                                             : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50/50'
                                     }`}
                                 >
                                     {opt === 'DISEÑO' && <DisenoIcon size={14} />}
                                     {opt === 'MARKETING' && <MarketingIcon size={14} />}
+                                    {opt === 'EXTERNO' && <Icon name="domain" size="14px" />}
                                     {opt}
                                 </button>
                             ))}
@@ -213,6 +219,7 @@ export const MinutasDesktop = ({
                 loading={loading} 
                 departamentoGlobal={departamentoGlobal}
                 isAdmin={isAdmin}
+                isExterna={departamentoGlobal === 'EXTERNO'}
             />
 
             {/* QUICK NAVIGATE: Calendario semanal */}
@@ -316,6 +323,8 @@ export const MinutasDesktop = ({
                                             onEdit={onEdit}
                                             onCancel={onCancel}
                                             isAdmin={isAdmin}
+                                            onDownloadPdf={isExterna ? () => onDownloadPdf(minuta) : undefined}
+                                            isGeneratingPdf={isGeneratingPdf === minuta.id}
                                             badge={
                                                 ultimaJuntaId && (minuta.id === (
                                                     (minuta.departamento || minuta.creadoPor?.departamento) === 'MARKETING'
@@ -355,6 +364,9 @@ export const MinutasDesktop = ({
                     isAdmin={isAdmin}
                     ultimaJuntaId={ultimaJuntaId}
                     juntaAnteriorId={juntaAnteriorId}
+                    isExterna={isExterna}
+                    onDownloadPdf={isExterna ? onDownloadPdf : undefined}
+                    isGeneratingPdf={isGeneratingPdf}
                 />
             )}
         </div>

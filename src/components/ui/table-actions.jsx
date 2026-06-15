@@ -52,6 +52,12 @@ const ACTION_CONFIG = {
         variant: "dark",
         className: "text-estado-resuelto hover:bg-estado-resuelto/10",
     },
+    descargar_pdf: {
+        icon: "picture_as_pdf",
+        tooltip: "Descargar PDF",
+        variant: "dark",
+        className: "text-red-600 hover:bg-red-50",
+    },
     // ── Acciones de Tickets ──
     asignar_tecnico: {
         icon: "engineering",
@@ -82,13 +88,14 @@ const ACTION_CONFIG = {
 export const TableActions = ({ row, actions = [] }) => {
     return (
         <div className="flex items-center justify-center gap-1.5">
-            {actions.map(({ key, enabled, hidden, onClick, tooltip: tooltipOverride }) => {
+            {actions.map(({ key, enabled, hidden, onClick, tooltip: tooltipOverride, isLoading, iconOverride }) => {
                 if (hidden || !enabled) return null;
 
                 const config = ACTION_CONFIG[key];
                 if (!config) return null;
 
                 const tooltip = tooltipOverride ?? config.tooltip;
+                const finalIcon = isLoading ? "hourglass_empty" : (iconOverride || config.icon);
 
                 return (
                     <Tooltip
@@ -99,16 +106,17 @@ export const TableActions = ({ row, actions = [] }) => {
                         className="text-[13px] px-2 py-0.5 font-bold tracking-tight"
                     >
                         <button
+                            disabled={isLoading}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 onClick?.(row);
                             }}
                             className={cn(
-                                "p-1.5 rounded-md transition-colors cursor-pointer", // Padding del botón intacto
+                                "p-1.5 rounded-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed", // Padding del botón intacto
                                 config.className
                             )}
                         >
-                            <Icon name={config.icon} size="sm" /> {/* Icono intacto */}
+                            <Icon name={finalIcon} size="sm" className={isLoading ? "animate-spin" : ""} />
                         </button>
                     </Tooltip>
                 );

@@ -8,6 +8,7 @@ import { useUsers } from '@/features/usuarios/hooks/use-users';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Camera, X, Plus, Save, Trash2, Calendar, UserPlus, Info, Pencil, Check } from 'lucide-react';
 import { notify } from '@/components/notification/adaptive-notify';
+import { validateImageFile } from '@/utils/validators';
 
 const generateCompressedThumbnail = (file, maxWidth = 300, maxHeight = 300, quality = 0.5) => {
   return new Promise((resolve) => {
@@ -168,10 +169,30 @@ export const EntryFormModal = ({
 
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
-    const availableSlots = 3 - totalImagesCount;
-    if (availableSlots <= 0) return;
     
-    const sliced = files.slice(0, availableSlots);
+    const validFiles = [];
+    for (const file of files) {
+      const validation = validateImageFile(file);
+      if (!validation.isValid) {
+        notify.error(validation.error);
+      } else {
+        validFiles.push(file);
+      }
+    }
+
+    if (validFiles.length === 0) {
+      e.target.value = '';
+      return;
+    }
+
+    const availableSlots = 3 - totalImagesCount;
+    if (availableSlots <= 0) {
+      notify.warning("Límite de 3 imágenes alcanzado.");
+      e.target.value = '';
+      return;
+    }
+    
+    const sliced = validFiles.slice(0, availableSlots);
     const newImgs = [];
     for (const file of sliced) {
       const base64Thumb = await generateCompressedThumbnail(file);
@@ -275,17 +296,27 @@ export const EntryFormModal = ({
             <button onClick={() => markExistingForDeletion(img.id)} className="absolute inset-0 bg-rose-600/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16} /></button>
           </div>
         ))}
-        {localImages.map((img) => (
-          <div key={img.id} className="relative w-24 h-24 shrink-0 rounded-2xl overflow-hidden border-2 border-emerald-200 group shadow-md animate-in zoom-in-90">
-            <img src={img.preview || img.base64Thumb} className="w-full h-full object-cover" alt="Nuevo" />
-            <button onClick={() => removeLocalImage(img.id)} className="absolute inset-0 bg-slate-900/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X size={16} /></button>
-          </div>
-        ))}
+        {localImages.map((img) => {
+          const isHeic = img.file && /\.(heic|heif)$/i.test(img.file.name);
+          return (
+            <div key={img.id} className="relative w-24 h-24 shrink-0 rounded-2xl overflow-hidden border-2 border-emerald-200 group shadow-md animate-in zoom-in-90 bg-slate-50 flex items-center justify-center text-slate-400">
+              {isHeic ? (
+                <div className="flex flex-col items-center justify-center h-full w-full p-2 text-center bg-slate-100 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                  <Camera size={20} className="text-amber-500 mb-1" />
+                  <span>HEIC</span>
+                </div>
+              ) : (
+                <img src={img.preview || img.base64Thumb} className="w-full h-full object-cover" alt="Nuevo" />
+              )}
+              <button onClick={() => removeLocalImage(img.id)} className="absolute inset-0 bg-slate-900/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X size={16} /></button>
+            </div>
+          );
+        })}
         {totalImagesCount < 3 && (
           <button onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center justify-center w-24 h-24 shrink-0 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-500 transition-colors"><Plus size={20} /></button>
         )}
       </div>
-      <input type="file" multiple accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileChange} />
+      <input type="file" multiple accept="image/jpeg, image/png, image/webp, image/heic, image/heif" className="hidden" ref={fileInputRef} onChange={handleFileChange} />
     </div>
   );
 

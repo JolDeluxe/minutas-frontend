@@ -8,6 +8,7 @@ import { getModulesByRole } from '@/config/modules-config';
 import { useUsers } from '../../../usuarios/hooks/use-users';
 import { LineIconSelector } from '../icons/line-icons';
 import { Camera, X, Plus, Send, StickyNote, Calendar, UserPlus, Check } from 'lucide-react';
+import { validateImageFile } from '@/utils/validators';
 
 /**
  * MobileAllNotesModal — Versión móvil para ver todas las notas.
@@ -68,6 +69,7 @@ const MobileAllNotesModal = ({ isOpen, onClose, notas, onUpdate, onRemove, onAdd
 export const MobileQuickComposer = ({
   minutaId,
   lineaDefault,
+  areaDefault,
   departamento,
   onSubmit,
   submitting,
@@ -88,25 +90,34 @@ export const MobileQuickComposer = ({
   const [expanded, setExpanded] = useState(false);
   const [texto, setTexto] = useState('');
   const [notasRapidas, setNotasRapidas] = useState([]);
-  const [area, setArea] = useState(departamento || catalogos.areas[0]?.value || 'DISENO');
+  const [area, setArea] = useState(areaDefault || (departamento !== 'EXTERNO' ? departamento : null) || catalogos.areas[0]?.value || 'DISENO');
   
-  useEffect(() => {
-    if (departamento && area === 'DISENO' && departamento !== 'DISENO') {
-      setArea(departamento);
-    }
-  }, [departamento]);
-
   const lineasDisponibles = useMemo(() => LINEAS_POR_AREA[area] || [], [area]);
-  const tieneLineas = lineasDisponibles.length > 0;
+  
+  const lineasConDefault = useMemo(() => {
+    let list = [...lineasDisponibles];
+    if (area === areaDefault && lineaDefault) {
+      const exists = list.some(
+        l => l.value?.toUpperCase() === lineaDefault.toUpperCase() || 
+             l.label?.toUpperCase() === lineaDefault.toUpperCase()
+      );
+      if (!exists) {
+        list = [{ value: lineaDefault, label: lineaDefault }, ...list];
+      }
+    }
+    return list;
+  }, [lineasDisponibles, area, areaDefault, lineaDefault]);
+
+  const tieneLineas = lineasConDefault.length > 0;
   const isOperationalArea = area === 'DISENO' || area === 'MARKETING';
 
-  const [linea, setLinea] = useState(tieneLineas ? (lineaDefault || lineasDisponibles[0]?.value) : null);
+  const [linea, setLinea] = useState(tieneLineas ? (lineaDefault || lineasConDefault[0]?.value) : null);
   const [clasificacion, setClasificacion] = useState('');
   const [localImages, setLocalImages] = useState([]);
   const [showAllNotes, setShowAllNotes] = useState(false);
 
   // Estados Operativos
-  const [esTarea, setEsTarea] = useState(false);
+  const [esTarea, setEsTarea] = useState(departamento === 'EXTERNO');
   const [prioridad, setPrioridad] = useState('MEDIA');
   const [responsables, setResponsables] = useState([]);
   const [fechaVencimiento, setFechaVencimiento] = useState('');
@@ -117,6 +128,30 @@ export const MobileQuickComposer = ({
     fetchUsers();
   }, [fetchUsers]);
 
+  useEffect(() => {
+    if (areaDefault) {
+      setArea(areaDefault);
+    }
+  }, [areaDefault]);
+
+  useEffect(() => {
+    if (lineaDefault !== undefined) {
+      setLinea(lineaDefault);
+    }
+  }, [lineaDefault]);
+
+  useEffect(() => {
+    if (departamento === 'EXTERNO') {
+      setEsTarea(true);
+    }
+  }, [departamento]);
+
+  useEffect(() => {
+    if (departamento && departamento !== 'EXTERNO' && area === 'DISENO' && departamento !== 'DISENO') {
+      setArea(departamento);
+    }
+  }, [departamento]);
+
   const filteredUsers = useMemo(() => {
     return allUsers.filter(u => u.estado === 'ACTIVO' && (u.rol === 'ADMIN' || u.departamento === departamento));
   }, [allUsers, departamento]);
@@ -125,13 +160,13 @@ export const MobileQuickComposer = ({
   const [touchStart, setTouchStart] = useState(null);
 
   const normalizedArea = String(area || '').trim().toUpperCase();
-  const allowTarea = normalizedArea === 'MARKETING' || normalizedArea === 'DISEÑO' || normalizedArea === 'DISENO';
+  const allowTarea = normalizedArea === 'MARKETING' || normalizedArea === 'DISEÑO' || normalizedArea === 'DISENO' || normalizedArea === 'EXTERNO';
 
   useEffect(() => {
-    if (!allowTarea && esTarea) {
+    if (!allowTarea && esTarea && departamento !== 'EXTERNO') {
       setEsTarea(false);
     }
-  }, [allowTarea, esTarea]);
+  }, [allowTarea, esTarea, departamento]);
   const [touchEnd, setTouchEnd] = useState(null);
 
   // Validación personalizada
@@ -145,7 +180,7 @@ export const MobileQuickComposer = ({
     }
     
     if (esTarea) {
-      if (!fechaVencimiento) return false;
+      // Fecha límite es opcional (se quitó la validación estricta)
     }
     
     return true;
@@ -171,10 +206,38 @@ export const MobileQuickComposer = ({
   };
 
   const handleFileChange = (e) => {
-    const files = Array.from(e.target.files).slice(0, Math.max(0, 3 - localImages.length));
-    const newImages = files.map(file => ({ file, preview: URL.createObjectURL(file), id: Math.random().toString(36).substr(2, 9) }));
+    const files = Array.from(e.target.files);
+    
+    const validFiles = [];
+    for (const file of files) {
+      const validation = validateImageFile(file);
+      if (!validation.isValid) {
+        notify.error(validation.error);
+      } else {
+        validFiles.push(file);
+      }
+    }
+
+    if (validFiles.length === 0) {
+      e.target.value = '';
+      return;
+    }
+
+    const availableSlots = 3 - localImages.length;
+    if (availableSlots <= 0) {
+      e.target.value = '';
+      return;
+    }
+
+    const sliced = validFiles.slice(0, availableSlots);
+    const newImages = sliced.map(file => ({
+      file,
+      preview: URL.createObjectURL(file),
+      id: Math.random().toString(36).substr(2, 9)
+    }));
     setLocalImages(prev => [...prev, ...newImages]);
     setExpanded(true);
+    e.target.value = '';
   };
 
   const removeImage = (id) => {
@@ -204,11 +267,13 @@ export const MobileQuickComposer = ({
     };
 
     if (esTarea) {
-      tareaData.prioridad = prioridad;
-      tareaData.fechaVencimiento = fechaVencimiento ? new Date(fechaVencimiento).toISOString() : null;
-      if (responsables.length > 0) {
-        tareaData.responsables = responsables;
+      if (departamento !== 'EXTERNO') {
+        tareaData.prioridad = prioridad;
+        if (responsables.length > 0) {
+          tareaData.responsables = responsables;
+        }
       }
+      tareaData.fechaVencimiento = fechaVencimiento ? new Date(fechaVencimiento).toISOString() : null;
     }
 
     onSubmit({ tareas: [tareaData] });
@@ -219,13 +284,23 @@ export const MobileQuickComposer = ({
     setExpanded(false);
 
     // --- REINICIAR SELECTORES A SUS VALORES INICIALES ---
-    const defaultArea = catalogos.areas[0]?.value || departamento;
+    const defaultArea = areaDefault || catalogos.areas[0]?.value || departamento;
     const defaultLineas = LINEAS_POR_AREA[defaultArea] || [];
+    let finalLineas = [...defaultLineas];
+    if (defaultArea === areaDefault && lineaDefault) {
+      const exists = finalLineas.some(
+        l => l.value?.toUpperCase() === lineaDefault.toUpperCase() || 
+             l.label?.toUpperCase() === lineaDefault.toUpperCase()
+      );
+      if (!exists) {
+        finalLineas = [{ value: lineaDefault, label: lineaDefault }, ...finalLineas];
+      }
+    }
     setArea(defaultArea);
-    setLinea(defaultLineas.length > 0 ? (lineaDefault || defaultLineas[0]?.value) : null);
+    setLinea(finalLineas.length > 0 ? (lineaDefault || finalLineas[0]?.value) : null);
     setClasificacion('');
     
-    setEsTarea(false);
+    setEsTarea(departamento === 'EXTERNO');
     setPrioridad('MEDIA');
     setResponsables([]);
     setFechaVencimiento('');
@@ -304,9 +379,22 @@ export const MobileQuickComposer = ({
                 <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Imágenes Adjuntas ({localImages.length}/3)</span>
                 <div className="flex items-center gap-2 overflow-x-auto scrollbar-none px-1">
                   <button onClick={() => fileInputRef.current?.click()} disabled={localImages.length >= 3} className="w-16 h-16 shrink-0 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center text-slate-400 bg-white active:scale-95 disabled:opacity-40"><Camera size={20} /><span className="text-[6px] font-black uppercase">Foto</span></button>
-                  {localImages.map((img) => (
-                    <div key={img.id} className="relative w-16 h-16 shrink-0 rounded-2xl overflow-hidden border border-slate-200 shadow-sm"><img src={img.preview} className="w-full h-full object-cover" /><button onClick={() => removeImage(img.id)} className="absolute inset-0 bg-slate-900/40 text-white flex items-center justify-center opacity-0 active:opacity-100 transition-opacity"><X size={18} /></button></div>
-                  ))}
+                  {localImages.map((img) => {
+                    const isHeic = img.file && /\.(heic|heif)$/i.test(img.file.name);
+                    return (
+                      <div key={img.id} className="relative w-16 h-16 shrink-0 rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-slate-50 flex items-center justify-center text-slate-400">
+                        {isHeic ? (
+                          <div className="flex flex-col items-center justify-center h-full w-full bg-slate-100 text-[8px] font-black uppercase text-slate-500">
+                            <Camera size={16} className="text-amber-500 mb-0.5" />
+                            <span>HEIC</span>
+                          </div>
+                        ) : (
+                          <img src={img.preview} className="w-full h-full object-cover" />
+                        )}
+                        <button onClick={() => removeImage(img.id)} className="absolute inset-0 bg-slate-900/40 text-white flex items-center justify-center opacity-0 active:opacity-100 transition-opacity"><X size={18} /></button>
+                      </div>
+                    );
+                  })}
                 </div>
                 {/* ÁREA / CLASIFICACIÓN (ROW) */}
               <div className={cn("grid gap-3 mt-4", isOperationalArea ? "grid-cols-2" : "grid-cols-1")}>
@@ -319,7 +407,17 @@ export const MobileQuickComposer = ({
                         const newArea = e.target.value;
                         setArea(newArea);
                         const newLineas = LINEAS_POR_AREA[newArea] || [];
-                        setLinea(newLineas.length > 0 ? newLineas[0].value : null);
+                        let finalLineas = [...newLineas];
+                        if (newArea === areaDefault && lineaDefault) {
+                          const exists = finalLineas.some(
+                            l => l.value?.toUpperCase() === lineaDefault.toUpperCase() || 
+                                 l.label?.toUpperCase() === lineaDefault.toUpperCase()
+                          );
+                          if (!exists) {
+                            finalLineas = [{ value: lineaDefault, label: lineaDefault }, ...finalLineas];
+                          }
+                        }
+                        setLinea(finalLineas.length > 0 ? (newArea === areaDefault ? lineaDefault : finalLineas[0].value) : null);
                         if (newArea !== 'DISENO' && newArea !== 'MARKETING') {
                           setClasificacion('');
                         }
@@ -371,7 +469,7 @@ export const MobileQuickComposer = ({
                   <div>
                     <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Línea de Producto</span>
                     <div className="grid grid-cols-5 gap-1.5 px-0.5">
-                      {lineasDisponibles.map(({ value, label }) => (
+                      {lineasConDefault.map(({ value, label }) => (
                         <button 
                           key={value} 
                           onClick={() => setLinea(value)} 
@@ -408,7 +506,7 @@ export const MobileQuickComposer = ({
                         className="w-full bg-white border-2 border-slate-100 rounded-xl pl-2 pr-7 py-2.5 text-[11px] font-bold text-slate-700 focus:outline-none focus:border-marca-primario/40 transition-all appearance-none shadow-sm h-11 truncate"
                       >
                         <option value="">— Seleccionar Línea —</option>
-                        {lineasDisponibles.map(({ value, label }) => (
+                        {lineasConDefault.map(({ value, label }) => (
                           <option key={value} value={value}>{label}</option>
                         ))}
                       </select>
@@ -421,7 +519,7 @@ export const MobileQuickComposer = ({
               )}
 
               {/* SWITCH ¿ES TAREA? */}
-              {allowTarea && clasificacion !== 'POLITICAS' && (
+              {allowTarea && clasificacion !== 'POLITICAS' && departamento !== 'EXTERNO' && (
                 <div className="flex items-center gap-3 px-2 pt-2 border-t border-slate-100">
                    <button
                       type="button"
@@ -448,97 +546,101 @@ export const MobileQuickComposer = ({
               )}
 
               {/* CAMPOS OPERATIVOS */}
-              {allowTarea && esTarea && (
+              {((allowTarea && esTarea) || departamento === 'EXTERNO') && (
                 <div className="flex flex-col gap-3 px-1 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                   <div className="grid grid-cols-2 gap-2.5">
-                     <div className="flex flex-col gap-1">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml- flex items-center gap-1">
-                           <Calendar size={10} /> Fecha Límite
-                        </label>
-                        <input 
-                          type="date" 
-                          value={fechaVencimiento} 
-                          onChange={(e) => setFechaVencimiento(e.target.value)} 
-                          min={new Date().toISOString().split('T')[0]}
-                          className="w-full bg-white border-2 border-slate-100 rounded-xl px-2 py-2.5 text-[9px] font-bold text-slate-700 focus:outline-none focus:border-marca-primario/40 transition-all shadow-sm h-11"
-                        />
-                     </div>
-
-                     <div className="flex flex-col gap-1">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Prioridad</label>
-                        <div className="relative">
-                          <select 
-                            value={prioridad} 
-                            onChange={(e) => setPrioridad(e.target.value)} 
-                            className="w-full bg-white border-2 border-slate-100 rounded-xl pl-2 pr-7 py-2.5 text-[9px] font-bold text-slate-700 focus:outline-none focus:border-marca-primario/40 transition-all appearance-none shadow-sm h-11 truncate"
-                          >
-
-                            {Object.entries(PRIORIDAD_MAP).map(([key, config]) => (
-                              <option key={key} value={key}>{config.label}</option>
-                            ))}
-                          </select>
-                          <div className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                            <Icon name="expand_more" size="14px" />
-                          </div>
-                        </div>
-                     </div>
-                   </div>
-
-                   <div className="flex flex-col gap-1 col-span-2">
-                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1">
-                         <UserPlus size={10} /> Responsable(s)
-                      </label>
-                      <div className="flex gap-3 overflow-x-auto custom-scrollbar pb-2 pt-1 px-1 -mx-1">
-                        {filteredUsers.length === 0 ? (
-                          <p className="text-[10px] text-slate-400 italic ml-1">No hay responsables disponibles</p>
-                        ) : (
-                          filteredUsers.map((u) => {
-                            const isSelected = responsables.includes(u.id);
-                            return (
-                              <button
-                                type="button"
-                                key={u.id}
-                                onClick={() => {
-                                  setResponsables(prev => prev.includes(u.id) ? prev.filter(id => id !== u.id) : [...prev, u.id])
-                                }}
-                                className={cn(
-                                  "flex flex-col items-center gap-1 shrink-0 transition-all select-none cursor-pointer focus:outline-none",
-                                  isSelected ? "scale-105 font-bold" : "hover:scale-102"
-                                )}
-                                title={u.nombre}
-                              >
-                                <div className={cn(
-                                  "w-11 h-11 rounded-full border-2 flex items-center justify-center overflow-hidden transition-all bg-slate-50 relative shadow-xs",
-                                  isSelected 
-                                    ? "border-emerald-500 ring-4 ring-emerald-100 shadow-md opacity-100" 
-                                    : "border-slate-200 opacity-50 hover:opacity-85"
-                                )}>
-                                  {u.imagen ? (
-                                    <img src={u.imagen} className="h-full w-full object-cover" />
-                                  ) : (
-                                    <span className="text-[10px] font-black uppercase text-slate-600">{u.nombre.charAt(0)}</span>
-                                  )}
-                                  
-                                  {isSelected && (
-                                    <div className="absolute inset-0 bg-emerald-500/10 flex items-center justify-center">
-                                      <div className="bg-emerald-500 text-white rounded-full p-0.5 shadow-sm">
-                                        <Check size={8} strokeWidth={4} />
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                                <span className={cn(
-                                  "text-[8.5px] uppercase tracking-wider text-center truncate w-12 leading-tight transition-colors",
-                                  isSelected ? "text-emerald-800 font-extrabold" : "text-slate-500 font-bold"
-                                )}>
-                                  {u.nombre.split(' ')[0]}
-                                </span>
-                              </button>
-                            );
-                          })
-                        )}
+                    <div className={cn("grid gap-2.5", departamento === 'EXTERNO' ? "grid-cols-1" : "grid-cols-2")}>
+                      <div className="flex flex-col gap-1">
+                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml- flex items-center gap-1">
+                            <Calendar size={10} /> Fecha Límite (Opcional)
+                         </label>
+                         <input 
+                           type="date" 
+                           value={fechaVencimiento} 
+                           onChange={(e) => setFechaVencimiento(e.target.value)} 
+                           min={new Date().toISOString().split('T')[0]}
+                           className="w-full bg-white border-2 border-slate-100 rounded-xl px-2 py-2.5 text-[9px] font-bold text-slate-700 focus:outline-none focus:border-marca-primario/40 transition-all shadow-sm h-11"
+                         />
                       </div>
-                   </div>
+
+                      {departamento !== 'EXTERNO' && (
+                        <div className="flex flex-col gap-1">
+                           <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Prioridad</label>
+                           <div className="relative">
+                             <select 
+                               value={prioridad} 
+                               onChange={(e) => setPrioridad(e.target.value)} 
+                               className="w-full bg-white border-2 border-slate-100 rounded-xl pl-2 pr-7 py-2.5 text-[9px] font-bold text-slate-700 focus:outline-none focus:border-marca-primario/40 transition-all appearance-none shadow-sm h-11 truncate"
+                             >
+
+                               {Object.entries(PRIORIDAD_MAP).map(([key, config]) => (
+                                 <option key={key} value={key}>{config.label}</option>
+                               ))}
+                             </select>
+                             <div className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                               <Icon name="expand_more" size="14px" />
+                             </div>
+                           </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {departamento !== 'EXTERNO' && (
+                      <div className="flex flex-col gap-1 col-span-2">
+                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1">
+                            <UserPlus size={10} /> Responsable(s)
+                         </label>
+                         <div className="flex gap-3 overflow-x-auto custom-scrollbar pb-2 pt-1 px-1 -mx-1">
+                           {filteredUsers.length === 0 ? (
+                             <p className="text-[10px] text-slate-400 italic ml-1">No hay responsables disponibles</p>
+                           ) : (
+                             filteredUsers.map((u) => {
+                               const isSelected = responsables.includes(u.id);
+                               return (
+                                 <button
+                                   type="button"
+                                   key={u.id}
+                                   onClick={() => {
+                                     setResponsables(prev => prev.includes(u.id) ? prev.filter(id => id !== u.id) : [...prev, u.id])
+                                   }}
+                                   className={cn(
+                                     "flex flex-col items-center gap-1 shrink-0 transition-all select-none cursor-pointer focus:outline-none",
+                                     isSelected ? "scale-105 font-bold" : "hover:scale-102"
+                                   )}
+                                   title={u.nombre}
+                                 >
+                                   <div className={cn(
+                                     "w-11 h-11 rounded-full border-2 flex items-center justify-center overflow-hidden transition-all bg-slate-50 relative shadow-xs",
+                                     isSelected 
+                                       ? "border-emerald-500 ring-4 ring-emerald-100 shadow-md opacity-100" 
+                                       : "border-slate-200 opacity-50 hover:opacity-85"
+                                   )}>
+                                     {u.imagen ? (
+                                       <img src={u.imagen} className="h-full w-full object-cover" />
+                                     ) : (
+                                       <span className="text-[10px] font-black uppercase text-slate-600">{u.nombre.charAt(0)}</span>
+                                     )}
+                                     
+                                     {isSelected && (
+                                       <div className="absolute inset-0 bg-emerald-500/10 flex items-center justify-center">
+                                         <div className="bg-emerald-500 text-white rounded-full p-0.5 shadow-sm">
+                                           <Check size={8} strokeWidth={4} />
+                                         </div>
+                                       </div>
+                                     )}
+                                   </div>
+                                   <span className={cn(
+                                     "text-[8.5px] uppercase tracking-wider text-center truncate w-12 leading-tight transition-colors",
+                                     isSelected ? "text-emerald-800 font-extrabold" : "text-slate-500 font-bold"
+                                   )}>
+                                     {u.nombre.split(' ')[0]}
+                                   </span>
+                                 </button>
+                               );
+                             })
+                           )}
+                         </div>
+                      </div>
+                    )}
                 </div>
               )}
 
@@ -557,7 +659,7 @@ export const MobileQuickComposer = ({
       </div>
 
       <MobileAllNotesModal isOpen={showAllNotes} onClose={() => setShowAllNotes(false)} notas={notasRapidas} onUpdate={handleUpdateNota} onRemove={handleRemoveNota} onAdd={handleAddNota} />
-      <input type="file" multiple accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileChange} />
+      <input type="file" multiple accept="image/jpeg, image/png, image/webp, image/heic, image/heif" className="hidden" ref={fileInputRef} onChange={handleFileChange} />
     </>,
     document.body
   );

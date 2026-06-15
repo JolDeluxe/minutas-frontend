@@ -12,7 +12,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useAuthStore } from '@/stores/auth-store';
 import { notify } from '@/components/notification/adaptive-notify';
-import { guardarResumenMinuta } from '../api/minutas-api';
+import { guardarResumenMinuta, updateMinutaExterna } from '../api/minutas-api';
 import { MinutaResumenDesktop } from '../views/minuta-resumen-desktop';
 import { MinutaResumenMobile } from '../views/minuta-resumen-mobile';
 
@@ -21,6 +21,7 @@ export const MinutaResumen = ({
   tareas = [],
   onSwitchToTareas,
   onResumenUpdated,
+  esExterna = false,
 }) => {
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const { user } = useAuthStore();
@@ -53,7 +54,11 @@ export const MinutaResumen = ({
       if (campo === 'acuerdos')      payload.resumenAcuerdos      = valor;
       if (campo === 'proximosPasos') payload.resumenProximosPasos = valor;
 
-      await guardarResumenMinuta(minuta.id, payload);
+      if (esExterna) {
+        await updateMinutaExterna(minuta.id, payload);
+      } else {
+        await guardarResumenMinuta(minuta.id, payload);
+      }
 
       setResumenLocal(prev => ({ ...prev, [campo]: valor }));
       onResumenUpdated?.(
@@ -66,7 +71,7 @@ export const MinutaResumen = ({
       notify.error('Error al guardar. Intenta de nuevo.');
       throw new Error('save failed'); // para que SeccionIA no cierre el editor
     }
-  }, [minuta?.id, onResumenUpdated]);
+  }, [minuta?.id, esExterna, onResumenUpdated]);
 
   const commonProps = {
     minuta,

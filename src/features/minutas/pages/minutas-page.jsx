@@ -6,6 +6,9 @@ import { useMinutas } from '../hooks/use-minutas';
 import { MinutasDesktop } from '../views/minutas-desktop';
 import { MinutasMobile } from '../views/minutas-mobile';
 import { MinutaFormModal } from '../components/minuta-form-modal';
+import { SharePdfModal } from '../components/share-pdf-modal';
+import { generarPdfMinutaExterna } from '../api/minutas-api';
+import { ENV } from '@/config/env';
 
 import { useUIStore } from '@/stores/ui-store';
 import { ConfirmModal } from '@/components/ui/z_index';
@@ -57,6 +60,39 @@ const MinutasPage = () => {
     
     const [showForm, setShowForm] = useState(false);
     const [minutaToEdit, setMinutaToEdit] = useState(null);
+
+    const [isGeneratingPdf, setIsGeneratingPdf] = useState(null);
+    const [sharePdfData, setSharePdfData] = useState(null);
+
+    const handleDownloadPdf = async (minutaExterna) => {
+        setIsGeneratingPdf(minutaExterna.id);
+        try {
+            const res = await generarPdfMinutaExterna(minutaExterna.id);
+            let url = res?.data?.data?.pdfUrl || res?.data?.pdfUrl || res?.pdfUrl;
+            
+            if (!url) throw new Error("No se pudo obtener la URL del PDF");
+
+            if (url.startsWith('/')) {
+                url = `${ENV.API_URL}${url}`;
+            }
+
+            const fechaObj = new Date(minutaExterna.fechaRealizada || minutaExterna.fechaProgramada || minutaExterna.createdAt);
+            const fechaFormateada = `${String(fechaObj.getDate()).padStart(2, '0')}-${String(fechaObj.getMonth() + 1).padStart(2, '0')}-${fechaObj.getFullYear()}`;
+            
+            setSharePdfData({
+                url,
+                area: minutaExterna.area || 'Externo',
+                fechaStr: fechaFormateada,
+                minutaTitulo: minutaExterna.tema || 'Minuta',
+            });
+            
+        } catch (err) {
+            console.error("Error al compartir PDF:", err);
+            notify.error('Error al generar y compartir el PDF');
+        } finally {
+            setIsGeneratingPdf(null);
+        }
+    };
 
     const loadMinutas = useCallback(() => {
         const params = { page, limit: LIMIT };
@@ -151,11 +187,12 @@ const MinutasPage = () => {
     }, [selectedDate]);
 
     const handleSaveMinuta = async (payload) => {
+        const isExterna = departamentoGlobal === 'EXTERNO';
         if (minutaToEdit) {
-            await updateMinuta(minutaToEdit.id, payload);
+            await updateMinuta(minutaToEdit.id, payload, isExterna);
             notify.success('Minuta actualizada correctamente.');
         } else {
-            await createMinuta(payload);
+            await createMinuta(payload, isExterna);
             notify.success('Minuta creada correctamente.');
         }
         setShowForm(false);
@@ -174,7 +211,11 @@ const MinutasPage = () => {
     };
 
     const handleViewDetail = (minuta) => {
-        navigate(`/minutas/${minuta.id}`);
+        if (departamentoGlobal === 'EXTERNO') {
+            navigate(`/minutas-externas/${minuta.id}`);
+        } else {
+            navigate(`/minutas/${minuta.id}`);
+        }
     };
 
     const [minutaToCancel, setMinutaToCancel] = useState(null);
@@ -185,8 +226,9 @@ const MinutasPage = () => {
 
     const confirmCancelMinuta = async () => {
         if (!minutaToCancel) return;
+        const isExterna = departamentoGlobal === 'EXTERNO';
         try {
-            await cancelMinuta(minutaToCancel.id);
+            await cancelMinuta(minutaToCancel.id, isExterna);
             notify.success('Minuta cancelada correctamente.');
             await loadMinutas();
         } catch (err) {
@@ -292,6 +334,9 @@ const MinutasPage = () => {
             setDepartamentoGlobal(val);
             setPage(1);
         },
+        isExterna: departamentoGlobal === 'EXTERNO',
+        onDownloadPdf: handleDownloadPdf,
+        isGeneratingPdf,
     };
 
     return (
@@ -303,14 +348,27 @@ const MinutasPage = () => {
                 }
             </div>
 
-            <MinutaFormModal
-                isOpen={showForm}
-                onClose={() => { setShowForm(false); setMinutaToEdit(null); }}
-                minutaAEditar={minutaToEdit}
-                submitting={submitting}
-                onSuccess={handleSaveMinuta}
-                departamentoGlobal={departamentoGlobal}
-            />
+            {departamentoGlobal === 'EXTERNO' ? (
+                // Aquí irá el ModalNuevaMinuta extendido para minutas externas
+                <MinutaFormModal
+                    isOpen={showForm}
+                    onClose={() => { setShowForm(false); setMinutaToEdit(null); }}
+                    minutaAEditar={minutaToEdit}
+                    submitting={submitting}
+                    onSuccess={handleSaveMinuta}
+                    departamentoGlobal={departamentoGlobal}
+                    isExterna={true}
+                />
+            ) : (
+                <MinutaFormModal
+                    isOpen={showForm}
+                    onClose={() => { setShowForm(false); setMinutaToEdit(null); }}
+                    minutaAEditar={minutaToEdit}
+                    submitting={submitting}
+                    onSuccess={handleSaveMinuta}
+                    departamentoGlobal={departamentoGlobal}
+                />
+            )}
 
             {minutaToCancel && (
                 <ConfirmModal
@@ -318,12 +376,18 @@ const MinutasPage = () => {
                     onClose={() => setMinutaToCancel(null)}
                     onConfirm={confirmCancelMinuta}
                     title="Cancelar Minuta"
-                    message={`¿Estás seguro de que deseas cancelar la minuta "${minutaToCancel.titulo}"? Esta acción no se puede deshacer.`}
+                    message={`¿Estás seguro de que deseas cancelar la minuta "${minutaToCancel.titulo || minutaToCancel.tema}"? Esta acción no se puede deshacer.`}
                     confirmText="Cancelar Minuta"
                     cancelText="Volver"
                     variant="danger"
                 />
             )}
+
+            <SharePdfModal 
+                isOpen={Boolean(sharePdfData)} 
+                onClose={() => setSharePdfData(null)} 
+                data={sharePdfData} 
+            />
         </div>
     );
 };

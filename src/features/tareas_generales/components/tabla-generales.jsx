@@ -336,7 +336,7 @@ export const TablaGenerales = ({
                 return (
                     <div className="flex flex-col gap-1.5">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                            {tipo === 'TAREA' && (
+                            {tipo === 'TAREA' && (row.area === 'DISENO' || row.area === 'MARKETING') && (
                                 <span className="inline-flex items-center gap-1 rounded-lg bg-rose-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-rose-600 border border-rose-100">
                                     <Icon name="task_alt" size="10px" className="shrink-0 text-rose-500" /> Tarea
                                 </span>
@@ -480,7 +480,7 @@ export const TablaGenerales = ({
                             actions={[
                                 {
                                     key: 'ver_detalle',
-                                    enabled: true,
+                                    enabled: Boolean(onViewDetail),
                                     onClick: (r) => {
                                         onViewDetail?.(r);
                                     }

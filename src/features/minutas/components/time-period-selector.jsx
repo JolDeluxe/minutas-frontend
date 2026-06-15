@@ -32,9 +32,11 @@ export const TimePeriodSelector = ({
   onYearChange, 
   onMonthChange,
   onEstadoChange,
-  className 
+  className,
+  isExterna = false 
 }) => {
   const showMonthSelector = periodo === 'month';
+  const visibleTabs = isExterna ? ESTADO_TABS.filter(tab => tab.key !== 'ACTIVA' && tab.key !== 'PROGRAMADA') : ESTADO_TABS;
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
@@ -42,7 +44,7 @@ export const TimePeriodSelector = ({
       <div className="flex items-center gap-1.5 flex-wrap">
         {/* Tabs de estado */}
         <div className="flex items-center bg-slate-100/80 p-0.5 rounded-lg">
-          {ESTADO_TABS.map((tab) => {
+          {visibleTabs.map((tab) => {
             const isActive = estadoFilter === tab.key;
             return (
               <button

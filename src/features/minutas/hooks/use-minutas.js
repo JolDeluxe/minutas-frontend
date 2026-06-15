@@ -5,6 +5,11 @@ import {
   updateMinuta,
   changeMinutaStatus,
   cancelarMinuta,
+  getMinutasExternas,
+  createMinutaExterna,
+  updateMinutaExterna,
+  deleteMinutaExterna,
+  cerrarMinutaExterna,
 } from '../api/minutas-api';
 
 export const useMinutas = () => {
@@ -40,7 +45,12 @@ export const useMinutas = () => {
     lastFetchParams.current = cleanParams;
 
     try {
-      const response = await getMinutas(cleanParams);
+      const isExterna = cleanParams.departamentoGlobal === 'EXTERNO';
+      if (isExterna) {
+          delete cleanParams.departamentoGlobal;
+      }
+
+      const response = isExterna ? await getMinutasExternas(cleanParams) : await getMinutas(cleanParams);
       
       const data = response?.data || [];
       const pagination = response?.pagination || {};
@@ -64,20 +74,20 @@ export const useMinutas = () => {
     }
   }, []);
 
-  const handleCreate = useCallback(async (data) => {
+  const handleCreate = useCallback(async (data, isExterna = false) => {
     setSubmitting(true);
     try { 
-      const res = await createMinuta(data);
+      const res = isExterna ? await createMinutaExterna(data) : await createMinuta(data);
       return res.data;
     } finally { 
       setSubmitting(false); 
     }
   }, []);
 
-  const handleUpdate = useCallback(async (id, data) => {
+  const handleUpdate = useCallback(async (id, data, isExterna = false) => {
     setSubmitting(true);
     try { 
-      const res = await updateMinuta(id, data);
+      const res = isExterna ? await updateMinutaExterna(id, data) : await updateMinuta(id, data);
       return res.data;
     } finally { 
       setSubmitting(false); 
@@ -94,10 +104,10 @@ export const useMinutas = () => {
     }
   }, []);
 
-  const handleCancel = useCallback(async (id) => {
+  const handleCancel = useCallback(async (id, isExterna = false) => {
     setSubmitting(true);
     try {
-      const res = await cancelarMinuta(id);
+      const res = isExterna ? await deleteMinutaExterna(id) : await cancelarMinuta(id);
       return res.data;
     } finally {
       setSubmitting(false);

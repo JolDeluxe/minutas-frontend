@@ -67,6 +67,9 @@ export const EntryCard = ({
       users={users}
       hideStatus={hideStatus}
       className={className}
+      onCreateNote={onCreateNote}
+      onUpdateNote={onUpdateNote}
+      onDeleteNote={onDeleteNote}
     />
   );
 };

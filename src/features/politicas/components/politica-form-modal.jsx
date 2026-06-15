@@ -4,6 +4,8 @@ import { Icon, Button, Modal, ModalHeader, ModalBody, ModalFooter } from '@/comp
 import { cn } from '@/utils/cn';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { Camera, X, Plus, Pencil, ShieldAlert } from 'lucide-react';
+import { validateImageFile } from '@/utils/validators';
+import { notify } from '@/components/notification/adaptive-notify';
 
 /**
  * PoliticaFormModal - Versión simplificada de EntryFormModal.
@@ -49,12 +51,31 @@ export const PoliticaFormModal = ({
     const files = Array.from(e.target.files);
     if (!files.length) return;
 
+    const validFiles = [];
+    for (const file of files) {
+      const validation = validateImageFile(file);
+      if (!validation.isValid) {
+        notify.error(validation.error);
+      } else {
+        validFiles.push(file);
+      }
+    }
+
+    if (validFiles.length === 0) {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
     const currentTotal = localImages.length + existingImages.length;
     const availableSlots = 3 - currentTotal;
     
-    if (availableSlots <= 0) return;
+    if (availableSlots <= 0) {
+      notify.warning("Límite de 3 imágenes alcanzado.");
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
 
-    const filesToAdd = files.slice(0, availableSlots).map(file => ({
+    const filesToAdd = validFiles.slice(0, availableSlots).map(file => ({
       file,
       preview: URL.createObjectURL(file),
     }));
@@ -138,12 +159,22 @@ export const PoliticaFormModal = ({
               <button onClick={() => removeExistingImage(img.id)} className="absolute inset-0 bg-rose-600/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X size={20} /></button>
             </div>
           ))}
-          {localImages.map((img) => (
-            <div key={img.preview} className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden border-2 border-emerald-200 group shadow-md animate-in zoom-in-90">
-              <img src={img.preview} className="w-full h-full object-cover" alt="Nuevo" />
-              <button onClick={() => removeLocalImage(img.preview)} className="absolute inset-0 bg-slate-900/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X size={20} /></button>
-            </div>
-          ))}
+          {localImages.map((img) => {
+            const isHeic = img.file && /\.(heic|heif)$/i.test(img.file.name);
+            return (
+              <div key={img.preview} className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden border-2 border-emerald-200 group shadow-md animate-in zoom-in-90 bg-slate-50 flex items-center justify-center text-slate-400">
+                {isHeic ? (
+                  <div className="flex flex-col items-center justify-center h-full w-full p-2 text-center bg-slate-100 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                    <Camera size={24} className="text-amber-500 mb-1" />
+                    <span>HEIC</span>
+                  </div>
+                ) : (
+                  <img src={img.preview} className="w-full h-full object-cover" alt="Nuevo" />
+                )}
+                <button onClick={() => removeLocalImage(img.preview)} className="absolute inset-0 bg-slate-900/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X size={20} /></button>
+              </div>
+            );
+          })}
           {(localImages.length + existingImages.length) < 3 && (
             <button onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center justify-center w-28 h-28 sm:w-32 sm:h-32 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-500 hover:border-slate-300 transition-colors">
               <Plus size={24} className="mb-1" />
@@ -151,7 +182,7 @@ export const PoliticaFormModal = ({
             </button>
           )}
         </div>
-        <input type="file" accept="image/*" multiple className="hidden" ref={fileInputRef} onChange={handleFileChange} />
+        <input type="file" accept="image/jpeg, image/png, image/webp, image/heic, image/heif" multiple className="hidden" ref={fileInputRef} onChange={handleFileChange} />
       </div>
     </div>
   );

@@ -34,7 +34,7 @@ const BadgeWithTooltip = ({ icon, value, label, shortLabel, onClick, active, col
   </div>
 );
 
-export const MinutaExecutiveSummary = ({ resumen, onFilterByStatus, onFilterByTipo, onToggleExternal, onResetFilter, activeFilter }) => {
+export const MinutaExecutiveSummary = ({ resumen, onFilterByStatus, onFilterByTipo, onToggleExternal, onResetFilter, activeFilter, isExterna }) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
 
   if (!resumen) return null;
@@ -49,6 +49,50 @@ export const MinutaExecutiveSummary = ({ resumen, onFilterByStatus, onFilterByTi
     externas = 0,
     sinClasificar = 0,
   } = resumen;
+
+  if (isExterna) {
+    const extPendientes = totalTareas - cerradas;
+    return (
+      <div className="w-full bg-white/85 backdrop-blur-sm border border-slate-200/60 rounded-3xl p-3 lg:px-5 lg:py-3.5 shadow-sm overflow-visible flex items-center gap-3 md:gap-5 flex-wrap">
+          <div className="flex flex-col items-start shrink-0">
+            <span className="text-xl lg:text-3xl font-black font-mono leading-none text-slate-900">{totalTareas}</span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400 mt-1">Total Tareas<br/>Externas Registradas</span>
+          </div>
+
+          <div className="w-px h-8 bg-slate-200 shrink-0" />
+
+          <div className="flex flex-col items-start shrink-0">
+            <span className="text-xl lg:text-3xl font-black font-mono leading-none text-amber-500">{extPendientes}</span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-amber-500/80 mt-1">Pendientes</span>
+          </div>
+
+          <div className="w-px h-8 bg-slate-200 shrink-0" />
+
+          <div className="flex flex-col items-start shrink-0">
+            <span className="text-xl lg:text-3xl font-black font-mono leading-none text-emerald-500">{cerradas}</span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-emerald-500/80 mt-1">Completadas</span>
+          </div>
+
+          <div className="w-px h-8 bg-slate-200 shrink-0 hidden md:block" />
+
+          <div className="flex-1 min-w-[150px] w-full md:w-auto mt-2 md:mt-0">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Progreso de Tareas Externas</span>
+              <span className={cn('text-[10px] font-black font-mono', porcentaje < 100 ? 'text-amber-600' : 'text-emerald-600')}>{porcentaje}%</span>
+            </div>
+            <div className="relative h-2.5 w-full rounded-full bg-slate-100 overflow-hidden shadow-inner border border-slate-200/50">
+              <div
+                className={cn(
+                  'absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ease-out shadow-sm',
+                  porcentaje < 100 ? 'bg-gradient-to-r from-amber-500 to-amber-400' : 'bg-gradient-to-r from-emerald-500 to-emerald-400'
+                )}
+                style={{ width: `${porcentaje}%` }}
+              />
+            </div>
+          </div>
+      </div>
+    );
+  }
 
   const estado = activeFilter?.estado;
   const tipo = activeFilter?.tipo;
