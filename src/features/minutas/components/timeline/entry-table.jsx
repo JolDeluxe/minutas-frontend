@@ -779,7 +779,7 @@ export const EntryTable = ({
         const isRemoteDraft = Boolean(row._isRemoteDraft);
         const tipo = row.tipo || (isDraft ? 'SIN_ORGANIZAR' : 'TAREA');
         const isOrganized = tipo !== 'SIN_ORGANIZAR';
-        const entryNotes = row.notas || [];
+        const entryNotes = (row.notas || []).filter(n => !n.esEntrega);
         const isExternal = (departamento === 'DISENO' && row.area !== 'DISENO') || (departamento === 'MARKETING' && row.area !== 'MARKETING');
         const isFormalizada = tipo === 'TAREA';
         const isAsignado = row.asignaciones?.some(asig => asig.usuarioId === currentUserId);
@@ -798,7 +798,7 @@ export const EntryTable = ({
         const canForceClose = isJefe && (!isAsignado || !myTaskIsPendiente) && estadoActual === 'PENDIENTE' && row.tipo === 'TAREA' && !isDraft && !isRemoteDraft;
         
         if (row._isSubTask) {
-          const subNotes = row.notas || [];
+          const subNotes = (row.notas || []).filter(n => !n.esEntrega);
           return (
             <div className="flex items-center gap-2 justify-center">
               {/* Notas para sub-tarea */}
@@ -941,7 +941,7 @@ export const EntryTable = ({
       {activeEntryForNotes && (
         <EntryNotesPostIt
           entry={{ ...activeEntryForNotes, readOnly: activeEntryForNotes.estado === 'CERRADA' || activeEntryForNotes._isRemoteDraft }}
-          notes={activeEntryForNotes.notas || []}
+          notes={(activeEntryForNotes.notas || []).filter(n => !n.esEntrega)}
           onClose={() => setActiveNotesEntryId(null)}
           onAddNote={onCreateNote}
           onUpdateNote={onUpdateNote}

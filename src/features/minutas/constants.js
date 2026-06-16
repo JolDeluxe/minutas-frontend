@@ -83,6 +83,7 @@ export const LINEA_MAP = {
   ROPA:       { label: 'Ropa',       icon: 'checkroom',    color: '#0f172a' },
   ACCESORIOS: { label: 'Accesorios', icon: 'shopping_bag', color: '#94a3b8' },
   MARKETING:  { label: 'Marketing',  icon: 'record_voice_over',     color: '#7c3aed' },
+  OTROS:      { label: 'Otros',      icon: 'more_horiz',            color: '#64748b' },
 };
 
 export const LINEAS_POR_AREA = {
@@ -101,6 +102,7 @@ export const LINEAS_POR_AREA = {
     { value: 'PT',         label: 'PT',         color: '#482b2c', icon: 'inventory' },
     { value: 'TRAFICO',    label: 'Tráfico',    color: '#482b2c', icon: 'local_shipping' },
     { value: 'DIRECCION',  label: 'Dirección',  color: '#482b2c', icon: 'business' },
+    { value: 'OTROS',          label: 'Otros',          color: '#482b2c', icon: 'more_horiz' },
   ],
   DIRECCION_CFI: [
     { value: 'COMPRAS',    label: 'Compras',    color: '#482b2c', icon: 'shopping_bag' },
@@ -110,11 +112,13 @@ export const LINEAS_POR_AREA = {
     { value: 'PT',         label: 'PT',         color: '#482b2c', icon: 'inventory' },
     { value: 'TRAFICO',    label: 'Tráfico',    color: '#482b2c', icon: 'local_shipping' },
     { value: 'DIRECCION',  label: 'Dirección',  color: '#482b2c', icon: 'business' },
+    { value: 'OTROS',          label: 'Otros',          color: '#482b2c', icon: 'more_horiz' },
   ],
   DIRECCION_TIENDAS: [
     { value: 'VISUAL',          label: 'Visual',          color: '#482b2c', icon: 'visibility' },
     { value: 'ANALISIS_VENTAS', label: 'Análisis Ventas', color: '#482b2c', icon: 'analytics' },
     { value: 'DIRECCION',       label: 'Dirección',       color: '#482b2c', icon: 'business' },
+    { value: 'OTROS',          label: 'Otros',          color: '#482b2c', icon: 'more_horiz' },
   ],
   DIRECCION_MKT: [
     { value: 'REDES_SOCIALES', label: 'Redes Sociales', color: '#482b2c', icon: 'share' },
@@ -132,9 +136,11 @@ export const LINEAS_POR_AREA = {
     { value: 'PT',         label: 'PT',         color: '#482b2c', icon: 'inventory' },
     { value: 'TRAFICO',    label: 'Tráfico',    color: '#482b2c', icon: 'local_shipping' },
     { value: 'DIRECCION',  label: 'Dirección',  color: '#482b2c', icon: 'business' },
+    { value: 'OTROS',          label: 'Otros',          color: '#482b2c', icon: 'more_horiz' },
   ],
   DIRECCION_ADJUNTA: [
-    { value: 'DIRECCION',  label: 'Dirección',  color: '#482b2c', icon: 'business' }
+    { value: 'DIRECCION',  label: 'Dirección',  color: '#482b2c', icon: 'business' },
+    { value: 'OTROS',          label: 'Otros',          color: '#482b2c', icon: 'more_horiz' },
   ],
   MARKETING: [],
 };

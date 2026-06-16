@@ -94,8 +94,8 @@ export const PanelDetalleTarea = ({
         || (tarea._isExternal === true);
 
     const allNotes = tarea.notas || [];
-    const notasEntrega = allNotes.filter(n => n.esEntrega === true);
-    const notasNormales = allNotes.filter(n => n.esEntrega !== true);
+    const notasEntrega = allNotes.filter(n => n.esEntrega);
+    const notasNormales = allNotes.filter(n => !n.esEntrega);
 
     const { rol, id: userId } = currentUser ?? {};
 

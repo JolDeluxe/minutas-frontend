@@ -15,6 +15,7 @@ export const ModalRevisionTarea = ({ isOpen, onClose, tarea, onConfirm, submitti
     if (!isOpen || !tarea) return null;
 
     const imagenesEvidencia = tarea.imagenes?.filter(img => img.tipo === 'EVIDENCIA') || [];
+    const notasEntrega = tarea.notas?.filter(n => n.esEntrega) || [];
     const areaText = AREA_MAP[tarea.area] || 'General';
     const lineaText = LINEA_MAP[tarea.linea]?.label || tarea.linea || 'Multi';
 
@@ -102,11 +103,11 @@ export const ModalRevisionTarea = ({ isOpen, onClose, tarea, onConfirm, submitti
                     {/* Comentarios de Entrega */}
                     <div className="flex flex-col gap-1.5">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 font-sans">
-                            Notas y Comentarios
+                            Notas de Entrega
                         </label>
-                        {tarea.notas?.length > 0 ? (
+                        {notasEntrega.length > 0 ? (
                             <div className="space-y-3 max-h-[220px] overflow-y-auto custom-scrollbar pr-1">
-                                {tarea.notas.map((nota) => {
+                                {notasEntrega.map((nota) => {
                                     const creador = nota.creadoPor || {};
                                     return (
                                         <div key={nota.id} className="p-3.5 bg-slate-50 border border-slate-100 rounded-2xl shadow-sm flex flex-col gap-2">

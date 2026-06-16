@@ -632,7 +632,7 @@ const GrupoSubTareasPanel = ({ subTareas, currentUser, onChangeStatus, onViewDet
       {activeNotesSub && (
         <EntryNotesPostIt
           entry={{ ...activeNotesSub, readOnly: activeNotesSub.estado === 'CERRADA' || rol === 'COORDINADOR' }}
-          notes={activeNotesSub.notas || []}
+          notes={(activeNotesSub.notas || []).filter(n => !n.esEntrega)}
           onClose={() => setActiveNotesSub(null)}
           onAddNote={async (subId, content) => {
             const added = await handleAddNote(subId, content);
@@ -689,7 +689,12 @@ export const TareaCard = ({
     const [isConfirmAprobarOpen, setIsConfirmAprobarOpen] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [showNotesPanel, setShowNotesPanel] = useState(false);
-    const [notas, setNotas] = useState(tarea.notas || []);
+    const [notas, setNotas] = useState(() => (tarea.notas || []).filter(n => !n.esEntrega));
+    
+    useEffect(() => {
+        setNotas((tarea.notas || []).filter(n => !n.esEntrega));
+    }, [tarea.notas]);
+    
     const [viewerIndex, setViewerIndex] = useState(null);
     const [forceCloseTarget, setForceCloseTarget] = useState(null);
     const [grupoExpanded, setGrupoExpanded] = useState(false);
