@@ -46,7 +46,10 @@ export const createTareaGeneral = async (data) => {
                 try {
                     const compressedBlob = await compressImage(file);
                     const fieldName = `files_${tIdx}_${iIdx}`;
-                    const fileName = file.name ? file.name.replace(/\.[^/.]+$/, ".jpg") : `image_${tIdx}_${iIdx}.jpg`;
+                    const isCompressed = compressedBlob !== file && compressedBlob.type === 'image/jpeg';
+                    const fileName = isCompressed
+                        ? (file.name ? file.name.replace(/\.[^/.]+$/, ".jpg") : `image_${tIdx}_${iIdx}.jpg`)
+                        : (file.name || `image_${tIdx}_${iIdx}`);
                     formData.append(fieldName, compressedBlob, fileName);
                     totalArchivos++;
                 } catch (err) {
@@ -94,9 +97,13 @@ export const addTareaGeneralImagen = async (tareaId, file) => {
     const formData = new FormData();
     try {
         const compressed = await compressImage(file);
-        formData.append('imagen', compressed, file.name ? file.name.replace(/\.[^/.]+$/, "") + ".jpg" : "image.jpg");
+        const isCompressed = compressed !== file && compressed.type === 'image/jpeg';
+        const fileName = isCompressed
+            ? (file.name ? file.name.replace(/\.[^/.]+$/, ".jpg") : "image.jpg")
+            : (file.name || "image");
+        formData.append('imagen', compressed, fileName);
     } catch {
-        formData.append('imagen', file);
+        formData.append('imagen', file, file.name);
     }
     return await api.post(`/api/tareas-generales/${tareaId}/imagenes`, formData, {
         headers: { 'Content-Type': undefined }
