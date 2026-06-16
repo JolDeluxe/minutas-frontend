@@ -29,8 +29,10 @@ export const useMinutas = () => {
   });
 
   const lastFetchParams = useRef({});
+  const fetchIdRef = useRef(0);
 
   const fetchMinutas = useCallback(async (params = {}) => {
+    const currentFetchId = ++fetchIdRef.current;
     setLoading(true);
     
     // Sanitize parameters to avoid validation issues (like 'TODAS' enums)
@@ -52,6 +54,8 @@ export const useMinutas = () => {
 
       const response = isExterna ? await getMinutasExternas(cleanParams) : await getMinutas(cleanParams);
       
+      if (currentFetchId !== fetchIdRef.current) return; // Evita condition race al cambiar tabs rápido
+
       const data = response?.data || [];
       const pagination = response?.pagination || {};
 
@@ -70,7 +74,9 @@ export const useMinutas = () => {
     } catch (error) {
       console.error("Error fetching minutas:", error);
     } finally {
-      setLoading(false);
+      if (currentFetchId === fetchIdRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 
