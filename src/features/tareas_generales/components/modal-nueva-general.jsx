@@ -60,6 +60,7 @@ const emptyForm = () => ({
     descripcion: '',
     area: 'DIRECCION_ADJUNTA',
     linea: '',
+    lineaCustom: '',
     clasificacion: 'OTROS',
     tipo: 'SIN_ORGANIZAR',
     estado: null,
@@ -80,10 +81,15 @@ export function ModalNuevaGeneral({ isOpen, onClose, onSave, users = [], editDat
     // Cuando abre con datos de edición, rellenar el formulario
     useEffect(() => {
         if (isOpen && editData) {
+            const area = editData.area || 'DIRECCION_ADJUNTA';
+            const linea = editData.linea || '';
+            const isCustom = linea && !(LINEAS_POR_AREA[area] || []).some(o => o.value === linea || o.label === linea);
+
             setForm({
                 descripcion: editData.descripcion || '',
-                area: editData.area || 'DIRECCION_ADJUNTA',
-                linea: editData.linea || '',
+                area: area,
+                linea: isCustom ? 'OTROS' : linea,
+                lineaCustom: isCustom ? linea : '',
                 clasificacion: editData.clasificacion || 'OTROS',
                 tipo: editData.tipo || 'SIN_ORGANIZAR',
                 estado: editData.estado || null,
@@ -109,7 +115,13 @@ export function ModalNuevaGeneral({ isOpen, onClose, onSave, users = [], editDat
         const e = {};
         if (!form.descripcion.trim()) e.descripcion = 'La descripción es requerida.';
         if (!form.area) e.area = 'El área es requerida.';
-        if (lineasDeArea.length > 0 && !form.linea) e.linea = 'La línea es requerida.';
+        if (lineasDeArea.length > 0) {
+            if (!form.linea) {
+                e.linea = 'La línea es requerida.';
+            } else if (form.linea === 'OTROS' && !form.lineaCustom?.trim()) {
+                e.linea = 'Especifica el nombre de la línea.';
+            }
+        }
         return e;
     };
 
@@ -179,7 +191,7 @@ export function ModalNuevaGeneral({ isOpen, onClose, onSave, users = [], editDat
         const payload = {
             descripcion: form.descripcion.trim(),
             area: form.area,
-            linea: form.linea || null,
+            linea: (form.linea === 'OTROS' ? form.lineaCustom?.trim() : form.linea) || null,
             clasificacion: form.clasificacion,
             tipo: 'SIN_ORGANIZAR',
             estado: null,
@@ -269,6 +281,7 @@ export function ModalNuevaGeneral({ isOpen, onClose, onSave, users = [], editDat
                                         ...prev,
                                         area: a,
                                         linea: '',
+                                        lineaCustom: '',
                                         clasificacion: CLASIFICACIONES_POR_AREA[a]?.[0]?.value || 'OTROS'
                                     }));
                                     if (formErrors.area || formErrors.linea) {
@@ -298,6 +311,7 @@ export function ModalNuevaGeneral({ isOpen, onClose, onSave, users = [], editDat
                                     value={form.linea}
                                     onChange={e => {
                                         set('linea', e.target.value);
+                                        if (e.target.value !== 'OTROS') set('lineaCustom', '');
                                         if (formErrors.linea) setFormErrors(prev => ({ ...prev, linea: null }));
                                     }}
                                     className={`w-full rounded-2xl border px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-4 transition-all ${
@@ -311,6 +325,20 @@ export function ModalNuevaGeneral({ isOpen, onClose, onSave, users = [], editDat
                                         <option key={l.value} value={l.value}>{l.label}</option>
                                     ))}
                                 </select>
+                                {form.linea === 'OTROS' && (
+                                    <div className="mt-2 animate-in fade-in slide-in-from-top-1">
+                                        <input
+                                            type="text"
+                                            value={form.lineaCustom || ''}
+                                            onChange={e => {
+                                                set('lineaCustom', e.target.value);
+                                                if (formErrors.linea) setFormErrors(prev => ({ ...prev, linea: null }));
+                                            }}
+                                            placeholder="Escribe la línea..."
+                                            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold focus:border-slate-400 focus:outline-none focus:ring-4 focus:ring-slate-200/50 transition-all"
+                                        />
+                                    </div>
+                                )}
                                 {formErrors.linea && (
                                     <p className="mt-1.5 text-[11px] font-bold text-rose-500">{formErrors.linea}</p>
                                 )}

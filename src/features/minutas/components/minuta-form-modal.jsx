@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Input, Label, Select } from '@/components/form/z_index';
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Icon } from '@/components/ui/z_index';
-import { LINEA_MAP } from '../constants';
+import { LINEA_MAP, LINEAS_POR_AREA } from '../constants';
 import { useAuthStore } from '@/stores/auth-store';
 
 export const MinutaFormModal = ({
@@ -31,6 +31,7 @@ export const MinutaFormModal = ({
     const [temaExterno, setTemaExterno] = useState('');
     const [areaExterna, setAreaExterna] = useState('DIRECCION_MBC');
     const [departamentoExterno, setDepartamentoExterno] = useState('');
+    const [departamentoExternoCustom, setDepartamentoExternoCustom] = useState('');
     const [objetivoExterno, setObjetivoExterno] = useState('');
     const [integrantesExterno, setIntegrantesExterno] = useState('');
     const [asistentesExterno, setAsistentesExterno] = useState('');
@@ -81,8 +82,20 @@ export const MinutaFormModal = ({
             }
             if ('tema' in minutaAEditar) {
                 setTemaExterno(minutaAEditar.tema || '');
-                setAreaExterna(minutaAEditar.area || 'DIRECCION_MBC');
-                setDepartamentoExterno(minutaAEditar.departamento || '');
+                const area = minutaAEditar.area || 'DIRECCION_MBC';
+                setAreaExterna(area);
+                
+                const dep = minutaAEditar.departamento || '';
+                const options = LINEAS_POR_AREA[area] || [];
+                const isCustom = dep && !options.some(opt => opt.value === dep || opt.label === dep);
+                
+                if (isCustom) {
+                    setDepartamentoExterno('OTROS');
+                    setDepartamentoExternoCustom(dep);
+                } else {
+                    setDepartamentoExterno(dep);
+                    setDepartamentoExternoCustom('');
+                }
                 setObjetivoExterno(minutaAEditar.objetivo || '');
                 setIntegrantesExterno(minutaAEditar.integrantes || '');
                 setAsistentesExterno(minutaAEditar.asistentes || '');
@@ -90,6 +103,7 @@ export const MinutaFormModal = ({
                 setTemaExterno('');
                 setAreaExterna('DIRECCION_MBC');
                 setDepartamentoExterno('');
+                setDepartamentoExternoCustom('');
                 setObjetivoExterno('');
                 setIntegrantesExterno('');
                 setAsistentesExterno('');
@@ -118,6 +132,7 @@ export const MinutaFormModal = ({
             setTemaExterno('');
             setAreaExterna('DIRECCION_MBC');
             setDepartamentoExterno('');
+            setDepartamentoExternoCustom('');
             setObjetivoExterno('');
             setIntegrantesExterno('');
             setAsistentesExterno('');
@@ -167,7 +182,7 @@ export const MinutaFormModal = ({
         const payload = isExterna ? {
             tema: temaExterno.trim(),
             area: areaExterna,
-            departamento: departamentoExterno.trim() || undefined,
+            departamento: (departamentoExterno === 'OTROS' ? departamentoExternoCustom.trim() : departamentoExterno) || undefined,
             objetivo: objetivoExterno.trim() || undefined,
             integrantes: integrantesExterno.trim() || undefined,
             asistentes: asistentesExterno.trim() || undefined,
@@ -226,7 +241,11 @@ export const MinutaFormModal = ({
                                     <Select
                                         id="me-area"
                                         value={areaExterna}
-                                        onChange={(e) => setAreaExterna(e.target.value)}
+                                        onChange={(e) => {
+                                            setAreaExterna(e.target.value);
+                                            setDepartamentoExterno('');
+                                            setDepartamentoExternoCustom('');
+                                        }}
                                         error={!!fe.areaExterna}
                                     >
                                         <option value="DIRECCION_MBC">Dirección MBC</option>
@@ -239,14 +258,33 @@ export const MinutaFormModal = ({
                                 </div>
                                 <div className="flex flex-col gap-1.5">
                                     <Label htmlFor="me-departamento">Departamento / Línea</Label>
-                                    <Input
+                                    <Select
                                         id="me-departamento"
                                         value={departamentoExterno}
-                                        onChange={(e) => setDepartamentoExterno(e.target.value)}
-                                        placeholder="Ej. Compras, Visual..."
-                                    />
+                                        onChange={(e) => {
+                                            setDepartamentoExterno(e.target.value);
+                                            if (e.target.value !== 'OTROS') setDepartamentoExternoCustom('');
+                                        }}
+                                    >
+                                        <option value="">Selecciona...</option>
+                                        {(LINEAS_POR_AREA[areaExterna] || []).map((linea) => (
+                                            <option key={linea.value} value={linea.value}>{linea.label}</option>
+                                        ))}
+                                    </Select>
                                 </div>
                             </div>
+                            
+                            {departamentoExterno === 'OTROS' && (
+                                <div className="flex flex-col gap-1.5 pt-2 animate-in fade-in slide-in-from-top-2">
+                                    <Label htmlFor="me-departamento-custom">Especificar Departamento / Línea</Label>
+                                    <Input
+                                        id="me-departamento-custom"
+                                        value={departamentoExternoCustom}
+                                        onChange={(e) => setDepartamentoExternoCustom(e.target.value)}
+                                        placeholder="Escribe el nombre..."
+                                    />
+                                </div>
+                            )}
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="flex flex-col gap-1.5">

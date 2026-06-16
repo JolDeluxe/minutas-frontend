@@ -72,6 +72,7 @@ export const EntryFormModal = ({
     descripcion: '',
     area: departamento || 'DISENO',
     linea: 'CALZADO',
+    lineaCustom: '',
     clasificacion: 'OTROS',
     tipo: 'TAREA',
     prioridad: '',
@@ -90,10 +91,15 @@ export const EntryFormModal = ({
       fetchUsers();
       if (entry) {
         const isDraft = typeof entry.id === 'string' || entry.tempId;
+        const entryArea = entry.area || departamento || 'DISENO';
+        const entryLinea = entry.linea || 'CALZADO';
+        const isCustomLinea = entryLinea && !(LINEAS_POR_AREA[entryArea] || []).some(o => o.value === entryLinea || o.label === entryLinea);
+
         setEditForm({
           descripcion: entry.descripcion || '',
-          area: entry.area || departamento || 'DISENO',
-          linea: entry.linea || 'CALZADO',
+          area: entryArea,
+          linea: isCustomLinea ? 'OTROS' : entryLinea,
+          lineaCustom: isCustomLinea ? entryLinea : '',
           clasificacion: entry.clasificacion || 'OTROS',
           tipo: entry.tipo || (isDraft ? 'SIN_ORGANIZAR' : 'TAREA'), 
           prioridad: entry.prioridad || 'MEDIA',
@@ -138,7 +144,9 @@ export const EntryFormModal = ({
   const handleFieldChange = (field, value) => {
     if (field === 'area') {
       const newLineas = LINEAS_POR_AREA[value] || [];
-      setEditForm(prev => ({ ...prev, area: value, linea: newLineas.length > 0 ? newLineas[0].value : null }));
+      setEditForm(prev => ({ ...prev, area: value, linea: newLineas.length > 0 ? newLineas[0].value : null, lineaCustom: '' }));
+    } else if (field === 'linea') {
+      setEditForm(prev => ({ ...prev, linea: value, lineaCustom: value !== 'OTROS' ? '' : prev.lineaCustom }));
     } else {
       setEditForm(prev => ({ ...prev, [field]: value }));
     }
@@ -247,7 +255,9 @@ export const EntryFormModal = ({
 
     const payload = {
       ...form,
+      linea: form.linea === 'OTROS' ? form.lineaCustom?.trim() : form.linea,
     };
+    delete payload.lineaCustom;
     
     // Si es TAREA o SIN_ORGANIZAR, solo enviamos responsables si cambiaron
     if (form.tipo === 'TAREA' || form.tipo === 'SIN_ORGANIZAR') {
@@ -466,8 +476,18 @@ export const EntryFormModal = ({
                     onChange={(e) => handleFieldChange('linea', e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 shadow-sm"
                   >
+                    <option value="">Selecciona...</option>
                     {lineasDisponibles.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
                   </select>
+                  {form.linea === 'OTROS' && (
+                    <input
+                      type="text"
+                      value={form.lineaCustom || ''}
+                      onChange={(e) => handleFieldChange('lineaCustom', e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 shadow-sm mt-1 animate-in fade-in slide-in-from-top-1"
+                      placeholder="Escribe la línea..."
+                    />
+                  )}
                </div>
              )}
              <div className="flex flex-col gap-1.5">
@@ -570,7 +590,13 @@ export const EntryFormModal = ({
              {hasLineas && (
                <div className="flex flex-col gap-1.5">
                   <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Línea</label>
-                  <select value={form.linea || ''} onChange={(e) => handleFieldChange('linea', e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 shadow-sm">{lineasDisponibles.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}</select>
+                  <select value={form.linea || ''} onChange={(e) => handleFieldChange('linea', e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 shadow-sm">
+                    <option value="">Selecciona...</option>
+                    {lineasDisponibles.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+                  </select>
+                  {form.linea === 'OTROS' && (
+                    <input type="text" value={form.lineaCustom || ''} onChange={(e) => handleFieldChange('lineaCustom', e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 shadow-sm mt-1 animate-in fade-in slide-in-from-top-1" placeholder="Escribe la línea..." />
+                  )}
                </div>
              )}
              <div className="flex flex-col gap-1.5">
