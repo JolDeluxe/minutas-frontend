@@ -7,6 +7,8 @@ import {
     changeTareaStatus,
     deleteTarea,
     createNotaGeneral,
+    updateNotaGeneral,
+    deleteNotaGeneral,
     createTareaNota,
     updateTareaNota,
     deleteTareaNota,
@@ -127,6 +129,26 @@ export const useTareas = () => {
         }
     }, []);
 
+    const handleUpdateNotaGeneral = useCallback(async (id, data) => {
+        setSubmitting(true);
+        try { 
+            const res = await updateNotaGeneral(id, data);
+            return res.data;
+        } finally { 
+            setSubmitting(false); 
+        }
+    }, []);
+
+    const handleDeleteNotaGeneral = useCallback(async (id) => {
+        setSubmitting(true);
+        try { 
+            const res = await deleteNotaGeneral(id);
+            return res.data;
+        } finally { 
+            setSubmitting(false); 
+        }
+    }, []);
+
     const handleCreateTareaNota = useCallback(async (data) => {
         setSubmitting(true);
         try { 
@@ -219,6 +241,8 @@ export const useTareas = () => {
         changeStatus: handleChangeStatus,
         deleteTarea: handleDelete,
         createNotaGeneral: handleCreateNotaGeneral,
+        updateNotaGeneral: handleUpdateNotaGeneral,
+        deleteNotaGeneral: handleDeleteNotaGeneral,
         createTareaNota: handleCreateTareaNota,
         updateTareaNota: handleUpdateTareaNota,
         deleteTareaNota: handleDeleteTareaNota,

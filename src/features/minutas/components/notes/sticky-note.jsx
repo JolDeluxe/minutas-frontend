@@ -19,6 +19,14 @@ export const StickyNote = ({
     setContent(nota.contenido || '');
   }, [nota.contenido]);
 
+  // Auto-resize on mount and content change
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+    }
+  }, [content]);
+
   const handleBlur = () => {
     if (content.trim() !== nota.contenido) {
       onUpdate?.(nota.id, content.trim());
@@ -27,9 +35,6 @@ export const StickyNote = ({
 
   const handleChange = (e) => {
     setContent(e.target.value);
-    // Auto-resize
-    e.target.style.height = 'auto';
-    e.target.style.height = e.target.scrollHeight + 'px';
   };
 
   return (

@@ -120,6 +120,20 @@ const TableImagePreview = ({ images, remoteImageCount, onClick }) => {
 // ── Notas PostIt ─────────────────────────────────────────────────────────────
 const EditableNote = ({ note, onUpdate, onDelete }) => {
     const [content, setContent] = useState(note.contenido || '');
+    const [prevContenido, setPrevContenido] = useState(note.contenido);
+    const textareaRef = useRef(null);
+
+    if (note.contenido !== prevContenido) {
+        setPrevContenido(note.contenido);
+        setContent(note.contenido || '');
+    }
+
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+        }
+    }, [content]);
 
     const handleBlur = () => {
         if (content.trim() !== note.contenido) {
@@ -145,6 +159,7 @@ const EditableNote = ({ note, onUpdate, onDelete }) => {
                 </div>
             )}
             <textarea
+                ref={textareaRef}
                 value={content}
                 onChange={e => setContent(e.target.value)}
                 onBlur={handleBlur}

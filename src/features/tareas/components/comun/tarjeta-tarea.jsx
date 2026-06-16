@@ -279,6 +279,13 @@ const EditableNote = ({ note, onUpdate, onDelete, readOnly }) => {
     setContent(note.contenido || '');
   }
 
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+    }
+  }, [content]);
+
   const handleBlur = () => {
     if (!readOnly && content.trim() !== note.contenido) {
       onUpdate?.(note.id, content.trim());
@@ -287,8 +294,6 @@ const EditableNote = ({ note, onUpdate, onDelete, readOnly }) => {
 
   const handleChange = (e) => {
     setContent(e.target.value);
-    e.target.style.height = 'auto';
-    e.target.style.height = e.target.scrollHeight + 'px';
   };
 
   return (

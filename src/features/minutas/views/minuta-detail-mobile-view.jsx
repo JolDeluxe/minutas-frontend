@@ -51,6 +51,9 @@ export const MinutaDetailMobileView = ({
   isSubmittingFinal,
   showNotes,
   setShowNotes,
+  handleCreateGeneralNote,
+  handleUpdateGeneralNote,
+  handleDeleteGeneralNote,
   handleCreateEntryNote,
   handleUpdateEntryNote,
   handleDeleteEntryNote,
@@ -269,11 +272,11 @@ export const MinutaDetailMobileView = ({
             className="fixed top-16 bottom-20 right-0 w-[85%] max-w-sm bg-white z-90 shadow-2xl animate-in slide-in-from-right duration-300 rounded-l-3xl overflow-hidden flex flex-col border-l border-slate-100"
           >
             <StickyNotesBoard
-              notas={[...draftNotes, ...(minuta.notasGenerales || [])]}
+              notas={minuta.notasGenerales || []}
               minutaId={minuta.id}
-              onCreateNota={(data) => addDraftNote(data.contenido)}
-              onUpdateNota={updateDraftNote}
-              onDeleteNota={removeDraftNote}
+              onCreateNota={handleCreateGeneralNote}
+              onUpdateNota={handleUpdateGeneralNote}
+              onDeleteNota={handleDeleteGeneralNote}
               onClose={() => setShowNotes(false)}
               isDrawer={false}
             />
@@ -283,7 +286,7 @@ export const MinutaDetailMobileView = ({
 
       {!composerExpanded && (
         <div className="fixed bottom-48 right-6 z-[60] flex flex-col gap-4">
-          {(draftEntries.length > 0 || draftNotes.length > 0) && (
+          {(draftEntries.length > 0) && (
             <button
               onClick={() => setShowReviewModal(true)}
               style={{ ...glassBase('success'), width: 52, height: 52, borderRadius: 16 }}
@@ -292,7 +295,7 @@ export const MinutaDetailMobileView = ({
               <GlassSheen />
               <Icon name="cloud_upload" size="26px" className="relative z-10" />
               <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-lg animate-in zoom-in z-20">
-                {draftEntries.length + draftNotes.length}
+                {draftEntries.length}
               </div>
             </button>
           )}
@@ -313,9 +316,9 @@ export const MinutaDetailMobileView = ({
           >
             <GlassSheen />
             <Icon name="sticky_note_2" size="26px" className="relative z-10" />
-            {(draftNotes.length + (minuta.notasGenerales?.length || 0)) > 0 && (
+            {(minuta.notasGenerales?.length || 0) > 0 && (
               <div className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-amber-950 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-amber-500 shadow-lg z-20">
-                 {draftNotes.length + (minuta.notasGenerales?.length || 0)}
+                 {minuta.notasGenerales?.length || 0}
               </div>
             )}
           </button>
@@ -341,7 +344,7 @@ export const MinutaDetailMobileView = ({
         onClose={() => setShowReviewModal(false)}
         onConfirm={handleFinalSubmit}
         entries={draftEntries}
-        notesCount={draftNotes.length}
+        notesCount={0}
         submitting={isSubmittingFinal}
         minutaEstado={minutaEstado}
         onRemoveEntry={removeDraftEntry}

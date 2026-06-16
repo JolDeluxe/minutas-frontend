@@ -112,6 +112,7 @@ export default function MinutaDetailPage() {
   const { 
     tareas, fetchTareas, loadingTareas, deleteTarea,
     createTarea: createTareaApi, updateTarea, organizarTarea, changeStatus: changeTareaStatus, createNotaGeneral, 
+    updateNotaGeneral, deleteNotaGeneral,
     createTareaNota, updateTareaNota, deleteTareaNota,
     addTareaImagen, deleteTareaImagen, generarPdfTarea, toggleNotificado: toggleNotificadoTarea
   } = useTareas();
@@ -637,9 +638,6 @@ export default function MinutaDetailPage() {
           await createTareaApi({ tareas: toSend });
         }
       }
-      for (const note of draftNotes) {
-        await createNotaGeneral({ contenido: note.contenido, minutaId: Number(id) });
-      }
       emitDraftEntriesRemove(draftEntries.map((entry) => entry.tempId));
       await clearDrafts();
       setShowReviewModal(false);
@@ -711,6 +709,38 @@ export default function MinutaDetailPage() {
     } catch {
       notify.error('Error al cambiar estado');
       return false;
+    }
+  };
+
+  const handleCreateGeneralNote = async (data) => {
+    try {
+      await createNotaGeneral({ ...data, minutaId: Number(id) });
+      const res = await getMinutaById(id);
+      setMinuta(res.data?.data || res.data);
+      notify.success('Nota agregada');
+    } catch {
+      notify.error('Error al crear nota');
+    }
+  };
+
+  const handleUpdateGeneralNote = async (notaId, contenido) => {
+    try {
+      await updateNotaGeneral(notaId, { contenido });
+      const res = await getMinutaById(id);
+      setMinuta(res.data?.data || res.data);
+    } catch {
+      notify.error('Error al actualizar nota');
+    }
+  };
+
+  const handleDeleteGeneralNote = async (notaId) => {
+    try {
+      await deleteNotaGeneral(notaId);
+      const res = await getMinutaById(id);
+      setMinuta(res.data?.data || res.data);
+      notify.success('Nota eliminada');
+    } catch {
+      notify.error('Error al eliminar nota');
     }
   };
 
@@ -964,7 +994,9 @@ export default function MinutaDetailPage() {
     organizeEntry, setOrganizeEntry, handleOrganizeSave,
     editEntry, setEditEntry, handleEditEntrySave, isSavingEntry,
     updateTarea, changeTareaStatus: handleStatusChange, fetchTareas, refreshEntries, setShowReviewModal, showReviewModal,
-    handleFinalSubmit, isSubmittingFinal, showNotes, setShowNotes, handleCreateEntryNote, handleUpdateEntryNote,
+    handleFinalSubmit, isSubmittingFinal, showNotes, setShowNotes, 
+    handleCreateGeneralNote, handleUpdateGeneralNote, handleDeleteGeneralNote,
+    handleCreateEntryNote, handleUpdateEntryNote,
     handleDeleteEntryNote, handleAddEntryImage, handleDeleteEntryImage, handleIniciar, handleCancelar, handleCerrar, handleReabrir, handleFinalizar,
     iniciando, cancelando, cerrando, reabriendo, finalizando, minutaEstado: minuta?.estado,
     clearDrafts: handleClearDrafts, handleDownloadPdf, isGeneratingPdf,

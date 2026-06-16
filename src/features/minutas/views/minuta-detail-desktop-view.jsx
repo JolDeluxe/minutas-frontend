@@ -48,6 +48,9 @@ export const MinutaDetailDesktopView = ({
   isSubmittingFinal,
   showNotes,
   setShowNotes,
+  handleCreateGeneralNote,
+  handleUpdateGeneralNote,
+  handleDeleteGeneralNote,
   handleCreateEntryNote,
   handleUpdateEntryNote,
   handleDeleteEntryNote,
@@ -284,11 +287,11 @@ export const MinutaDetailDesktopView = ({
             />
             <div className="absolute right-0 top-0 bottom-0 z-[100] w-[min(430px,calc(100%-2.5rem))] overflow-hidden rounded-l-[2rem] border-l border-amber-100 bg-white shadow-2xl shadow-slate-900/20 animate-in slide-in-from-right-4 fade-in duration-300">
               <StickyNotesBoard
-                notas={[...draftNotes, ...(minuta.notasGenerales || [])]}
+                notas={minuta.notasGenerales || []}
                 minutaId={minuta.id}
-                onCreateNota={(data) => addDraftNote(data.contenido)}
-                onUpdateNota={updateDraftNote}
-                onDeleteNota={removeDraftNote}
+                onCreateNota={handleCreateGeneralNote}
+                onUpdateNota={handleUpdateGeneralNote}
+                onDeleteNota={handleDeleteGeneralNote}
                 onClose={() => setShowNotes(false)}
                 isDrawer={false}
               />
@@ -298,16 +301,16 @@ export const MinutaDetailDesktopView = ({
 
         {composerCollapsed && (
           <div className="fixed bottom-24 right-10 z-[60] flex gap-4">
-            {(draftEntries.length > 0 || draftNotes.length > 0) && (
+            {(draftEntries.length > 0) && (
               <button
                 onClick={() => setShowReviewModal(true)}
                 className="flex h-16 px-6 items-center gap-3 rounded-2xl bg-emerald-600 text-white shadow-2xl shadow-emerald-600/40 hover:bg-emerald-500 hover:scale-105 active:scale-95 transition-all group relative"
               >
                 <Icon name="cloud_upload" size="28px" className="group-hover:animate-bounce" />
                 <span className="text-xs font-black uppercase tracking-widest pr-2">Guardar</span>
-                {(draftEntries.length + draftNotes.length) > 0 && (
+                {(draftEntries.length) > 0 && (
                   <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-lg animate-in zoom-in">
-                    {draftEntries.length + draftNotes.length}
+                    {draftEntries.length}
                   </div>
                 )}
               </button>
@@ -319,9 +322,9 @@ export const MinutaDetailDesktopView = ({
                 className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-2xl shadow-amber-500/40 hover:bg-amber-400 hover:scale-110 active:scale-95 transition-all relative group"
               >
                 <Icon name="sticky_note_2" size="32px" />
-                {(draftEntries.length + (minuta.notasGenerales?.length || 0)) > 0 && (
+                {(minuta.notasGenerales?.length || 0) > 0 && (
                   <div className="absolute -top-2 -right-2 w-7 h-7 bg-amber-950 text-white text-[11px] font-black rounded-full flex items-center justify-center border-2 border-amber-500 shadow-lg group-hover:scale-110 transition-transform">
-                     {draftNotes.length + (minuta.notasGenerales?.length || 0)}
+                     {minuta.notasGenerales?.length || 0}
                   </div>
                 )}
               </button>
@@ -335,7 +338,7 @@ export const MinutaDetailDesktopView = ({
         onClose={() => setShowReviewModal(false)}
         onConfirm={handleFinalSubmit}
         entries={draftEntries}
-        notesCount={draftNotes.length}
+        notesCount={0}
         submitting={isSubmittingFinal}
         minutaEstado={minutaEstado}
         onRemoveEntry={removeDraftEntry}

@@ -100,6 +100,14 @@ export const createNotaGeneral = async (data) => {
     return await api.post('/api/tareas/notas/general', data);
 };
 
+export const updateNotaGeneral = async (id, data) => {
+    return await api.put(`/api/tareas/notas/general/${id}`, data);
+};
+
+export const deleteNotaGeneral = async (id) => {
+    return await api.delete(`/api/tareas/notas/general/${id}`);
+};
+
 export const createTareaNota = async (data) => {
     return await api.post('/api/tareas/notas/tarea', data);
 };
