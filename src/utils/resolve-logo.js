@@ -11,7 +11,7 @@ export const getLogoByUser = (user) => {
     return defaultLogo;
   }
 
-  const dept = currentUser.departamento?.toUpperCase();
+  const dept = typeof currentUser.departamento === 'string' ? currentUser.departamento.toUpperCase() : '';
   
   if (dept === 'DISENO' || dept === 'DISEÑO') {
     return disenoLogo;

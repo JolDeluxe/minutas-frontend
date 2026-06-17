@@ -6,8 +6,9 @@
  */
 export const compressImage = async (file, { maxWidth = 1200, quality = 0.6 } = {}) => {
   return new Promise((resolve, reject) => {
-    // Si no es una imagen, devolver original
-    if (!file.type.startsWith('image/')) {
+    // Si no es una imagen, o es HEIC/HEIF, devolver original inmediatamente
+    const isHeic = file.type === "image/heic" || file.type === "image/heif" || /\.(heic|heif)$/i.test(file.name || "");
+    if (!file.type.startsWith('image/') || isHeic) {
       return resolve(file);
     }
 
