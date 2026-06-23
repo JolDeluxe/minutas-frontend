@@ -18,6 +18,7 @@ const LINEA_OPTIONS = [
     { value: 'BOTA', label: 'Bota' },
     { value: 'ROPA', label: 'Ropa' },
     { value: 'ACCESORIOS', label: 'Accesorios' },
+    { value: 'TODAS', label: 'Todas' },
 ];
 
 export const MinutasInlineFilters = ({ 

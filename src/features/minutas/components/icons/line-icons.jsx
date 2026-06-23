@@ -93,6 +93,8 @@ export const LineIconSelector = ({ type, size = 28, className = '', style }) => 
     case 'DISENO':
     case 'DISEÑO':
       return <DisenoIcon size={size} className={className} style={style} />;
+    case 'TODAS':
+      return renderIcon('all_inclusive');
       
     // Iconos de las líneas de áreas externas
     case 'COMPRAS': return renderIcon('shopping_bag');

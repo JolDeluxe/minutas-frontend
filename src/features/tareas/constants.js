@@ -44,6 +44,7 @@ export const TAREA_LINEA_OPTS = [
     { value: 'BOTA', label: 'Bota' },
     { value: 'ROPA', label: 'Ropa' },
     { value: 'ACCESORIOS', label: 'Accesorios' },
+    { value: 'TODAS', label: 'Todas' },
 ];
 
 export const TAREA_CLASIFICACION_OPTS = [

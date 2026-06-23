@@ -83,6 +83,7 @@ export const LINEA_MAP = {
   ROPA:       { label: 'Ropa',       icon: 'checkroom',    color: '#0f172a' },
   ACCESORIOS: { label: 'Accesorios', icon: 'shopping_bag', color: '#94a3b8' },
   MARKETING:  { label: 'Marketing',  icon: 'record_voice_over',     color: '#7c3aed' },
+  TODAS:      { label: 'Todas',      icon: 'all_inclusive',         color: '#64748b' },
   OTROS:      { label: 'Otros',      icon: 'more_horiz',            color: '#64748b' },
 };
 
@@ -92,6 +93,7 @@ export const LINEAS_POR_AREA = {
     { value: 'BOTA',       label: 'Bota',       color: '#482b2c', icon: 'hiking' },
     { value: 'ROPA',       label: 'Ropa',       color: '#ec4899', icon: 'checkroom' },
     { value: 'ACCESORIOS', label: 'Accesorios', color: '#14b8a6', icon: 'watch' },
+    { value: 'TODAS',      label: 'Todas',      color: '#64748b', icon: 'all_inclusive' },
     { value: 'OTROS',      label: 'Otros',      color: '#64748b', icon: 'more_horiz' },
   ],
   DIRECCION_MBC: [
@@ -233,6 +235,7 @@ export const CATALOGOS_POR_DEPARTAMENTO = {
       { value: 'BOTA',       label: 'Bota',       color: '#482b2c', icon: 'hiking' },
       { value: 'ROPA',       label: 'Ropa',       color: '#ec4899', icon: 'checkroom' },
       { value: 'ACCESORIOS', label: 'Accesorios', color: '#14b8a6', icon: 'watch' },
+      { value: 'TODAS',      label: 'Todas',      color: '#64748b', icon: 'all_inclusive' },
       { value: 'OTROS',      label: 'Otros',      color: '#64748b', icon: 'more_horiz' },
     ],
   },

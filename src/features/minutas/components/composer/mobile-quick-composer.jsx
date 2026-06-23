@@ -468,7 +468,7 @@ export const MobileQuickComposer = ({
                 isOperationalArea ? (
                   <div>
                     <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Línea de Producto</span>
-                    <div className="grid grid-cols-5 gap-1.5 px-0.5">
+                    <div className="grid grid-cols-3 gap-1.5 px-0.5">
                       {lineasConDefault.map(({ value, label }) => (
                         <button 
                           key={value} 
@@ -487,7 +487,7 @@ export const MobileQuickComposer = ({
                           )}
                           <LineIconSelector type={value} size={28} />
                           <span className={cn(
-                            "text-[6.5px] font-black uppercase tracking-tighter truncate w-full text-center leading-none",
+                            "text-[8px] font-black uppercase tracking-wider truncate w-full text-center leading-none",
                             linea === value ? "text-emerald-600" : "text-slate-400"
                           )}>
                             {label}
