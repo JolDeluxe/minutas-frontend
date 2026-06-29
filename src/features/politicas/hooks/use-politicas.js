@@ -7,47 +7,36 @@ export const usePoliticas = () => {
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
   const [filters, setFilters] = useState({
-    page: 1,
-    limit: 100, // Traemos todas para el repositorio
-    q: '',
-    tipo: 'POLITICA', // 🔥 FILTRO ESTRICTO (string en vez de array para qs de express)
-    todo: true,
+    page:  1,
+    limit: 100,         // Traemos todas para el repositorio
+    q:     '',
+    tipo:  'POLITICA',  // Filtro estricto — string, no array, para qs de Express
+    todo:  true,
+    area:  undefined,   // undefined = sin filtro activo (axios lo omite de la query)
+    linea: undefined,   // undefined = sin filtro activo
   });
 
   const fetchPoliticas = useCallback(async () => {
     setLoading(true);
     try {
+      // `filters` ya incluye area y linea (undefined cuando no hay filtro activo).
+      // Axios omite los keys undefined de la query string automáticamente.
       const responsePayload = await getPoliticas({ ...filters, tipo: 'POLITICA' });
-      
-      console.group('🔍 DEBUG POLITICAS');
-      console.log('1. Filtros enviados:', { ...filters, tipo: 'POLITICA' });
-      console.log('2. Respuesta cruda de la API:', responsePayload);
-      
-      // La API devuelve: { data: { tareas: [...] } } o directamente { tareas: [...] } dependiendo del interceptor
+
+      // La API puede devolver { data: { tareas: [] } } o { tareas: [] } según el interceptor.
       const payloadData = responsePayload?.data ? responsePayload.data : responsePayload;
-      
-      console.log('3. Data extraída (payloadData):', payloadData);
-      
+
       if (payloadData && Array.isArray(payloadData.tareas)) {
-        // Doble validación en cliente
-        const soloPoliticas = payloadData.tareas.filter(t => t.tipo === 'POLITICA');
-        
-        console.log('4. Total de items recibidos:', payloadData.tareas.length);
-        console.log('5. Total filtrados en frontend (tipo===POLITICA):', soloPoliticas.length);
-        console.log('6. Arreglo final a renderizar:', soloPoliticas);
-        console.groupEnd();
-        
+        // Doble validación en cliente — garantía defensiva.
+        const soloPoliticas = payloadData.tareas.filter((t) => t.tipo === 'POLITICA');
         setPoliticas(soloPoliticas);
         setTotal(payloadData.total || soloPoliticas.length);
       } else {
-        console.log('⚠️ No se encontró un array de tareas válido');
-        console.groupEnd();
-        
         setPoliticas([]);
         setTotal(0);
       }
     } catch (error) {
-      console.error('Error fetching politicas:', error);
+      console.error('[usePoliticas] Error fetching politicas:', error);
       notify.error('No se pudieron cargar las políticas');
     } finally {
       setLoading(false);

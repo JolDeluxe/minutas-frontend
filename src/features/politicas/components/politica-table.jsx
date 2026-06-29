@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { ImageViewer } from '@/features/tareas/components/comun/tarjeta-tarea';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { cn } from '@/utils/cn';
+import { AreaLineaBadge } from './area-linea-badge';
 
 const TableImagePreview = ({ images, remoteImageCount, onClick }) => {
   const isDesktop = useIsDesktop();
@@ -165,6 +166,20 @@ export const PoliticaTable = ({ politicas, loading, onEdit, onDelete }) => {
                 </span>
               </div>
             )}
+          </div>
+        );
+      }
+    },
+    {
+      header: 'Área / Línea',
+      accessorKey: 'area',
+      align: 'center',
+      headerClassName: 'w-[20%] min-w-[160px]',
+      cell: (row) => {
+        if (row.isSkeleton) return <Skeleton className="h-6 w-28 mx-auto rounded-lg" />;
+        return (
+          <div className="flex justify-center py-2">
+            <AreaLineaBadge area={row.area} linea={row.linea} />
           </div>
         );
       }

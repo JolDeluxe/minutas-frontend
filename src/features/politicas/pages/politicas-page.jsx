@@ -43,15 +43,13 @@ export const PoliticasPage = () => {
     let success = false;
     
     if (selectedPolitica) {
-      if (data instanceof FormData) {
-          // El backend de updateTarea no soporta FormData directamente de la misma forma que crear.
-          // Extraemos la descripción para actualizar. 
-          // Si el usuario quiere cambiar imagen, en este flujo simplificado solo actualizamos texto.
-          const desc = data.get('tareas[0][descripcion]');
-          success = await handleUpdate(selectedPolitica.id, { descripcion: desc });
-      } else {
-          success = await handleUpdate(selectedPolitica.id, data);
-      }
+      const isFormData = data instanceof FormData;
+      const payload = {
+        descripcion: isFormData ? data.get('tareas[0][descripcion]') : data.descripcion,
+        area:        isFormData ? (data.get('tareas[0][area]')  || null) : (data.area ?? null),
+        linea:       isFormData ? (data.get('tareas[0][linea]') || null) : (data.linea ?? null),
+      };
+      success = await handleUpdate(selectedPolitica.id, payload);
     } else {
       success = await handleCreate(data);
     }

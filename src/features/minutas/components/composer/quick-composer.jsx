@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Icon, Modal, ModalHeader, ModalBody, ModalFooter, Button as UIButton } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
-import { getCatalogos, LINEAS_POR_AREA, PRIORIDAD_MAP } from '../../constants';
+import { getCatalogos, LINEAS_POR_AREA, PRIORIDAD_MAP, computeDerivedLines } from '../../constants';
 import { useUsers } from '../../../usuarios/hooks/use-users';
 import { LineIconSelector } from '../icons/line-icons';
 import { Camera, X, Plus, AlertCircle, Save, StickyNote, Trash2, Calendar, UserPlus, Check } from 'lucide-react';
@@ -96,6 +96,8 @@ export const QuickComposer = ({
   const [showLimitError, setShowLimitError] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [showAllNotes, setShowAllNotes] = useState(false);
+  const [localSubmitting, setLocalSubmitting] = useState(false);
+  const isSaving = submitting || localSubmitting;
 
   // Estados Operativos (Modo Tarea)
   const [esTarea, setEsTarea] = useState(departamento === 'EXTERNO');
@@ -163,25 +165,23 @@ export const QuickComposer = ({
     }
   }, [allowTarea, esTarea, departamento]);
 
-  // Validación personalizada solicitada por el usuario
   const isValid = useMemo(() => {
     if (!descripcion.trim()) return false;
-    
-    // Si el área es Diseño o Marketing, requerir línea (si aplica) y clasificación
     const isOperationalArea = area === 'DISENO' || area === 'MARKETING';
     if (isOperationalArea) {
-      const hasLinea = tieneLineas ? !!linea : true;
-      const hasClasif = !!clasificacion;
-      if (!(hasLinea && hasClasif)) return false;
+      if (!clasificacion) return false;
+      if (clasificacion !== 'POLITICAS' && tieneLineas) {
+        const lineaEnArray = lineasConDefault.some((l) => l.value === linea);
+        if (!linea || !lineaEnArray) return false;
+      }
     }
-    
-    if (esTarea) {
-      // Fecha límite es opcional (se quitó la validación estricta)
-    }
-    
-    // Para otras áreas, solo se requiere la descripción
     return true;
-  }, [descripcion, area, linea, clasificacion, tieneLineas, esTarea, fechaVencimiento]);
+  }, [descripcion, area, linea, clasificacion, tieneLineas, lineasConDefault]);
+
+  const textareaRows = useMemo(
+    () => (!isCollapsed ? (esTarea ? 2 : 3) : 1),
+    [isCollapsed, esTarea]
+  );
 
   useEffect(() => {
     onCollapseChange?.(isCollapsed);
@@ -200,7 +200,6 @@ export const QuickComposer = ({
     const ta = textareaRef.current;
     if (ta) {
       ta.style.height = 'auto';
-      // Ajuste dinámico de altura para evitar scroll excesivo del componente
       ta.style.height = Math.min(200, Math.max(100, ta.scrollHeight)) + 'px';
     }
   }, [descripcion]);
@@ -266,13 +265,11 @@ export const QuickComposer = ({
     });
   };
 
-  const handleSubmit = useCallback(() => {
-    if (!isValid || submitting) return;
+  const handleSubmit = useCallback(async () => {
+    if (!isValid || isSaving) return;
+    setLocalSubmitting(true);
     const esPolitica = clasificacion === 'POLITICAS';
     
-    // Si NO esTarea, los campos operativos (prioridad, responsables, fechaVencimiento) 
-    // se envían vacíos o con valores que el backend ignore/defaults.
-    // Pero en este caso, se envían en el payload solo si esTarea es true.
     const tareaData = {
       descripcion: descripcion.trim(),
       area,
@@ -297,34 +294,29 @@ export const QuickComposer = ({
     const payload = {
       tareas: [tareaData],
     };
-    onSubmit(payload);
-    setDescripcion('');
-    setNotasRapidas([]);
-    setImagenes([]);
 
-    // --- REINICIAR SELECTORES A SUS VALORES INICIALES ---
-    const defaultArea = areaDefault || catalogos.areas[0]?.value || departamento;
-    const defaultLineas = LINEAS_POR_AREA[defaultArea] || [];
-    let finalLineas = [...defaultLineas];
-    if (defaultArea === areaDefault && lineaDefault) {
-      const exists = finalLineas.some(
-        l => l.value?.toUpperCase() === lineaDefault.toUpperCase() || 
-             l.label?.toUpperCase() === lineaDefault.toUpperCase()
-      );
-      if (!exists) {
-        finalLineas = [{ value: lineaDefault, label: lineaDefault }, ...finalLineas];
-      }
+    try {
+      await onSubmit(payload);
+      setDescripcion('');
+      setNotasRapidas([]);
+      setImagenes([]);
+
+      const defaultArea = areaDefault || catalogos.areas[0]?.value || departamento;
+      const { defaultLinea } = computeDerivedLines(defaultArea, areaDefault, lineaDefault);
+      setArea(defaultArea);
+      setLinea(defaultLinea);
+      setClasificacion('');
+      setEsTarea(departamento === 'EXTERNO');
+      setPrioridad('MEDIA');
+      setResponsables([]);
+      setFechaVencimiento('');
+
+      if (isDesktop) textareaRef.current?.focus();
+    } catch (err) {
+      console.error('[QuickComposer] Error during submit:', err);
+    } finally {
+      setLocalSubmitting(false);
     }
-    setArea(defaultArea);
-    setLinea(finalLineas.length > 0 ? (lineaDefault || finalLineas[0]?.value) : null);
-    setClasificacion('');
-    
-    setEsTarea(departamento === 'EXTERNO');
-    setPrioridad('MEDIA');
-    setResponsables([]);
-    setFechaVencimiento('');
-
-    if (isDesktop) textareaRef.current?.focus();
   }, [
     isValid, 
     descripcion, 
@@ -335,7 +327,7 @@ export const QuickComposer = ({
     minutaId, 
     imagenes, 
     onSubmit, 
-    submitting, 
+    isSaving, 
     isDesktop, 
     tieneLineas,
     catalogos,
@@ -391,10 +383,10 @@ export const QuickComposer = ({
           </div>
 
           <div className={cn("flex-1 bg-white border border-slate-200/60 rounded-[1.5rem] p-3 lg:p-4 shadow-2xl flex flex-col gap-2.5 min-h-0 overflow-y-auto custom-scrollbar transition-all duration-300", showResponsiblesDropdown ? "pb-56" : "")}>
-            {/* 1. INPUT DESCRIPCION (GRANDE) */}
             <div className={cn("relative group transition-all duration-300 flex-1 flex flex-col", esTarea ? "min-h-[50px] max-h-[80px]" : "min-h-[80px]")}>
               <textarea
                 ref={textareaRef}
+                rows={textareaRows}
                 value={descripcion}
                 onChange={(e) => setDescripcion(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -406,9 +398,7 @@ export const QuickComposer = ({
               </div>
             </div>
 
-            {/* 2. NOTAS | IMAGENES (SIDE BY SIDE) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 shrink-0 bg-slate-50/40 p-2 rounded-[1rem] border border-slate-100/60 shadow-inner">
-              {/* Notas */}
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between px-1">
                   <div className="flex items-center gap-2">
@@ -449,7 +439,6 @@ export const QuickComposer = ({
                 </div>
               </div>
 
-              {/* Imágenes */}
               <div className="flex flex-col gap-1.5 border-l border-slate-200 pl-4">
                 <div className="flex items-center justify-between px-1">
                   <div className="flex items-center gap-2">
@@ -489,7 +478,6 @@ export const QuickComposer = ({
               </div>
             </div>
 
-            {/* 3. AREA | LINEA | CLASIFICACION (ROW) */}
             <div className={cn(
                 "grid grid-cols-1 gap-2 shrink-0",
                 (tieneLineas && isOperationalArea) ? "md:grid-cols-3" : (tieneLineas || isOperationalArea) ? "md:grid-cols-2" : "md:grid-cols-1"
@@ -499,18 +487,11 @@ export const QuickComposer = ({
                   <select value={area} onChange={(e) => {
                     const newArea = e.target.value;
                     setArea(newArea);
-                    const newLineas = LINEAS_POR_AREA[newArea] || [];
-                    let finalLineas = [...newLineas];
-                    if (newArea === areaDefault && lineaDefault) {
-                      const exists = finalLineas.some(
-                        l => l.value?.toUpperCase() === lineaDefault.toUpperCase() || 
-                             l.label?.toUpperCase() === lineaDefault.toUpperCase()
-                      );
-                      if (!exists) {
-                        finalLineas = [{ value: lineaDefault, label: lineaDefault }, ...finalLineas];
-                      }
-                    }
-                    setLinea(finalLineas.length > 0 ? (newArea === areaDefault ? lineaDefault : finalLineas[0].value) : null);
+                    const isPolitica = clasificacion === 'POLITICAS';
+                    const { defaultLinea } = isPolitica 
+                      ? { defaultLinea: '' }
+                      : computeDerivedLines(newArea, areaDefault, lineaDefault);
+                    setLinea(defaultLinea);
                     if (newArea !== 'DISENO' && newArea !== 'MARKETING') {
                       setClasificacion('');
                     }
@@ -523,7 +504,9 @@ export const QuickComposer = ({
                  <div className="flex flex-col gap-1">
                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Línea</label>
                     <select value={linea || ''} onChange={(e) => setLinea(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-marca-primario/10 transition-all shadow-sm">
-                      <option value="">— Seleccionar Línea —</option>
+                      <option value="">
+                        {clasificacion === 'POLITICAS' ? '— General (Sin línea) —' : '— Seleccionar Línea —'}
+                      </option>
                       {lineasConDefault.map(({ value, label }) => (<option key={value} value={value}>{label}</option>))}
                     </select>
                  </div>
@@ -539,6 +522,7 @@ export const QuickComposer = ({
                         setClasificacion(newClasificacion);
                         if (newClasificacion === 'POLITICAS') {
                           setEsTarea(false);
+                          setLinea('');
                         }
                       }} 
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-marca-primario/10 transition-all shadow-sm"
@@ -710,14 +694,14 @@ export const QuickComposer = ({
                <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={!isValid || submitting}
+                disabled={!isValid || isSaving}
                 className={cn(
                   "w-full flex items-center justify-center gap-3 py-3 lg:py-4 rounded-2xl font-black text-xs lg:text-sm uppercase tracking-[0.2em] transition-all active:scale-95 shadow-xl",
                   isValid ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30" : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
                 )}
               >
-                {submitting ? <Icon name="progress_activity" size="20px" className="animate-spin" /> : <Save size={20} />}
-                {submitting ? 'Guardando...' : 'Registrar Tarea'}
+                {isSaving ? <Icon name="progress_activity" size="20px" className="animate-spin" /> : <Save size={20} />}
+                {isSaving ? 'Guardando...' : 'Registrar Tarea'}
               </button>
               
               <div className="flex justify-center items-center gap-2">

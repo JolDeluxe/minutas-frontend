@@ -276,3 +276,53 @@ export const CATALOGOS_POR_DEPARTAMENTO = {
 /** Helper: obtiene catálogos del departamento, con fallback a DISENO */
 export const getCatalogos = (departamento) =>
   CATALOGOS_POR_DEPARTAMENTO[departamento] || CATALOGOS_POR_DEPARTAMENTO.DISENO;
+
+// ─── computeDerivedLines ──────────────────────────────────────────────────────
+// Fuente única de verdad para calcular el array de líneas disponibles y el
+// valor por defecto de `linea` al cambiar de área en cualquier composer o modal.
+//
+// Parámetros:
+//   newArea      — el área recién seleccionada (string | null)
+//   areaDefault  — el área "ancla" de la minuta (prop del composer, puede ser null)
+//   lineaDefault — la línea "ancla" de la minuta (prop del composer, puede ser null)
+//
+// Retorna:
+//   { finalLineas: Array<{value,label,...}>, defaultLinea: string | null }
+//
+// Casos:
+//   - MARKETING / área sin entradas en LINEAS_POR_AREA → finalLineas=[], defaultLinea=null
+//   - Volviendo a areaDefault con lineaDefault válida → preserva lineaDefault
+//   - Cualquier otra área → primera línea del array como default
+// ─────────────────────────────────────────────────────────────────────────────
+export const computeDerivedLines = (newArea, areaDefault, lineaDefault) => {
+  const baseLineas = (newArea ? LINEAS_POR_AREA[newArea] : null) || [];
+  let finalLineas = [...baseLineas];
+
+  // Inyectar lineaDefault solo si volvemos al areaDefault y aún no está en la lista.
+  // Esto preserva líneas "heredadas" de minutas viejas sin romper la lista nueva.
+  if (newArea && newArea === areaDefault && lineaDefault) {
+    const lineaDefaultUpper = lineaDefault.toUpperCase();
+    const alreadyInList = finalLineas.some(
+      (l) => l.value?.toUpperCase() === lineaDefaultUpper
+    );
+    if (!alreadyInList) {
+      finalLineas = [{ value: lineaDefault, label: lineaDefault }, ...finalLineas];
+    }
+  }
+
+  const defaultLinea = (() => {
+    if (finalLineas.length === 0) return null;
+
+    // Volviendo al areaDefault → intentar preservar lineaDefault
+    if (newArea === areaDefault && lineaDefault) {
+      const found = finalLineas.find(
+        (l) => l.value?.toUpperCase() === lineaDefault.toUpperCase()
+      );
+      return found ? lineaDefault : finalLineas[0].value;
+    }
+
+    return finalLineas[0].value;
+  })();
+
+  return { finalLineas, defaultLinea };
+};

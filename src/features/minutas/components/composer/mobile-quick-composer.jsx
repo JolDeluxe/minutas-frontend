@@ -2,7 +2,7 @@ import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon, Modal, ModalHeader, ModalBody, ModalFooter, Button as UIButton } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
-import { getCatalogos, LINEAS_POR_AREA, PRIORIDAD_MAP } from '../../constants';
+import { getCatalogos, LINEAS_POR_AREA, PRIORIDAD_MAP, computeDerivedLines } from '../../constants';
 import { useAuthStore } from '@/stores/auth-store';
 import { getModulesByRole } from '@/config/modules-config';
 import { useUsers } from '../../../usuarios/hooks/use-users';
@@ -105,8 +105,14 @@ export const MobileQuickComposer = ({
         list = [{ value: lineaDefault, label: lineaDefault }, ...list];
       }
     }
+    if (clasificacion === 'POLITICAS' && isOperationalArea) {
+      const alreadyHasGeneral = list.some(l => l.value === '');
+      if (!alreadyHasGeneral) {
+        list = [{ value: '', label: 'General', icon: 'all_inclusive' }, ...list];
+      }
+    }
     return list;
-  }, [lineasDisponibles, area, areaDefault, lineaDefault]);
+  }, [lineasDisponibles, area, areaDefault, lineaDefault, clasificacion, isOperationalArea]);
 
   const tieneLineas = lineasConDefault.length > 0;
   const isOperationalArea = area === 'DISENO' || area === 'MARKETING';
@@ -115,6 +121,8 @@ export const MobileQuickComposer = ({
   const [clasificacion, setClasificacion] = useState('');
   const [localImages, setLocalImages] = useState([]);
   const [showAllNotes, setShowAllNotes] = useState(false);
+  const [localSubmitting, setLocalSubmitting] = useState(false);
+  const isSaving = submitting || localSubmitting;
 
   // Estados Operativos
   const [esTarea, setEsTarea] = useState(departamento === 'EXTERNO');
@@ -174,17 +182,23 @@ export const MobileQuickComposer = ({
     if (!texto.trim()) return false;
     const isOperationalArea = area === 'DISENO' || area === 'MARKETING';
     if (isOperationalArea) {
-      const hasLinea = tieneLineas ? !!linea : true;
-      const hasClasif = !!clasificacion;
-      if (!(hasLinea && hasClasif)) return false;
+      if (!clasificacion) return false;
+      // Para POLITICAS la línea es opcional — se puede registrar sin línea específica.
+      // Para otras clasificaciones: validar que linea exista Y pertenezca al array actual.
+      if (clasificacion !== 'POLITICAS' && tieneLineas) {
+        const lineaEnArray = lineasConDefault.some((l) => l.value === linea);
+        if (!linea || !lineaEnArray) return false;
+      }
     }
-    
-    if (esTarea) {
-      // Fecha límite es opcional (se quitó la validación estricta)
-    }
-    
     return true;
-  }, [texto, area, linea, clasificacion, tieneLineas, esTarea, fechaVencimiento]);
+  }, [texto, area, linea, clasificacion, tieneLineas, lineasConDefault]);
+
+  // Memoizar rows del textarea — evita que React parche el atributo DOM en cada
+  // render al cambiar área, lo que provocaría que el browser pierda el cursor.
+  const textareaRows = useMemo(
+    () => (expanded ? (esTarea ? 2 : 3) : 1),
+    [expanded, esTarea]
+  );
 
   useEffect(() => {
     onExpandedChange?.(expanded);
@@ -249,9 +263,10 @@ export const MobileQuickComposer = ({
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     if (e) { e.preventDefault(); e.stopPropagation(); }
-    if (!isValid || submitting) return;
+    if (!isValid || isSaving) return;
+    setLocalSubmitting(true);
     const esPolitica = clasificacion === 'POLITICAS';
     
     const tareaData = {
@@ -276,34 +291,31 @@ export const MobileQuickComposer = ({
       tareaData.fechaVencimiento = fechaVencimiento ? new Date(fechaVencimiento).toISOString() : null;
     }
 
-    onSubmit({ tareas: [tareaData] });
-    
-    setTexto('');
-    setNotasRapidas([]);
-    setLocalImages([]);
-    setExpanded(false);
+    try {
+      await onSubmit({ tareas: [tareaData] });
+      
+      setTexto('');
+      setNotasRapidas([]);
+      setLocalImages([]);
+      setExpanded(false);
 
-    // --- REINICIAR SELECTORES A SUS VALORES INICIALES ---
-    const defaultArea = areaDefault || catalogos.areas[0]?.value || departamento;
-    const defaultLineas = LINEAS_POR_AREA[defaultArea] || [];
-    let finalLineas = [...defaultLineas];
-    if (defaultArea === areaDefault && lineaDefault) {
-      const exists = finalLineas.some(
-        l => l.value?.toUpperCase() === lineaDefault.toUpperCase() || 
-             l.label?.toUpperCase() === lineaDefault.toUpperCase()
-      );
-      if (!exists) {
-        finalLineas = [{ value: lineaDefault, label: lineaDefault }, ...finalLineas];
-      }
+      // --- REINICIAR SELECTORES A SUS VALORES INICIALES ---
+      const defaultArea = areaDefault || catalogos.areas[0]?.value || departamento;
+      // computeDerivedLines — fuente única de verdad para reset post-submit
+      const { defaultLinea } = computeDerivedLines(defaultArea, areaDefault, lineaDefault);
+      setArea(defaultArea);
+      setLinea(defaultLinea);
+      setClasificacion('');
+      
+      setEsTarea(departamento === 'EXTERNO');
+      setPrioridad('MEDIA');
+      setResponsables([]);
+      setFechaVencimiento('');
+    } catch (err) {
+      console.error('[MobileQuickComposer] Error during submit:', err);
+    } finally {
+      setLocalSubmitting(false);
     }
-    setArea(defaultArea);
-    setLinea(finalLineas.length > 0 ? (lineaDefault || finalLineas[0]?.value) : null);
-    setClasificacion('');
-    
-    setEsTarea(departamento === 'EXTERNO');
-    setPrioridad('MEDIA');
-    setResponsables([]);
-    setFechaVencimiento('');
   };
 
   const handleClose = (e) => {
@@ -342,7 +354,7 @@ export const MobileQuickComposer = ({
         <div className={cn("flex-1 min-h-0 flex flex-col overflow-hidden transition-all", expanded ? "px-4 pt-4 bg-slate-50" : "px-4 pb-3")}>
           <div className="flex flex-col gap-2 shrink-0">
             <div className="flex items-start gap-3 w-full">
-              <textarea placeholder="Escribe la idea, acuerdo o tarea aquí..." value={texto} onChange={(e) => setTexto(e.target.value)} onFocus={() => setExpanded(true)} rows={expanded ? (esTarea ? 2 : 3) : 1} className={cn("flex-1 bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold transition-all resize-none focus:outline-none focus:border-marca-primario/40", expanded ? (esTarea ? "min-h-[4rem] max-h-[5rem]" : "min-h-[6rem] max-h-[8rem]") + " bg-white border-slate-200 shadow-inner" : "h-12 py-2.5 overflow-hidden")} />
+              <textarea placeholder="Escribe la idea, acuerdo o tarea aquí..." value={texto} onChange={(e) => setTexto(e.target.value)} onFocus={() => setExpanded(true)} rows={textareaRows} className={cn("flex-1 bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold transition-all resize-none focus:outline-none focus:border-marca-primario/40", expanded ? (esTarea ? "min-h-[4rem] max-h-[5rem]" : "min-h-[6rem] max-h-[8rem]") + " bg-white border-slate-200 shadow-inner" : "h-12 py-2.5 overflow-hidden")} />
               {!expanded && (
                 <div className="flex gap-2 shrink-0">
                   <button onClick={() => setExpanded(true)} className="w-12 h-12 bg-slate-900 text-white rounded-xl flex items-center justify-center transition-all active:scale-90 touch-manipulation shadow-md"><Plus size={22} strokeWidth={3} /></button>
@@ -406,18 +418,11 @@ export const MobileQuickComposer = ({
                       onChange={(e) => {
                         const newArea = e.target.value;
                         setArea(newArea);
-                        const newLineas = LINEAS_POR_AREA[newArea] || [];
-                        let finalLineas = [...newLineas];
-                        if (newArea === areaDefault && lineaDefault) {
-                          const exists = finalLineas.some(
-                            l => l.value?.toUpperCase() === lineaDefault.toUpperCase() || 
-                                 l.label?.toUpperCase() === lineaDefault.toUpperCase()
-                          );
-                          if (!exists) {
-                            finalLineas = [{ value: lineaDefault, label: lineaDefault }, ...finalLineas];
-                          }
-                        }
-                        setLinea(finalLineas.length > 0 ? (newArea === areaDefault ? lineaDefault : finalLineas[0].value) : null);
+                        const isPolitica = clasificacion === 'POLITICAS';
+                        const { defaultLinea } = isPolitica 
+                          ? { defaultLinea: '' }
+                          : computeDerivedLines(newArea, areaDefault, lineaDefault);
+                        setLinea(defaultLinea);
                         if (newArea !== 'DISENO' && newArea !== 'MARKETING') {
                           setClasificacion('');
                         }
@@ -445,6 +450,7 @@ export const MobileQuickComposer = ({
                           setClasificacion(newClasificacion);
                           if (newClasificacion === 'POLITICAS') {
                             setEsTarea(false);
+                            setLinea(''); // Poner General en automático
                           }
                         }}
                         className="w-full bg-white border-2 border-slate-100 rounded-xl pl-2 pr-7 py-2.5 text-[11px] font-bold text-slate-700 focus:outline-none focus:border-marca-primario/40 transition-all appearance-none shadow-sm h-11 truncate"
@@ -505,7 +511,9 @@ export const MobileQuickComposer = ({
                         onChange={(e) => setLinea(e.target.value)}
                         className="w-full bg-white border-2 border-slate-100 rounded-xl pl-2 pr-7 py-2.5 text-[11px] font-bold text-slate-700 focus:outline-none focus:border-marca-primario/40 transition-all appearance-none shadow-sm h-11 truncate"
                       >
-                        <option value="">— Seleccionar Línea —</option>
+                        <option value="">
+                          {clasificacion === 'POLITICAS' ? '— General (Sin línea) —' : '— Seleccionar Línea —'}
+                        </option>
                         {lineasConDefault.map(({ value, label }) => (
                           <option key={value} value={value}>{label}</option>
                         ))}
@@ -649,9 +657,9 @@ export const MobileQuickComposer = ({
             {/* FOOTER FIXO (EXPANDED) */}
             <div className="shrink-0 border-t border-slate-200/60 flex items-center justify-between bg-white pt-4 pb-8 px-4 -mx-4 shadow-[0_-4px_30px_rgba(0,0,0,0.05)]">
               <button type="button" onClick={() => fileInputRef.current?.click()} disabled={localImages.length >= 3} className="flex items-center gap-2 px-4 py-3 bg-slate-50 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-slate-100 disabled:opacity-40 touch-manipulation"><Camera size={20} /> FOTO</button>
-              <button type="button" onClick={handleSubmit} disabled={!isValid || submitting} className={cn("px-8 py-3 rounded-2xl flex items-center gap-2 transition-all active:scale-95 font-black uppercase text-[10px] tracking-widest shadow-2xl touch-manipulation", isValid ? "bg-emerald-600 text-white shadow-emerald-600/30" : "bg-slate-100 text-slate-300 shadow-none border border-slate-100")}>
-                {submitting ? <Icon name="progress_activity" className="animate-spin" size="20px" /> : <Send size={18} />}
-                {submitting ? 'GUARDANDO...' : 'GUARDAR TAREA'}
+              <button type="button" onClick={handleSubmit} disabled={!isValid || isSaving} className={cn("px-8 py-3 rounded-2xl flex items-center gap-2 transition-all active:scale-95 font-black uppercase text-[10px] tracking-widest shadow-2xl touch-manipulation", isValid ? "bg-emerald-600 text-white shadow-emerald-600/30" : "bg-slate-100 text-slate-300 shadow-none border border-slate-100")}>
+                {isSaving ? <Icon name="progress_activity" className="animate-spin" size="20px" /> : <Send size={18} />}
+                {isSaving ? 'GUARDANDO...' : 'GUARDAR TAREA'}
               </button>
             </div>
           </div>

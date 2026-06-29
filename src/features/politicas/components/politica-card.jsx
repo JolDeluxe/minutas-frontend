@@ -3,6 +3,7 @@ import { ExternalLink } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { ImageViewer } from '@/features/tareas/components/comun/tarjeta-tarea';
 import { cn } from '@/utils/cn';
+import { AreaLineaBadge } from './area-linea-badge';
 
 const MiniCarousel = ({ images, onClick }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -94,6 +95,13 @@ export const PoliticaCard = ({ politica, onEdit, onDelete }) => {
                  </span>
               </div>
            )}
+
+           {/* Badge de jerarquía institucional — área • línea */}
+           <AreaLineaBadge
+             area={politica.area}
+             linea={politica.linea}
+             className="mb-2 mt-0.5"
+           />
 
            <p className="text-[12px] sm:text-[13px] font-medium text-slate-700 leading-relaxed break-words whitespace-pre-wrap flex-1">
               {politica.descripcion}
