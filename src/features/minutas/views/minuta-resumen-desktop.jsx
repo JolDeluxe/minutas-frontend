@@ -10,6 +10,7 @@ import { Icon } from '@/components/ui/z_index';
 import { cn } from '@/utils/cn';
 import { SeccionIA } from '../components/minuta-resumen/seccion-ia';
 import { GraficoEstados } from '../components/minuta-resumen/grafico-estados';
+import { SeccionImagenes } from '../components/minuta-resumen/seccion-imagenes';
 
 export const MinutaResumenDesktop = ({
   minuta,
@@ -17,9 +18,17 @@ export const MinutaResumenDesktop = ({
   resumenLocal,
   isAdmin,
   onGuardar,
+  onGuardarImagenes,
   onSwitchToTareas,
 }) => {
-  const hayResumen = !!(resumenLocal.temas || resumenLocal.acuerdos || resumenLocal.proximosPasos);
+  const hayResumen = !!(
+    resumenLocal.temas || 
+    resumenLocal.acuerdos || 
+    resumenLocal.proximosPasos ||
+    resumenLocal.imagenUrl1 ||
+    resumenLocal.imagenUrl2 ||
+    resumenLocal.imagenUrl3
+  );
   const tareasFiltradas = tareas.filter(t => 
     !t.tempId && 
     t.tipo !== 'DESCARTADA' && 
@@ -143,6 +152,12 @@ export const MinutaResumenDesktop = ({
             valor={resumenLocal.proximosPasos}
             placeholder="No se han registrado próximos pasos aún."
             onGuardar={isAdmin ? (val) => onGuardar('proximosPasos', val) : null}
+          />
+
+          <SeccionImagenes
+            minuta={minuta}
+            isAdmin={isAdmin}
+            onGuardar={onGuardarImagenes}
           />
         </div>
       </div>

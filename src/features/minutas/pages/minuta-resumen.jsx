@@ -33,6 +33,12 @@ export const MinutaResumen = ({
     temas:         minuta?.resumenTemas         || '',
     acuerdos:      minuta?.resumenAcuerdos      || '',
     proximosPasos: minuta?.resumenProximosPasos || '',
+    imagenUrl1:    minuta?.imagenUrl1           || '',
+    publicId1:     minuta?.publicId1            || '',
+    imagenUrl2:    minuta?.imagenUrl2           || '',
+    publicId2:     minuta?.publicId2            || '',
+    imagenUrl3:    minuta?.imagenUrl3           || '',
+    publicId3:     minuta?.publicId3            || '',
   });
 
   // Sincronizar estado local cuando cambia la minuta externamente
@@ -41,6 +47,12 @@ export const MinutaResumen = ({
       temas:         minuta?.resumenTemas         || '',
       acuerdos:      minuta?.resumenAcuerdos      || '',
       proximosPasos: minuta?.resumenProximosPasos || '',
+      imagenUrl1:    minuta?.imagenUrl1           || '',
+      publicId1:     minuta?.publicId1            || '',
+      imagenUrl2:    minuta?.imagenUrl2           || '',
+      publicId2:     minuta?.publicId2            || '',
+      imagenUrl3:    minuta?.imagenUrl3           || '',
+      publicId3:     minuta?.publicId3            || '',
     });
   }, [minuta]);
 
@@ -73,12 +85,33 @@ export const MinutaResumen = ({
     }
   }, [minuta?.id, esExterna, onResumenUpdated]);
 
+  /**
+   * Guarda manualmente las imágenes actualizadas.
+   */
+  const handleGuardarImagenes = useCallback(async (imagenesPayload) => {
+    try {
+      if (esExterna) {
+        await updateMinutaExterna(minuta.id, imagenesPayload);
+      } else {
+        await guardarResumenMinuta(minuta.id, imagenesPayload);
+      }
+
+      setResumenLocal(prev => ({ ...prev, ...imagenesPayload }));
+      onResumenUpdated?.(imagenesPayload);
+      notify.success('Imágenes actualizadas correctamente.');
+    } catch {
+      notify.error('Error al guardar imágenes. Intenta de nuevo.');
+      throw new Error('save failed');
+    }
+  }, [minuta?.id, esExterna, onResumenUpdated]);
+
   const commonProps = {
     minuta,
     tareas,
     resumenLocal,
     isAdmin,
-    onGuardar:     handleGuardarSeccion,
+    onGuardar:         handleGuardarSeccion,
+    onGuardarImagenes: handleGuardarImagenes,
     onSwitchToTareas,
   };
 

@@ -167,3 +167,18 @@ export const generarPdfMinutaExterna = async (id) => {
   return await api.get(`/api/minutas-externas/${id}/pdf`);
 };
 
+export const uploadResumenImagen = async (file) => {
+  const formData = new FormData();
+  try {
+    const compressed = await compressImage(file);
+    const fileName = file.name ? file.name.replace(/\.[^/.]+$/, ".jpg") : "image.jpg";
+    formData.append('imagen', compressed, fileName);
+  } catch (e) {
+    formData.append('imagen', file);
+  }
+  return await api.post('/api/tareas/borrador/imagen', formData, {
+    headers: { 'Content-Type': undefined }
+  });
+};
+
+
