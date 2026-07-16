@@ -47,8 +47,8 @@ export const SeccionImagenes = ({
 
     try {
       const response = await uploadResumenImagen(file);
-      if (response.data?.status === 'success' || response.status === 200) {
-        const data = response.data?.data || response.data;
+      if (response?.status === 'success' || response?.url) {
+        const data = response;
         setImagenes(prev => {
           const copy = [...prev];
           copy[index] = { url: data.url, publicId: data.publicId };
