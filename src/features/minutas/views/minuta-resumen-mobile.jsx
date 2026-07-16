@@ -130,6 +130,12 @@ export const MinutaResumenMobile = ({
         </div>
       )}
 
+      <SeccionImagenes
+        minuta={minuta}
+        isAdmin={isAdmin}
+        onGuardar={onGuardarImagenes}
+      />
+
       <SeccionIA
         titulo="Temas Tratados"
         icono="topic"
@@ -155,12 +161,6 @@ export const MinutaResumenMobile = ({
         valor={resumenLocal.proximosPasos}
         placeholder="No se han registrado próximos pasos aún."
         onGuardar={isAdmin ? (val) => onGuardar('proximosPasos', val) : null}
-      />
-
-      <SeccionImagenes
-        minuta={minuta}
-        isAdmin={isAdmin}
-        onGuardar={onGuardarImagenes}
       />
     </div>
   );
