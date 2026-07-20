@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Icon, Tooltip } from '@/components/ui/z_index';
+import { Icon } from './icon';
+import { Tooltip } from './tooltip';
 import { cn } from '@/utils/cn';
 
 export const SearchableSelect = ({

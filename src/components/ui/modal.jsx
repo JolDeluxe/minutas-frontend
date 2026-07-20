@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/utils/cn';
-import { Icon } from './z_index'; 
+import { Icon } from './icon'; 
 
 export const Modal = ({
   isOpen,

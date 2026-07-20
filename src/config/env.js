@@ -50,12 +50,13 @@ validateEnv();
 const connection = import.meta.env.VITE_CONNECTION;
 
 export const ENV = {
-  API_URL:
+  API_URL: (
     connection === 'network'
       ? import.meta.env.VITE_API_URL_NETWORK
       : connection === 'prod'
       ? import.meta.env.VITE_API_URL_PROD
-      : import.meta.env.VITE_API_URL_LOCAL,
+      : import.meta.env.VITE_API_URL_LOCAL || 'http://localhost:3000'
+  )?.replace(/\/+$/, ''),
 
   // Identidad
   APP_NAME: import.meta.env.VITE_APP_NAME,
