@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Button, Icon } from '@/components/ui/z_index';
+import { Button } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
 import { cn } from '@/utils/cn';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { formatFecha, formatFechaHora } from '@/lib/date';

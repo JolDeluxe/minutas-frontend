@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Icon, Button } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { Button } from '@/components/ui/button';
 import { getTareas } from '@/features/tareas/api/tareas-api';
 import { cn } from '@/utils/cn';
 

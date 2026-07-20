@@ -1,6 +1,8 @@
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Icon, Modal, ModalHeader, ModalBody, ModalFooter, Button as UIButton } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/modal';
+import { Button as UIButton } from '@/components/ui/button';
 import { cn } from '@/utils/cn';
 import { getCatalogos, LINEAS_POR_AREA, PRIORIDAD_MAP, computeDerivedLines } from '../../constants';
 import { useAuthStore } from '@/stores/auth-store';

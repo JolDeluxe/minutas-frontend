@@ -1,5 +1,6 @@
 import React from 'react';
-import { Modal, ModalHeader, ModalBody, Icon } from '@/components/ui/z_index';
+import { Modal, ModalHeader, ModalBody } from '@/components/ui/modal';
+import { Icon } from '@/components/ui/icon';
 import { notify } from '@/components/notification/adaptive-notify';
 
 export const SharePdfModal = ({ isOpen, onClose, data }) => {

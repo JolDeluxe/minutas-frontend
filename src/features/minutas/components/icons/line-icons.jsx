@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
 import ropaIcon from '@/assets/icons/ropa-svg.svg';
 import calzadoIcon from '@/assets/icons/calzado-svg.svg';
 import botaIcon from '@/assets/icons/bota-svg.svg';

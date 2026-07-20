@@ -1,7 +1,8 @@
 // src/features/tareas_generales/views/tareas-generales-desktop.jsx
 import React from 'react';
 import { RefreshCw } from 'lucide-react';
-import { Icon, Button } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { Button } from '@/components/ui/button';
 import { TareasGeneralesExecutiveSummary } from '../components/tareas-generales-executive-summary';
 import { TareasGeneralesInlineFilters } from '../components/tareas-generales-inline-filters';
 import { TablaGenerales } from '../components/tabla-generales';

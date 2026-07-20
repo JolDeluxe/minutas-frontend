@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { Table, Badge, Button, Icon, Card, CardBody } from '@/components/ui/z_index';
+import { Table } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
+import { Card, CardBody } from '@/components/ui/card';
 
 export const TableTester = () => {
   const [sort, setSort] = useState({ key: 'fecha', direction: 'desc' });

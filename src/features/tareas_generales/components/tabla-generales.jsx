@@ -1,7 +1,11 @@
 // src/features/tareas_generales/components/tabla-generales.jsx
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Table, Icon, Tooltip, TableActions, ConfirmModal } from '@/components/ui/z_index';
+import { Table } from '@/components/ui/table';
+import { Icon } from '@/components/ui/icon';
+import { Tooltip } from '@/components/ui/tooltip';
+import { TableActions } from '@/components/ui/table-actions';
+import { ConfirmModal } from '@/components/ui/modal';
 import { cn } from '@/utils/cn';
 import { AREA_MAP, CLASIFICACION_MAP, LINEA_MAP } from '../../minutas/constants';
 import { formatFecha, isPastDate, formatFechaRelativa } from '@/lib/date';

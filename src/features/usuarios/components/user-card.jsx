@@ -1,5 +1,6 @@
 // src/features/usuarios/components/user-card.jsx
-import { Badge, Icon } from '@/components/ui/z_index';
+import { Badge } from '@/components/ui/badge';
+import { Icon } from '@/components/ui/icon';
 import { cn } from '@/utils/cn';
 
 const ROL_LABEL = {

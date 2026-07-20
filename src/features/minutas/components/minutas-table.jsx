@@ -1,4 +1,7 @@
-import { Table, Skeleton, Icon, TableActions } from "@/components/ui/z_index";
+import { Table } from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/spinner';
+import { Icon } from '@/components/ui/icon';
+import { TableActions } from '@/components/ui/table-actions';
 import { cn } from "@/utils/cn";
 import { LINEA_MAP, ESTADO_MINUTA_MAP } from '../constants';
 import { LineIconSelector, MarketingIcon } from './icons/line-icons';

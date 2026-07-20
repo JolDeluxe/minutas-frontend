@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Icon, Modal, ModalHeader, ModalBody, ModalFooter, Button as UIButton } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/modal';
+import { Button as UIButton } from '@/components/ui/button';
 import { cn } from '@/utils/cn';
 import { getCatalogos, LINEAS_POR_AREA, PRIORIDAD_MAP, computeDerivedLines } from '../../constants';
 import { useUsers } from '../../../usuarios/hooks/use-users';

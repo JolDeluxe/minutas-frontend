@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Icon, Spinner } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { Spinner } from '@/components/ui/spinner';
 
 export const ProfileAvatar = ({ 
   imagen, 

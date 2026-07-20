@@ -1,6 +1,9 @@
 import { PoliticaTable } from '../components/politica-table';
 import { PoliticaCard } from '../components/politica-card';
-import { Skeleton, Icon, GlassViewToggle, Button } from '@/components/ui/z_index';
+import { Skeleton } from '@/components/ui/spinner';
+import { Icon } from '@/components/ui/icon';
+import { GlassViewToggle } from '@/components/ui/liquid-glass-mobile';
+import { Button } from '@/components/ui/button';
 import { PoliticasFiltros } from '../components/politicas-filtros';
 import { cn } from '@/utils/cn';
 import { ShieldCheck, Plus } from 'lucide-react';

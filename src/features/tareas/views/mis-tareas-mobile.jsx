@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Skeleton, Button, Icon, GlassViewToggle, GlassPaginationPill } from '@/components/ui/z_index';
+import { Skeleton } from '@/components/ui/spinner';
+import { Button } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
+import { GlassViewToggle, GlassPaginationPill } from '@/components/ui/liquid-glass-mobile';
 import { TareaCard } from '../components/comun/tarjeta-tarea';
 import { ResumenTareasActivas } from '../components/comun/resumen-tareas-activas';
 import { BarraFiltrosTareas } from '../components/comun/barra-filtros-tareas';

@@ -1,8 +1,11 @@
 // minutas-frontend\src\features\minutas\components\minutas-inline-filters.jsx
 
 import { useState, useEffect } from 'react';
-import { Button, Icon } from '@/components/ui/z_index';
-import { Input, Label, Select } from '@/components/form/z_index';
+import { Button } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
+import { Input } from '@/components/form/input';
+import { Label } from '@/components/form/label';
+import { Select } from '@/components/form/select';
 
 const ESTADO_OPTIONS = [
     { value: 'PROGRAMADA', label: 'Programada' },

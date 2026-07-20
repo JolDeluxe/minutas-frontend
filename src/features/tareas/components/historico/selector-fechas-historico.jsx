@@ -1,6 +1,6 @@
 // src/features/tareas/components/historico/tarea-fechas.jsx
 import { useMemo } from 'react';
-import { Icon } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
 import { cn } from '@/utils/cn';
 import { getMinDateHoy } from '@/lib/date';
 

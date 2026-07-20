@@ -1,6 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Input, Label, Select } from '@/components/form/z_index';
-import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Icon } from '@/components/ui/z_index';
+import { Input } from '@/components/form/input';
+import { Label } from '@/components/form/label';
+import { Select } from '@/components/form/select';
+import { Button } from '@/components/ui/button';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/modal';
+import { Icon } from '@/components/ui/icon';
 import { LINEA_MAP, LINEAS_POR_AREA } from '../constants';
 import { useAuthStore } from '@/stores/auth-store';
 

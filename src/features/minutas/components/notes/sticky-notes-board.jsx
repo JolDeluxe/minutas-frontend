@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Icon } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
 import { StickyNote } from './sticky-note';
 import { cn } from '@/utils/cn';
 

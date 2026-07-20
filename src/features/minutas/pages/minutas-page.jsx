@@ -11,7 +11,7 @@ import { generarPdfMinutaExterna } from '../api/minutas-api';
 import { ENV } from '@/config/env';
 
 import { useUIStore } from '@/stores/ui-store';
-import { ConfirmModal } from '@/components/ui/z_index';
+import { ConfirmModal } from '@/components/ui/modal';
 
 const LIMIT = 50; // Más alto para que el agrupamiento por fecha funcione bien
 

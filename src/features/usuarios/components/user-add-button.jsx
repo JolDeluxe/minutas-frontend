@@ -1,4 +1,5 @@
-import { Button, Fab } from '@/components/ui/z_index';
+import { Button } from '@/components/ui/button';
+import { Fab } from '@/components/ui/fab';
 
 export const UserAddButton = ({ onClick, isMobile = false }) => {
 

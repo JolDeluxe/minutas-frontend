@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Table, Skeleton, Icon } from '@/components/ui/z_index';
+import { Table } from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/spinner';
+import { Icon } from '@/components/ui/icon';
 import { EtiquetaEstadoTarea } from './etiqueta-estado-tarea';
 import { EtiquetaPrioridadTarea } from './etiqueta-prioridad-tarea';
 import { AccionesTablaTarea } from './acciones-tabla-tarea';
@@ -8,7 +10,7 @@ import { formatFecha, formatFechaRelativa } from '@/lib/date';
 import { cn } from '@/utils/cn';
 import { LineIconSelector, MarketingIcon } from '../../../minutas/components/icons/line-icons';
 import { LINEA_MAP, AREA_MAP, CLASIFICACION_MAP } from '../../../minutas/constants';
-import { Tooltip } from '@/components/ui/z_index';
+import { Tooltip } from '@/components/ui/tooltip';
 import { ImageViewer, getGroupColorConfig } from './tarjeta-tarea';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 

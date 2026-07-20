@@ -1,4 +1,5 @@
-import { Icon, GlassViewToggle } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { GlassViewToggle } from '@/components/ui/liquid-glass-mobile';
 import { AREA_MAP, LINEAS_POR_AREA } from '@/features/minutas/constants';
 
 /**

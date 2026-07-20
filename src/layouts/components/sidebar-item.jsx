@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Icon, Tooltip } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { Tooltip } from '@/components/ui/tooltip';
 import { useUIStore } from '@/stores/ui-store';
 
 export const SidebarItem = ({ module }) => {

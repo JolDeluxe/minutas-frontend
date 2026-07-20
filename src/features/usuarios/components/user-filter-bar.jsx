@@ -1,6 +1,7 @@
 // src/features/usuarios/components/user-filter-bar.jsx
 import { useState, useEffect } from 'react';
-import { Icon, Button } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { Button } from '@/components/ui/button';
 
 const SearchInput = ({ localValue, onChange, onClear, mostrarInactivos }) => (
   <div className="relative w-full lg:max-w-sm shrink-0">

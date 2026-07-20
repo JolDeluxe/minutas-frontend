@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Button, Icon } from '@/components/ui/z_index';
+import { Button } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
 import { notify } from '@/components/notification/adaptive-notify';
 import { addTareaImagen, createTareaNota } from '../../api/tareas-api';
 import { validateImageFile } from '@/utils/validators';

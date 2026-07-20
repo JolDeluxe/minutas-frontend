@@ -1,5 +1,6 @@
 // src/features/tareas/components/hoy/hoy-summary-bar.jsx
-import { SummaryBar, Skeleton } from '@/components/ui/z_index';
+import { SummaryBar } from '@/components/ui/summary-bar';
+import { Skeleton } from '@/components/ui/spinner';
 
 const SummaryBarSkeleton = ({ count }) => (
     <>

@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Modal, ModalHeader, ModalBody, ModalFooter, Button, Icon, Tooltip } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/modal';
+import { Button } from '@/components/ui/button';
+import { Tooltip } from '@/components/ui/tooltip';
 import { cn } from '@/utils/cn';
 import { CLASIFICACION_MAP, AREA_MAP, LINEA_MAP } from '../constants';
 import { LineIconSelector } from './icons/line-icons';

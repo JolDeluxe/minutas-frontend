@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Icon, Button, Skeleton } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/spinner';
 import { getNotificaciones, markAllAsRead } from '../api/notificaciones-api';
 import { useNotifyStore } from '@/stores/notify-store';
 import { TIPO_CONFIG } from './notify-config';

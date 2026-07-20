@@ -1,4 +1,8 @@
-import { GlassFab, Icon, Skeleton, ScrollToTopButton, Spinner, Button } from '@/components/ui/z_index';
+import { GlassFab } from '@/components/ui/liquid-glass-mobile';
+import { Icon } from '@/components/ui/icon';
+import { Skeleton, Spinner } from '@/components/ui/spinner';
+import { ScrollToTopButton } from '@/components/ui/scroll-to-top-button';
+import { Button } from '@/components/ui/button';
 import { glassBase, GlassSheen } from '@/components/ui/liquid-glass-mobile';
 import { NotifyItem } from '../components/notify-item';
 import { NotifyEmptyState } from '../components/notify-empty-state';

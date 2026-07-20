@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Input, Label } from '@/components/form/z_index';
-import { Button, Icon } from '@/components/ui/z_index';
+import { Input } from '@/components/form/input';
+import { Label } from '@/components/form/label';
+import { Button } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
 
 export const ProfileGeneralForm = ({
   profile,

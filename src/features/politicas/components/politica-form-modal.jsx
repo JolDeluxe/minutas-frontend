@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Icon, Button, Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { Button } from '@/components/ui/button';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/modal';
 import { cn } from '@/utils/cn';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { Camera, X, Plus, Pencil, ShieldAlert } from 'lucide-react';

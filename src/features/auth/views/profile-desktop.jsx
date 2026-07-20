@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { Card, CardBody, Button, Icon, Spinner, Badge } from '@/components/ui/z_index';
+import { Card, CardBody } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
+import { Spinner } from '@/components/ui/spinner';
+import { Badge } from '@/components/ui/badge';
 import { ProfileAvatar } from '../components/profile-avatar';
 import { ProfileGeneralForm } from '../components/profile-general-form';
 import { ProfilePasswordForm } from '../components/profile-password-form';

@@ -1,6 +1,9 @@
 // src/features/tareas/components/comun/tarjeta-tarea.jsx
 // Componente unificado de tarjeta de tarea — compartido entre módulo Tareas y módulo Minutas (EntryCard)
-import { Icon, ConfirmModal, TableActions, Tooltip } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { ConfirmModal } from '@/components/ui/modal';
+import { TableActions } from '@/components/ui/table-actions';
+import { Tooltip } from '@/components/ui/tooltip';
 import { StickyNote, X, Plus, Settings2 } from 'lucide-react';
 import { EtiquetaEstadoTarea } from './etiqueta-estado-tarea';
 import { EtiquetaPrioridadTarea } from './etiqueta-prioridad-tarea';

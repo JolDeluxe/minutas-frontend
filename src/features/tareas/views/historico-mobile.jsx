@@ -1,6 +1,8 @@
 // src/features/tareas/views/historico-mobile.jsx
 import { useState } from 'react';
-import { Skeleton, Icon, GlassViewToggle, GlassPaginationPill } from '@/components/ui/z_index';
+import { Skeleton } from '@/components/ui/spinner';
+import { Icon } from '@/components/ui/icon';
+import { GlassViewToggle, GlassPaginationPill } from '@/components/ui/liquid-glass-mobile';
 import { TareaCard } from '../components/comun/tarjeta-tarea';
 import { ResumenHistorico } from '../components/historico/resumen-historico';
 import { BarraFiltrosHistorico } from '../components/historico/barra-filtros-historico';

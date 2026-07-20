@@ -1,17 +1,10 @@
 import React, { useState } from 'react';
-import { 
-        Modal, 
-        Icon, 
-        ModalHeader, 
-        ModalBody, 
-        ModalFooter, 
-        Skeleton, 
-        Spinner, 
-        Badge, 
-        Button, 
-        Card, 
-        CardBody 
-      } from '@/components/ui/z_index';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/modal';
+import { Icon } from '@/components/ui/icon';
+import { Skeleton, Spinner } from '@/components/ui/spinner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardBody } from '@/components/ui/card';
 
 // Nuevos componentes de formulario
 import { Label } from '@/components/form/label';

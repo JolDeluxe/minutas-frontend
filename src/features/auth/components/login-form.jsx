@@ -1,7 +1,8 @@
 import React from 'react';
 import { Icon } from '@/components/ui/icon';
 import { Button } from '../../../components/ui/z_index'; 
-import { Input, Label } from '@/components/form/z_index';
+import { Input } from '@/components/form/input';
+import { Label } from '@/components/form/label';
 
 export const LoginForm = ({
   formData,

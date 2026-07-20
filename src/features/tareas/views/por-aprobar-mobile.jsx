@@ -1,5 +1,8 @@
 import { useState } from 'react';
-import { Skeleton, Button, Icon, GlassViewToggle, GlassPaginationPill } from '@/components/ui/z_index';
+import { Skeleton } from '@/components/ui/spinner';
+import { Button } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
+import { GlassViewToggle, GlassPaginationPill } from '@/components/ui/liquid-glass-mobile';
 import { TareaCard } from '../components/comun/tarjeta-tarea';
 import { ModalEditarTarea } from '../components/comun/modal-editar-tarea';
 import { TablaTareas } from '../components/comun/tabla-tareas';

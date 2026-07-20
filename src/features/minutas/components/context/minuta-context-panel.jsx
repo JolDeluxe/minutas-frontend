@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Icon, Button } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/utils/cn';
 import { LINEA_MAP, ESTADO_MINUTA_MAP } from '../../constants';
 import { LineIconSelector } from '../icons/line-icons';

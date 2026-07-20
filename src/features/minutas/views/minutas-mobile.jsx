@@ -1,7 +1,10 @@
 // minutas-frontend\src\features\minutas\views\minutas-mobile.jsx
 
 import { useState, useMemo } from 'react';
-import { Button, GlassFab, GlassPaginationPill, GlassViewToggle, ScrollToTopButton, Icon } from '@/components/ui/z_index';
+import { Button } from '@/components/ui/button';
+import { GlassFab, GlassPaginationPill, GlassViewToggle } from '@/components/ui/liquid-glass-mobile';
+import { ScrollToTopButton } from '@/components/ui/scroll-to-top-button';
+import { Icon } from '@/components/ui/icon';
 import { MinutasTable } from '../components/minutas-table';
 import { MinutaCard } from '../components/minuta-card';
 import { MinutasInlineFilters } from '../components/minutas-inline-filters';

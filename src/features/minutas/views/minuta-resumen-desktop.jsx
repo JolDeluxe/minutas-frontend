@@ -6,7 +6,7 @@
  *  Izquierda (1/3): Gráfico de tareas + estadísticas
  *  Derecha  (2/3): Secciones de Resumen (Temas, Acuerdos, Próximos Pasos)
  */
-import { Icon } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
 import { cn } from '@/utils/cn';
 import { SeccionIA } from '../components/minuta-resumen/seccion-ia';
 import { GraficoEstados } from '../components/minuta-resumen/grafico-estados';

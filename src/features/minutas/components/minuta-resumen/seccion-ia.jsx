@@ -4,7 +4,8 @@
  * Usa SOLO componentes del sistema: Button, Icon de @/components/ui/z_index.
  */
 import { useState, useEffect, useRef } from 'react';
-import { Icon, Button } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/utils/cn';
 
 export const SeccionIA = ({

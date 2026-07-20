@@ -1,7 +1,8 @@
 // src/features/tareas/views/tareas-layout-desktop.jsx
 import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Button, Icon } from '@/components/ui/z_index';
+import { Button } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
 import { MODULES_CONFIG } from '@/config/modules-config';
 import { useAuthStore } from '@/stores/auth-store';
 import { getTareas } from '../api/tareas-api';

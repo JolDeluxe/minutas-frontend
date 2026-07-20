@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { GlassFab, GlassPaginationPill, GlassViewToggle } from '@/components/ui/z_index';
-import { ScrollToTopButton } from '@/components/ui/z_index';
+import { GlassFab, GlassPaginationPill, GlassViewToggle } from '@/components/ui/liquid-glass-mobile';
+import { ScrollToTopButton } from '@/components/ui/scroll-to-top-button';
 import { UserFormModal } from '../components/user-form-modal';
 import { UserStatusModal } from '../components/user-status-modal';
 import { UserDetailModal } from '../components/user-detail-modal';

@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Plus, Paperclip, Trash2, StickyNote, Camera } from 'lucide-react';
-import { Icon } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
 import { notify } from '@/components/notification/adaptive-notify';
 import { AREA_MAP, CLASIFICACION_MAP, PRIORIDAD_MAP, LINEAS_POR_AREA } from '../../minutas/constants';
 import { validateImageFile } from '@/utils/validators';

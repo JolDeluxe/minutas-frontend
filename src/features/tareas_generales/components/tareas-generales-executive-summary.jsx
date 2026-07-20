@@ -1,5 +1,5 @@
 // src/features/tareas_generales/components/tareas-generales-executive-summary.jsx
-import { SummaryBar } from '@/components/ui/z_index';
+import { SummaryBar } from '@/components/ui/summary-bar';
 
 export const TareasGeneralesExecutiveSummary = ({
     resumen,

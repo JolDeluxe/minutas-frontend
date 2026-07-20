@@ -1,5 +1,7 @@
 import React from 'react';
-import { Card, CardBody, Badge, Icon } from '@/components/ui/z_index';
+import { Card, CardBody } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Icon } from '@/components/ui/icon';
 import { ProfileAvatar } from './profile-avatar';
 
 export const ProfileSummaryCard = ({

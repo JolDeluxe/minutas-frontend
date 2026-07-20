@@ -1,6 +1,8 @@
 // src/features/tareas/components/historico/tarea-actions.jsx
 import { useState } from 'react';
-import { Icon, TableActions, ConfirmModal } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { TableActions } from '@/components/ui/table-actions';
+import { ConfirmModal } from '@/components/ui/modal';
 import { cn } from '@/utils/cn';
 import { ModalEntregarTarea } from './modal-entregar-tarea';
 

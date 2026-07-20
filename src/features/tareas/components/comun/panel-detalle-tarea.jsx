@@ -1,6 +1,8 @@
 // src/features/tareas/components/common/tarea-detail-drawer.jsx
 import { useState, useEffect } from 'react';
-import { Icon, Button, ConfirmModal } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { Button } from '@/components/ui/button';
+import { ConfirmModal } from '@/components/ui/modal';
 import { cn } from '@/utils/cn';
 import { TAREA_STATUS_MAP, TAREA_STATUS_OPTS, TAREA_PRIORIDAD_OPTS } from '../../constants';
 import { CLASIFICACION_MAP, AREA_MAP, LINEA_MAP } from '../../../minutas/constants';

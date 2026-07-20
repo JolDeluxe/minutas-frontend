@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Icon, Button } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/utils/cn';
 import { uploadResumenImagen } from '../../api/minutas-api';
 import { notify } from '@/components/notification/adaptive-notify';
-import { ImageViewer } from '@/features/tareas/components/comun/tarjeta-tarea';
+import { ImageViewer } from '@/features/tareas/components/comun/image-viewer';
 
 export const SeccionImagenes = ({
   minuta,

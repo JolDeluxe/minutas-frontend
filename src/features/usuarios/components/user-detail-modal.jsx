@@ -1,4 +1,5 @@
-import { Modal, ModalHeader, ModalBody, ModalFooter, Icon } from "@/components/ui/z_index";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/modal';
+import { Icon } from '@/components/ui/icon';
 import { UserStatusBadge } from "./user-status-badge";
 
 const DEPARTAMENTO_LABEL = {

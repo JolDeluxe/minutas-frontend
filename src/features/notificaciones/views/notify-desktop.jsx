@@ -1,4 +1,7 @@
-import { Card, CardBody, Button, Icon, Skeleton } from '@/components/ui/z_index';
+import { Card, CardBody } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
+import { Skeleton } from '@/components/ui/spinner';
 import { NotifyItem } from '../components/notify-item';
 import { NotifyEmptyState } from '../components/notify-empty-state';
 import { NotifyFilterBar } from '../components/notify-filter-bar';

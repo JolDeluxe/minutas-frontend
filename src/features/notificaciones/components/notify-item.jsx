@@ -1,4 +1,5 @@
-import { Icon, Button } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { Button } from '@/components/ui/button';
 import { formatRelativo } from '@/lib/date';
 import { cn } from '@/utils/cn';
 import { TIPO_CONFIG } from './notify-config';

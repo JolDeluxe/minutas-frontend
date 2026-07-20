@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Icon } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
 import { cn } from '@/utils/cn';
 import api from '@/lib/axios';
 

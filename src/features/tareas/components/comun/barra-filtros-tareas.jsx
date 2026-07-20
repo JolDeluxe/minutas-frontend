@@ -1,6 +1,8 @@
 // src/features/tareas/components/hoy/hoy-filter-bar.jsx
 import { useState, useEffect, useMemo } from 'react';
-import { Icon, Button, SearchableSelect } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { Button } from '@/components/ui/button';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { 
     TAREA_PRIORIDAD_OPTS, 
     TAREA_LINEA_OPTS, 

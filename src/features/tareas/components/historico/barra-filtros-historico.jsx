@@ -1,6 +1,8 @@
 // src/features/tareas/components/historico/tareas-filter-bar.jsx
 import { useState, useEffect, useMemo } from 'react';
-import { Icon, Button, SearchableSelect } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { Button } from '@/components/ui/button';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { useIsMobile, useIsTablet } from '@/hooks/useMediaQuery';
 import { TAREA_LINEA_OPTS, TAREA_PRIORIDAD_OPTS, ROLES_ADMIN } from '../../constants';
 import { SelectorFechasHistorico } from './selector-fechas-historico';

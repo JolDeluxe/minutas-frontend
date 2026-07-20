@@ -1,8 +1,10 @@
 // minutas-frontend\src\features\minutas\components\timeline\entry-filters-bar.jsx
 
 import { useState, useMemo } from 'react';
-import { Icon, GlassViewToggle } from '@/components/ui/z_index';
-import { Label, Select } from '@/components/form/z_index';
+import { Icon } from '@/components/ui/icon';
+import { GlassViewToggle } from '@/components/ui/liquid-glass-mobile';
+import { Label } from '@/components/form/label';
+import { Select } from '@/components/form/select';
 import { glassBase, GlassSheen } from '@/components/ui/liquid-glass-mobile';
 import { cn } from '@/utils/cn';
 import { getCatalogos } from '../../constants';

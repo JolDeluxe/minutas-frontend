@@ -1,6 +1,8 @@
 // src/features/usuarios/components/users-table.jsx
 import { useState } from "react";
-import { Table, Skeleton, Icon } from "@/components/ui/z_index";
+import { Table } from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/spinner';
+import { Icon } from '@/components/ui/icon';
 import { notify } from "@/components/notification/adaptive-notify";
 import { UserStatusBadge } from "./user-status-badge";
 import { UserFormModal } from "./user-form-modal";

@@ -1,5 +1,6 @@
 // src/features/usuarios/components/user-summary-bar.jsx
-import { SummaryBar, Skeleton } from '@/components/ui/z_index';
+import { SummaryBar } from '@/components/ui/summary-bar';
+import { Skeleton } from '@/components/ui/spinner';
 
 const SummaryBarSkeleton = ({ count = 5 }) => (
     <div className={`hidden lg:grid gap-4 mb-4 grid-cols-${count}`}>

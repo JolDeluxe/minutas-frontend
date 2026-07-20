@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Icon, Tooltip } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { Tooltip } from '@/components/ui/tooltip';
 import { MinutaContextPanel } from '../components/context/minuta-context-panel';
 import { MinutaExecutiveSummary } from '../components/minuta-executive-summary';
 import { MinutaJuntaComparison } from '../components/minuta-junta-comparison';

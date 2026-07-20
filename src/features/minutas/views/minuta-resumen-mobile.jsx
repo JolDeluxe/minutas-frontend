@@ -8,7 +8,7 @@
  *  3. Secciones del Resumen en acordeón colapsable
  */
 import { useState } from 'react';
-import { Icon } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
 import { SeccionIA } from '../components/minuta-resumen/seccion-ia';
 import { GraficoEstados } from '../components/minuta-resumen/grafico-estados';
 import { SeccionImagenes } from '../components/minuta-resumen/seccion-imagenes';

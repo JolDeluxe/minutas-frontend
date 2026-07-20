@@ -1,5 +1,6 @@
 import React from 'react';
-import { Card, CardBody, Icon } from '@/components/ui/z_index';
+import { Card, CardBody } from '@/components/ui/card';
+import { Icon } from '@/components/ui/icon';
 
 export const IconTester = () => {
   return (

@@ -1,4 +1,5 @@
-import { Icon, Skeleton } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { Skeleton } from '@/components/ui/spinner';
 import { UserCard } from './user-card';
 import { cn } from '@/utils/cn';
 

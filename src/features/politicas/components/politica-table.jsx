@@ -1,4 +1,8 @@
-import { Table, Icon, Skeleton, ConfirmModal, TableActions } from '@/components/ui/z_index';
+import { Table } from '@/components/ui/table';
+import { Icon } from '@/components/ui/icon';
+import { Skeleton } from '@/components/ui/spinner';
+import { ConfirmModal } from '@/components/ui/modal';
+import { TableActions } from '@/components/ui/table-actions';
 import { ShieldCheck, ExternalLink } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';

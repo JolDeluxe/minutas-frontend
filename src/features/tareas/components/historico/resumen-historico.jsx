@@ -1,5 +1,6 @@
 // src/features/tareas/components/historico/tareas-summary-bar.jsx
-import { SummaryBar, Skeleton } from '@/components/ui/z_index';
+import { SummaryBar } from '@/components/ui/summary-bar';
+import { Skeleton } from '@/components/ui/spinner';
 
 const ESTADOS_HISTORICO = [
     { id: 'TODOS', label: 'Total Historial', color: 'gris' },

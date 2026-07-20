@@ -1,4 +1,6 @@
-import { Icon, ConfirmModal, TableActions } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { ConfirmModal } from '@/components/ui/modal';
+import { TableActions } from '@/components/ui/table-actions';
 import { ExternalLink } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { ImageViewer } from '@/features/tareas/components/comun/tarjeta-tarea';

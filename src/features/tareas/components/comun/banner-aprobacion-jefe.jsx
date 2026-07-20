@@ -1,5 +1,5 @@
 // src/features/tareas/components/common/boss-approval-banner.jsx
-import { Icon } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
 import { cn } from '@/utils/cn';
 
 export const BannerAprobacionJefe = ({ count, isActive, onClick }) => {

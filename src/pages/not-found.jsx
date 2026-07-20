@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/z_index';
+import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/stores/auth-store';
 import { getLogoByUser } from '@/utils/resolve-logo';
 

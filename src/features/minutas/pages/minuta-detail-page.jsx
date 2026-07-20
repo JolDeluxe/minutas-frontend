@@ -11,7 +11,8 @@ import socket from '@/lib/socket';
 import { ENV } from '@/config/env';
 import { validateImageFile } from '@/utils/validators';
 
-import { Icon, ConfirmModal, Modal, ModalHeader, ModalBody } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { ConfirmModal, Modal, ModalHeader, ModalBody } from '@/components/ui/modal';
 import { MinutaDetailDesktopView } from '../views/minuta-detail-desktop-view';
 import { MinutaDetailMobileView } from '../views/minuta-detail-mobile-view';
 import { MinutaContextPanel } from '../components/context/minuta-context-panel';

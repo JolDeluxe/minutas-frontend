@@ -1,5 +1,6 @@
 import React from 'react';
-import { Icon, Modal, ModalHeader, ModalBody } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { Modal, ModalHeader, ModalBody } from '@/components/ui/modal';
 import { notify } from '@/components/notification/adaptive-notify';
 
 export const ShareTareaModal = ({ isOpen, onClose, data }) => {

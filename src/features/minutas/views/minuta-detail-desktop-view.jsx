@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Icon, Tooltip } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { Tooltip } from '@/components/ui/tooltip';
 import { MinutaContextPanel } from '../components/context/minuta-context-panel';
 import { QuickComposer } from '../components/composer/quick-composer';
 import { EntryFiltersBar } from '../components/timeline/entry-filters-bar';

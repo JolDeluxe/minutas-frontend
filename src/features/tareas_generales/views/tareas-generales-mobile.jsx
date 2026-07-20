@@ -1,6 +1,8 @@
 // src/features/tareas_generales/views/tareas-generales-mobile.jsx
 import React from 'react';
-import { Icon, GlassFab, GlassPaginationPill, ScrollToTopButton } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { GlassFab, GlassPaginationPill } from '@/components/ui/liquid-glass-mobile';
+import { ScrollToTopButton } from '@/components/ui/scroll-to-top-button';
 import { glassBase, GlassSheen } from '@/components/ui/liquid-glass-mobile';
 import { cn } from '@/utils/cn';
 import { TareasGeneralesExecutiveSummary } from '../components/tareas-generales-executive-summary';

@@ -1,4 +1,9 @@
-import { Table, Skeleton, Icon, Tooltip, TableActions, ConfirmModal } from "@/components/ui/z_index";
+import { Table } from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/spinner';
+import { Icon } from '@/components/ui/icon';
+import { Tooltip } from '@/components/ui/tooltip';
+import { TableActions } from '@/components/ui/table-actions';
+import { ConfirmModal } from '@/components/ui/modal';
 import { cn } from "@/utils/cn";
 import { AREA_MAP, CLASIFICACION_MAP, ESTADO_TAREA_MAP, PRIORIDAD_MAP, LINEA_MAP } from '../../constants';
 import { formatFecha, isPastDate, formatFechaRelativa } from '@/lib/date';

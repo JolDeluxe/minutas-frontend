@@ -1,4 +1,4 @@
-import { Icon } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
 
 export const NotifyEmptyState = ({ soloNoLeidas = false }) => (
     <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">

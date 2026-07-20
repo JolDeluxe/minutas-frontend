@@ -1,6 +1,10 @@
 import { PoliticaCard } from '../components/politica-card';
 import { PoliticaTable } from '../components/politica-table';
-import { Skeleton, Icon, GlassViewToggle, Button, GlassFab, ScrollToTopButton } from '@/components/ui/z_index';
+import { Skeleton } from '@/components/ui/spinner';
+import { Icon } from '@/components/ui/icon';
+import { GlassViewToggle, GlassFab } from '@/components/ui/liquid-glass-mobile';
+import { Button } from '@/components/ui/button';
+import { ScrollToTopButton } from '@/components/ui/scroll-to-top-button';
 import { PoliticasFiltros } from '../components/politicas-filtros';
 import { ShieldCheck, Plus, Search } from 'lucide-react';
 import { cn } from '@/utils/cn';

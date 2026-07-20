@@ -1,4 +1,6 @@
-import { Modal, ModalHeader, ModalBody, ModalFooter, Button, Icon } from "@/components/ui/z_index";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/modal';
+import { Button } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
 
 export const UserStatusModal = ({ isOpen, onClose, onConfirm, usuario, isSubmitting }) => {
   if (!usuario) return null;

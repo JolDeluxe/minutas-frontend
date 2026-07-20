@@ -1,7 +1,8 @@
 // src/features/tareas_generales/components/tareas-generales-inline-filters.jsx
 import { useState, useEffect } from 'react';
-import { Icon } from '@/components/ui/z_index';
-import { Label, Select } from '@/components/form/z_index';
+import { Icon } from '@/components/ui/icon';
+import { Label } from '@/components/form/label';
+import { Select } from '@/components/form/select';
 import { AREA_MAP } from '../../minutas/constants';
 
 const AREA_OPTIONS = Object.entries(AREA_MAP)

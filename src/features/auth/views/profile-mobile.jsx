@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Icon, Spinner } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { Spinner } from '@/components/ui/spinner';
 import { ProfileSummaryCard } from '../components/profile-summary-card';
 import { ProfileInfoCard } from '../components/profile-info-card';
 import { ProfileGeneralForm } from '../components/profile-general-form';

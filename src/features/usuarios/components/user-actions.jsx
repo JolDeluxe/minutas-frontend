@@ -1,4 +1,4 @@
-import { TableActions } from "@/components/ui/z_index";
+import { TableActions } from '@/components/ui/table-actions';
 
 export const UserActions = ({
     usuario,

@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
-import { Badge, Icon, Card } from '@/components/ui/z_index';
+import { Badge } from '@/components/ui/badge';
+import { Icon } from '@/components/ui/icon';
+import { Card } from '@/components/ui/card';
 import { cn } from '@/utils/cn';
 import { LINEA_MAP, ESTADO_MINUTA_MAP } from '../constants';
 import { LineIconSelector, MarketingIcon } from './icons/line-icons';

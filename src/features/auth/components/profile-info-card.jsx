@@ -1,5 +1,6 @@
 import React from 'react';
-import { Icon, Badge } from '@/components/ui/z_index';
+import { Icon } from '@/components/ui/icon';
+import { Badge } from '@/components/ui/badge';
 
 export const ProfileInfoCard = ({ profile }) => {
   if (!profile) return null;

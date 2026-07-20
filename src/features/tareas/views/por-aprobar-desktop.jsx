@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Skeleton, Icon, GlassViewToggle, GlassPaginationPill } from '@/components/ui/z_index';
+import { Skeleton } from '@/components/ui/spinner';
+import { Icon } from '@/components/ui/icon';
+import { GlassViewToggle, GlassPaginationPill } from '@/components/ui/liquid-glass-mobile';
 import { cn } from '@/utils/cn';
 import { TareaCard } from '../components/comun/tarjeta-tarea';
 import { TablaTareas } from '../components/comun/tabla-tareas';
