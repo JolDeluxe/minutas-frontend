@@ -117,7 +117,7 @@ export const SeccionImagenes = ({
           <h3 className="fuente-titulos text-[11px] font-black tracking-widest uppercase text-slate-700">
             Imágenes de la Reunión
           </h3>
-          {tieneImagenes && colapsado && (
+          {tieneImagenes && (
             <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-600 text-[9px] font-bold">
               {imagenesValidas.length}
             </span>
@@ -155,27 +155,27 @@ export const SeccionImagenes = ({
       {/* Body */}
       <div className="px-4 py-3">
         {colapsado ? (
-          /* Vista Colapsada (Miniaturas súper compactas) */
+          /* Vista Colapsada (Miniaturas súper compactas con click para ver en pantalla completa) */
           tieneImagenes ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5 overflow-x-auto custom-scrollbar py-0.5">
               {imagenesValidas.map((img, idx) => (
                 <div
                   key={idx}
                   onClick={() => setViewerState({ images: imagenesValidas, index: idx })}
-                  className="relative w-12 h-12 rounded-lg border border-slate-200 overflow-hidden cursor-pointer hover:shadow-md transition-all active:scale-95 group"
+                  className="relative w-14 h-14 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:shadow-md transition-all active:scale-95 group shrink-0"
                 >
                   <img
                     src={img.url}
-                    alt={`Thumbnail ${idx + 1}`}
+                    alt={`Evidencia ${idx + 1}`}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                   />
-                  <div className="absolute inset-0 bg-slate-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                    <Icon name="zoom_in" size="14px" />
+                  <div className="absolute inset-0 bg-slate-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white pointer-events-none">
+                    <Icon name="zoom_in" size="16px" />
                   </div>
                 </div>
               ))}
-              <span className="text-[10px] text-slate-400 font-semibold italic ml-2">
-                Haz clic para ampliar la evidencia
+              <span className="text-[10px] text-slate-400 font-semibold italic ml-1 shrink-0">
+                Toca una imagen para verla en grande
               </span>
             </div>
           ) : (
@@ -184,7 +184,7 @@ export const SeccionImagenes = ({
             </p>
           )
         ) : (
-          /* Vista Expandida (Grid de edición / visualización estándar pero compacta) */
+          /* Vista Expandida (Grid estándar con acciones claras e independientes) */
           !editando && !tieneImagenes ? (
             <p className="text-sm text-slate-400 italic text-center py-2">
               No se han agregado imágenes de referencia aún.
@@ -195,12 +195,13 @@ export const SeccionImagenes = ({
                 {imagenes.map((img, idx) => {
                   const isLoading = loadingSlots[idx];
                   const hasImage = !!img.url;
+                  const validIdx = imagenesValidas.findIndex(i => i.url === img.url);
 
                   return (
                     <div
                       key={idx}
                       className={cn(
-                        "relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl border flex items-center justify-center overflow-hidden transition-all group bg-slate-50/50",
+                        "relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl border flex items-center justify-center overflow-hidden transition-all bg-slate-50/50 shrink-0",
                         hasImage ? "border-slate-200" : "border-dashed border-slate-300 hover:border-slate-400"
                       )}
                     >
@@ -210,36 +211,36 @@ export const SeccionImagenes = ({
                           <span className="text-[9px] text-slate-400 font-semibold">Subiendo...</span>
                         </div>
                       ) : hasImage ? (
-                        <>
+                        <div
+                          className="relative w-full h-full cursor-pointer group"
+                          onClick={() => {
+                            setViewerState({ images: imagenesValidas, index: validIdx >= 0 ? validIdx : 0 });
+                          }}
+                        >
                           <img
                             src={img.url}
                             alt={`Evidencia ${idx + 1}`}
                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                           />
-                          <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
+                          <div className="absolute inset-0 bg-slate-950/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white pointer-events-none">
+                            <Icon name="zoom_in" size="20px" />
+                          </div>
+
+                          {/* Botón de eliminar aislado en modo edición */}
+                          {editando && (
                             <button
                               type="button"
-                              onClick={() => {
-                                const validIdx = imagenesValidas.findIndex(i => i.url === img.url);
-                                setViewerState({ images: imagenesValidas, index: validIdx >= 0 ? validIdx : 0 });
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemoveImage(idx);
                               }}
-                              className="w-7 h-7 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-md flex items-center justify-center text-white transition-all hover:scale-105 cursor-pointer"
-                              title="Ver imagen"
+                              className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-lg hover:bg-rose-700 active:scale-90 transition-all z-20 cursor-pointer"
+                              title="Eliminar imagen"
                             >
-                              <Icon name="zoom_in" size="14px" />
+                              <Icon name="close" size="12px" weight={700} />
                             </button>
-                            {editando && (
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveImage(idx)}
-                                className="w-7 h-7 rounded-lg bg-red-500/80 hover:bg-red-500 flex items-center justify-center text-white transition-all hover:scale-105 cursor-pointer"
-                                title="Eliminar imagen"
-                              >
-                                <Icon name="delete" size="14px" />
-                              </button>
-                            )}
-                          </div>
-                        </>
+                          )}
+                        </div>
                       ) : editando ? (
                         <label className="w-full h-full flex flex-col items-center justify-center gap-1.5 cursor-pointer p-3 select-none">
                           <input
@@ -297,7 +298,7 @@ export const SeccionImagenes = ({
         )}
       </div>
 
-      {/* Visor de imágenes premium (Importado del módulo Tareas) */}
+      {/* Visor de imágenes en pantalla completa */}
       {viewerState !== null && (
         <ImageViewer
           images={viewerState.images}
