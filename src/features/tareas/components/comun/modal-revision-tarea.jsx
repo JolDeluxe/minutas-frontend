@@ -6,7 +6,7 @@ import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { formatFecha, formatFechaHora } from '@/lib/date';
 import { AREA_MAP, LINEA_MAP } from '../../../minutas/constants';
 import { EtiquetaPrioridadTarea } from './etiqueta-prioridad-tarea';
-import { ImageViewer } from './tarjeta-tarea';
+import { ImageViewer } from './image-viewer';
 
 export const ModalRevisionTarea = ({ isOpen, onClose, tarea, onConfirm, submitting }) => {
     const isDesktop = useIsDesktop();
