@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { Icon } from '@/components/ui/icon';
 import { Tooltip } from '@/components/ui/tooltip';
 import { MinutaContextPanel } from '../components/context/minuta-context-panel';
