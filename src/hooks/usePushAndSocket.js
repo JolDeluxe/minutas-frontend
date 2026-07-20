@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { toast } from 'react-toastify';
 import { useAuthStore } from '@/stores/auth-store';
@@ -25,7 +25,7 @@ export const usePushAndSocket = () => {
     const userId = user?.id || user?.data?.id;
 
     // 1. Setup Push Notifications
-    const subscribeToPush = async () => {
+    const subscribeToPush = useCallback(async () => {
         if (!('serviceWorker' in navigator) || !('PushManager' in window) || !VAPID_KEY) return;
         
         try {
@@ -62,7 +62,7 @@ export const usePushAndSocket = () => {
         } catch (error) {
             console.error('Error al suscribir a Push:', error);
         }
-    };
+    }, [token]);
 
     // 2. Setup Socket.io & Request Permissions
     useEffect(() => {
@@ -117,7 +117,7 @@ export const usePushAndSocket = () => {
                 socketRef.current.disconnect();
             }
         };
-    }, [isAuthenticated, token, userId, navigate]);
+    }, [isAuthenticated, token, userId, navigate, subscribeToPush]);
 
     return null;
 };
