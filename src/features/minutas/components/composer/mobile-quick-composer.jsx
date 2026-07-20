@@ -91,9 +91,11 @@ export const MobileQuickComposer = ({
 
   const [expanded, setExpanded] = useState(false);
   const [texto, setTexto] = useState('');
+  const [clasificacion, setClasificacion] = useState('');
   const [notasRapidas, setNotasRapidas] = useState([]);
   const [area, setArea] = useState(areaDefault || (departamento !== 'EXTERNO' ? departamento : null) || catalogos.areas[0]?.value || 'DISENO');
   
+  const isOperationalArea = area === 'DISENO' || area === 'MARKETING';
   const lineasDisponibles = useMemo(() => LINEAS_POR_AREA[area] || [], [area]);
   
   const lineasConDefault = useMemo(() => {
@@ -117,10 +119,8 @@ export const MobileQuickComposer = ({
   }, [lineasDisponibles, area, areaDefault, lineaDefault, clasificacion, isOperationalArea]);
 
   const tieneLineas = lineasConDefault.length > 0;
-  const isOperationalArea = area === 'DISENO' || area === 'MARKETING';
 
   const [linea, setLinea] = useState(tieneLineas ? (lineaDefault || lineasConDefault[0]?.value) : null);
-  const [clasificacion, setClasificacion] = useState('');
   const [localImages, setLocalImages] = useState([]);
   const [showAllNotes, setShowAllNotes] = useState(false);
   const [localSubmitting, setLocalSubmitting] = useState(false);
