@@ -56,16 +56,9 @@ export const SeccionAsistentes = ({
       });
     }
 
-    // Si aún no hay ninguno registrado, poner por default al usuario logueado
-    if (currentUser?.id && currentUser?.nombre) {
-      return [{
-        id: currentUser.id,
-        nombre: currentUser.nombre,
-        imagen: currentUser.imagen || null,
-      }];
-    }
+    // Por defecto la lista debe estar vacía hasta que el usuario decida agregar asistentes y guardar
     return [];
-  }, [minuta?.asistentes, currentUser?.id, currentUser?.nombre, currentUser?.imagen, allUsers]);
+  }, [minuta?.asistentes, allUsers]);
 
   const [asistentesSeleccionados, setAsistentesSeleccionados] = useState(initialAsistentes);
   const [imageErrors, setImageErrors] = useState({});
