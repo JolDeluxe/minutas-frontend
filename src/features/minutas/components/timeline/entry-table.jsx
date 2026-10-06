@@ -232,6 +232,10 @@ const TableImagePreview = ({ images, remoteImageCount, onClick }) => {
               key={i}
               src={img.preview || img.url || img.base64Thumb} 
               alt={`Preview ${i}`} 
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/img/no-image.avif';
+              }}
               className={cn(
                 "absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ease-in-out group-hover:scale-110",
                 i === currentIndex ? "opacity-100 z-10" : "opacity-0 z-0"
@@ -264,7 +268,15 @@ const TableImagePreview = ({ images, remoteImageCount, onClick }) => {
           }}
         >
           <div className="bg-white p-3 rounded-[2.5rem] shadow-[0_40px_100px_rgba(0,0,0,0.35)] border border-slate-200 w-[380px] h-[380px] flex flex-col items-center justify-center relative overflow-hidden ring-4 ring-slate-100/50">
-            <img src={currentImg} alt="Preview Zoom" className="w-full h-full object-contain rounded-3xl drop-shadow-xl animate-in fade-in duration-500" />
+            <img 
+              src={currentImg} 
+              alt="Preview Zoom" 
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/img/no-image.avif';
+              }}
+              className="w-full h-full object-contain rounded-3xl drop-shadow-xl animate-in fade-in duration-500" 
+            />
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900/90 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black text-white uppercase tracking-[0.2em] shadow-2xl">
                Previsualización Rápida
             </div>

@@ -165,6 +165,10 @@ const CardImageCarousel = ({ images, lineInfo, isMarketing, onImageClick }) => {
             <img
               key={i}
               src={img.preview || img.url || img.base64Thumb}
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/img/no-image.avif';
+              }}
               className={cn(
                 "absolute inset-0 h-full w-full object-cover transition-all duration-1000 ease-in-out",
                 i === currentIndex ? "opacity-100 scale-100" : "opacity-0 scale-110"
@@ -200,7 +204,15 @@ const CardImageCarousel = ({ images, lineInfo, isMarketing, onImageClick }) => {
           style={{ left: coords.x, top: coords.y, transform: 'translateY(-50%)' }}
         >
           <div className="w-64 h-64 sm:w-[380px] sm:h-[380px] flex items-center justify-center relative overflow-hidden rounded-[2.5rem] bg-white border border-slate-200 p-2 shadow-[0_50px_120px_rgba(0,0,0,0.5)] ring-[12px] ring-white/20">
-            <img src={currentImg.preview || currentImg.url || currentImg.base64Thumb} alt="Preview Zoom" className="w-full h-full object-contain rounded-3xl drop-shadow-lg animate-in fade-in duration-500 bg-slate-50" />
+            <img 
+              src={currentImg.preview || currentImg.url || currentImg.base64Thumb} 
+              alt="Preview Zoom" 
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/img/no-image.avif';
+              }}
+              className="w-full h-full object-contain rounded-3xl drop-shadow-lg animate-in fade-in duration-500 bg-slate-50" 
+            />
             <div className="absolute bottom-5 left-1/2 -translate-x-1/2 bg-slate-900/90 backdrop-blur-md px-5 py-2 rounded-full text-[10px] font-black text-white uppercase tracking-[0.3em] shadow-2xl border border-white/10">
               Vista Rápida
             </div>

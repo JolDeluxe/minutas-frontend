@@ -287,19 +287,7 @@ export const MinutaDetailMobileView = ({
 
       {!composerExpanded && (
         <div className="fixed bottom-48 right-6 z-[60] flex flex-col gap-4">
-          {(draftEntries.length > 0) && (
-            <button
-              onClick={() => setShowReviewModal(true)}
-              style={{ ...glassBase('success'), width: 52, height: 52, borderRadius: 16 }}
-              className="flex items-center justify-center text-white active:scale-90 transition-all relative shadow-xl"
-            >
-              <GlassSheen />
-              <Icon name="cloud_upload" size="26px" className="relative z-10" />
-              <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-lg animate-in zoom-in z-20">
-                {draftEntries.length}
-              </div>
-            </button>
-          )}
+          {/* Boton consolidacion de borradores desconectado del flujo normal */}
 
           <button
             onClick={() => setShowNotes(true)}
@@ -337,6 +325,9 @@ export const MinutaDetailMobileView = ({
           onIniciar={handleIniciar}
           iniciando={iniciando}
           onExpandedChange={setComposerExpanded}
+          onFinalizar={handleFinalizar}
+          finalizando={finalizando}
+          totalRegistros={resumen?.totalValidas || allEntries?.length || 0}
         />
       )}
 

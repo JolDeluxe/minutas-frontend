@@ -39,6 +39,7 @@ export const MinutaResumen = ({
     publicId2:     minuta?.publicId2            || '',
     imagenUrl3:    minuta?.imagenUrl3           || '',
     publicId3:     minuta?.publicId3            || '',
+    asistentes:    minuta?.asistentes           || '[]',
   });
 
   // Sincronizar estado local cuando cambia la minuta externamente
@@ -53,6 +54,7 @@ export const MinutaResumen = ({
       publicId2:     minuta?.publicId2            || '',
       imagenUrl3:    minuta?.imagenUrl3           || '',
       publicId3:     minuta?.publicId3            || '',
+      asistentes:    minuta?.asistentes           || '[]',
     });
   }, [minuta]);
 
@@ -86,6 +88,29 @@ export const MinutaResumen = ({
   }, [minuta?.id, esExterna, onResumenUpdated]);
 
   /**
+   * Guarda manualmente los asistentes de la reunión.
+   */
+  const handleGuardarAsistentes = useCallback(async (asistentesArray) => {
+    try {
+      const valorStr = JSON.stringify(asistentesArray || []);
+      const payload = { asistentes: valorStr };
+
+      if (esExterna) {
+        await updateMinutaExterna(minuta.id, payload);
+      } else {
+        await guardarResumenMinuta(minuta.id, payload);
+      }
+
+      setResumenLocal(prev => ({ ...prev, asistentes: valorStr }));
+      onResumenUpdated?.({ asistentes: valorStr });
+      notify.success('Asistentes guardados correctamente.');
+    } catch {
+      notify.error('Error al guardar asistentes. Intenta de nuevo.');
+      throw new Error('save failed');
+    }
+  }, [minuta?.id, esExterna, onResumenUpdated]);
+
+  /**
    * Guarda manualmente las imágenes actualizadas.
    */
   const handleGuardarImagenes = useCallback(async (imagenesPayload) => {
@@ -106,12 +131,16 @@ export const MinutaResumen = ({
   }, [minuta?.id, esExterna, onResumenUpdated]);
 
   const commonProps = {
-    minuta,
+    minuta: {
+      ...minuta,
+      asistentes: resumenLocal.asistentes,
+    },
     tareas,
     resumenLocal,
     isAdmin,
-    onGuardar:         handleGuardarSeccion,
-    onGuardarImagenes: handleGuardarImagenes,
+    onGuardar:           handleGuardarSeccion,
+    onGuardarAsistentes: handleGuardarAsistentes,
+    onGuardarImagenes:   handleGuardarImagenes,
     onSwitchToTareas,
   };
 

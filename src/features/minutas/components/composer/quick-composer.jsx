@@ -1,3 +1,4 @@
+import { notify } from '@/components/notification/adaptive-notify';
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Icon } from '@/components/ui/icon';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/modal';
@@ -66,7 +67,11 @@ export const QuickComposer = ({
   onIniciar,
   iniciando = false,
   onCollapseChange,
+  onFinalizar,
+  finalizando = false,
+  totalRegistros = 0,
 }) => {
+  const [showCloseConfirmModal, setShowCloseConfirmModal] = useState(false);
   const catalogos = useMemo(() => getCatalogos(departamento), [departamento]);
 
   const [descripcion, setDescripcion] = useState('');
@@ -99,6 +104,7 @@ export const QuickComposer = ({
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [showAllNotes, setShowAllNotes] = useState(false);
   const [localSubmitting, setLocalSubmitting] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const isSaving = submitting || localSubmitting;
 
   // Estados Operativos (Modo Tarea)
@@ -230,7 +236,13 @@ export const QuickComposer = ({
 
   const processFiles = (files) => {
     const validFiles = [];
-    for (const file of Array.from(files)) {
+    for (const rawFile of Array.from(files)) {
+      let file = rawFile;
+      // Si la imagen proviene del portapapeles sin nombre o extensión válida
+      if (file && (!file.name || file.name === 'image.png' || !file.name.includes('.'))) {
+        const ext = file.type ? file.type.split('/')[1] || 'png' : 'png';
+        file = new File([file], `pegado_${Date.now()}.${ext}`, { type: file.type || 'image/png' });
+      }
       const validation = validateImageFile(file);
       if (!validation.isValid) {
         notify.error(validation.error);
@@ -257,6 +269,79 @@ export const QuickComposer = ({
   const handleFileChange = (e) => {
     if (e.target.files) processFiles(e.target.files);
     e.target.value = '';
+  };
+
+  const lastPasteTimeRef = useRef(0);
+
+  const handlePaste = useCallback((e) => {
+    const now = Date.now();
+    // Prevenir duplicados si el evento se dispara en múltiples burbujeos
+    if (now - lastPasteTimeRef.current < 400) return;
+
+    const clipboardData = e.clipboardData;
+    if (!clipboardData) return;
+
+    const imageFiles = [];
+
+    // Prioridad 1: Archivos directos del clipboard
+    if (clipboardData.files && clipboardData.files.length > 0) {
+      for (let i = 0; i < clipboardData.files.length; i++) {
+        const file = clipboardData.files[i];
+        if (file.type && file.type.startsWith('image/')) {
+          imageFiles.push(file);
+        }
+      }
+    }
+
+    // Prioridad 2: Items (capturas de pantalla en memoria / recortes) solo si no se encontraron en files
+    if (imageFiles.length === 0 && clipboardData.items) {
+      for (let i = 0; i < clipboardData.items.length; i++) {
+        const item = clipboardData.items[i];
+        if (item.type && item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) imageFiles.push(file);
+        }
+      }
+    }
+
+    if (imageFiles.length > 0) {
+      lastPasteTimeRef.current = now;
+      e.preventDefault();
+      e.stopPropagation();
+      processFiles(imageFiles);
+    }
+  }, [imagenes.length]);
+
+  // Listener único a nivel de ventana cuando el QuickComposer está abierto
+  useEffect(() => {
+    if (isCollapsed) return;
+    const onWindowPaste = (e) => {
+      if (e.target && e.target.tagName === 'INPUT' && e.target.type !== 'file') return;
+      handlePaste(e);
+    };
+    window.addEventListener('paste', onWindowPaste);
+    return () => window.removeEventListener('paste', onWindowPaste);
+  }, [isCollapsed, handlePaste]);
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDragging) setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+      processFiles(e.dataTransfer.files);
+    }
   };
 
   const removeImagen = (id) => {
@@ -316,6 +401,7 @@ export const QuickComposer = ({
       if (isDesktop) textareaRef.current?.focus();
     } catch (err) {
       console.error('[QuickComposer] Error during submit:', err);
+      throw err;
     } finally {
       setLocalSubmitting(false);
     }
@@ -372,7 +458,20 @@ export const QuickComposer = ({
            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Captura</span>
            {descripcion.trim() && <span className="text-[11px] font-bold text-slate-900 truncate max-w-md italic opacity-60">"{descripcion.substring(0, 60)}..."</span>}
-           <button onClick={() => setIsCollapsed(false)} className="ml-2 flex items-center gap-1.5 px-3 py-1 bg-slate-900 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg"><Plus size={12} /> Nueva Tarea</button>
+           <div className="ml-2 flex items-center gap-2">
+              {estado === 'EN_CURSO' && totalRegistros > 0 && onFinalizar && (
+                <button
+                  type="button"
+                  onClick={onFinalizar}
+                  disabled={finalizando}
+                  className="flex items-center gap-1.5 px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg transition-all active:scale-95"
+                >
+                  <Icon name="stop_circle" size="12px" />
+                  <span>{finalizando ? 'Finalizando...' : 'Finalizar Junta'}</span>
+                </button>
+              )}
+              <button onClick={() => setIsCollapsed(false)} className="flex items-center gap-1.5 px-3 py-1 bg-slate-900 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg"><Plus size={12} /> Nueva Tarea</button>
+            </div>
         </div>
       ) : (
         <div className="flex flex-col h-full w-full gap-2 animate-in fade-in zoom-in-95 duration-300 min-h-0 max-w-5xl mx-auto">
@@ -381,7 +480,33 @@ export const QuickComposer = ({
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Captura</span>
             </div>
-            <button onClick={() => setIsCollapsed(true)} className="flex items-center gap-1.5 px-6 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-[11px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-md border border-slate-700 cursor-pointer"><X size={16} /> Cerrar Captura</button>
+            <div className="flex items-center gap-2">
+              {estado === 'EN_CURSO' && totalRegistros > 0 && onFinalizar && (
+                <button
+                  type="button"
+                  onClick={onFinalizar}
+                  disabled={finalizando}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-md shadow-emerald-900/20 border border-emerald-500/40 cursor-pointer"
+                  title="Finalizar sesión y organizar tareas"
+                >
+                  <Icon name="stop_circle" size="15px" />
+                  <span>{finalizando ? 'Finalizando...' : 'Finalizar Junta'}</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  if (estado === 'EN_CURSO' && totalRegistros > 0) {
+                    setShowCloseConfirmModal(true);
+                  } else {
+                    setIsCollapsed(true);
+                  }
+                }}
+                className="flex items-center gap-1.5 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-[11px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-md border border-slate-700 cursor-pointer"
+              >
+                <X size={16} /> Cerrar Captura
+              </button>
+            </div>
           </div>
 
           <div className={cn("flex-1 bg-white border border-slate-200/60 rounded-[1.5rem] p-3 lg:p-4 shadow-2xl flex flex-col gap-2.5 min-h-0 overflow-y-auto custom-scrollbar transition-all duration-300", showResponsiblesDropdown ? "pb-56" : "")}>
@@ -392,7 +517,7 @@ export const QuickComposer = ({
                 value={descripcion}
                 onChange={(e) => setDescripcion(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Escribe la idea, acuerdo o tarea aquí..."
+                placeholder="Escribe la idea, acuerdo o tarea aquí... (puedes pegar imágenes con Ctrl+V)"
                 className={cn("w-full flex-1 bg-slate-50/50 border border-slate-100 rounded-2xl px-4 py-2 text-sm lg:text-lg font-bold text-slate-800 focus:outline-none focus:ring-4 focus:ring-marca-primario/5 transition-all resize-none placeholder:text-slate-300 shadow-inner custom-scrollbar", esTarea && "lg:text-sm py-1.5")}
               />
               <div className="absolute right-3 bottom-3 flex items-center gap-2">
@@ -441,22 +566,39 @@ export const QuickComposer = ({
                 </div>
               </div>
 
-              <div className="flex flex-col gap-1.5 border-l border-slate-200 pl-4">
+              <div 
+                className={cn(
+                  "flex flex-col gap-1.5 border-l pl-4 rounded-xl transition-all",
+                  isDragging ? "bg-blue-50/60 border-blue-400 ring-2 ring-blue-400/20" : "border-slate-200"
+                )}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
                 <div className="flex items-center justify-between px-1">
                   <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Imágenes (Opcional)</span>
+                    <div className={cn("w-1.5 h-1.5 rounded-full", isDragging ? "bg-blue-600 animate-ping" : "bg-blue-400")} />
+                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
+                      {isDragging ? '¡Suelta las fotos aquí!' : 'Imágenes (Arrastra o pega con Ctrl+V)'}
+                    </span>
                   </div>
                   <span className="text-[8px] font-bold text-slate-400 uppercase">{imagenes.length} / 3</span>
                 </div>
                 <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1">
                   <button
+                    type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={imagenes.length >= 3}
-                    className="w-12 h-12 shrink-0 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center text-slate-400 bg-white hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-40"
+                    className={cn(
+                      "w-12 h-12 shrink-0 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all active:scale-95 disabled:opacity-40 cursor-pointer",
+                      isDragging 
+                        ? "border-blue-500 bg-blue-100 text-blue-600 scale-105" 
+                        : "border-slate-300 text-slate-400 bg-white hover:bg-slate-50"
+                    )}
+                    title="Haz clic, arrastra imágenes o presiona Ctrl+V"
                   >
                     <Camera size={16} />
-                    <span className="text-[6px] font-black uppercase">Foto</span>
+                    <span className="text-[6px] font-black uppercase">{isDragging ? 'Soltar' : 'Foto'}</span>
                   </button>
                   <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/jpeg, image/png, image/webp, image/heic, image/heif" multiple className="hidden" />
 
@@ -726,6 +868,52 @@ export const QuickComposer = ({
         </div>
       )}
 
+      {showCloseConfirmModal && (
+        <Modal isOpen={showCloseConfirmModal} onClose={() => setShowCloseConfirmModal(false)} size="sm">
+          <div className="p-6 flex flex-col items-center text-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center shadow-inner">
+              <Icon name="help" size="28px" />
+            </div>
+            <div>
+              <h3 className="text-base font-black text-slate-900 uppercase tracking-wide">¿Terminaste la junta?</h3>
+              <p className="text-xs text-slate-500 mt-1 font-medium">
+                Ya tienes <strong className="text-slate-800">{totalRegistros}</strong> {totalRegistros === 1 ? 'registro guardado' : 'registros guardados'} en esta minuta.
+              </p>
+            </div>
+            <div className="flex flex-col w-full gap-2 mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCloseConfirmModal(false);
+                  onFinalizar?.();
+                }}
+                disabled={finalizando}
+                className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-600/20 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Icon name="stop_circle" size="16px" />
+                Finalizar Junta
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCloseConfirmModal(false);
+                  setIsCollapsed(true);
+                }}
+                className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+              >
+                Solo cerrar captura (Seguir junta)
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCloseConfirmModal(false)}
+                className="text-[11px] font-bold text-slate-400 hover:text-slate-600 py-1 transition-colors cursor-pointer"
+              >
+                Seguir capturando
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
       <AllNotesModal
         isOpen={showAllNotes}
         onClose={() => setShowAllNotes(false)}

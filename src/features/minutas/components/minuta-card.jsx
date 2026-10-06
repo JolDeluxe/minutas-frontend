@@ -78,11 +78,13 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, onCancel, badge = nul
         return programada < hoy;
     }, [minuta.estado, minuta.fechaProgramada]);
 
-    const finalBadgeCfg = badgeCfg || (isPendiente ? {
+    // Etiquetas de Junta Actual y Anterior comentadas por solicitud
+    // const badgeCfg = badge ? BADGE_CONFIG[badge] : null;
+    const finalBadgeCfg = isPendiente ? {
         label: 'Pendiente de realizar',
         bg: 'bg-amber-500',
         border: 'border-amber-300 ring-1 ring-amber-300/50 shadow-[0_0_15px_rgba(245,158,11,0.15)]',
-    } : null);
+    } : null;
 
     return (
         <Card 

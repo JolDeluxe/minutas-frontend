@@ -103,13 +103,24 @@ export const MinutasMobile = ({
     };
 
     const displayMinutas = useMemo(() => {
-        if (!selectedDate) return minutas;
-        return minutas.filter(m => {
+        let list = selectedDate ? minutas.filter(m => {
             const d = new Date(m.fechaRealizada || m.fechaProgramada || m.createdAt);
             const sel = new Date(selectedDate);
             return d.getFullYear() === sel.getFullYear() && 
                    d.getMonth() === sel.getMonth() && 
                    d.getDate() === sel.getDate();
+        }) : [...minutas];
+
+        // Orden:
+        // Todas las minutas activas/programadas/en curso van arriba ordenadas por ID descendente.
+        // Las CERRADAS y CANCELADAS siempre van hasta abajo (también por ID descendente).
+        return list.sort((a, b) => {
+            const aClosed = a.estado === 'CERRADA' || a.estado === 'CANCELADA';
+            const bClosed = b.estado === 'CERRADA' || b.estado === 'CANCELADA';
+
+            if (aClosed && !bClosed) return 1;
+            if (!aClosed && bClosed) return -1;
+            return (b.id || 0) - (a.id || 0);
         });
     }, [minutas, selectedDate]);
 
@@ -294,46 +305,21 @@ export const MinutasMobile = ({
                             </p>
                         </div>
                     ) : (
-                        statusGroups.map((group) => (
-                            <div key={group.key} className="mb-6">
-                                <h2 className="text-lg font-black text-slate-900 fuente-titulos tracking-tight mb-3 pl-1 flex items-center gap-2.5">
-                                    <span className={cn("w-1 h-5 rounded-full", group.color)} />
-                                    {group.label}
-                                    <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full ml-1 shrink-0">
-                                        {group.minutas.length}
-                                    </span>
-                                </h2>
-                                <div className="grid grid-cols-1 min-[520px]:grid-cols-2 gap-4">
-                                    {group.minutas.map(minuta => (
-                                        <MinutaCard 
-                                            key={minuta.id} 
-                                            minuta={minuta} 
-                                            onViewDetail={onViewDetail}
-                                            onEdit={onEdit}
-                                            onCancel={onCancel}
-                                            isAdmin={isAdmin}
-                                            onDownloadPdf={isExterna ? () => onDownloadPdf(minuta) : undefined}
-                                            isGeneratingPdf={isGeneratingPdf === minuta.id}
-                                            badge={
-                                                ultimaJuntaId && (minuta.id === (
-                                                    (minuta.departamento || minuta.creadoPor?.departamento) === 'MARKETING'
-                                                        ? ultimaJuntaId.MARKETING
-                                                        : ultimaJuntaId.DISENO
-                                                ))
-                                                    ? 'current'
-                                                    : juntaAnteriorId && (minuta.id === (
-                                                        (minuta.departamento || minuta.creadoPor?.departamento) === 'MARKETING'
-                                                            ? juntaAnteriorId.MARKETING
-                                                            : juntaAnteriorId.DISENO
-                                                    ))
-                                                        ? 'previous'
-                                                        : null
-                                            }
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        ))
+                        /* Lista plana continua en orden de creación (sin divisiones por categoría) */
+                        <div className="grid grid-cols-1 min-[520px]:grid-cols-2 gap-4">
+                            {displayMinutas.map(minuta => (
+                                <MinutaCard 
+                                    key={minuta.id} 
+                                    minuta={minuta} 
+                                    onViewDetail={onViewDetail}
+                                    onEdit={onEdit}
+                                    onCancel={onCancel}
+                                    isAdmin={isAdmin}
+                                    onDownloadPdf={isExterna ? () => onDownloadPdf(minuta) : undefined}
+                                    isGeneratingPdf={isGeneratingPdf === minuta.id}
+                                />
+                            ))}
+                        </div>
                     )}
                 </div>
             ) : (

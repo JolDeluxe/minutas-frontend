@@ -78,8 +78,12 @@ export const MobileQuickComposer = ({
   estado = 'ACTIVA',
   onIniciar,
   iniciando = false,
-  onExpandedChange
+  onExpandedChange,
+  onFinalizar,
+  finalizando = false,
+  totalRegistros = 0
 }) => {
+  const [showCloseConfirmModal, setShowCloseConfirmModal] = useState(false);
   const { user } = useAuthStore();
   const currentUser = user?.data || user;
   const userRole = currentUser?.rol || 'GERENCIA';
@@ -315,6 +319,7 @@ export const MobileQuickComposer = ({
       setFechaVencimiento('');
     } catch (err) {
       console.error('[MobileQuickComposer] Error during submit:', err);
+      throw err;
     } finally {
       setLocalSubmitting(false);
     }
@@ -322,7 +327,11 @@ export const MobileQuickComposer = ({
 
   const handleClose = (e) => {
     if (e) { e.preventDefault(); e.stopPropagation(); }
-    setExpanded(false);
+    if (estado === 'EN_CURSO' && totalRegistros > 0) {
+      setShowCloseConfirmModal(true);
+    } else {
+      setExpanded(false);
+    }
   };
 
   const handleTouchStart = (e) => setTouchStart(e.targetTouches[0].clientY);
@@ -349,7 +358,26 @@ export const MobileQuickComposer = ({
         ) : (
           <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-slate-200/60 shrink-0 select-none" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEndClose}>
             <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /><span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Captura Mobile</span></div>
-            <button onClick={handleClose} className="flex items-center gap-1.5 px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 hover:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm border border-slate-300 cursor-pointer touch-manipulation"><X size={14} /> Volver / Cerrar</button>
+            <div className="flex items-center gap-2">
+              {estado === 'EN_CURSO' && totalRegistros > 0 && onFinalizar && (
+                <button
+                  type="button"
+                  onClick={onFinalizar}
+                  disabled={finalizando}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 active:bg-emerald-700 text-white rounded-xl text-[9px] font-black uppercase tracking-wider shadow-sm border border-emerald-500/40 touch-manipulation"
+                >
+                  <Icon name="stop_circle" size="14px" />
+                  <span>{finalizando ? '...' : 'Finalizar'}</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleClose}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 hover:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm border border-slate-300 cursor-pointer touch-manipulation"
+              >
+                <X size={14} /> Cerrar
+              </button>
+            </div>
           </div>
         )}
 
@@ -668,6 +696,52 @@ export const MobileQuickComposer = ({
         </div>
       </div>
 
+      {showCloseConfirmModal && (
+        <Modal isOpen={showCloseConfirmModal} onClose={() => setShowCloseConfirmModal(false)} size="sm">
+          <div className="p-6 flex flex-col items-center text-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center shadow-inner">
+              <Icon name="help" size="28px" />
+            </div>
+            <div>
+              <h3 className="text-base font-black text-slate-900 uppercase tracking-wide">¿Terminaste la junta?</h3>
+              <p className="text-xs text-slate-500 mt-1 font-medium">
+                Ya tienes <strong className="text-slate-800">{totalRegistros}</strong> {totalRegistros === 1 ? 'registro guardado' : 'registros guardados'} en esta minuta.
+              </p>
+            </div>
+            <div className="flex flex-col w-full gap-2 mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCloseConfirmModal(false);
+                  onFinalizar?.();
+                }}
+                disabled={finalizando}
+                className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-600/20 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Icon name="stop_circle" size="16px" />
+                Finalizar Junta
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCloseConfirmModal(false);
+                  setExpanded(false);
+                }}
+                className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+              >
+                Solo cerrar captura (Seguir junta)
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCloseConfirmModal(false)}
+                className="text-[11px] font-bold text-slate-400 hover:text-slate-600 py-1 transition-colors cursor-pointer"
+              >
+                Seguir capturando
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
       <MobileAllNotesModal isOpen={showAllNotes} onClose={() => setShowAllNotes(false)} notas={notasRapidas} onUpdate={handleUpdateNota} onRemove={handleRemoveNota} onAdd={handleAddNota} />
       <input type="file" multiple accept="image/jpeg, image/png, image/webp, image/heic, image/heif" className="hidden" ref={fileInputRef} onChange={handleFileChange} />
     </>,

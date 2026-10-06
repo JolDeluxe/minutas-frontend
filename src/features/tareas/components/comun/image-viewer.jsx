@@ -38,7 +38,15 @@ export const ImageViewer = ({ images, initialIndex, onClose }) => {
         )}
 
         <div className="relative max-w-[95vw] max-h-[90vh] flex items-center justify-center pointer-events-auto">
-          <img src={currentImg.preview || currentImg.url || currentImg.base64Thumb} className="max-w-[90vw] max-h-[75vh] w-auto h-auto object-contain rounded-2xl shadow-[0_0_80px_rgba(0,0,0,0.8)] animate-in zoom-in-95 duration-500 select-none" alt="Vista ampliada" />
+          <img 
+            src={currentImg.preview || currentImg.url || currentImg.base64Thumb} 
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = '/img/no-image.avif';
+            }}
+            className="max-w-[90vw] max-h-[75vh] w-auto h-auto object-contain rounded-2xl shadow-[0_0_80px_rgba(0,0,0,0.8)] animate-in zoom-in-95 duration-500 select-none" 
+            alt="Vista ampliada" 
+          />
         </div>
 
         {images.length > 1 && (

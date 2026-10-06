@@ -75,7 +75,8 @@ const TableImagePreview = ({ images, remoteImageCount, onClick }) => {
           {images.map((img, i) => (
             <img 
               key={i}
-              src={img.preview || img.url || img.base64Thumb} 
+              src={img.preview || img.url || img.base64Thumb}
+              onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/img/no-image.avif"; }} 
               alt={`Preview ${i}`} 
               className={cn(
                 "absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ease-in-out group-hover:scale-110",
@@ -102,7 +103,9 @@ const TableImagePreview = ({ images, remoteImageCount, onClick }) => {
           style={{ left: coords.x, top: coords.y, transform: 'translateY(-50%)' }}
         >
           <div className="w-[400px] h-[400px] flex items-center justify-center relative overflow-hidden rounded-[2rem] bg-white border border-slate-200 p-2 shadow-2xl">
-            <img src={currentImg} alt="Preview Zoom" className="w-full h-full object-contain rounded-[1.5rem] bg-slate-50 drop-shadow-md" />
+            <img src={currentImg} alt="Preview Zoom"
+            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/img/no-image.avif"; }}
+            className="w-full h-full object-contain rounded-[1.5rem] bg-slate-50 drop-shadow-md" />
           </div>
         </div>,
         document.body

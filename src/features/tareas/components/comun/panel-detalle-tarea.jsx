@@ -145,6 +145,10 @@ export const PanelDetalleTarea = ({
                     >
                         <img
                             src={img.preview || img.url || img.base64Thumb}
+                            onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = '/img/no-image.avif';
+                            }}
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                             alt={esEvidencia ? 'Evidencia' : 'Captura'}
                         />

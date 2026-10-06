@@ -546,12 +546,80 @@ export default function MinutaDetailPage() {
     await clearDrafts();
   }, [clearDrafts, emitDraftEntriesRemove]);
 
-  const handleCapture = (payload) => {
-    payload.tareas.forEach(t => {
-      const createdEntry = addDraftEntry(t);
-      emitDraftEntryUpsert(createdEntry);
-    });
-    notify.success('Borrador añadido', { duration: 1500 });
+  const captureIdempotencyKeyRef = useRef(null);
+  const isCapturingRef = useRef(false);
+
+  const handleCapture = async (payload) => {
+    if (isCapturingRef.current) return;
+
+    if (!captureIdempotencyKeyRef.current) {
+      captureIdempotencyKeyRef.current = (typeof crypto !== "undefined" && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : `idemp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    }
+
+    isCapturingRef.current = true;
+    try {
+      const incomingTareas = payload?.tareas || [];
+      const validEntries = incomingTareas.filter(e => e.descripcion && e.descripcion.trim().length >= 3);
+      if (validEntries.length === 0) {
+        notify.warning("La descripción debe tener al menos 3 caracteres.");
+        return;
+      }
+
+      const toSend = validEntries.map((e) => {
+        const entry = { ...e };
+        delete entry.tempId;
+        delete entry.estadoConceptual;
+        delete entry.formalizada;
+        delete entry._isRemoteDraft;
+        delete entry.readOnly;
+        delete entry.createdAt;
+        delete entry.updatedAt;
+        delete entry.fecha;
+        delete entry.asignaciones;
+
+        if (entry.responsables) {
+          if (Array.isArray(entry.responsables)) {
+            entry.responsables = entry.responsables
+              .map(r => (typeof r === "object" && r !== null) ? (r.usuarioId || r.id) : r)
+              .map(Number)
+              .filter(id => !isNaN(id) && id > 0);
+          } else {
+            delete entry.responsables;
+          }
+        }
+
+        if (entry.notas && Array.isArray(entry.notas)) {
+          entry.notas = entry.notas
+            .map(n => {
+              if (typeof n === "string") return { contenido: n.trim() };
+              if (typeof n === "object" && n !== null && n.contenido) return { contenido: String(n.contenido).trim() };
+              return null;
+            })
+            .filter(n => n && n.contenido.length > 0);
+        }
+
+        return entry;
+      });
+
+      await createTareaApi({ tareas: toSend }, captureIdempotencyKeyRef.current);
+      captureIdempotencyKeyRef.current = null;
+      notify.success("Entrada registrada con éxito");
+      await refreshEntries();
+    } catch (err) {
+      console.error("❌ Error al registrar entrada inmediata:", err);
+      const apiErrors = err.response?.data?.errors;
+      if (apiErrors && Array.isArray(apiErrors)) {
+        const errorMsg = apiErrors.map(e => `${e.field}: ${e.message}`).join(" | ");
+        notify.error(`Error de validación: ${errorMsg}`);
+      } else {
+        notify.error(err.response?.data?.error || err.response?.data?.message || "Error al registrar");
+      }
+      throw err;
+    } finally {
+      isCapturingRef.current = false;
+    }
   };
 
   const handleEditEntrySave = async (entryId, payload, imageActions = {}) => {
@@ -931,11 +999,10 @@ export default function MinutaDetailPage() {
   };
 
   const handleFinalizar = async () => {
-    if (allEntries.length === 0 && draftEntries.length === 0) {
+    if (allEntries.length === 0) {
       notify.warning('No puedes finalizar una junta sin entradas. Captura al menos un punto o cancela la minuta.');
       return;
     }
-    if (draftEntries.length > 0 || draftNotes.length > 0) { setShowReviewModal(true); return; }
     setShowFinalizarModal(true);
   };
 
@@ -944,7 +1011,9 @@ export default function MinutaDetailPage() {
     setFinalizando(true);
     try {
       const res = await finalizarMinuta(id);
-      setMinuta(res.data?.data || res.data);
+      const minutaActualizada = res.data?.data || res.data;
+      setMinuta(minutaActualizada);
+      await refreshEntries();
       notify.success(res.data?.message || "Junta finalizada");
     } catch {
       notify.error("Error al finalizar la junta");

@@ -186,7 +186,7 @@ export const MinutaContextPanel = ({
               </Button>
             )}
 
-            {!isExterna && minuta.estado === 'EN_CURSO' && resumen?.totalValidas > 0 && composerCollapsed && (
+            {!isExterna && minuta.estado === 'EN_CURSO' && (resumen?.totalValidas > 0 || resumen?.totalEntradas > 0) && (
               <Button variant="marca" icon="stop_circle" onClick={onFinalizar} loading={finalizando} size="sm" className="h-7 px-2 text-[9px] font-black uppercase shadow-sm">
                 <span>Finalizar</span>
               </Button>
@@ -222,7 +222,7 @@ export const MinutaContextPanel = ({
             </Button>
           )}
 
-          {!isExterna && minuta.estado === 'EN_CURSO' && resumen?.totalValidas > 0 && composerCollapsed && (
+          {!isExterna && minuta.estado === 'EN_CURSO' && (resumen?.totalValidas > 0 || resumen?.totalEntradas > 0) && (
             <Button variant="marca" icon="stop_circle" onClick={onFinalizar} loading={finalizando} size="sm" className="h-7 px-2 md:px-4 text-[9px] font-black uppercase shadow-sm">
               <span className="hidden xs:inline">Finalizar</span>
             </Button>

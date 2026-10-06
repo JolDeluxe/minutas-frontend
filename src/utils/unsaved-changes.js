@@ -4,31 +4,66 @@
  */
 export const hasPendingWork = () => {
   try {
-    // 1. Modales abiertos (creación/edición de minuta, tarea, nota, general, revisión)
+    // 1. Modales de captura o edición abiertos
     const openModals = document.querySelectorAll('[role="dialog"], .modal-open');
     if (openModals.length > 0) {
-      return true;
-    }
-
-    // 2. Elementos de formulario activos con texto ingresado
-    const inputsAndTextareas = document.querySelectorAll('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), textarea');
-    for (const el of inputsAndTextareas) {
-      // Ignorar inputs que no pertenecen a captura (ej. barra de búsqueda vacía o genérica)
-      if (el.value && el.value.trim().length > 0 && el.type !== 'search') {
-        // Si el usuario está enfocado o tiene texto significativo escrito
-        return true;
+      for (const modal of openModals) {
+        // Si el modal tiene inputs o textareas con contenido editable que el usuario pueda perder
+        const modalInputs = modal.querySelectorAll('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([readonly]):not([disabled]), textarea:not([readonly]):not([disabled])');
+        for (const input of modalInputs) {
+          if (input.type !== 'search' && input.value && input.value.trim().length > 0) {
+            return true;
+          }
+        }
       }
     }
 
-    // 3. Comprobación de foco activo en elementos editables
+    // 2. Elemento activamente enfocado por el usuario con edición en curso
     const activeEl = document.activeElement;
-    if (
-      activeEl &&
-      (activeEl.tagName === 'INPUT' ||
-        activeEl.tagName === 'TEXTAREA' ||
-        activeEl.getAttribute('contenteditable') === 'true')
-    ) {
-      return true;
+    if (activeEl) {
+      const isContentEditable = activeEl.getAttribute('contenteditable') === 'true';
+      if (isContentEditable && activeEl.innerText && activeEl.innerText.trim().length > 0) {
+        return true;
+      }
+
+      const tagName = activeEl.tagName;
+      if (
+        (tagName === 'INPUT' || tagName === 'TEXTAREA') &&
+        !activeEl.readOnly &&
+        !activeEl.disabled
+      ) {
+        // Ignorar si es búsqueda, filtro, botón o selector
+        const type = (activeEl.type || '').toLowerCase();
+        const isFilterOrSearch =
+          type === 'search' ||
+          type === 'checkbox' ||
+          type === 'radio' ||
+          type === 'button' ||
+          type === 'submit' ||
+          activeEl.dataset?.filter === 'true' ||
+          activeEl.classList.contains('filter-input') ||
+          activeEl.placeholder?.toLowerCase().includes('buscar') ||
+          activeEl.placeholder?.toLowerCase().includes('filtrar');
+
+        if (!isFilterOrSearch) {
+          // Si el usuario modificó el valor respecto al inicial o tiene texto escrito
+          const defaultValue = activeEl.defaultValue || '';
+          if (activeEl.value !== defaultValue && activeEl.value.trim().length > 0) {
+            return true;
+          }
+        }
+      }
+    }
+
+    // 3. Compositores de texto / captura rápida (ej. QuickComposer o notas de minuta)
+    // Solo bloquea si hay un textarea de captura con texto escrito explícitamente
+    const composerTextareas = document.querySelectorAll(
+      'textarea[placeholder*="idea"], textarea[placeholder*="acuerdo"], textarea[placeholder*="tarea"], textarea[placeholder*="nota"], textarea.composer-input'
+    );
+    for (const textarea of composerTextareas) {
+      if (!textarea.readOnly && !textarea.disabled && textarea.value && textarea.value.trim().length > 0) {
+        return true;
+      }
     }
 
     return false;

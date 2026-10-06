@@ -83,16 +83,17 @@ export const MinutasTable = ({
                         )}
 
                         <span className="font-semibold text-slate-900" title={title}>{title}</span>
-                        {isCurrent && (
+                        {/* Etiquetas de Junta Actual y Anterior comentadas por solicitud */}
+                        {/* {isCurrent && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-700 border border-emerald-200/40 whitespace-nowrap">
                                 Junta Actual
                             </span>
-                        )}
-                        {isPrevious && (
+                        )} */}
+                        {/* {isPrevious && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-700 border border-indigo-200/40 whitespace-nowrap">
                                 Anterior
                             </span>
-                        )}
+                        )} */}
                     </div>
                 );
             },

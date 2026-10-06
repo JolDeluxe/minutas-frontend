@@ -12,6 +12,7 @@ import { Icon } from '@/components/ui/icon';
 import { SeccionIA } from '../components/minuta-resumen/seccion-ia';
 import { GraficoEstados } from '../components/minuta-resumen/grafico-estados';
 import { SeccionImagenes } from '../components/minuta-resumen/seccion-imagenes';
+import { SeccionAsistentes } from '../components/minuta-resumen/seccion-asistentes';
 
 export const MinutaResumenMobile = ({
   minuta,
@@ -19,6 +20,7 @@ export const MinutaResumenMobile = ({
   resumenLocal,
   isAdmin,
   onGuardar,
+  onGuardarAsistentes,
   onGuardarImagenes,
   onSwitchToTareas,
 }) => {
@@ -28,7 +30,8 @@ export const MinutaResumenMobile = ({
     resumenLocal.proximosPasos ||
     resumenLocal.imagenUrl1 ||
     resumenLocal.imagenUrl2 ||
-    resumenLocal.imagenUrl3
+    resumenLocal.imagenUrl3 ||
+    (resumenLocal.asistentes && resumenLocal.asistentes !== '[]')
   );
   const tareasFiltradas = tareas.filter(t => 
     !t.tempId && 
@@ -129,6 +132,12 @@ export const MinutaResumenMobile = ({
           </div>
         </div>
       )}
+
+      <SeccionAsistentes
+        minuta={minuta}
+        isAdmin={isAdmin}
+        onGuardar={onGuardarAsistentes}
+      />
 
       <SeccionImagenes
         minuta={minuta}
