@@ -8,8 +8,9 @@ export const getMinutaById = async (id) => {
   return await api.get(`/api/minutas/${id}`);
 };
 
-export const createMinuta = async (data) => {
-  return await api.post('/api/minutas', data);
+export const createMinuta = async (data, idempotencyKey = null) => {
+  const headers = idempotencyKey ? { 'X-Idempotency-Key': idempotencyKey } : {};
+  return await api.post('/api/minutas', data, { headers });
 };
 
 export const updateMinuta = async (id, data) => {
@@ -58,8 +59,9 @@ export const getMinutasExternas = async (params = {}) => {
   return await api.get('/api/minutas-externas', { params });
 };
 
-export const createMinutaExterna = async (data) => {
-  return await api.post('/api/minutas-externas', data);
+export const createMinutaExterna = async (data, idempotencyKey = null) => {
+  const headers = idempotencyKey ? { 'X-Idempotency-Key': idempotencyKey } : {};
+  return await api.post('/api/minutas-externas', data, { headers });
 };
 
 export const updateMinutaExterna = async (id, data) => {
@@ -81,7 +83,7 @@ export const getMinutaExternaById = async (id) => {
 import { compressImage } from '@/utils/image-compression';
 
 // ── Tareas Externas ───────────────────────────────────────────────────
-export const createTareasExternas = async (minutaId, data) => {
+export const createTareasExternas = async (minutaId, data, idempotencyKey = null) => {
   const hasImages = data.tareas?.some(t => (t._localImages?.length > 0));
 
   // Sin imágenes → JSON normal
@@ -89,7 +91,8 @@ export const createTareasExternas = async (minutaId, data) => {
     const clean = {
       tareas: data.tareas.map(({ _localImages, ...rest }) => rest)
     };
-    return await api.post(`/api/minutas-externas/${minutaId}/tareas`, clean);
+    const headers = idempotencyKey ? { 'X-Idempotency-Key': idempotencyKey } : {};
+    return await api.post(`/api/minutas-externas/${minutaId}/tareas`, clean, { headers });
   }
 
   // Con imágenes → FormData
@@ -130,10 +133,13 @@ export const createTareasExternas = async (minutaId, data) => {
     }));
   }));
 
+  const reqHeaders = {
+    'Content-Type': undefined,
+    ...(idempotencyKey ? { 'X-Idempotency-Key': idempotencyKey } : {})
+  };
+
   return await api.post(`/api/minutas-externas/${minutaId}/tareas`, formData, {
-    headers: {
-      'Content-Type': undefined,
-    },
+    headers: reqHeaders,
     timeout: 180000
   });
 };

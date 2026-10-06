@@ -591,8 +591,18 @@ export default function MinutaDetailPage() {
     }
   };
 
+  const finalSubmitKeyRef = useRef(null);
+
   const handleFinalSubmit = async (closeAfterSave = false) => {
+    if (isSubmittingFinal) return;
     setIsSubmittingFinal(true);
+
+    if (!finalSubmitKeyRef.current) {
+      finalSubmitKeyRef.current = (typeof crypto !== 'undefined' && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : `idemp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    }
+
     try {
       if (draftEntries.length > 0) {
         const validEntries = draftEntries.filter(e => e.descripcion && e.descripcion.trim().length >= 3);
@@ -636,9 +646,10 @@ export default function MinutaDetailPage() {
 
             return entry;
           });
-          await createTareaApi({ tareas: toSend });
+          await createTareaApi({ tareas: toSend }, finalSubmitKeyRef.current);
         }
       }
+      finalSubmitKeyRef.current = null;
       emitDraftEntriesRemove(draftEntries.map((entry) => entry.tempId));
       await clearDrafts();
       setShowReviewModal(false);

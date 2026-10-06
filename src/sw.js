@@ -5,14 +5,19 @@ import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { clientsClaim } from 'workbox-core';
 
-// Toma control inmediato de todos los clientes abiertos
+// Activa inmediatamente el nuevo Service Worker tan pronto como termine la instalación
+self.addEventListener('install', () => {
+    self.skipWaiting();
+});
+
+// Toma control inmediato de todos los clientes abiertos sin esperar una recarga
 clientsClaim();
 
 // vite-plugin-pwa inyecta el manifest real aquí en build
 precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
 
-// Soporte para hardReload.js existente en el proyecto
+// Soporte para mensajes SKIP_WAITING adicionales si se invocan externamente
 self.addEventListener('message', (event) => {
     if (event.data?.type === 'SKIP_WAITING') {
         self.skipWaiting();
@@ -56,7 +61,7 @@ registerRoute(
     ({ request }) =>
         request.destination === 'font' || request.destination === 'image',
     new CacheFirst({
-        cacheName: 'cuadra-static-v1',
+        cacheName: 'cuadra-static-v2',
         plugins: [
             new ExpirationPlugin({ maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 }),
         ],

@@ -21,47 +21,59 @@ const VAPID_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 export const usePushAndSocket = () => {
     const { token, user, isAuthenticated } = useAuthStore();
     const socketRef = useRef(null);
+    const subscribingPromiseRef = useRef(null);
     const navigate = useNavigate();
     const userId = user?.id || user?.data?.id;
 
-    // 1. Setup Push Notifications
+    // 1. Setup Push Notifications con deduplicación de llamada en vuelo
     const subscribeToPush = useCallback(async () => {
         if (!('serviceWorker' in navigator) || !('PushManager' in window) || !VAPID_KEY) return;
-        
-        try {
-            const registration = await navigator.serviceWorker.ready;
-            
-            let subscription = await registration.pushManager.getSubscription();
-            
-            if (!subscription) {
-                const padding = '='.repeat((4 - VAPID_KEY.length % 4) % 4);
-                const base64 = (VAPID_KEY + padding).replace(/-/g, '+').replace(/_/g, '/');
-                const rawData = window.atob(base64);
-                const outputArray = new Uint8Array(rawData.length);
-                for (let i = 0; i < rawData.length; ++i) {
-                    outputArray[i] = rawData.charCodeAt(i);
+        if (!token) return;
+
+        if (subscribingPromiseRef.current) {
+            return subscribingPromiseRef.current;
+        }
+
+        const task = (async () => {
+            try {
+                const registration = await navigator.serviceWorker.ready;
+                
+                let subscription = await registration.pushManager.getSubscription();
+                
+                if (!subscription) {
+                    const padding = '='.repeat((4 - VAPID_KEY.length % 4) % 4);
+                    const base64 = (VAPID_KEY + padding).replace(/-/g, '+').replace(/_/g, '/');
+                    const rawData = window.atob(base64);
+                    const outputArray = new Uint8Array(rawData.length);
+                    for (let i = 0; i < rawData.length; ++i) {
+                        outputArray[i] = rawData.charCodeAt(i);
+                    }
+
+                    subscription = await registration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: outputArray
+                    });
                 }
 
-                subscription = await registration.pushManager.subscribe({
-                    userVisibleOnly: true,
-                    applicationServerKey: outputArray
-                });
+                if (subscription) {
+                    const subObj = subscription.toJSON();
+                    await api.post('/api/notificaciones/subscribe', {
+                        endpoint: subObj.endpoint,
+                        keys: {
+                            p256dh: subObj.keys?.p256dh,
+                            auth: subObj.keys?.auth
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error al suscribir a Push:', error);
+            } finally {
+                subscribingPromiseRef.current = null;
             }
+        })();
 
-            if (token) {
-                const subObj = subscription.toJSON();
-                await api.post('/api/notificaciones/subscribe', {
-                    endpoint: subObj.endpoint,
-                    keys: {
-                        p256dh: subObj.keys?.p256dh,
-                        auth: subObj.keys?.auth
-                    }
-                });
-            }
-
-        } catch (error) {
-            console.error('Error al suscribir a Push:', error);
-        }
+        subscribingPromiseRef.current = task;
+        return task;
     }, [token]);
 
     // 2. Setup Socket.io & Request Permissions

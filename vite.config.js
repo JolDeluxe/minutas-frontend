@@ -17,6 +17,8 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
       VitePWA({
+        registerType: 'autoUpdate',
+        injectRegister: 'auto',
         strategies: 'injectManifest',
         srcDir: 'src',
         filename: 'sw.js',

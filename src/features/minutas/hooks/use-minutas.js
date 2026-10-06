@@ -80,10 +80,12 @@ export const useMinutas = () => {
     }
   }, []);
 
-  const handleCreate = useCallback(async (data, isExterna = false) => {
+  const handleCreate = useCallback(async (data, isExterna = false, idempotencyKey = null) => {
     setSubmitting(true);
     try { 
-      const res = isExterna ? await createMinutaExterna(data) : await createMinuta(data);
+      const res = isExterna 
+        ? await createMinutaExterna(data, idempotencyKey) 
+        : await createMinuta(data, idempotencyKey);
       return res.data;
     } finally { 
       setSubmitting(false); 

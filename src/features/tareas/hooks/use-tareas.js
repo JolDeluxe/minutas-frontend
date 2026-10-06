@@ -57,10 +57,10 @@ export const useTareas = () => {
         }
     }, []);
 
-    const handleCreate = useCallback(async (data) => {
+    const handleCreate = useCallback(async (data, idempotencyKey = null) => {
         setSubmitting(true);
         try { 
-            const res = await createTarea(data);
+            const res = await createTarea(data, idempotencyKey);
             return res.data;
         } catch (err) {
             const errorData = err.response?.data;

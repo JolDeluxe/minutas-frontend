@@ -21,47 +21,59 @@ const urlBase64ToUint8Array = (base64String) => {
  *
  * @returns {Promise<PushSubscription|null>}
  */
+let inFlightSubscribePromise = null;
+
 export const subscribeToPush = async () => {
-    try {
-        if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
-            console.warn('[Push] No soportado en este navegador.');
-            return null;
-        }
-
-        const permission = await window.Notification.requestPermission();
-        if (permission !== 'granted') {
-            console.warn('[Push] Permiso denegado por el usuario.');
-            return null;
-        }
-
-        const registration = await navigator.serviceWorker.ready;
-
-        // Reutilizamos suscripción existente si ya hay una
-        let subscription = await registration.pushManager.getSubscription();
-
-        if (!subscription) {
-            const vapidKey = urlBase64ToUint8Array(import.meta.env.VITE_VAPID_PUBLIC_KEY);
-            subscription = await registration.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: vapidKey,
-            });
-        }
-
-        const { endpoint, keys } = subscription.toJSON();
-
-        await api.post('/api/notificaciones/subscribe', {
-            endpoint,
-            keys: {
-                p256dh: keys.p256dh,
-                auth: keys.auth,
-            },
-        });
-
-        console.log('[Push] Suscripción activada ✅');
-        return subscription;
-    } catch (error) {
-        // No lanzamos — el sistema sigue funcionando sin push
-        console.error('[Push] Error al suscribirse:', error);
-        return null;
+    if (inFlightSubscribePromise) {
+        return inFlightSubscribePromise;
     }
+
+    inFlightSubscribePromise = (async () => {
+        try {
+            if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+                console.warn('[Push] No soportado en este navegador.');
+                return null;
+            }
+
+            const permission = await window.Notification.requestPermission();
+            if (permission !== 'granted') {
+                console.warn('[Push] Permiso denegado por el usuario.');
+                return null;
+            }
+
+            const registration = await navigator.serviceWorker.ready;
+
+            // Reutilizamos suscripción existente si ya hay una
+            let subscription = await registration.pushManager.getSubscription();
+
+            if (!subscription) {
+                const vapidKey = urlBase64ToUint8Array(import.meta.env.VITE_VAPID_PUBLIC_KEY);
+                subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: vapidKey,
+                });
+            }
+
+            const { endpoint, keys } = subscription.toJSON();
+
+            await api.post('/api/notificaciones/subscribe', {
+                endpoint,
+                keys: {
+                    p256dh: keys.p256dh,
+                    auth: keys.auth,
+                },
+            });
+
+            console.log('[Push] Suscripción activada ✅');
+            return subscription;
+        } catch (error) {
+            // No lanzamos — el sistema sigue funcionando sin push
+            console.error('[Push] Error al suscribirse:', error);
+            return null;
+        } finally {
+            inFlightSubscribePromise = null;
+        }
+    })();
+
+    return inFlightSubscribePromise;
 };

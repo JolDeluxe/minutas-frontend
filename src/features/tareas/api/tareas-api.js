@@ -13,7 +13,7 @@ export const getTareaById = async (id) => {
 
 // ── Mutaciones ─────────────────────────────────────────────────────────────
 
-export const createTarea = async (data) => {
+export const createTarea = async (data, idempotencyKey = null) => {
     const hasImages = data.tareas?.some(t => (t._localImages?.length > 0));
 
     // Sin imágenes → JSON normal
@@ -21,7 +21,8 @@ export const createTarea = async (data) => {
         const clean = {
             tareas: data.tareas.map(({ _localImages, ...rest }) => rest)
         };
-        return await api.post('/api/tareas', clean);
+        const headers = idempotencyKey ? { 'X-Idempotency-Key': idempotencyKey } : {};
+        return await api.post('/api/tareas', clean, { headers });
     }
 
     // Con imágenes → FormData
@@ -69,13 +70,13 @@ export const createTarea = async (data) => {
 
     console.log(`[createTarea] Enviando batch de ${data.tareas.length} tareas con ${totalArchivos} imágenes.`);
 
-    // IMPORTANTE: Al enviar FormData, NO debemos poner Content-Type manualmente
-    // o Axios pondrá uno sin el boundary necesario. 
-    // Usar 'multipart/form-data' o simplemente dejar que Axios lo detecte.
+    const reqHeaders = {
+        'Content-Type': undefined,
+        ...(idempotencyKey ? { 'X-Idempotency-Key': idempotencyKey } : {})
+    };
+
     return await api.post('/api/tareas', formData, {
-        headers: {
-            'Content-Type': undefined,
-        },
+        headers: reqHeaders,
         timeout: 180000 // 3 min para subidas pesadas
     });
 };

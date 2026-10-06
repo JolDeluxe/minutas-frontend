@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Input } from '@/components/form/input';
 import { Label } from '@/components/form/label';
 import { Select } from '@/components/form/select';
@@ -176,12 +176,23 @@ export const MinutaFormModal = ({
         return e;
     };
 
+    const idempotencyKeyRef = useRef(null);
+    const isSubmittingRef = useRef(false);
+
     const handleSubmit = async () => {
+        if (isSubmittingRef.current || submitting) return;
+
         setSubmitted(true);
         setBackendError('');
 
         const errors = getFormErrors();
         if (Object.keys(errors).length > 0) return;
+
+        if (!esEdicion && !idempotencyKeyRef.current) {
+            idempotencyKeyRef.current = (typeof crypto !== 'undefined' && crypto.randomUUID)
+                ? crypto.randomUUID()
+                : `idemp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        }
 
         const payload = isExterna ? {
             tema: temaExterno.trim(),
@@ -199,8 +210,10 @@ export const MinutaFormModal = ({
             departamento: departamento === 'DISEÑO' ? 'DISENO' : departamento,
         };
 
+        isSubmittingRef.current = true;
         try {
-            await onSuccess(payload);
+            await onSuccess(payload, idempotencyKeyRef.current);
+            idempotencyKeyRef.current = null;
         } catch (err) {
             const data = err?.response?.data;
             let msg = data?.error || data?.message || 'Error al procesar la solicitud.';
@@ -208,6 +221,8 @@ export const MinutaFormModal = ({
                 msg = data.errors[0].message;
             }
             setBackendError(msg);
+        } finally {
+            isSubmittingRef.current = false;
         }
     };
 

@@ -186,13 +186,13 @@ const MinutasPage = () => {
         setPage(1);
     }, [selectedDate]);
 
-    const handleSaveMinuta = async (payload) => {
+    const handleSaveMinuta = async (payload, idempotencyKey = null) => {
         const isExterna = departamentoGlobal === 'EXTERNO';
         if (minutaToEdit) {
             await updateMinuta(minutaToEdit.id, payload, isExterna);
             notify.success('Minuta actualizada correctamente.');
         } else {
-            await createMinuta(payload, isExterna);
+            await createMinuta(payload, isExterna, idempotencyKey);
             notify.success('Minuta creada correctamente.');
         }
         setShowForm(false);
