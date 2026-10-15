@@ -160,12 +160,12 @@ export function ModalNuevaGeneral({ isOpen, onClose, onSave, users = [], editDat
             return;
         }
 
-        const withPreviews = validFiles.slice(0, 3 - form._localImages.length).map(file => ({
+        const withPreviews = validFiles.slice(0, 6 - form._localImages.length).map(file => ({
             file,
             preview: URL.createObjectURL(file),
             name: file.name,
         }));
-        setForm(prev => ({ ...prev, _localImages: [...prev._localImages, ...withPreviews].slice(0, 3) }));
+        setForm(prev => ({ ...prev, _localImages: [...prev._localImages, ...withPreviews].slice(0, 6) }));
         e.target.value = '';
     };
 
@@ -406,9 +406,9 @@ export function ModalNuevaGeneral({ isOpen, onClose, onSave, users = [], editDat
                         <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 space-y-4 shadow-sm">
                             <div className="flex items-center justify-between">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                    <Camera size={14} className="text-slate-400" /> Imágenes de Referencia ({form._localImages.length}/3)
+                                    <Camera size={14} className="text-slate-400" /> Imágenes de Referencia ({form._localImages.length}/6)
                                 </label>
-                                {form._localImages.length < 3 && (
+                                {form._localImages.length < 6 && (
                                     <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all hover:bg-emerald-100 active:scale-95">
                                         <Plus size={14} /> Añadir Foto
                                     </button>
@@ -432,7 +432,7 @@ export function ModalNuevaGeneral({ isOpen, onClose, onSave, users = [], editDat
                                         </div>
                                     );
                                 })}
-                                {form._localImages.length < 3 && (
+                                {form._localImages.length < 6 && (
                                     <button type="button" onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center justify-center w-28 h-28 sm:w-32 sm:h-32 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-500 hover:border-slate-300 transition-colors">
                                         <Plus size={24} className="mb-1" />
                                         <span className="text-[10px] font-black mt-1 uppercase tracking-widest">Subir</span>

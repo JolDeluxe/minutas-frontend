@@ -243,7 +243,7 @@ export const MobileQuickComposer = ({
       return;
     }
 
-    const availableSlots = 3 - localImages.length;
+    const availableSlots = 6 - localImages.length;
     if (availableSlots <= 0) {
       e.target.value = '';
       return;
@@ -418,9 +418,9 @@ export const MobileQuickComposer = ({
 
               {/* IMÁGENES */}
               <div>
-                <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Imágenes Adjuntas ({localImages.length}/3)</span>
+                <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-1">Imágenes Adjuntas ({localImages.length}/6)</span>
                 <div className="flex items-center gap-2 overflow-x-auto scrollbar-none px-1">
-                  <button onClick={() => fileInputRef.current?.click()} disabled={localImages.length >= 3} className="w-16 h-16 shrink-0 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center text-slate-400 bg-white active:scale-95 disabled:opacity-40"><Camera size={20} /><span className="text-[6px] font-black uppercase">Foto</span></button>
+                  <button onClick={() => fileInputRef.current?.click()} disabled={localImages.length >= 6} className="w-16 h-16 shrink-0 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center text-slate-400 bg-white active:scale-95 disabled:opacity-40"><Camera size={20} /><span className="text-[6px] font-black uppercase">Foto</span></button>
                   {localImages.map((img) => {
                     const isHeic = img.file && /\.(heic|heif)$/i.test(img.file.name);
                     return (
@@ -686,7 +686,7 @@ export const MobileQuickComposer = ({
 
             {/* FOOTER FIXO (EXPANDED) */}
             <div className="shrink-0 border-t border-slate-200/60 flex items-center justify-between bg-white pt-4 pb-8 px-4 -mx-4 shadow-[0_-4px_30px_rgba(0,0,0,0.05)]">
-              <button type="button" onClick={() => fileInputRef.current?.click()} disabled={localImages.length >= 3} className="flex items-center gap-2 px-4 py-3 bg-slate-50 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-slate-100 disabled:opacity-40 touch-manipulation"><Camera size={20} /> FOTO</button>
+              <button type="button" onClick={() => fileInputRef.current?.click()} disabled={localImages.length >= 6} className="flex items-center gap-2 px-4 py-3 bg-slate-50 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-slate-100 disabled:opacity-40 touch-manipulation"><Camera size={20} /> FOTO</button>
               <button type="button" onClick={handleSubmit} disabled={!isValid || isSaving} className={cn("px-8 py-3 rounded-2xl flex items-center gap-2 transition-all active:scale-95 font-black uppercase text-[10px] tracking-widest shadow-2xl touch-manipulation", isValid ? "bg-emerald-600 text-white shadow-emerald-600/30" : "bg-slate-100 text-slate-300 shadow-none border border-slate-100")}>
                 {isSaving ? <Icon name="progress_activity" className="animate-spin" size="20px" /> : <Send size={18} />}
                 {isSaving ? 'GUARDANDO...' : 'GUARDAR TAREA'}

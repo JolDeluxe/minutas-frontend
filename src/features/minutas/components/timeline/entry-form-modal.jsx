@@ -195,9 +195,9 @@ export const EntryFormModal = ({
       return;
     }
 
-    const availableSlots = 3 - totalImagesCount;
+    const availableSlots = 6 - totalImagesCount;
     if (availableSlots <= 0) {
-      notify.warning("Límite de 3 imágenes alcanzado.");
+      notify.warning("Límite de 6 imágenes alcanzado.");
       e.target.value = '';
       return;
     }
@@ -293,9 +293,9 @@ export const EntryFormModal = ({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-          <Camera size={14} className="text-slate-400" /> Imagenes de Referencia ({totalImagesCount}/3)
+          <Camera size={14} className="text-slate-400" /> Imagenes de Referencia ({totalImagesCount}/6)
         </label>
-        {totalImagesCount < 3 && (
+        {totalImagesCount < 6 && (
           <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-wider">
             <Plus size={14} /> Añadir Foto
           </button>
@@ -324,7 +324,7 @@ export const EntryFormModal = ({
             </div>
           );
         })}
-        {totalImagesCount < 3 && (
+        {totalImagesCount < 6 && (
           <button onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center justify-center w-24 h-24 shrink-0 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-500 transition-colors"><Plus size={20} /></button>
         )}
       </div>

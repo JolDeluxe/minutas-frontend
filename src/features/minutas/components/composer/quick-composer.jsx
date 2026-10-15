@@ -253,7 +253,7 @@ export const QuickComposer = ({
 
     if (validFiles.length === 0) return;
 
-    const remainingSlots = 3 - imagenes.length;
+    const remainingSlots = 6 - imagenes.length;
     if (remainingSlots <= 0) {
       setShowLimitError(true);
       return;
@@ -521,7 +521,7 @@ export const QuickComposer = ({
                 className={cn("w-full flex-1 bg-slate-50/50 border border-slate-100 rounded-2xl px-4 py-2 text-sm lg:text-lg font-bold text-slate-800 focus:outline-none focus:ring-4 focus:ring-marca-primario/5 transition-all resize-none placeholder:text-slate-300 shadow-inner custom-scrollbar", esTarea && "lg:text-sm py-1.5")}
               />
               <div className="absolute right-3 bottom-3 flex items-center gap-2">
-                {showLimitError && <div className="flex items-center gap-1 px-2 py-1 bg-rose-50 text-rose-600 rounded-lg text-[8px] font-black uppercase animate-in fade-in slide-in-from-right-2 duration-300 border border-rose-100"><AlertCircle size={10} /> Máximo 3 fotos</div>}
+                {showLimitError && <div className="flex items-center gap-1 px-2 py-1 bg-rose-50 text-rose-600 rounded-lg text-[8px] font-black uppercase animate-in fade-in slide-in-from-right-2 duration-300 border border-rose-100"><AlertCircle size={10} /> Máximo 6 fotos</div>}
               </div>
             </div>
 
@@ -582,13 +582,13 @@ export const QuickComposer = ({
                       {isDragging ? '¡Suelta las fotos aquí!' : 'Imágenes (Arrastra o pega con Ctrl+V)'}
                     </span>
                   </div>
-                  <span className="text-[8px] font-bold text-slate-400 uppercase">{imagenes.length} / 3</span>
+                  <span className="text-[8px] font-bold text-slate-400 uppercase">{imagenes.length} / 6</span>
                 </div>
                 <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1">
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={imagenes.length >= 3}
+                    disabled={imagenes.length >= 6}
                     className={cn(
                       "w-12 h-12 shrink-0 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all active:scale-95 disabled:opacity-40 cursor-pointer",
                       isDragging 

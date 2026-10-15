@@ -90,10 +90,10 @@ export const PoliticaFormModal = ({
     }
 
     const currentTotal    = localImages.length + existingImages.length;
-    const availableSlots  = 3 - currentTotal;
+    const availableSlots  = 6 - currentTotal;
 
     if (availableSlots <= 0) {
-      notify.warning('Límite de 3 imágenes alcanzado.');
+      notify.warning('Límite de 6 imágenes alcanzado.');
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
@@ -251,9 +251,9 @@ export const PoliticaFormModal = ({
         <div className="flex items-center justify-between">
           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
             <Camera size={14} className="text-slate-400" />
-            Imágenes de Referencia ({localImages.length + existingImages.length}/3)
+            Imágenes de Referencia ({localImages.length + existingImages.length}/6)
           </label>
-          {(localImages.length + existingImages.length) < 3 && (
+          {(localImages.length + existingImages.length) < 6 && (
             <button
               onClick={() => fileInputRef.current?.click()}
               className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600
@@ -315,7 +315,7 @@ export const PoliticaFormModal = ({
           })}
 
           {/* Botón de subida (placeholder visual) */}
-          {(localImages.length + existingImages.length) < 3 && (
+          {(localImages.length + existingImages.length) < 6 && (
             <button
               onClick={() => fileInputRef.current?.click()}
               className="flex flex-col items-center justify-center w-28 h-28 sm:w-32 sm:h-32
