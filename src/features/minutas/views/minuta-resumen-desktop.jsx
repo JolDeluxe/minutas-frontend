@@ -30,6 +30,9 @@ export const MinutaResumenDesktop = ({
     resumenLocal.imagenUrl1 ||
     resumenLocal.imagenUrl2 ||
     resumenLocal.imagenUrl3 ||
+    resumenLocal.imagenUrl4 ||
+    resumenLocal.imagenUrl5 ||
+    resumenLocal.imagenUrl6 ||
     (resumenLocal.asistentes && resumenLocal.asistentes !== '[]')
   );
   const tareasFiltradas = tareas.filter(t => 
