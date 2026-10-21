@@ -80,6 +80,21 @@ export const idbGet = async (storeName, key) => {
   }
 };
 
+export const idbGetAll = async (storeName) => {
+  try {
+    const db = await openDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(storeName, 'readonly');
+      const store = tx.objectStore(storeName);
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result ?? []);
+      request.onerror = () => resolve([]);
+    });
+  } catch {
+    return [];
+  }
+};
+
 export const idbDelete = async (storeName, key) => {
   try {
     const db = await openDB();

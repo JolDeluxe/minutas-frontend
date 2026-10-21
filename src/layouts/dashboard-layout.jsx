@@ -5,6 +5,7 @@ import { DesktopLayout } from './desktop-layout.jsx';
 import { MobileLayout } from './mobile-layout.jsx';
 import { OfflineBanner } from '@/components/ui/offline-banner';
 import { RefreshFab } from '@/components/ui/refresh-fab';
+import { PendingDraftsBanner } from '@/components/ui/pending-drafts-banner';
 
 export const DashboardLayout = () => {
   const isDesktop = useIsDesktop();
@@ -15,6 +16,7 @@ export const DashboardLayout = () => {
   return (
     <>
       <OfflineBanner />
+      <PendingDraftsBanner />
       {isDesktop ? <DesktopLayout /> : <MobileLayout />}
       <RefreshFab />
     </>
