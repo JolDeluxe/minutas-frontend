@@ -3,16 +3,21 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Icon } from '@/components/ui/icon';
 import { idbGetAll, idbDelete } from '@/lib/idb';
 import { createTarea, createNotaGeneral } from '@/features/tareas/api/tareas-api';
-import { getMinutaById } from '@/features/minutas/api/minutas-api';
+import { getMinutaById, reabrirMinuta, cerrarMinuta } from '@/features/minutas/api/minutas-api';
 import { notify } from '@/components/notification/adaptive-notify';
 import { useMinutaDraftStore } from '@/features/minutas/stores/minuta-draft-store';
 import socket from '@/lib/socket';
 
+const VALID_ESTADOS_TAREA = ['PENDIENTE', 'EN_REVISION', 'CERRADA', 'CANCELADA', 'DESCARTADA'];
+const VALID_TIPOS_ENTRADA = ['SIN_ORGANIZAR', 'TAREA', 'RECORDATORIO', 'POLITICA', 'DESCARTADA'];
+
 /**
- * Normaliza las tareas de borrador de IndexedDB para enviarlas a createTareaApi
+ * Normaliza las tareas de borrador de IndexedDB para enviarlas limpias a createTareaApi
  */
 const sanitizeDraftEntry = (raw) => {
   const entry = { ...raw };
+
+  // Eliminar propiedades internas o efímeras de cliente
   delete entry.tempId;
   delete entry.estadoConceptual;
   delete entry.formalizada;
@@ -23,6 +28,30 @@ const sanitizeDraftEntry = (raw) => {
   delete entry.fecha;
   delete entry.asignaciones;
 
+  // Filtrar o eliminar _localImages huérfanas (sin File/Blob real de memoria)
+  // para evitar que createTarea arme un FormData con archivos corruptos
+  if (Array.isArray(entry._localImages)) {
+    const validLocalImages = entry._localImages.filter(img => img?.file instanceof File || img?.file instanceof Blob);
+    if (validLocalImages.length > 0) {
+      entry._localImages = validLocalImages;
+    } else {
+      delete entry._localImages;
+    }
+  } else {
+    delete entry._localImages;
+  }
+
+  // Validar enum de estado: si no es un estado válido de Tarea (o viene como CAPTURADO), dejarlo null
+  if (entry.estado && !VALID_ESTADOS_TAREA.includes(entry.estado)) {
+    delete entry.estado;
+  }
+
+  // Validar enum de tipo: si no es válido, asignarle SIN_ORGANIZAR
+  if (!entry.tipo || !VALID_TIPOS_ENTRADA.includes(entry.tipo)) {
+    entry.tipo = 'SIN_ORGANIZAR';
+  }
+
+  // Normalizar responsables a IDs numéricos
   if (entry.responsables) {
     if (Array.isArray(entry.responsables)) {
       entry.responsables = entry.responsables
@@ -34,6 +63,7 @@ const sanitizeDraftEntry = (raw) => {
     }
   }
 
+  // Normalizar notas para que cumplan { contenido: string }
   if (entry.notas && Array.isArray(entry.notas)) {
     entry.notas = entry.notas
       .map(n => {
@@ -42,6 +72,11 @@ const sanitizeDraftEntry = (raw) => {
         return null;
       })
       .filter(n => n && n.contenido.length > 0);
+    if (entry.notas.length === 0) {
+      delete entry.notas;
+    }
+  } else {
+    delete entry.notas;
   }
 
   return entry;
@@ -112,19 +147,36 @@ export const PendingDraftsBanner = () => {
     scanDrafts();
   }, [location.pathname, scanDrafts]);
 
-  // Total de tareas y notas pendientes de todas las minutas encontradas
-  const totalItems = useMemo(() => {
-    return pendingDrafts.reduce((acc, curr) => acc + curr.total, 0);
-  }, [pendingDrafts]);
+  // Detectar si el usuario está dentro de una minuta específica (ej: /minutas/58)
+  const currentUrlMinutaId = useMemo(() => {
+    const match = location.pathname.match(/\/minutas\/(\d+)/);
+    return match ? match[1] : null;
+  }, [location.pathname]);
 
-  // Guardar borradores de una minuta específica o de todas
+  // Si estamos dentro de una minuta (/minutas/:id), filtramos los borradores sólo a esa minuta
+  // Si estamos en /minutas o cualquier otra vista, mostramos todas las minutas que tengan borradores
+  const displayedDrafts = useMemo(() => {
+    if (currentUrlMinutaId) {
+      return pendingDrafts.filter(p => p.minutaId === currentUrlMinutaId);
+    }
+    return pendingDrafts;
+  }, [pendingDrafts, currentUrlMinutaId]);
+
+  // Total de tareas y notas pendientes mostradas actualmente en el banner
+  const displayedTotalItems = useMemo(() => {
+    return displayedDrafts.reduce((acc, curr) => acc + curr.total, 0);
+  }, [displayedDrafts]);
+
+  // Guardar borradores de una minuta específica o de las que apliquen según la vista
   const handleSaveDrafts = async (targetMinutaId = null) => {
     if (isSaving) return;
     setIsSaving(true);
-    setMinutaIdInSaving(targetMinutaId);
 
-    const itemsToProcess = targetMinutaId 
-      ? pendingDrafts.filter(p => p.minutaId === targetMinutaId)
+    const effectiveTargetId = targetMinutaId || currentUrlMinutaId;
+    setMinutaIdInSaving(effectiveTargetId);
+
+    const itemsToProcess = effectiveTargetId 
+      ? pendingDrafts.filter(p => p.minutaId === effectiveTargetId)
       : pendingDrafts;
 
     let successCount = 0;
@@ -133,6 +185,20 @@ export const PendingDraftsBanner = () => {
     for (const item of itemsToProcess) {
       try {
         const numericMinutaId = Number(item.minutaId);
+
+        // 0. Comprobar si la minuta está en un estado que impida crear tareas (CERRADA)
+        // Si está cerrada, la reabrimos momentáneamente para poder insertar los borradores rescatados.
+        let wasOriginallyClosed = false;
+        try {
+          const minRes = await getMinutaById(item.minutaId);
+          const minData = minRes.data?.data || minRes.data;
+          if (minData?.estado === 'CERRADA') {
+            wasOriginallyClosed = true;
+            await reabrirMinuta(item.minutaId);
+          }
+        } catch (minErr) {
+          console.warn(`[PendingDraftsBanner] No se pudo verificar o reabrir estado previo de minuta ${item.minutaId}:`, minErr);
+        }
 
         // 1. Guardar tareas
         if (item.entries.length > 0) {
@@ -205,9 +271,15 @@ export const PendingDraftsBanner = () => {
     }
   };
 
-  if (pendingDrafts.length === 0) {
+  if (displayedDrafts.length === 0) {
     return null;
   }
+
+  const isSingleMinutaContext = displayedDrafts.length === 1;
+  const singleDraft = displayedDrafts[0];
+  const singleTitle = isSingleMinutaContext 
+    ? (minutaTitles[singleDraft.minutaId] || `Minuta #${singleDraft.minutaId}`)
+    : '';
 
   return (
     <aside 
@@ -224,29 +296,33 @@ export const PendingDraftsBanner = () => {
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="bg-white text-amber-900 text-[10px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider shadow-sm">
-                Borradores pendientes ({totalItems})
+                Borradores pendientes ({displayedTotalItems})
               </span>
               <span className="text-amber-200 text-xs font-semibold">
-                en {pendingDrafts.length} {pendingDrafts.length === 1 ? 'minuta' : 'minutas'}
+                {isSingleMinutaContext 
+                  ? 'en esta minuta' 
+                  : `en ${displayedDrafts.length} minutas`}
               </span>
             </div>
             <p className="text-xs sm:text-sm font-bold text-white mt-0.5 leading-snug break-words">
-              {pendingDrafts.length === 1 
-                ? (minutaTitles[pendingDrafts[0].minutaId] || `Minuta #${pendingDrafts[0].minutaId}`)
-                : `${pendingDrafts.length} minutas tienen tareas sin subir a la base de datos`}
+              {isSingleMinutaContext 
+                ? singleTitle 
+                : `${displayedDrafts.length} minutas tienen tareas sin subir a la base de datos`}
             </p>
             <p className="text-[11px] text-amber-200/90 font-medium">
-              Estas tareas están en tu navegador pero no se habían guardado. Haz clic para subirlas permanentemente.
+              {currentUrlMinutaId 
+                ? 'Tareas capturadas en esta minuta que aún no se han guardado permanentemente.'
+                : 'Tareas capturadas en tu navegador que no se habían subido. Haz clic para guardarlas.'}
             </p>
           </div>
         </div>
 
         {/* Lado derecho: Botones de Acción */}
         <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-          {pendingDrafts.length === 1 && !location.pathname.includes(`/minutas/${pendingDrafts[0].minutaId}`) && (
+          {isSingleMinutaContext && !currentUrlMinutaId && (
             <button
               type="button"
-              onClick={() => navigate(`/minutas/${pendingDrafts[0].minutaId}`)}
+              onClick={() => navigate(`/minutas/${singleDraft.minutaId}`)}
               className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all active:scale-95 border border-white/20 cursor-pointer"
             >
               Ver Minuta
@@ -256,7 +332,7 @@ export const PendingDraftsBanner = () => {
           <button
             type="button"
             disabled={isSaving}
-            onClick={() => handleSaveDrafts()}
+            onClick={() => handleSaveDrafts(currentUrlMinutaId || null)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-amber-900 hover:bg-amber-50 active:scale-95 text-xs font-black uppercase tracking-wider transition-all shadow-lg hover:shadow-xl disabled:opacity-50 cursor-pointer"
           >
             {isSaving ? (
@@ -267,7 +343,7 @@ export const PendingDraftsBanner = () => {
             ) : (
               <>
                 <Icon name="cloud_upload" size="18px" className="text-amber-700" />
-                <span>Guardar Tareas Ahora</span>
+                <span>{currentUrlMinutaId ? 'Guardar Estas Tareas' : 'Guardar Todo Ahora'}</span>
               </>
             )}
           </button>
