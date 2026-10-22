@@ -9,6 +9,7 @@ import socket from '@/lib/socket';
 
 const VALID_ESTADOS_TAREA = ['PENDIENTE', 'EN_REVISION', 'CERRADA', 'CANCELADA', 'DESCARTADA'];
 const VALID_TIPOS_ENTRADA = ['SIN_ORGANIZAR', 'TAREA', 'RECORDATORIO', 'POLITICA', 'DESCARTADA'];
+const VALID_ALCANCES_RECORDATORIO = ['DEPARTAMENTO', 'PERSONAL'];
 
 /**
  * Normaliza las tareas de borrador de IndexedDB para enviarlas limpias a createTareaApi
@@ -46,6 +47,11 @@ const sanitizeDraftEntry = (raw) => {
   // Validar enum de tipo: si no es válido, asignar SIN_ORGANIZAR
   if (!entry.tipo || !VALID_TIPOS_ENTRADA.includes(entry.tipo)) {
     entry.tipo = 'SIN_ORGANIZAR';
+  }
+
+  // Validar enum de alcanceRecordatorio: sólo DEPARTAMENTO o PERSONAL
+  if (entry.alcanceRecordatorio && !VALID_ALCANCES_RECORDATORIO.includes(entry.alcanceRecordatorio)) {
+    delete entry.alcanceRecordatorio;
   }
 
   // Normalizar responsables a IDs numéricos
