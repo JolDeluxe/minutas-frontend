@@ -87,7 +87,7 @@ const refreshAccessToken = async () => {
     const response = await axios.post(
       `${ENV.API_URL}/api/auth/refresh`,
       { refreshToken },
-      { headers: { 'Content-Type': 'application/json' }, timeout: 10000 }
+      { headers: { 'Content-Type': 'application/json' }, timeout: 15000 }
     );
 
     const { accessToken } = response.data;
@@ -97,10 +97,20 @@ const refreshAccessToken = async () => {
     return accessToken;
 
   } catch (error) {
-    console.error('🔴 Fallo el refresh, purgando sesión global');
-    useAuthStore.getState().logout();
-    if (window.location.pathname !== '/login') {
-      window.location.href = '/login?session=expired';
+    // Si el fallo es de red (servidor caído o reiniciándose), NO cerramos la sesión
+    const isNetworkError = !error.response || error.code === 'ECONNABORTED' || error.message === 'Network Error';
+    if (isNetworkError) {
+      console.warn('⚠️ Fallo temporal de red al refrescar token, manteniendo sesión local...');
+      throw error;
+    }
+
+    // Solo si el servidor explícitamente respondió 401 o 403 (token inválido/revocado en BD)
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      console.error('🔴 Refresh token rechazado por el servidor, cerrando sesión...');
+      useAuthStore.getState().logout();
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login?session=expired';
+      }
     }
     throw error;
   }

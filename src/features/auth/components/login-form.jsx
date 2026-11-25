@@ -30,7 +30,7 @@ export const LoginForm = ({
         </div>
       )}
 
-      <form className="flex flex-col gap-6" onSubmit={onSubmit} noValidate>
+      <form className="flex flex-col gap-6" onSubmit={onSubmit} noValidate autoComplete="on">
         {/* Campo Correo / Usuario */}
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="email" error={!!emailError} className="flex items-center gap-2 font-bold">
@@ -40,6 +40,7 @@ export const LoginForm = ({
             id="email"
             type="text"
             name="email"
+            autoComplete="username"
             placeholder="usuario@cuadra.com.mx"
             value={formData.email}
             onChange={onChange}
@@ -57,6 +58,7 @@ export const LoginForm = ({
             id="password"
             type="password"
             name="password"
+            autoComplete="current-password"
             placeholder="••••••••"
             value={formData.password}
             onChange={onChange}

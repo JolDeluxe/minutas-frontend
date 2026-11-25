@@ -1,6 +1,6 @@
 import { precacheAndRoute, cleanupOutdatedCaches, createHandlerBoundToURL } from 'workbox-precaching';
 import { registerRoute, NavigationRoute } from 'workbox-routing';
-import { NetworkFirst, CacheFirst } from 'workbox-strategies';
+import { NetworkFirst, CacheFirst, NetworkOnly } from 'workbox-strategies';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { clientsClaim } from 'workbox-core';
@@ -31,10 +31,15 @@ registerRoute(
     })
 );
 
-// ── API → NetworkFirst (Solo GETs) ───────────────────────────────────────────
+// ── API → NetworkOnly para Auth y NetworkFirst para el resto ─────────────────────────
+registerRoute(
+    ({ url }) => url.pathname.startsWith('/api/auth/'),
+    new NetworkOnly()
+);
+
 registerRoute(
     ({ url, request }) => 
-        url.pathname.startsWith('/api/') && request.method === 'GET',
+        url.pathname.startsWith('/api/') && !url.pathname.startsWith('/api/auth/') && request.method === 'GET',
     new NetworkFirst({
         cacheName: 'cuadra-api-v1',
         networkTimeoutSeconds: 7, // Aumentado un poco para redes móviles inestables

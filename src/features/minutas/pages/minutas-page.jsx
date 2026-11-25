@@ -33,7 +33,7 @@ const MinutasPage = () => {
 
     const [query, setQuery] = useState('');
     const [page, setPage] = useState(1);
-    const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'desc' });
+    const [sortConfig, setSortConfig] = useState({ key: 'fechaProgramada', direction: 'desc' });
     
     // Filtros de periodo rápido
     const [periodo, setPeriodo] = useState('all');

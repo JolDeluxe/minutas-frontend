@@ -40,16 +40,6 @@ export const MinutasTable = ({
 
     const columns = [
         {
-            header: "ID",
-            accessorKey: "id",
-            sortable: true,
-            headerClassName: "w-[8%] min-w-[60px]",
-            cell: (row) => {
-                if (row.isSkeleton) return <Skeleton className="h-4 w-10" />;
-                return <span className="font-mono text-slate-500 text-xs">#{row.id}</span>;
-            },
-        },
-        {
             header: minutas?.length > 0 && minutas.every(m => 'tema' in m) ? "Tema" : "Título",
             accessorKey: "titulo",
             sortable: true,
