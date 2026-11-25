@@ -110,17 +110,11 @@ export const MinutasMobile = ({
                    d.getMonth() === sel.getMonth() && 
                    d.getDate() === sel.getDate();
         }) : [...minutas];
-
-        // Orden:
-        // Todas las minutas activas/programadas/en curso van arriba ordenadas por ID descendente.
-        // Las CERRADAS y CANCELADAS siempre van hasta abajo (también por ID descendente).
+        // Orden por fecha programada (o realizada / creación) descendente
         return list.sort((a, b) => {
-            const aClosed = a.estado === 'CERRADA' || a.estado === 'CANCELADA';
-            const bClosed = b.estado === 'CERRADA' || b.estado === 'CANCELADA';
-
-            if (aClosed && !bClosed) return 1;
-            if (!aClosed && bClosed) return -1;
-            return (b.id || 0) - (a.id || 0);
+            const dateA = new Date(a.fechaProgramada || a.fechaRealizada || a.createdAt).getTime() || 0;
+            const dateB = new Date(b.fechaProgramada || b.fechaRealizada || b.createdAt).getTime() || 0;
+            return dateB - dateA;
         });
     }, [minutas, selectedDate]);
 
