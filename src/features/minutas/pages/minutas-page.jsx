@@ -247,45 +247,23 @@ const MinutasPage = () => {
     // 6. CANCELADA (rojo) - Cancelada
     const sortedMinutas = useMemo(() => {
         if (!minutas) return [];
-        
         const minutasCopy = [...minutas];
-        
-        const STATUS_ORDER = {
-            'EN_CURSO': 1,
-            'EN_ORGANIZACION': 2,
-            'ACTIVA': 3,
-            'PROGRAMADA': 4,
-            'CERRADA': 5,
-            'CANCELADA': 6
-        };
-        
+        const key = sortConfig?.key || 'fechaProgramada';
+        const direction = sortConfig?.direction || 'desc';
+
         return minutasCopy.sort((a, b) => {
-            const statusA = a.estado?.toUpperCase() || '';
-            const statusB = b.estado?.toUpperCase() || '';
-            
-            const orderA = STATUS_ORDER[statusA] ?? 99;
-            const orderB = STATUS_ORDER[statusB] ?? 99;
-            
-            if (orderA !== orderB) {
-                return orderA - orderB;
-            }
-            
-            // Secundario: Orden por fecha desc o segun sortConfig
-            const key = sortConfig?.key || 'fecha';
             let valA, valB;
-            
-            if (key === 'fecha') {
-                valA = new Date(a.fechaRealizada || a.fechaProgramada || a.fecha || a.createdAt || 0).getTime();
-                valB = new Date(b.fechaRealizada || b.fechaProgramada || b.fecha || b.createdAt || 0).getTime();
+            if (key === 'fecha' || key === 'fechaProgramada') {
+                valA = new Date(a.fechaProgramada || a.fechaRealizada || a.createdAt || 0).getTime();
+                valB = new Date(b.fechaProgramada || b.fechaRealizada || b.createdAt).getTime() || 0;
             } else {
                 valA = a[key];
                 valB = b[key];
             }
-            
+
             if (valA === undefined || valA === null) return 1;
             if (valB === undefined || valB === null) return -1;
-            
-            const direction = sortConfig?.direction || 'desc';
+
             if (valA < valB) return direction === 'asc' ? -1 : 1;
             if (valA > valB) return direction === 'asc' ? 1 : -1;
             return 0;
