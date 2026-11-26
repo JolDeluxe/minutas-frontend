@@ -41,7 +41,7 @@ export const MinutaCard = ({ minuta, onViewDetail, onEdit, onCancel, badge = nul
     const canEdit = minuta.estado !== 'CANCELADA' && minuta.estado !== 'CERRADA';
     
     // Fecha REAL — lo que el jefe necesita para "la minuta del 28 de marzo"
-    const fechaReal = formatFechaReal(minuta.fechaRealizada || minuta.fechaProgramada || minuta.createdAt);
+    const fechaReal = formatFechaReal(minuta.fechaProgramada || minuta.fechaRealizada || minuta.createdAt);
     
     const dept = minuta.departamento || minuta.creadoPor?.departamento;
     const isMarketing = dept === 'MARKETING';

@@ -272,15 +272,40 @@ export const MinutaContextPanel = ({
           )}>
             <div className="flex flex-col gap-4">
 
-              {minuta.asistentes && (
-                <div className="text-sm mt-1 pt-3 border-t border-slate-100">
-                  <span className="font-bold block mb-0.5 text-[10px] uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                    <Icon name="how_to_reg" size="14px" className="text-slate-400" />
-                    Asistentes
-                  </span>
-                  <p className="text-slate-600 text-xs md:text-sm pl-5">{minuta.asistentes}</p>
-                </div>
-              )}
+              {minuta.asistentes && (() => {
+                let asistList = [];
+                try {
+                  const parsed = typeof minuta.asistentes === 'string' ? JSON.parse(minuta.asistentes) : minuta.asistentes;
+                  if (Array.isArray(parsed)) asistList = parsed;
+                } catch (_) {}
+
+                return (
+                  <div className="text-sm mt-1 pt-3 border-t border-slate-100">
+                    <span className="font-bold block mb-1 text-[10px] uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                      <Icon name="how_to_reg" size="14px" className="text-slate-400" />
+                      Asistentes
+                    </span>
+                    {asistList.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5 pl-5">
+                        {asistList.map((a, idx) => (
+                          <span key={a.id || idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200 shadow-2xs">
+                            {a.imagen ? (
+                              <img src={a.imagen} alt="" className="w-4 h-4 rounded-full object-cover" />
+                            ) : (
+                              <div className="w-4 h-4 rounded-full bg-slate-300 text-[9px] font-bold text-slate-600 flex items-center justify-center">
+                                {(a.nombre || '?')[0].toUpperCase()}
+                              </div>
+                            )}
+                            {a.nombre}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-slate-600 text-xs md:text-sm pl-5">{minuta.asistentes}</p>
+                    )}
+                  </div>
+                );
+              })()}
 
               {(minuta.resumenTemas || minuta.resumenAcuerdos || minuta.resumenProximosPasos) && (
                 <div className="flex flex-col gap-3 mt-1 pt-2 border-t border-slate-100">

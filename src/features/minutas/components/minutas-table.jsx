@@ -155,7 +155,7 @@ export const MinutasTable = ({
             headerClassName: "w-[12%] min-w-[100px]",
             cell: (row) => {
                 if (row.isSkeleton) return <Skeleton className="h-4 w-20 mx-auto" />;
-                const dateStr = row.fechaRealizada || row.fechaProgramada || row.createdAt;
+                const dateStr = row.fechaProgramada || row.fechaRealizada || row.createdAt;
                 if (!dateStr) return <span className="text-slate-400">—</span>;
                 const dateObj = new Date(dateStr);
                 return (
